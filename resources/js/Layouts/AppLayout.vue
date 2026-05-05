@@ -1,0 +1,289 @@
+<template>
+    <div style="display:flex; min-height:100vh; background:#F7F8FA; font-family:system-ui,sans-serif;">
+
+        <!-- Sidebar -->
+        <aside style="width:230px; min-height:100vh; background:white; border-right:1px solid #E2E8F0; display:flex; flex-direction:column; position:fixed; top:0; left:0; z-index:100;">
+
+            <!-- Logo -->
+            <div style="padding:24px 20px 20px; border-bottom:1px solid #F0F2F5;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : '🔧' }}
+                    </div>
+                    <div>
+                        <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0;">NEXPOS</p>
+                        <p style="font-size:11px; color:#94A3B8; margin:0;">Sistema Multi-industry</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav style="flex:1; padding:16px 12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;">
+    
+                <!-- Dashboard siempre visible -->
+                <a href="/dashboard" :style="menuItem('/dashboard')">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                    Dashboard
+                </a>
+
+                <!-- Secciones dinámicas -->
+                <template v-for="(items, sectionName) in menuSections" :key="sectionName">
+                    <p v-if="sectionName && sectionName !== 'GENERAL'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
+                        {{ sectionName }}
+                    </p>
+                    
+                    <template v-for="item in items" :key="item.path">
+                        <a v-if="item.path !== '/dashboard'" :href="item.path" :style="menuItem(item.path)">
+                            <!-- Íconos SVG -->
+                            <svg v-if="item.icon === 'table'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="2" y="7" width="20" height="10" rx="2"/>
+                                <path d="M6 7V5M18 7V5M6 17v2M18 17v2"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'clock'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'menu'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'chef'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'kanban'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="7" height="9" rx="1"/>
+                                <rect x="14" y="3" width="7" height="5" rx="1"/>
+                                <rect x="14" y="12" width="7" height="9" rx="1"/>
+                                <rect x="3" y="16" width="7" height="5" rx="1"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'users'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <path d="M20 8v6M23 11h-6"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'chart'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="12" y1="20" x2="12" y2="10"/>
+                                <line x1="18" y1="20" x2="18" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="16"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'receipt'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'settings'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                            </svg>
+                            
+                            {{ item.label }}
+                        </a>
+                    </template>
+                </template>
+
+            </nav>
+
+            <!-- Usuario -->
+            <div style="padding:16px 20px; border-top:1px solid #F0F2F5; display:flex; align-items:center; gap:12px;">
+                <div style="width:38px; height:38px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:white; flex-shrink:0;">
+                    {{ initials }}
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $page.props.auth?.user?.name }}</p>
+                    <p style="font-size:11px; color:#94A3B8; margin:0; text-transform:capitalize;">{{ rolLabel }}</p>
+                </div>
+                <svg @click="logout" style="cursor:pointer; flex-shrink:0;" width="16" height="16" fill="none" stroke="#94A3B8" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            </div>
+        </aside>
+
+        <!-- Contenido -->
+        <main style="margin-left:230px; flex:1; display:flex; flex-direction:column; min-height:100vh;">
+
+            <!-- Topbar -->
+            <header style="background:white; padding:16px 28px; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;">
+                <div>
+                    <p style="font-size:18px; font-weight:700; color:#1E293B; margin:0;">{{ title }}</p>
+                    <p style="font-size:13px; color:#94A3B8; margin:0;">{{ subtitle }}</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:13px; color:#94A3B8;">{{ today }}</span>
+                    <a v-if="empresa.industry_type === 'restaurante'" href="/mesas" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; box-shadow:0 4px 12px rgba(20,184,166,0.3);">
+                    🪑 Ver mesas
+                    </a>
+                    <a v-else-if="empresa.industry_type === 'minimarket'" href="/minimarket/pos" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; box-shadow:0 4px 12px rgba(20,184,166,0.3);">
+                     🛒 Nueva venta
+                    </a>
+                </div>
+            </header>
+
+            <!-- Notificaciones flash -->
+            <div v-if="$page.props.flash?.success || $page.props.flash?.error"
+                style="padding:0 28px; margin-top:16px;">
+                <div v-if="$page.props.flash?.success"
+                    style="background:#F0FDF4; border:1px solid #DCFCE7; border-radius:12px; padding:14px 20px; display:flex; align-items:center; gap:12px;">
+                    <svg width="20" height="20" fill="none" stroke="#166534" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style="font-size:15px; color:#166534; font-weight:600;">{{ $page.props.flash.success }}</span>
+                </div>
+                <div v-if="$page.props.flash?.error"
+                    style="background:#FEF2F2; border:1px solid #FECACA; border-radius:12px; padding:14px 20px; display:flex; align-items:center; gap:12px;">
+                    <svg width="20" height="20" fill="none" stroke="#991B1B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <span style="font-size:15px; color:#991B1B; font-weight:600;">{{ $page.props.flash.error }}</span>
+                </div>
+            </div>
+
+            <!-- Slot -->
+            <div style="padding:28px; flex:1;">
+                <slot />
+            </div>
+        </main>
+    </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
+
+defineProps({
+    title:    { type: String, default: 'Dashboard' },
+    subtitle: { type: String, default: '' },
+})
+
+const page = usePage()
+
+const initials = computed(() => {
+    const name = page.props.auth?.user?.name || 'U'
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+})
+
+const rolLabel = computed(() => {
+    const roles = {
+        admin:      'Administrador',
+        cajero:     'Cajero',
+        mozo:       'Mozo',
+        cocinero:   'Cocinero',
+        vendedor:   'Vendedor',
+        contador:   'Contador',
+        almacenero: 'Almacenero',
+    }
+    return roles[page.props.auth?.user?.rol] || 'Usuario'
+})
+
+const today = computed(() => {
+    return new Date().toLocaleDateString('es-PE', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    })
+})
+
+const empresa = computed(() => page.props.empresa || { industry_type: 'restaurante', modules_enabled: [] })
+const modulesEnabled = computed(() => {
+    const m = empresa.value.modules_enabled
+    if (!m) return []
+    if (Array.isArray(m)) return m
+    try { return JSON.parse(m) } catch { return [] }
+})
+
+const allMenuItems = [
+    { path: '/dashboard', icon: 'dashboard', label: 'Dashboard', module: null, section: null },
+    
+    // RESTAURANTE
+    { path: '/mesas',    icon: 'table',  label: 'Mesas',        module: 'mesas',    section: 'RESTAURANTE' },
+    { path: '/turnos',   icon: 'clock',  label: 'Turnos',       module: 'turnos',   section: 'RESTAURANTE' },
+    { path: '/menu',     icon: 'menu',   label: 'Carta / Menú', module: 'carta',    section: 'RESTAURANTE' },
+    { path: '/cocina',   icon: 'chef',   label: 'Cocina',       module: 'cocina',   section: 'RESTAURANTE' },
+    { path: '/comandas', icon: 'kanban', label: 'Comandas',     module: 'comandas', section: 'RESTAURANTE' },
+    
+    // SISTEMA
+    { path: '/admin/mozos',          icon: 'users',   label: 'Mozos',        module: 'mozos',       section: 'SISTEMA' },
+    { path: '/reportes-restaurante', icon: 'chart',   label: 'Reportes',     module: 'reportes',    section: 'SISTEMA' },
+    { path: '/comprobantes',         icon: 'receipt', label: 'Comprobantes', module: 'facturacion', section: 'SISTEMA' },
+    { path: '/caja',                 icon: 'receipt', label: 'Caja',         module: 'caja',        section: 'SISTEMA' },
+
+    // MINIMARKET
+    { path: '/minimarket/pos',       icon: 'receipt', label: 'POS Venta',  module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/ventas',    icon: 'chart',   label: 'Ventas',     module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/productos', icon: 'menu',    label: 'Productos',  module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/caja',      icon: 'clock',   label: 'Caja',       module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/reportes',  icon: 'chart',   label: 'Reportes',   module: 'pos_minimarket', section: 'MINIMARKET' },
+
+    // GENERAL
+    { path: '/usuarios',     icon: 'users',    label: 'Usuarios',      module: 'admin', section: 'GENERAL' },
+    { path: '/configuracion',icon: 'settings', label: 'Configuración', module: 'admin', section: 'GENERAL' },
+]
+
+const menuItems = computed(() => {
+    const industry = empresa.value.industry_type
+    const rol = page.props.auth?.user?.rol
+
+    const modulosCajero   = ['/dashboard', '/minimarket/pos', '/minimarket/ventas', '/minimarket/caja']
+    const modulosMozo     = ['/dashboard', '/mesas']
+    const modulosCocinero = ['/dashboard', '/cocina']
+
+    return allMenuItems.filter(item => {
+        if (rol === 'cajero')   return modulosCajero.includes(item.path)
+        if (rol === 'mozo')     return modulosMozo.includes(item.path)
+        if (rol === 'cocinero') return modulosCocinero.includes(item.path)
+
+        // Ocultar admin para no-admins
+        if (item.module === 'admin' && rol !== 'admin') return false
+
+        // Ocultar módulos de restaurante si es minimarket
+        if (industry === 'minimarket') {
+            const soloRestaurante = ['mozos', 'reportes', 'facturacion', 'mesas', 'carta', 'cocina', 'comandas', 'turnos', 'pos_restaurante']
+            if (item.module && soloRestaurante.includes(item.module)) return false
+            if (item.section === 'SISTEMA' && !['Usuarios', 'Configuración'].includes(item.label)) return false
+        }
+
+        // Ocultar módulos de minimarket si es restaurante
+        if (industry === 'restaurante') {
+            if (item.section === 'MINIMARKET') return false
+        }
+
+        if (!item.module) return true
+        if (item.module === 'admin') return rol === 'admin'
+        return modulesEnabled.value.includes(item.module)
+    })
+})
+
+const menuSections = computed(() => {
+    const orden = [null, 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL']
+    const sections = {}
+    
+    orden.forEach(s => {
+        const key = s || 'null'
+        sections[key] = []
+    })
+
+    menuItems.value.forEach(item => {
+        const section = item.section ?? 'null'
+        if (!sections[section]) sections[section] = []
+        sections[section].push(item)
+    })
+
+    Object.keys(sections).forEach(k => {
+        if (!sections[k].length) delete sections[k]
+    })
+
+    return sections
+})
+
+const menuItem = (path) => {
+    const active = window.location.pathname === path
+    return {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '11px 14px',
+        borderRadius: '10px',
+        fontSize: '14px',
+        fontWeight: active ? '700' : '500',
+        color: active ? '#0F766E' : '#64748B',
+        background: active ? '#F0FDFA' : 'transparent',
+        textDecoration: 'none',
+        cursor: 'pointer',
+        borderLeft: active ? '3px solid #14B8A6' : '3px solid transparent',
+    }
+}
+
+const logout = () => router.post('/logout')
+</script>
