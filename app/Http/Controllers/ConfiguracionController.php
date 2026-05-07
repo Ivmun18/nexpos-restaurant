@@ -47,6 +47,7 @@ class ConfiguracionController extends Controller
             'buen_contribuyente' => $request->buen_contribuyente ?? false,
             'agente_retencion'   => $request->agente_retencion ?? false,
             'ambiente'           => $request->ambiente ?? 'beta',
+            'zona_exonerada'     => $request->zona_exonerada ?? false,
         ];
 
         // Credenciales SUNAT
@@ -138,6 +139,7 @@ class ConfiguracionController extends Controller
         $empresa->update([
             'nubefact_token' => $request->nubefact_token,
             'nubefact_demo'  => $request->nubefact_demo ?? true,
+            'zona_exonerada'  => $request->zona_exonerada ?? false,
             'serie_boleta'   => strtoupper($request->serie_boleta),
             'serie_factura'  => strtoupper($request->serie_factura),
         ]);

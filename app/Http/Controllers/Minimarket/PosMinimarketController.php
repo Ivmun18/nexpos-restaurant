@@ -47,8 +47,16 @@ class PosMinimarketController extends Controller
     $correlativo = (\App\Models\Venta::where('empresa_id', $empresa->id)
         ->where('serie', $serie)->max('correlativo') ?? 0) + 1;
 
-    $igv = round($request->total / 1.18 * 0.18, 2);
-    $gravado = round($request->total - $igv, 2);
+    // Zona exonerada no tiene IGV
+    if ($empresa->zona_exonerada) {
+        $igv = 0;
+        $gravado = 0;
+        $exonerado = $request->total;
+    } else {
+        $igv = round($request->total / 1.18 * 0.18, 2);
+        $gravado = round($request->total - $igv, 2);
+        $exonerado = 0;
+    }
 
     $venta = \App\Models\Venta::create([
         'empresa_id'          => $empresa->id,
@@ -61,7 +69,7 @@ class PosMinimarketController extends Controller
         'hora_emision'        => now()->toTimeString(),
         'moneda'              => 'PEN',
         'total_gravado'       => $gravado,
-        'total_exonerado'     => 0,
+        'total_exonerado'     => $exonerado ?? 0,
         'total_inafecto'      => 0,
         'total_igv'           => $igv,
         'total_descuento'     => 0,

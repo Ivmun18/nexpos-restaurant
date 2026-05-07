@@ -76,10 +76,7 @@
                             style="padding:8px 16px; background:#16a34a; color:white; border-radius:8px; font-size:12px; font-weight:600;">
                             📄 Ver PDF
                         </a>
-                        <button v-if="venta.nubefact_estado !== 'anulado'" @click="anular"
-                            style="padding:8px 16px; background:#fee2e2; color:#dc2626; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
-                            ❌ Anular
-                        </button>
+
                     </div>
                 </div>
 
@@ -125,15 +122,20 @@
                 <div style="border-top:2px solid #1E293B; padding-top:12px; margin-bottom:16px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Subtotal</span>
-                        <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_gravado).toFixed(2) }}</span>
+                        <span style="font-size:13px; color:#1E293B;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv)).toFixed(2) }}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <!-- IGV o Exonerado -->
+                    <div v-if="Number(venta.total_exonerado) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:13px; color:#64748B;">🌿 Exonerado IGV</span>
+                        <span style="font-size:13px; color:#16a34a;">S/ {{ Number(venta.total_exonerado).toFixed(2) }}</span>
+                    </div>
+                    <div v-else style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">IGV (18%)</span>
-                        <span style="font-size:13px; color:#1E293B;">S/ {{ (Number(venta.total_gravado) * 0.18 / 1.18).toFixed(2) }}</span>
+                        <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_igv).toFixed(2) }}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; padding:10px 16px; background:#1E293B; border-radius:10px; margin-top:8px;">
                         <span style="font-size:16px; font-weight:700; color:white;">TOTAL</span>
-                        <span style="font-size:24px; font-weight:900; color:white;">S/ {{ Number(venta.total_gravado).toFixed(2) }}</span>
+                        <span style="font-size:24px; font-weight:900; color:white;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv)).toFixed(2) }}</span>
                     </div>
                 </div>
 

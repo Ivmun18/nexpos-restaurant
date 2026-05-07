@@ -194,7 +194,19 @@
                         </div>
                     </div>
 
-                    <!-- Botón guardar -->
+                    <!-- Zona exonerada -->
+                    <div style="background:white; border-radius:10px; border:1px solid #E2E8F0; padding:1.5rem; margin-bottom:1rem;">
+                        <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0 0 1rem;">🌿 Régimen Tributario</p>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" v-model="form.zona_exonerada" id="zona_exonerada" style="width:18px; height:18px; accent-color:#14B8A6;" />
+                            <label for="zona_exonerada" style="font-size:14px; color:#374151; cursor:pointer;">
+                                Zona exonerada de IGV (Selva)
+                                <span style="font-size:12px; color:#94a3b8; display:block; margin-top:2px;">Loreto, Ucayali, Amazonas, Madre de Dios, San Martín</span>
+                            </label>
+                        </div>
+                    </div>
+
+                <!-- Botón guardar -->
                     <button type="submit" :disabled="procesando"
                         style="width:100%; padding:14px; background:#2563EB; color:white; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;">
                         {{ procesando ? 'Guardando...' : 'Guardar configuración' }}
@@ -234,7 +246,7 @@
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
                 <input type="checkbox" v-model="nubefact.demo" id="nubefact_demo" style="width:16px; height:16px; accent-color:#0891b2;"/>
                 <label for="nubefact_demo" style="font-size:13px; color:#374151;">Modo Demo (pruebas)</label>
-                <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;" :style="nubefact.demo ? 'background:#fef3c7; color:#92400e;' : 'background:#dcfce7; color:#166534;'">
+                <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-left:8px;" :style="nubefact.demo ? 'background:#fef3c7; color:#92400e;' : 'background:#dcfce7; color:#166534;'">
                     {{ nubefact.demo ? "🧪 Demo" : "🚀 Producción" }}
                 </span>
             </div>
@@ -286,6 +298,7 @@ const form = ref({
     buen_contribuyente: props.empresa?.buen_contribuyente ?? false,
     agente_retencion:   props.empresa?.agente_retencion ?? false,
     ambiente:           props.empresa?.ambiente ?? 'beta',
+    zona_exonerada:     props.empresa?.zona_exonerada ?? false,
     sol_usuario:        props.empresa?.sol_usuario ?? '',
     sol_clave:          '',
     cert_password:      '',
@@ -309,6 +322,7 @@ const onCertificado = (e) => {
 const nubefact = ref({
     token: props.empresa?.nubefact_token ?? '',
     demo: props.empresa?.nubefact_demo ?? true,
+    zona_exonerada: props.empresa?.zona_exonerada ?? false,
     serie_boleta: props.empresa?.serie_boleta ?? 'B001',
     serie_factura: props.empresa?.serie_factura ?? 'F001',
 })
@@ -320,6 +334,7 @@ const guardarNubefact = () => {
     router.post('/configuracion/nubefact', {
         nubefact_token: nubefact.value.token,
         nubefact_demo: nubefact.value.demo,
+        zona_exonerada: nubefact.value.zona_exonerada,
         serie_boleta: nubefact.value.serie_boleta,
         serie_factura: nubefact.value.serie_factura,
     }, {

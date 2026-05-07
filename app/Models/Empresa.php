@@ -22,6 +22,7 @@ class Empresa extends Model
         'modules_enabled',
         'nubefact_token',
         'nubefact_demo',
+        'zona_exonerada',
         'serie_boleta',
         'serie_factura',
         'serie_nota_credito',
@@ -33,6 +34,7 @@ class Empresa extends Model
     protected $casts = [
         'modules_enabled' => 'array',
         'nubefact_demo' => 'boolean',
+        'zona_exonerada' => 'boolean',
     ];
 
     public function users(): HasMany

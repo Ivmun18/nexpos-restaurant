@@ -22,6 +22,7 @@
                         <th style="padding:14px 20px; text-align:left; font-size:12px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Fecha</th>
                         <th style="padding:14px 20px; text-align:left; font-size:12px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Método</th>
                         <th style="padding:14px 20px; text-align:right; font-size:12px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Total</th>
+                        <th style="padding:14px 20px; text-align:center; font-size:12px; color:#94A3B8; font-weight:600; text-transform:uppercase;">SUNAT</th>
                         <th style="padding:14px 20px; text-align:center; font-size:12px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Acciones</th>
                     </tr>
                 </thead>
@@ -56,10 +57,35 @@
                             S/ {{ Number(venta.total_gravado).toFixed(2) }}
                         </td>
                         <td style="padding:14px 20px; text-align:center;">
-                            <a :href="`/minimarket/ventas/${venta.id}`"
-                                style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; border:1px solid #CCFBF1;">
-                                Ver ticket
-                            </a>
+                            <span v-if="venta.nubefact_estado === 'aceptado'"
+                                style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; background:#dcfce7; color:#166534;">
+                                ✅ Aceptado
+                            </span>
+                            <span v-else-if="venta.nubefact_estado === 'rechazado'"
+                                style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; background:#fee2e2; color:#dc2626;">
+                                ❌ Rechazado
+                            </span>
+                            <span v-else-if="venta.nubefact_estado === 'anulado'"
+                                style="padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; background:#f1f5f9; color:#64748b;">
+                                🚫 Anulado
+                            </span>
+                            <span v-else style="font-size:11px; color:#cbd5e1;">—</span>
+                        </td>
+                        <td style="padding:14px 20px; text-align:center;">
+                            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                                <a :href="`/minimarket/ventas/${venta.id}`"
+                                    style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; border:1px solid #CCFBF1;">
+                                    👁 Ver
+                                </a>
+                                <button v-if="venta.nubefact_estado === 'rechazado'" @click="reintentar(venta.id)"
+                                    style="padding:6px 12px; background:#e0f2fe; color:#0369a1; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                                    🔄 Reintentar
+                                </button>
+                                <button v-if="venta.nubefact_estado && venta.nubefact_estado !== 'anulado'" @click="anular(venta.id)"
+                                    style="padding:6px 12px; background:#fee2e2; color:#dc2626; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                                    ❌ Anular
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -87,6 +113,19 @@
 
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { router } from '@inertiajs/vue3'
+
+const reintentar = (id) => {
+    if (confirm('¿Reintentar envío a SUNAT?')) {
+        router.post(`/minimarket/ventas/${id}/reintentar`)
+    }
+}
+
+const anular = (id) => {
+    if (confirm('¿Anular este comprobante en SUNAT?')) {
+        router.post(`/minimarket/ventas/${id}/anular`)
+    }
+}
 
 const props = defineProps({
     ventas: { type: Object, default: () => ({ data: [], total: 0, last_page: 1, current_page: 1 }) },
