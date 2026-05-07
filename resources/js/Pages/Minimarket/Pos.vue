@@ -139,6 +139,41 @@
                         </div>
                     </div>
 
+                    <!-- Comprobante -->
+                    <div style="margin-bottom:12px;">
+                        <p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Comprobante</p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+                            <button type="button" @click="tipoComprobante = 'ninguno'"
+                                :style="tipoComprobante === 'ninguno' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                                🚫 Ninguno
+                            </button>
+                            <button type="button" @click="tipoComprobante = 'boleta'"
+                                :style="tipoComprobante === 'boleta' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                                🧾 Boleta
+                            </button>
+                            <button type="button" @click="tipoComprobante = 'factura'"
+                                :style="tipoComprobante === 'factura' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                                📄 Factura
+                            </button>
+                        </div>
+
+                        <!-- Datos cliente para boleta/factura -->
+                        <div v-if="tipoComprobante !== 'ninguno'" style="display:flex; flex-direction:column; gap:8px;">
+                            <input v-model="clienteDni" type="text"
+                                :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
+                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                            />
+                            <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
+                                placeholder="Razón social del cliente *"
+                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                            />
+                            <input v-model="clienteEmail" type="email"
+                                placeholder="Email (para enviar comprobante)"
+                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                            />
+                        </div>
+                    </div>
+
                     <!-- Botón cobrar -->
                     <button @click="cobrar"
                         :disabled="!carrito.length || procesando"
@@ -193,6 +228,11 @@ const productosFiltrados = computed(() => {
         (p.codigo_barras && p.codigo_barras.toLowerCase().includes(q))
     )
 })
+
+const tipoComprobante = ref('ninguno')
+const clienteDni = ref('')
+const clienteRazonSocial = ref('')
+const clienteEmail = ref('')
 
 const total = computed(() =>
     carrito.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
@@ -260,15 +300,23 @@ const cobrar = () => {
     procesando.value = true
 
     router.post('/minimarket/pos', {
-        items:        carrito.value,
-        metodo_pago:  metodoPago.value,
-        total:        total.value,
-        monto_pagado: montoPagado.value || null,
+        items:              carrito.value,
+        metodo_pago:        metodoPago.value,
+        total:              total.value,
+        monto_pagado:       montoPagado.value || null,
+        tipo_comprobante:   tipoComprobante.value,
+        cliente_dni:        clienteDni.value,
+        cliente_razon_social: clienteRazonSocial.value,
+        cliente_email:      clienteEmail.value,
     }, {
         onSuccess: () => {
-            carrito.value   = []
-            montoPagado.value = ''
-            procesando.value  = false
+            carrito.value        = []
+            montoPagado.value    = ''
+            procesando.value     = false
+            tipoComprobante.value = 'ninguno'
+            clienteDni.value     = ''
+            clienteRazonSocial.value = ''
+            clienteEmail.value   = ''
         },
         onError: () => { procesando.value = false }
     })

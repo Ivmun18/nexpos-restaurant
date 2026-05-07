@@ -38,6 +38,9 @@ class Venta extends Model
         'vuelto',
         'estado',
         'observaciones',
+        'metodo_pago',
+        'nubefact_id',
+        'nubefact_estado',
     ];
 
     protected $casts = [

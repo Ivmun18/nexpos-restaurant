@@ -43,6 +43,44 @@
                         {{ venta.tipo_comprobante === '03' ? 'BOLETA DE VENTA' : 'FACTURA' }}
                     </span>
                     <p style="font-size:15px; font-weight:700; color:#1E293B; margin:8px 0 0;">{{ venta.numero_completo }}</p>
+
+                    <!-- Estado SUNAT -->
+                    <div v-if="venta.nubefact_estado" style="margin-top:10px;">
+                        <span v-if="venta.nubefact_estado === 'aceptado'"
+                            style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#dcfce7; color:#166534; border-radius:20px; font-size:12px; font-weight:700;">
+                            ✅ Aceptado por SUNAT
+                        </span>
+                        <span v-else-if="venta.nubefact_estado === 'rechazado'"
+                            style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#fee2e2; color:#dc2626; border-radius:20px; font-size:12px; font-weight:700;">
+                            ❌ Rechazado por SUNAT
+                        </span>
+                        <span v-else
+                            style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#fef3c7; color:#92400e; border-radius:20px; font-size:12px; font-weight:700;">
+                            ⏳ Pendiente SUNAT
+                        </span>
+                    </div>
+                    <div v-else-if="venta.tipo_comprobante !== '00'"
+                        style="margin-top:10px;">
+                        <span style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; background:#f1f5f9; color:#64748b; border-radius:20px; font-size:12px; font-weight:600;">
+                            📋 Sin envío a SUNAT
+                        </span>
+                    </div>
+
+                    <!-- Botones SUNAT -->
+                    <div v-if="venta.nubefact_estado" style="display:flex; gap:8px; margin-top:12px; justify-content:center;">
+                        <button v-if="venta.nubefact_estado === 'rechazado'" @click="reintentar"
+                            style="padding:8px 16px; background:#0891b2; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                            🔄 Reintentar envío
+                        </button>
+                        <a v-if="venta.nubefact_id" :href="venta.nubefact_id" target="_blank"
+                            style="padding:8px 16px; background:#16a34a; color:white; border-radius:8px; font-size:12px; font-weight:600;">
+                            📄 Ver PDF
+                        </a>
+                        <button v-if="venta.nubefact_estado !== 'anulado'" @click="anular"
+                            style="padding:8px 16px; background:#fee2e2; color:#dc2626; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                            ❌ Anular
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Info comprobante -->
@@ -113,7 +151,20 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+const reintentar = () => {
+    if (confirm('¿Reintentar envío a SUNAT?')) {
+        router.post(`/minimarket/ventas/${props.venta.id}/reintentar`)
+    }
+}
+
+const anular = () => {
+    if (confirm('¿Anular este comprobante?')) {
+        router.post(`/minimarket/ventas/${props.venta.id}/anular`)
+    }
+}
 
 const props = defineProps({
     venta:    { type: Object,  default: () => ({}) },

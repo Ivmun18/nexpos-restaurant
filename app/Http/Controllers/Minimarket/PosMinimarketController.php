@@ -32,22 +32,44 @@ class PosMinimarketController extends Controller
         'monto_pagado' => 'nullable|numeric',
     ]);
 
-    $correlativo = (\App\Models\Venta::where('empresa_id', auth()->user()->empresa_id)->max('correlativo') ?? 0) + 1;
+    $empresa = auth()->user()->empresa;
+    $tipoComprobante = $request->tipo_comprobante ?? 'ninguno';
+
+    // Definir serie y tipo según comprobante
+    if ($tipoComprobante === 'factura') {
+        $tipo = '01';
+        $serie = $empresa->serie_factura ?? 'F001';
+    } else {
+        $tipo = '03';
+        $serie = $empresa->serie_boleta ?? 'B001';
+    }
+
+    $correlativo = (\App\Models\Venta::where('empresa_id', $empresa->id)
+        ->where('serie', $serie)->max('correlativo') ?? 0) + 1;
+
+    $igv = round($request->total / 1.18 * 0.18, 2);
+    $gravado = round($request->total - $igv, 2);
 
     $venta = \App\Models\Venta::create([
-        'empresa_id'          => auth()->user()->empresa_id,
+        'empresa_id'          => $empresa->id,
         'usuario_id'          => auth()->id(),
-        'tipo_comprobante'    => '03',
-        'serie'               => 'B001',
+        'tipo_comprobante'    => $tipo,
+        'serie'               => $serie,
         'correlativo'         => $correlativo,
-        'numero_completo'     => 'B001-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT),
+        'numero_completo'     => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT),
         'fecha_emision'       => now()->toDateString(),
         'hora_emision'        => now()->toTimeString(),
         'moneda'              => 'PEN',
-        'total_gravado'       => $request->total,
+        'total_gravado'       => $gravado,
         'total_exonerado'     => 0,
         'total_inafecto'      => 0,
+        'total_igv'           => $igv,
         'total_descuento'     => 0,
+        'metodo_pago'         => $request->metodo_pago,
+        'cliente_tipo_doc'    => $tipoComprobante === 'factura' ? '6' : '1',
+        'cliente_num_doc'     => $request->cliente_dni ?? '',
+        'cliente_razon_social'=> $request->cliente_razon_social ?? '',
+        'cliente_email'       => $request->cliente_email ?? '',
     ]);
 
    foreach ($request->items as $index => $item) {
@@ -71,8 +93,97 @@ class PosMinimarketController extends Controller
     \App\Models\Producto::where('id', $item['id'])->decrement('stock_actual', $item['cantidad']);
 }
 
+    // Emitir comprobante en Nubefact si corresponde
+    if ($tipoComprobante !== 'ninguno' && $empresa->nubefact_token) {
+        $this->emitirNubefact($venta, $empresa);
+    }
+
     return redirect()->route('minimarket.ventas.show', $venta->id)
-    ->with('success', 'Venta registrada correctamente')
-    ->with('imprimir', true); 
+        ->with('success', 'Venta registrada correctamente')
+        ->with('imprimir', true);
+}
+
+private function emitirNubefact($venta, $empresa)
+{
+    $venta->load('detalle');
+
+    $items = $venta->detalle->map(function($item, $i) {
+        $valorUnitario = round($item->precio_unitario / 1.18, 4);
+        $igvItem = round($valorUnitario * 0.18 * $item->cantidad, 2);
+        return [
+            'unidad_de_medida'         => 'NIU',
+            'codigo'                   => $item->codigo_producto ?? 'S/C',
+            'descripcion'              => $item->descripcion,
+            'cantidad'                 => $item->cantidad,
+            'valor_unitario'           => $valorUnitario,
+            'precio_unitario'          => $item->precio_unitario,
+            'descuento'                => '0',
+            'subtotal'                 => round($valorUnitario * $item->cantidad, 2),
+            'tipo_de_igv'              => 1,
+            'igv'                      => $igvItem,
+            'total'                    => round($item->precio_unitario * $item->cantidad, 2),
+            'anticipo_regularizacion'  => false,
+            'anticipo_documento_serie' => '',
+            'anticipo_documento_numero'=> '',
+        ];
+    })->toArray();
+
+    $url = $empresa->nubefact_demo
+        ? 'https://demo-api.nubefact.com/api/v1/'
+        : 'https://api.nubefact.com/api/v1/';
+
+    $payload = [
+        'operacion'           => 'generar_comprobante',
+        'tipo_de_comprobante' => $venta->tipo_comprobante === '01' ? 1 : 2,
+        'serie'               => $venta->serie,
+        'numero'              => $venta->correlativo,
+        'sunat_transaction'   => 1,
+        'cliente_tipo_de_documento' => $venta->tipo_comprobante === '01' ? 6 : 1,
+        'cliente_numero_de_documento' => $venta->cliente_num_doc ?? '',
+        'cliente_denominacion'=> $venta->cliente_razon_social ?? 'CLIENTE',
+        'cliente_direccion'   => '',
+        'cliente_email'       => $venta->cliente_email ?? '',
+        'fecha_de_emision'    => now()->format('d-m-Y'),
+        'hora_de_emision'     => now()->format('H:i:s'),
+        'moneda'              => 1,
+        'tipo_de_cambio'      => '',
+        'porcentaje_de_igv'   => 18.0,
+        'total_gravada'       => $venta->total_gravado,
+        'total_igv'           => $venta->total_igv,
+        'total'               => $venta->total_gravado + $venta->total_igv,
+        'detalle'             => $items,
+        'enviar_automaticamente_a_la_sunat' => true,
+        'enviar_automaticamente_al_cliente' => !empty($venta->cliente_email),
+        'codigo_unico'        => $venta->id,
+        'condiciones_de_pago' => 'Contado',
+    ];
+
+    try {
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Token token=' . $empresa->nubefact_token,
+            'Content-Type'  => 'application/json',
+        ])->post($url, $payload);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $venta->update([
+                'nubefact_id'     => $data['enlace_del_pdf'] ?? null,
+                'nubefact_estado' => 'aceptado',
+                'observaciones'   => json_encode($data),
+            ]);
+        } else {
+            $error = $response->json();
+            $venta->update([
+                'nubefact_estado' => 'rechazado',
+                'observaciones'   => json_encode($error),
+            ]);
+        }
+    } catch (\Exception $e) {
+        \Log::error('Nubefact error: ' . $e->getMessage());
+        $venta->update([
+            'nubefact_estado' => 'rechazado',
+            'observaciones'   => $e->getMessage(),
+        ]);
+    }
 }
 }
