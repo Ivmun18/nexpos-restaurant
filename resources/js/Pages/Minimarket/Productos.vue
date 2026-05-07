@@ -56,6 +56,7 @@
                         <td style="padding:14px 20px;">
                             <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ p.descripcion }}</p>
                             <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">{{ p.codigo_barras || 'Sin código de barras' }}</p>
+                            <span v-if="p.categoria" :style="{ padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', background: p.categoria.color + '22', color: p.categoria.color }">{{ p.categoria.icono }} {{ p.categoria.nombre }}</span>
                         </td>
                         <td style="padding:14px 20px; font-size:14px; color:#475569;">{{ p.codigo }}</td>
                         <td style="padding:14px 20px; text-align:right; font-size:14px; color:#475569;">S/ {{ Number(p.precio_compra).toFixed(2) }}</td>
@@ -96,6 +97,13 @@
                 <div>
                     <label style="font-size:13px; font-weight:600; color:#64748B;">Descripción *</label>
                     <input v-model="form.descripcion" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                <div>
+                    <label style="font-size:13px; font-weight:600; color:#64748B;">Categoría</label>
+                    <select v-model="form.categoria_id" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;">
+                        <option value="">Sin categoría</option>
+                        <option v-for="cat in categorias" :key="cat.id" :value="cat.id">{{ cat.icono }} {{ cat.nombre }}</option>
+                    </select>
+                </div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div>
@@ -103,8 +111,29 @@
                         <input v-model="form.codigo" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
                     </div>
                     <div>
-                        <label style="font-size:13px; font-weight:600; color:#64748B;">Código de barras</label>
-                        <input v-model="form.codigo_barras" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                        <label style="font-size:13px; font-weight:600; color:#64748B;">
+                            Código de barras
+                            <span v-if="escaneando" style="margin-left:8px; color:#14B8A6; font-size:11px;">📷 Esperando escaneo...</span>
+                        </label>
+                        <div style="position:relative;">
+                            <input
+                                ref="inputCodigoBarras"
+                                v-model="form.codigo_barras"
+                                style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;"
+                                :style="escaneando ? {border: '2px solid #14B8A6'} : {}"
+                                @keyup.enter="onCodigoBarrasEnter"
+                                placeholder="Escanea o escribe el código"
+                            />
+                            <button
+                                type="button"
+                                @click="activarEscaneo"
+                                :style="escaneando
+                                    ? 'position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#14B8A6; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; margin-top:2px;'
+                                    : 'position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#f1f5f9; color:#475569; border:none; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; margin-top:2px;'"
+                                title="Activar lector de barras">
+                                📷
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -189,6 +218,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
     productos: { type: Array, default: () => [] },
+    categorias: { type: Array, default: () => [] },
 })
 
 const busqueda    = ref('')
@@ -204,6 +234,27 @@ const form = ref({
 })
 
 const formStock = ref({ tipo: 'entrada', cantidad: 1 })
+const escaneando = ref(false)
+const inputCodigoBarras = ref(null)
+
+const activarEscaneo = () => {
+    escaneando.value = true
+    if (inputCodigoBarras.value) {
+        inputCodigoBarras.value.focus()
+    }
+    setTimeout(() => { escaneando.value = false }, 10000)
+}
+
+const onCodigoBarrasEnter = () => {
+    escaneando.value = false
+    const existe = props.productos.find(p =>
+        p.codigo_barras === form.value.codigo_barras && p.id !== (productoSeleccionado.value ? productoSeleccionado.value.id : null)
+    )
+    if (existe) {
+        alert("Este codigo ya esta asignado a: " + existe.descripcion)
+        form.value.codigo_barras = ""
+    }
+}
 
 const productosFiltrados = computed(() => {
     if (!busqueda.value) return props.productos
@@ -221,7 +272,7 @@ const stockBajo = computed(() =>
 const cerrarModales = () => {
     modalNuevo.value  = false
     modalEditar.value = false
-    form.value = { descripcion: '', codigo: '', codigo_barras: '', precio_compra: '', precio_venta: '', stock_actual: 0, stock_minimo: 0 }
+    form.value = { descripcion: '', codigo: '', codigo_barras: '', precio_compra: '', precio_venta: '', stock_actual: 0, stock_minimo: 0, categoria_id: '' }
 }
 
 const editarProducto = (p) => {
@@ -233,6 +284,7 @@ const editarProducto = (p) => {
         precio_compra: p.precio_compra,
         precio_venta:  p.precio_venta,
         stock_minimo:  p.stock_minimo,
+        categoria_id:  p.categoria_id,
     }
     modalEditar.value = true
 }
@@ -252,6 +304,7 @@ const guardar = () => {
             precio_compra: form.value.precio_compra,
             precio_venta:  form.value.precio_venta,
             stock_minimo:  form.value.stock_minimo,
+            categoria_id:  form.value.categoria_id,
         }, {
             onSuccess: () => {
                 modalNuevo.value = false
@@ -271,6 +324,7 @@ const guardar = () => {
             precio_venta:  form.value.precio_venta,
             stock_actual:  form.value.stock_actual,
             stock_minimo:  form.value.stock_minimo,
+            categoria_id:  form.value.categoria_id,
         }, {
             onSuccess: () => {
                 modalNuevo.value = false

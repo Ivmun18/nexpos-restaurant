@@ -8,13 +8,18 @@
 
                 <!-- Búsqueda -->
                 <div style="background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <input
-                        v-model="busqueda"
-                        placeholder="🔍 Buscar por nombre o código..."
-                        style="width:100%; padding:12px 16px; border:2px solid #E2E8F0; border-radius:12px; font-size:15px; outline:none; box-sizing:border-box; transition:border 0.2s;"
-                        @focus="$event.target.style.border='2px solid #14B8A6'"
-                        @blur="$event.target.style.border='2px solid #E2E8F0'"
-                    />
+                    <div style="position:relative;">
+                        <input
+                            ref="inputBusqueda"
+                            v-model="busqueda"
+                            placeholder="🔍 Buscar por nombre o código de barras..."
+                            style="width:100%; padding:12px 16px; border:2px solid #E2E8F0; border-radius:12px; font-size:15px; outline:none; box-sizing:border-box; transition:border 0.2s;"
+                            @focus="$event.target.style.border='2px solid #14B8A6'"
+                            @blur="$event.target.style.border='2px solid #E2E8F0'"
+                            @keyup.enter="escanearCodigo"
+                        />
+                        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:18px;" title="Listo para lector de barras">📷</span>
+                    </div>
                 </div>
 
                 <!-- Catálogo -->
@@ -200,6 +205,33 @@ const iconProducto = (categoria) => {
         conservas: '🥫', higiene: '🧴',
     }
     return map[categoria?.toLowerCase()] || '📦'
+}
+
+const inputBusqueda = ref(null)
+
+const escanearCodigo = () => {
+    const codigo = busqueda.value.trim()
+    if (!codigo) return
+
+    const producto = props.productos.find(p =>
+        p.codigo_barras === codigo || p.codigo === codigo
+    )
+
+    if (producto) {
+        agregarAlCarrito(producto)
+        busqueda.value = ''
+        const input = inputBusqueda.value
+        if (input) {
+            input.style.border = '2px solid #16A34A'
+            setTimeout(() => { input.style.border = '2px solid #E2E8F0' }, 500)
+        }
+    } else {
+        const input = inputBusqueda.value
+        if (input) {
+            input.style.border = '2px solid #DC2626'
+            setTimeout(() => { input.style.border = '2px solid #E2E8F0' }, 800)
+        }
+    }
 }
 
 const agregarAlCarrito = (p) => {

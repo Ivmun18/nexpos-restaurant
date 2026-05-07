@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\CategoriaMinimarket;
 
 class Producto extends Model
 {
@@ -39,6 +40,11 @@ class Producto extends Model
         'controla_stock'=> 'boolean',
         'activo'        => 'boolean',
     ];
+
+    public function categoria()
+    {
+        return $this->belongsTo(CategoriaMinimarket::class, 'categoria_id');
+    }
 
     public function empresa()
     {

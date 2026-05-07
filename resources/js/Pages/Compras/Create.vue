@@ -71,10 +71,24 @@
                 <div style="background:white; border-radius:10px; border:1px solid #E2E8F0; padding:1.5rem;">
                     <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0 0 1rem;">Productos</p>
 
+                    <!-- Lector de código de barras -->
+                    <div style="margin-bottom:12px; display:flex; gap:8px;">
+                        <input
+                            id="campo-scan"
+                            type="text"
+                            placeholder="📷 Escribe código de barras..."
+                            style="flex:1; padding:10px 14px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                        />
+                        <button type="button" @click="buscarPorCodigo"
+                            style="padding:10px 16px; background:#14B8A6; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            📷 Agregar
+                        </button>
+                    </div>
+
                     <div style="margin-bottom:1rem;">
                         <select @change="agregarProducto($event)"
                             style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; background:white;">
-                            <option value="">+ Agregar producto...</option>
+                            <option value="">+ Agregar producto por nombre...</option>
                             <option v-for="p in productos" :key="p.id" :value="p.id">
                                 {{ p.codigo }} - {{ p.descripcion }}
                             </option>
@@ -164,7 +178,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -190,13 +204,143 @@ const form = ref({
     items:                 [],
 })
 
+const scanCodigo = ref('')
+const codigoScan = ref('')
+
+const buscarPorCodigo = () => {
+    const inputEl = document.getElementById('campo-scan')
+    const codigo = inputEl ? inputEl.value.trim() : ''
+    if (!codigo) return
+    if (inputEl) { inputEl.value = ''; setTimeout(() => inputEl.focus(), 100) }
+    const p = props.productos.find(p =>
+        p.codigo_barras === codigo || p.codigo === codigo
+    )
+    if (!p) { alert('Producto no encontrado: ' + codigo); return }
+    const existe = form.value.items.findIndex(i => i.producto_id === p.id)
+    if (existe >= 0) {
+        form.value.items[existe].cantidad++
+        calcularItem(existe)
+    } else {
+        const precio = parseFloat(p.precio_compra || 0)
+        const afecto = p.tipo_afectacion_igv === '10'
+        const valorUnitario = afecto ? Math.round(precio / 1.18 * 10000) / 10000 : precio
+        form.value.items.push({
+            producto_id: p.id,
+            descripcion: p.descripcion,
+            unidad_medida: p.unidad_medida,
+            tipo_afectacion_igv: p.tipo_afectacion_igv,
+            afecto_igv: afecto,
+            cantidad: 1,
+            precio_unitario: precio,
+            valor_unitario: valorUnitario,
+            total_igv: afecto ? Math.round(valorUnitario * 0.18 * 100) / 100 : 0,
+            total: Math.round(precio * 100) / 100,
+        })
+    }
+}
+
+onMounted(() => {
+    const inp = document.getElementById('scan-input')
+    if (inp) {
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                const codigo = inp.value.trim()
+                if (!codigo) return
+                const producto = props.productos.find(p =>
+                    p.codigo_barras === codigo || p.codigo === codigo
+                )
+                if (producto) {
+                    const p = producto
+                    const existe = form.value.items.findIndex(i => i.producto_id === p.id)
+                    if (existe >= 0) {
+                        form.value.items[existe].cantidad++
+                        calcularItem(existe)
+                    } else {
+                        const precio = parseFloat(p.precio_compra || 0)
+                        const afecto = p.tipo_afectacion_igv === "10"
+                        const valorUnitario = afecto ? Math.round(precio / 1.18 * 10000) / 10000 : precio
+                        form.value.items.push({
+                            producto_id: p.id,
+                            descripcion: p.descripcion,
+                            unidad_medida: p.unidad_medida,
+                            tipo_afectacion_igv: p.tipo_afectacion_igv,
+                            afecto_igv: afecto,
+                            cantidad: 1,
+                            precio_unitario: precio,
+                            valor_unitario: valorUnitario,
+                            total_igv: afecto ? Math.round(valorUnitario * 0.18 * 100) / 100 : 0,
+                            total: Math.round(precio * 100) / 100,
+                        })
+                    }
+                    inp.value = ""
+                    inp.style.border = "2px solid #16A34A"
+                    setTimeout(() => { inp.style.border = "2px solid #E2E8F0" }, 500)
+                } else {
+                    inp.style.border = "2px solid #DC2626"
+                    setTimeout(() => { inp.style.border = "2px solid #E2E8F0" }, 800)
+                }
+            }
+        })
+    }
+})
+const scanActivo = ref(false)
+const inputScanCompra = ref(null)
+
+const activarScanCompra = () => {
+    scanActivo.value = true
+    if (inputScanCompra.value) inputScanCompra.value.focus()
+}
+
+const escanearDesdeInput = (event) => {
+    const codigo = event.target.value.trim()
+    if (!codigo) return
+    const producto = props.productos.find(p =>
+        p.codigo_barras === codigo || p.codigo === codigo
+    )
+    if (producto) {
+        const p = producto
+        const existe = form.value.items.findIndex(i => i.producto_id === p.id)
+        if (existe >= 0) {
+            form.value.items[existe].cantidad++
+            calcularItem(existe)
+        } else {
+            const precio = parseFloat(p.precio_compra || 0)
+            const afecto = p.tipo_afectacion_igv === '10'
+            const valorUnitario = afecto ? Math.round(precio / 1.18 * 10000) / 10000 : precio
+            form.value.items.push({
+                producto_id: p.id,
+                descripcion: p.descripcion,
+                unidad_medida: p.unidad_medida,
+                tipo_afectacion_igv: p.tipo_afectacion_igv,
+                afecto_igv: afecto,
+                cantidad: 1,
+                precio_unitario: precio,
+                valor_unitario: valorUnitario,
+                total_igv: afecto ? Math.round(valorUnitario * 0.18 * 100) / 100 : 0,
+                total: Math.round(precio * 100) / 100,
+            })
+        }
+        event.target.value = ''
+        if (inputScanCompra.value) {
+            inputScanCompra.value.style.border = '2px solid #16A34A'
+            setTimeout(() => { inputScanCompra.value.style.border = '2px solid #E2E8F0' }, 500)
+        }
+    } else {
+        if (inputScanCompra.value) {
+            inputScanCompra.value.style.border = '2px solid #DC2626'
+            setTimeout(() => { inputScanCompra.value.style.border = '2px solid #E2E8F0' }, 800)
+        }
+    }
+}
+
 const agregarProducto = (event) => {
     const id = parseInt(event.target.value)
     if (!id) return
     const p = props.productos.find(p => p.id === id)
     if (!p) return
     const existe = form.value.items.findIndex(i => i.producto_id === p.id)
-    if (existe >= 0) { form.value.items[existe].cantidad++; calcularItem(existe); event.target.value = ''; return }
+    if (existe >= 0) { form.value.items[existe].cantidad++; calcularItem(existe); return }
     const precio = parseFloat(p.precio_compra || 0)
     const afecto = p.tipo_afectacion_igv === '10'
     const valorUnitario = afecto ? round(precio / 1.18, 4) : precio

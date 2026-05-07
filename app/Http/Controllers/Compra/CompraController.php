@@ -36,7 +36,7 @@ class CompraController extends Controller
         $productos = Producto::where('empresa_id', EmpresaHelper::id())
             ->where('activo', true)
             ->orderBy('descripcion')
-            ->get(['id','codigo','descripcion','unidad_medida','precio_compra','tipo_afectacion_igv']);
+            ->get(['id','codigo','codigo_barras','descripcion','unidad_medida','precio_compra','tipo_afectacion_igv']);
 
         return Inertia::render('Compras/Create', [
             'proveedores' => $proveedores,

@@ -374,6 +374,10 @@ Route::middleware(['auth', 'solo_admin'])->group(function () {
     Route::put('/minimarket/productos/{producto}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'update'])->name('minimarket.productos.update');
     Route::post('/minimarket/productos/{producto}/stock', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'ajustarStock'])->name('minimarket.productos.stock');
     Route::delete('/minimarket/productos/{producto}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'destroy'])->name('minimarket.productos.destroy');
+    Route::get('/minimarket/categorias', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'index'])->name('minimarket.categorias');
+    Route::post('/minimarket/categorias', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'store'])->name('minimarket.categorias.store');
+    Route::put('/minimarket/categorias/{categoria}', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'update'])->name('minimarket.categorias.update');
+    Route::delete('/minimarket/categorias/{categoria}', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'destroy'])->name('minimarket.categorias.destroy');
 });
 
 // Reportes Minimarket (solo admin)
@@ -391,4 +395,12 @@ Route::middleware(['auth'])->group(function () {
 // Reportes Minimarket
 Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/reportes', [\App\Http\Controllers\Minimarket\ReportesMinimarketController::class, 'index'])->name('minimarket.reportes');
+});
+
+// Proveedores
+Route::middleware(['auth'])->group(function () {
+    Route::get('/proveedores', [App\Http\Controllers\ProveedorController::class, 'index'])->name('proveedores.index');
+    Route::post('/proveedores', [App\Http\Controllers\ProveedorController::class, 'store'])->name('proveedores.store');
+    Route::put('/proveedores/{proveedor}', [App\Http\Controllers\ProveedorController::class, 'update'])->name('proveedores.update');
+    Route::delete('/proveedores/{proveedor}', [App\Http\Controllers\ProveedorController::class, 'destroy'])->name('proveedores.destroy');
 });
