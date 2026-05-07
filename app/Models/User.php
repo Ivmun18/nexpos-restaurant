@@ -110,6 +110,11 @@ class User extends Authenticatable
         return $this->rol === 'contador';
     }
 
+    public function esSuperAdmin(): bool
+    {
+        return $this->rol === 'superadmin';
+    }
+
     public function esMozo(): bool
     {
         return $this->rol === 'mozo';

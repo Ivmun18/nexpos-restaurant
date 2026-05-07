@@ -225,7 +225,7 @@ const menuItems = computed(() => {
         if (rol === 'cocinero') return modulosCocinero.includes(item.path)
 
         // Ocultar admin para no-admins
-        if (item.module === 'admin' && rol !== 'admin') return false
+        if (item.module === 'admin' && rol !== 'admin' && rol !== 'superadmin') return false
 
         // Ocultar módulos de restaurante si es minimarket
         if (industry === 'minimarket') {
@@ -240,7 +240,7 @@ const menuItems = computed(() => {
         }
 
         if (!item.module) return true
-        if (item.module === 'admin') return rol === 'admin'
+        if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
         return modulesEnabled.value.includes(item.module)
     })
 })

@@ -15,6 +15,7 @@ class ConfiguracionController extends Controller
 
         return Inertia::render('Configuracion/Index', [
             'empresa' => $empresa,
+            'es_superadmin' => auth()->user()->esSuperAdmin(),
         ]);
     }
 
@@ -121,5 +122,54 @@ class ConfiguracionController extends Controller
         }
 
         file_put_contents($envPath, $contenido);
+    }
+
+    public function updateNubefact(Request $request)
+    {
+        $request->validate([
+            'nubefact_token' => 'required|string',
+            'nubefact_demo'  => 'boolean',
+            'serie_boleta'   => 'required|string|max:4',
+            'serie_factura'  => 'required|string|max:4',
+        ]);
+
+        $empresa = Empresa::first();
+
+        $empresa->update([
+            'nubefact_token' => $request->nubefact_token,
+            'nubefact_demo'  => $request->nubefact_demo ?? true,
+            'serie_boleta'   => strtoupper($request->serie_boleta),
+            'serie_factura'  => strtoupper($request->serie_factura),
+        ]);
+
+        return back()->with('success', 'Configuración Nubefact guardada correctamente.');
+    }
+
+    public function testNubefact()
+    {
+        $empresa = Empresa::first();
+
+        if (!$empresa->nubefact_token) {
+            return response()->json(['error' => 'No hay token configurado'], 400);
+        }
+
+        $url = $empresa->nubefact_demo
+            ? 'https://demo-api.nubefact.com/api/v1/'
+            : 'https://api.nubefact.com/api/v1/';
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Token token=' . $empresa->nubefact_token,
+                'Content-Type'  => 'application/json',
+            ])->get($url);
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'mensaje' => 'Conexión exitosa con Nubefact ✅']);
+            } else {
+                return response()->json(['error' => 'Token inválido o error de conexión'], 400);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+        }
     }
 }

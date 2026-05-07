@@ -196,6 +196,8 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
 // Configuración
     Route::get('/configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
     Route::post('/configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
+    Route::post('/configuracion/nubefact', [ConfiguracionController::class, 'updateNubefact'])->name('configuracion.nubefact');
+    Route::get('/configuracion/nubefact/test', [ConfiguracionController::class, 'testNubefact'])->name('configuracion.nubefact.test');
 
 // Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
