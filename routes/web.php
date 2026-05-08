@@ -406,3 +406,12 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/proveedores/{proveedor}', [App\Http\Controllers\ProveedorController::class, 'update'])->name('proveedores.update');
     Route::delete('/proveedores/{proveedor}', [App\Http\Controllers\ProveedorController::class, 'destroy'])->name('proveedores.destroy');
 });
+
+// ══ FERRETERÍA ══
+Route::middleware(['auth'])->group(function () {
+    Route::get('/ferreteria/productos',              [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'index'])->name('ferreteria.productos');
+    Route::post('/ferreteria/productos',             [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'store'])->name('ferreteria.productos.store');
+    Route::put('/ferreteria/productos/{producto}',   [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'update'])->name('ferreteria.productos.update');
+    Route::post('/ferreteria/productos/{producto}/stock', [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'ajustarStock'])->name('ferreteria.productos.stock');
+    Route::delete('/ferreteria/productos/{producto}',[\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'destroy'])->name('ferreteria.productos.destroy');
+});
