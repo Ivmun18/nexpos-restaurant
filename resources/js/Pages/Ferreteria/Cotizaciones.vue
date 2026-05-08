@@ -264,6 +264,7 @@ const estadoStyle = (estado) => {
 const autoScan = () => {
     clearTimeout(scanTimer.value)
     if (codigoScan.value.length < 3) return
+    // 800ms para escritura manual, el lector envía todo de golpe
     scanTimer.value = setTimeout(() => {
         const p = props.productos.find(p => p.codigo_barras === codigoScan.value || p.codigo === codigoScan.value)
         if (p) {
@@ -290,7 +291,7 @@ const autoScan = () => {
             }
         }
         codigoScan.value = ''
-    }, 300)
+    }, 800)
 }
 
 const abrirNueva = () => {
