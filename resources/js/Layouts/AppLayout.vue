@@ -107,7 +107,7 @@
         </aside>
 
         <!-- Contenido -->
-        <main style="margin-left:230px; flex:1; display:flex; flex-direction:column; min-height:100vh;">
+        <main :style="{marginLeft: collapsed ? '64px' : '230px', flex:1, display:'flex', flexDirection:'column', minHeight:'100vh', transition:'margin-left 0.25s ease'}">
 
             <!-- Topbar -->
             <header style="background:white; padding:16px 28px; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;">
