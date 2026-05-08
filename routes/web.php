@@ -37,6 +37,51 @@ Route::get('/dashboard', function () {
     $industryType = auth()->user()->empresa->industry_type ?? 'restaurante';
     $industryName = ucfirst($industryType);
 
+
+    if ($industryType === 'ferreteria') {
+        $hoy  = now()->toDateString();
+        $mes  = now()->month;
+        $anio = now()->year;
+        $empresaId = auth()->user()->empresa_id;
+
+        $ventasHoy      = \App\Models\CajaMinimarket::where('empresa_id', $empresaId)->where('estado','cerrada')->whereDate('created_at', $hoy)->sum('total_ventas');
+        $ventasMes      = \App\Models\CajaMinimarket::where('empresa_id', $empresaId)->where('estado','cerrada')->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('total_ventas');
+        $ventasHoyCount = \App\Models\CajaMinimarket::where('empresa_id', $empresaId)->where('estado','cerrada')->whereDate('created_at', $hoy)->sum('cantidad_ventas');
+        $stockBajo      = \App\Models\Producto::where('empresa_id', $empresaId)->whereColumn('stock_actual','<=','stock_minimo')->count();
+        $ordenesPendientes = \App\Models\OrdenTrabajo::where('empresa_id', $empresaId)->whereIn('estado',['pendiente','en_proceso'])->count();
+
+        $cotizaciones = \App\Models\Cotizacion::where('empresa_id', $empresaId)->get();
+
+        $ventasPorDia = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $fecha = now()->subDays($i);
+            $total = \App\Models\CajaMinimarket::where('empresa_id', $empresaId)->where('estado','cerrada')->whereDate('created_at', $fecha->toDateString())->sum('total_ventas');
+            $ventasPorDia[] = ['dia' => $fecha->locale('es')->isoFormat('ddd D'), 'total' => round($total, 2)];
+        }
+
+        $topProductos = \App\Models\Producto::where('empresa_id', $empresaId)->orderByDesc('stock_actual')->limit(5)->get()->map(fn($p) => ['descripcion' => $p->descripcion, 'total_cantidad' => $p->stock_actual, 'total_monto' => $p->precio_venta * $p->stock_actual]);
+
+        $ordenesRecientes = \App\Models\OrdenTrabajo::where('empresa_id', $empresaId)->orderByDesc('created_at')->limit(5)->get();
+
+        return Inertia\Inertia::render('Dashboard/Ferreteria', [
+            'industry_name'    => $industryName,
+            'stats' => [
+                'ventas_hoy'              => $ventasHoy,
+                'ventas_hoy_count'        => $ventasHoyCount,
+                'ventas_mes'              => $ventasMes,
+                'stock_bajo'              => $stockBajo,
+                'ordenes_pendientes'      => $ordenesPendientes,
+                'cotizaciones_total'      => $cotizaciones->count(),
+                'cotizaciones_aprobadas'  => $cotizaciones->where('estado','aprobada')->count(),
+                'cotizaciones_enviadas'   => $cotizaciones->where('estado','enviada')->count(),
+                'cotizaciones_monto'      => round($cotizaciones->where('estado','aprobada')->sum('total'), 2),
+            ],
+            'ventas_por_dia'    => $ventasPorDia,
+            'top_productos'     => $topProductos,
+            'ordenes_recientes' => $ordenesRecientes,
+        ]);
+    }
+
     if ($industryType === 'minimarket') {
         // ── Dashboard Minimarket ──
         $hoy  = now()->toDateString();
