@@ -1,10 +1,10 @@
 <template>
     <AppLayout title="POS Minimarket" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
 
-        <div style="display:grid; grid-template-columns:1fr 380px; gap:20px; height:calc(100vh - 140px);">
+        <div style="display:grid; grid-template-columns:1fr min(380px, 40vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
 
             <!-- ══ PANEL IZQUIERDO: Búsqueda + Catálogo ══ -->
-            <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden; min-height:0;">
 
                 <!-- Búsqueda -->
                 <div style="background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
@@ -60,7 +60,7 @@
             </div>
 
             <!-- ══ PANEL DERECHO: Carrito + Cobro ══ -->
-            <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; gap:16px; overflow-y:auto; min-height:0;">
 
                 <!-- Carrito -->
                 <div style="flex:1; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow-y:auto;">

@@ -30,7 +30,7 @@
     
                 <!-- Dashboard siempre visible -->
                 <a href="/dashboard" :style="menuItem('/dashboard')">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <rect x="3" y="3" width="7" height="7"/>
                         <rect x="14" y="3" width="7" height="7"/>
                         <rect x="3" y="14" width="7" height="7"/>
@@ -48,40 +48,40 @@
                     <template v-for="item in items" :key="item.path">
                         <a v-if="item.path !== '/dashboard'" :href="item.path" :style="menuItem(item.path)">
                             <!-- Íconos SVG -->
-                            <svg v-if="item.icon === 'table'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-if="item.icon === 'table'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="2" y="7" width="20" height="10" rx="2"/>
                                 <path d="M6 7V5M18 7V5M6 17v2M18 17v2"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'clock'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'clock'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="10"/>
                                 <polyline points="12 6 12 12 16 14"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'menu'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'menu'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'chef'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'chef'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'kanban'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'kanban'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="3" y="3" width="7" height="9" rx="1"/>
                                 <rect x="14" y="3" width="7" height="5" rx="1"/>
                                 <rect x="14" y="12" width="7" height="9" rx="1"/>
                                 <rect x="3" y="16" width="7" height="5" rx="1"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'users'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'users'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
                                 <circle cx="8.5" cy="7" r="4"/>
                                 <path d="M20 8v6M23 11h-6"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'chart'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'chart'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <line x1="12" y1="20" x2="12" y2="10"/>
                                 <line x1="18" y1="20" x2="18" y2="4"/>
                                 <line x1="6" y1="20" x2="6" y2="16"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'receipt'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'receipt'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'settings'" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'settings'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="3"/>
                                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
                             </svg>
