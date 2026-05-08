@@ -8,7 +8,7 @@
             <div style="padding:14px 16px; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
-                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : '🔧' }}
+                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : '🔧' }}
                     </div>
                     <div v-if="!collapsed">
                         <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0;">NEXPOS</p>
@@ -220,6 +220,19 @@ const allMenuItems = [
     { path: '/compras',               icon: 'receipt', label: 'Compras',     module: 'pos_minimarket', section: 'MINIMARKET' },
 
     // GENERAL
+
+    { path: '/ferreteria/pos',          icon: 'receipt',  label: 'Punto de Venta',    module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/productos',    icon: 'menu',     label: 'Productos',          module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/categorias',   icon: 'kanban',   label: 'Categorías',         module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/stock',        icon: 'chart',    label: 'Inventario/Stock',   module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/proveedores',  icon: 'users',    label: 'Proveedores',        module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/clientes',     icon: 'users',    label: 'Clientes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/cotizaciones', icon: 'receipt',  label: 'Cotizaciones',       module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/ordenes',      icon: 'clock',    label: 'Órdenes de Trabajo', module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/garantias',    icon: 'settings', label: 'Garantías',          module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/usuarios',     icon: 'users',    label: 'Usuarios',      module: 'admin', section: 'GENERAL' },
     { path: '/configuracion',icon: 'settings', label: 'Configuración', module: 'admin', section: 'GENERAL' },
 ]
@@ -247,9 +260,19 @@ const menuItems = computed(() => {
             if (item.section === 'SISTEMA' && !['Usuarios', 'Configuración'].includes(item.label)) return false
         }
 
-        // Ocultar módulos de minimarket si es restaurante
-        if (industry === 'restaurante') {
+        // Ocultar módulos de minimarket si no es minimarket
+        if (industry !== 'minimarket') {
             if (item.section === 'MINIMARKET') return false
+        }
+
+        // Ocultar módulos de ferretería si no es ferretería
+        if (industry !== 'ferreteria') {
+            if (item.section === 'FERRETERIA') return false
+        }
+
+        // Ocultar módulos de restaurante si no es restaurante
+        if (industry !== 'restaurante') {
+            if (item.section === 'RESTAURANTE') return false
         }
 
         if (!item.module) return true
