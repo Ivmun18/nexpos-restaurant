@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Ferreteria;
 
 use App\Http\Controllers\Controller;
 use App\Models\Producto;
-use App\Models\Categoria;
+use App\Models\CategoriaMinimarket as Categoria;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
