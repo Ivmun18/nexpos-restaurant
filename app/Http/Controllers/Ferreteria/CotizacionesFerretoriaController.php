@@ -16,7 +16,7 @@ class CotizacionesFerretoriaController extends Controller
     {
         $empresa_id   = auth()->user()->empresa_id;
         $cotizaciones = Cotizacion::where('empresa_id', $empresa_id)
-            ->with('detalles')
+            ->with('detalle')
             ->orderByDesc('created_at')
             ->get();
         $clientes  = Cliente::where('empresa_id', $empresa_id)->orderBy('razon_social')->get();
