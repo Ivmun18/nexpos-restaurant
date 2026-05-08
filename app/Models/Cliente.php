@@ -8,6 +8,12 @@ class Cliente extends Model
 {
     protected $table = 'clientes';
 
+    protected $casts = [
+        'numero_documento' => 'string',
+        'limite_credito' => 'float',
+        'descuento_porcentaje' => 'float',
+    ];
+
     protected $fillable = [
         'empresa_id',
         'tipo_documento',
