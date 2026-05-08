@@ -163,6 +163,7 @@ const form = ref({
 })
 
 const clientesFiltrados = computed(() => {
+    console.log("Clientes:", props.clientes.map(c => ({doc: c.numero_documento, tipo: typeof c.numero_documento})))
     if (!busqueda.value) return props.clientes
     const q = busqueda.value.toLowerCase().trim()
     return props.clientes.filter(c =>
