@@ -66,6 +66,7 @@ class CotizacionesFerretoriaController extends Controller
                 'valor_unitario'     => $item['precio_unitario'] / 1.18,
                 'tipo_afectacion_igv'=> '10',
                 'total_valor_venta'  => $item['cantidad'] * $item['precio_unitario'],
+                'total'              => $item['cantidad'] * $item['precio_unitario'],
             ]);
         }
 
