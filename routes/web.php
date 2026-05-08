@@ -63,7 +63,7 @@ Route::get('/dashboard', function () {
 
         $ordenesRecientes = \App\Models\OrdenTrabajo::where('empresa_id', $empresaId)->orderByDesc('created_at')->limit(5)->get();
 
-        return Inertia\Inertia::render('Dashboard/Ferreteria', [
+        return Inertia::render('Dashboard/Ferreteria', [
             'industry_name'    => $industryName,
             'stats' => [
                 'ventas_hoy'              => $ventasHoy,
