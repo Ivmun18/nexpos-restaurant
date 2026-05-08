@@ -10,11 +10,20 @@
                     <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
                         {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : '🔧' }}
                     </div>
-                    <div>
+                    <div v-if="!collapsed">
                         <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0;">NEXPOS</p>
                         <p style="font-size:11px; color:#94A3B8; margin:0;">Sistema Multi-industry</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Botón colapsar -->
+            <div style="display:flex; justify-content:center; padding:8px 0; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
+                <button @click="collapsed = !collapsed" style="width:32px; height:32px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#64748B;">
+                    <svg :style="{transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition:'transform 0.25s ease'}" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
             </div>
 
             <nav style="flex:1; min-height:0; padding:16px 12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;">
@@ -32,7 +41,7 @@
 
                 <!-- Secciones dinámicas -->
                 <template v-for="(items, sectionName) in menuSections" :key="sectionName">
-                    <p v-if="sectionName && sectionName !== 'GENERAL'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
+                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
                         {{ sectionName }}
                     </p>
                     
@@ -77,7 +86,7 @@
                                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
                             </svg>
                             
-                            {{ item.label }}
+                            <span v-if="!collapsed">{{ item.label }}</span>
                         </a>
                     </template>
                 </template>
@@ -89,7 +98,7 @@
                 <div style="width:38px; height:38px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:white; flex-shrink:0;">
                     {{ initials }}
                 </div>
-                <div style="flex:1; min-width:0;">
+                <div v-if="!collapsed" style="flex:1; min-width:0;">
                     <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $page.props.auth?.user?.name }}</p>
                     <p style="font-size:11px; color:#94A3B8; margin:0; text-transform:capitalize;">{{ rolLabel }}</p>
                 </div>
@@ -141,7 +150,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 
 defineProps({
@@ -150,6 +159,7 @@ defineProps({
 })
 
 const page = usePage()
+const collapsed = ref(false)
 
 const initials = computed(() => {
     const name = page.props.auth?.user?.name || 'U'
