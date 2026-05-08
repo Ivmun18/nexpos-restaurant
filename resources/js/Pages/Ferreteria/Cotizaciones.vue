@@ -13,7 +13,7 @@
                     <option value="rechazada">Rechazada</option>
                 </select>
             </div>
-            <button @click="abrirNueva()" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+            <button @click="abrirNueva" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                 + Nueva Cotización
             </button>
         </div>
@@ -33,7 +33,7 @@
                 <p style="font-size:24px; font-weight:700; color:#16A34A; margin:0;">{{ cotizaciones.filter(c=>c.estado==='aprobada').length }}</p>
             </div>
             <div style="background:white; border-radius:12px; padding:16px; border:1px solid #E2E8F0;">
-                <p style="font-size:12px; color:#94A3B8; margin:0 0 4px;">Monto Total</p>
+                <p style="font-size:12px; color:#94A3B8; margin:0 0 4px;">Monto Aprobado</p>
                 <p style="font-size:20px; font-weight:700; color:#14B8A6; margin:0;">S/ {{ totalGeneral }}</p>
             </div>
         </div>
@@ -43,7 +43,7 @@
             <table style="width:100%; border-collapse:collapse;">
                 <thead>
                     <tr style="background:#F8FAFC;">
-                        <th style="padding:14px 20px; text-align:left; font-size:12px; font-weight:700; color:#64748B;">N° COTIZACIÓN</th>
+                        <th style="padding:14px 20px; text-align:left; font-size:12px; font-weight:700; color:#64748B;">N° COT.</th>
                         <th style="padding:14px 20px; text-align:left; font-size:12px; font-weight:700; color:#64748B;">CLIENTE</th>
                         <th style="padding:14px 20px; text-align:left; font-size:12px; font-weight:700; color:#64748B;">FECHA</th>
                         <th style="padding:14px 20px; text-align:left; font-size:12px; font-weight:700; color:#64748B;">VENCE</th>
@@ -67,7 +67,7 @@
                         </td>
                         <td style="padding:14px 20px; font-size:13px; color:#475569;">{{ c.fecha_emision }}</td>
                         <td style="padding:14px 20px; font-size:13px; color:#475569;">{{ c.fecha_vencimiento }}</td>
-                        <td style="padding:14px 20px; text-align:right; font-size:14px; font-weight:700; color:#1E293B;">S/ {{ Number(c.total).toFixed(2) }}</td>
+                        <td style="padding:14px 20px; text-align:right; font-size:14px; font-weight:700;">S/ {{ Number(c.total).toFixed(2) }}</td>
                         <td style="padding:14px 20px; text-align:center;">
                             <span :style="estadoStyle(c.estado)">{{ c.estado }}</span>
                         </td>
@@ -90,13 +90,12 @@
             <div style="background:white; border-radius:16px; padding:28px; width:700px; margin:auto;">
                 <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 20px;">Nueva Cotización</h2>
 
-                <!-- Datos cliente -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
                     <div style="grid-column:1/-1;">
                         <label style="font-size:12px; font-weight:600; color:#64748B;">CLIENTE</label>
                         <select v-model="form.cliente_id" @change="llenarCliente" style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; margin-top:4px; font-size:14px; box-sizing:border-box;">
                             <option value="">Seleccionar cliente...</option>
-                            <option v-for="c in clientes" :key="c.id" :value="c.id">{{ c.razon_social }} — {{ c.numero_documento }}</option>
+                            <option v-for="cl in clientes" :key="cl.id" :value="cl.id">{{ cl.razon_social }} — {{ cl.numero_documento }}</option>
                         </select>
                     </div>
                     <div>
@@ -113,20 +112,21 @@
                     </div>
                 </div>
 
+                <!-- Lector código barras -->
+                <div style="margin-bottom:12px;">
+                    <input ref="inputScan" v-model="codigoScan" @keyup.enter="escanearCodigo"
+                        placeholder="📷 Escanea o escribe código de barras + Enter..."
+                        style="width:100%; padding:10px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+                </div>
+
                 <!-- Items -->
                 <div style="margin-bottom:16px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                         <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">Productos</p>
-                        <button @click="agregarItem()" style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Agregar</button>
-                    </div>
-                    <!-- Lector código barras -->
-                    <div style="display:flex; gap:8px; margin-bottom:12px;">
-                        <input ref="inputScan" v-model="codigoScan" @keyup.enter="escanearCodigo"
-                            placeholder="📷 Escanea código de barras para agregar producto..."
-                            style="flex:1; padding:10px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
+                        <button @click="agregarItem" style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Agregar</button>
                     </div>
                     <div v-for="(item,i) in form.items" :key="i" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
-                        <select v-model="item.producto_id" @change="e => llenarItem(e, i)" style="padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;">
+                        <select v-model="item.producto_id" @change="llenarItem(i)" style="padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;">
                             <option value="">Seleccionar...</option>
                             <option v-for="p in productos" :key="p.id" :value="p.id">{{ p.descripcion }}</option>
                         </select>
@@ -167,12 +167,10 @@
             <div style="background:white; border-radius:16px; padding:28px; width:600px; margin:auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0;">{{ cotizacionVer.numero }}</h2>
-                    <button @click="modalDetalle=false" style="border:none; background:none; font-size:20px; cursor:pointer; color:#94A3B8;">×</button>
+                    <button @click="modalDetalle=false" style="border:none; background:none; font-size:24px; cursor:pointer; color:#94A3B8;">×</button>
                 </div>
-                <div style="margin-bottom:16px;">
-                    <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ cotizacionVer.cliente_razon_social }}</p>
-                    <p style="font-size:13px; color:#94A3B8; margin:2px 0 0;">{{ cotizacionVer.cliente_num_doc }}</p>
-                </div>
+                <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0 0 4px;">{{ cotizacionVer.cliente_razon_social }}</p>
+                <p style="font-size:13px; color:#94A3B8; margin:0 0 16px;">{{ cotizacionVer.cliente_num_doc }}</p>
                 <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
                     <thead>
                         <tr style="background:#F8FAFC;">
@@ -183,10 +181,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="d in cotizacionVer.detalles" :key="d.id" style="border-top:1px solid #F1F5F9;">
-                            <td style="padding:10px; font-size:13px; color:#1E293B;">{{ d.descripcion }}</td>
-                            <td style="padding:10px; text-align:center; font-size:13px; color:#475569;">{{ d.cantidad }} {{ d.unidad_medida }}</td>
-                            <td style="padding:10px; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(d.precio_unitario).toFixed(2) }}</td>
+                        <tr v-for="d in cotizacionVer.detalle" :key="d.id" style="border-top:1px solid #F1F5F9;">
+                            <td style="padding:10px; font-size:13px;">{{ d.descripcion }}</td>
+                            <td style="padding:10px; text-align:center; font-size:13px;">{{ d.cantidad }} {{ d.unidad_medida }}</td>
+                            <td style="padding:10px; text-align:right; font-size:13px;">S/ {{ Number(d.precio_unitario).toFixed(2) }}</td>
                             <td style="padding:10px; text-align:right; font-size:13px; font-weight:700; color:#14B8A6;">S/ {{ Number(d.total_valor_venta).toFixed(2) }}</td>
                         </tr>
                     </tbody>
@@ -219,21 +217,20 @@ const cotizacionVer = ref(null)
 const procesando    = ref(false)
 const codigoScan    = ref('')
 const inputScan     = ref(null)
-const scanTimer     = ref(null)
 
-const hoy = new Date().toISOString().split('T')[0]
+const hoy  = new Date().toISOString().split('T')[0]
 const en30 = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]
 
 const form = ref({
-    cliente_id: '', fecha_emision: hoy, fecha_vencimiento: en30,
-    observaciones: '', items: []
+    cliente_id: '', cliente_razon_social: '', cliente_num_doc: '',
+    cliente_tipo_doc: '', cliente_direccion: '', cliente_email: '',
+    fecha_emision: hoy, fecha_vencimiento: en30, observaciones: '', items: []
 })
 
 const cotizacionesFiltradas = computed(() => {
     return props.cotizaciones.filter(c => {
-        const matchBus = !busqueda.value ||
-            c.numero?.includes(busqueda.value) ||
-            c.cliente_razon_social?.toLowerCase().includes(busqueda.value.toLowerCase())
+        const q = busqueda.value.toLowerCase()
+        const matchBus = !q || c.numero?.includes(q) || c.cliente_razon_social?.toLowerCase().includes(q)
         const matchEst = !filtroEstado.value || c.estado === filtroEstado.value
         return matchBus && matchEst
     })
@@ -248,22 +245,56 @@ const subtotalForm = computed(() => {
     const t = form.value.items.reduce((s, i) => s + i.cantidad * i.precio_unitario, 0)
     return (t / 1.18).toFixed(2)
 })
-const igvForm  = computed(() => (form.value.items.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0) - parseFloat(subtotalForm.value)).toFixed(2))
+const igvForm   = computed(() => (form.value.items.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0) - parseFloat(subtotalForm.value)).toFixed(2))
 const totalForm = computed(() => form.value.items.reduce((s,i) => s + i.cantidad * i.precio_unitario, 0).toFixed(2))
 
 const estadoStyle = (estado) => {
-    const estilos = {
+    const e = {
         borrador:  { padding:'4px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', background:'#F1F5F9', color:'#475569' },
         enviada:   { padding:'4px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', background:'#FEF3C7', color:'#92400E' },
         aprobada:  { padding:'4px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', background:'#F0FDF4', color:'#166534' },
         rechazada: { padding:'4px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', background:'#FEF2F2', color:'#991B1B' },
     }
-    return estilos[estado] || estilos.borrador
+    return e[estado] || e.borrador
+}
+
+const abrirNueva = () => {
+    form.value = {
+        cliente_id: '', cliente_razon_social: '', cliente_num_doc: '',
+        cliente_tipo_doc: '', cliente_direccion: '', cliente_email: '',
+        fecha_emision: hoy, fecha_vencimiento: en30, observaciones: '', items: []
+    }
+    codigoScan.value = ''
+    modalNueva.value = true
+}
+
+const llenarCliente = () => {
+    const c = props.clientes.find(c => c.id == form.value.cliente_id)
+    if (c) {
+        form.value.cliente_razon_social = c.razon_social
+        form.value.cliente_num_doc      = c.numero_documento
+        form.value.cliente_tipo_doc     = c.tipo_documento
+        form.value.cliente_direccion    = c.direccion
+        form.value.cliente_email        = c.email
+    }
+}
+
+const agregarItem = () => {
+    form.value.items.push({ producto_id: '', descripcion: '', unidad_medida: 'UND', cantidad: 1, precio_unitario: 0 })
+}
+
+const llenarItem = (i) => {
+    const p = props.productos.find(p => p.id == form.value.items[i].producto_id)
+    if (p) {
+        form.value.items[i].descripcion     = p.descripcion
+        form.value.items[i].unidad_medida   = p.unidad_medida || 'UND'
+        form.value.items[i].precio_unitario = p.precio_venta
+    }
 }
 
 const escanearCodigo = () => {
-    if (codigoScan.value.length < 3) return
     const buscar = codigoScan.value.trim()
+    if (buscar.length < 2) return
     const p = props.productos.find(p => p.codigo_barras === buscar || p.codigo === buscar)
     if (p) {
         const existe = form.value.items.find(i => i.producto_id == p.id)
@@ -271,11 +302,8 @@ const escanearCodigo = () => {
             existe.cantidad++
         } else {
             form.value.items.push({
-                producto_id: p.id,
-                descripcion: p.descripcion,
-                unidad_medida: p.unidad_medida || 'UND',
-                cantidad: 1,
-                precio_unitario: p.precio_venta
+                producto_id: p.id, descripcion: p.descripcion,
+                unidad_medida: p.unidad_medida || 'UND', cantidad: 1, precio_unitario: p.precio_venta
             })
         }
         if (inputScan.value) {
@@ -291,17 +319,6 @@ const escanearCodigo = () => {
     codigoScan.value = ''
 }
 
-
-
-const llenarItem = (e, i) => {
-    const p = props.productos.find(p => p.id == form.value.items[i].producto_id)
-    if (p) {
-        form.value.items[i].descripcion    = p.descripcion
-        form.value.items[i].unidad_medida  = p.unidad_medida || 'UND'
-        form.value.items[i].precio_unitario = p.precio_venta
-    }
-}
-
 const guardar = () => {
     procesando.value = true
     router.post('/ferreteria/cotizaciones', form.value, {
@@ -312,7 +329,7 @@ const guardar = () => {
 
 const verDetalle = (c) => {
     cotizacionVer.value = c
-    modalDetalle.value = true
+    modalDetalle.value  = true
 }
 
 const cambiarEstado = (c, estado) => {
