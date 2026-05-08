@@ -13,19 +13,18 @@ class CajaFerretoriaController extends Controller
     {
         $empresa_id  = auth()->user()->empresa_id;
         $cajaAbierta = Caja::where('empresa_id', $empresa_id)->where('estado', 'abierta')->latest()->first();
-        $historial   = Caja::where('empresa_id', $empresa_id)->where('estado', 'cerrada')->orderByDesc('created_at')->take(10)->get();
+        $historial   = Caja::where('empresa_id', $empresa_id)->orderByDesc('created_at')->take(10)->get();
         return Inertia::render('Ferreteria/Caja', compact('cajaAbierta', 'historial'));
     }
 
     public function abrir(Request $request)
     {
-        $request->validate(['monto_inicial' => 'required|numeric|min:0']);
         Caja::create([
-            'empresa_id'   => auth()->user()->empresa_id,
-            'usuario_id'   => auth()->id(),
-            'monto_inicial' => $request->monto_inicial,
-            'estado'       => 'abierta',
-            'apertura_at'  => now(),
+            'empresa_id'    => auth()->user()->empresa_id,
+            'usuario_id'    => auth()->id(),
+            'monto_inicial' => $request->monto_inicial ?? 0,
+            'estado'        => 'abierta',
+            'apertura_at'   => now(),
         ]);
         return back()->with('success', 'Caja abierta');
     }
