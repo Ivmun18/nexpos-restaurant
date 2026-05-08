@@ -415,3 +415,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ferreteria/productos/{producto}/stock', [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'ajustarStock'])->name('ferreteria.productos.stock');
     Route::delete('/ferreteria/productos/{producto}',[\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'destroy'])->name('ferreteria.productos.destroy');
 });
+    Route::get('/ferreteria/categorias',             [\App\Http\Controllers\Ferreteria\CategoriasFerretoriaController::class, 'index'])->name('ferreteria.categorias');
+    Route::post('/ferreteria/categorias',            [\App\Http\Controllers\Ferreteria\CategoriasFerretoriaController::class, 'store'])->name('ferreteria.categorias.store');
+    Route::put('/ferreteria/categorias/{categoria}', [\App\Http\Controllers\Ferreteria\CategoriasFerretoriaController::class, 'update'])->name('ferreteria.categorias.update');
+    Route::delete('/ferreteria/categorias/{categoria}', [\App\Http\Controllers\Ferreteria\CategoriasFerretoriaController::class, 'destroy'])->name('ferreteria.categorias.destroy');
