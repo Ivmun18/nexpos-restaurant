@@ -121,7 +121,7 @@
                     </div>
                     <!-- Lector código barras -->
                     <div style="display:flex; gap:8px; margin-bottom:12px;">
-                        <input ref="inputScan" v-model="codigoScan" @input="autoScan"
+                        <input ref="inputScan" v-model="codigoScan" @keyup.enter="escanearCodigo"
                             placeholder="📷 Escanea código de barras para agregar producto..."
                             style="flex:1; padding:10px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
                     </div>
@@ -263,54 +263,35 @@ const estadoStyle = (estado) => {
 
 const escanearCodigo = () => {
     if (codigoScan.value.length < 3) return
-    ;(()  => {
-        const p = props.productos.find(p => p.codigo_barras === codigoScan.value || p.codigo === codigoScan.value)
-        if (p) {
-            const existe = form.value.items.find(i => i.producto_id == p.id)
-            if (existe) {
-                existe.cantidad++
-            } else {
-                form.value.items.push({
-                    producto_id: p.id,
-                    descripcion: p.descripcion,
-                    unidad_medida: p.unidad_medida || 'UND',
-                    cantidad: 1,
-                    precio_unitario: p.precio_venta
-                })
-            }
-            if (inputScan.value) {
-                inputScan.value.style.border = '2px solid #16A34A'
-                setTimeout(() => { inputScan.value.style.border = '2px solid #E2E8F0' }, 500)
-            }
+    const buscar = codigoScan.value.trim()
+    const p = props.productos.find(p => p.codigo_barras === buscar || p.codigo === buscar)
+    if (p) {
+        const existe = form.value.items.find(i => i.producto_id == p.id)
+        if (existe) {
+            existe.cantidad++
         } else {
-            if (inputScan.value) {
-                inputScan.value.style.border = '2px solid #DC2626'
-                setTimeout(() => { inputScan.value.style.border = '2px solid #E2E8F0' }, 800)
-            }
+            form.value.items.push({
+                producto_id: p.id,
+                descripcion: p.descripcion,
+                unidad_medida: p.unidad_medida || 'UND',
+                cantidad: 1,
+                precio_unitario: p.precio_venta
+            })
         }
-        codigoScan.value = ''
-    })()
-}
-
-const abrirNueva = () => {
-    form.value = { cliente_id: '', fecha_emision: hoy, fecha_vencimiento: en30, observaciones: '', items: [] }
-    modalNueva.value = true
-}
-
-const llenarCliente = () => {
-    const c = props.clientes.find(c => c.id == form.value.cliente_id)
-    if (c) {
-        form.value.cliente_razon_social = c.razon_social
-        form.value.cliente_num_doc = c.numero_documento
-        form.value.cliente_tipo_doc = c.tipo_documento
-        form.value.cliente_direccion = c.direccion
-        form.value.cliente_email = c.email
+        if (inputScan.value) {
+            inputScan.value.style.border = '2px solid #16A34A'
+            setTimeout(() => { inputScan.value.style.border = '2px solid #E2E8F0' }, 500)
+        }
+    } else {
+        if (inputScan.value) {
+            inputScan.value.style.border = '2px solid #DC2626'
+            setTimeout(() => { inputScan.value.style.border = '2px solid #E2E8F0' }, 800)
+        }
     }
+    codigoScan.value = ''
 }
 
-const agregarItem = () => {
-    form.value.items.push({ producto_id: '', descripcion: '', unidad_medida: 'UND', cantidad: 1, precio_unitario: 0 })
-}
+
 
 const llenarItem = (e, i) => {
     const p = props.productos.find(p => p.id == form.value.items[i].producto_id)
