@@ -12,7 +12,11 @@ class ClientesFerretoriaController extends Controller
     public function index()
     {
         $clientes = Cliente::where('empresa_id', auth()->user()->empresa_id)
-            ->orderBy('razon_social')->get();
+            ->orderBy('razon_social')->get()
+            ->map(function($c) {
+                $c->numero_documento = (string) $c->numero_documento;
+                return $c;
+            });
         return Inertia::render('Ferreteria/Clientes', compact('clientes'));
     }
 
