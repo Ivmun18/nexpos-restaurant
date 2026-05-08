@@ -164,11 +164,12 @@ const form = ref({
 
 const clientesFiltrados = computed(() => {
     if (!busqueda.value) return props.clientes
-    const q = busqueda.value.toLowerCase()
+    const q = busqueda.value.toLowerCase().trim()
     return props.clientes.filter(c =>
         c.razon_social?.toLowerCase().includes(q) ||
-        c.numero_documento?.includes(q) ||
-        c.celular?.includes(q)
+        String(c.numero_documento || '').toLowerCase().includes(q) ||
+        String(c.celular || '').includes(q) ||
+        c.nombre_comercial?.toLowerCase().includes(q)
     )
 })
 
