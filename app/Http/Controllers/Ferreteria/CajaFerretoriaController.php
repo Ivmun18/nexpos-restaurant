@@ -33,8 +33,8 @@ class CajaFerretoriaController extends Controller
     public function cerrar(Request $request, Caja $caja)
     {
         $caja->update([
-            'monto_final'   => $request->monto_final,
-            'diferencia'    => $request->monto_final - ($caja->monto_inicial + $caja->total_efectivo),
+            'monto_final'   => $request->monto_final ?? 0,
+            'diferencia'    => ($request->monto_final ?? 0) - ($caja->monto_inicial + $caja->total_efectivo),
             'observaciones' => $request->observaciones,
             'estado'        => 'cerrada',
             'cierre_at'     => now(),
