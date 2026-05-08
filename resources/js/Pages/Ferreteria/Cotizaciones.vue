@@ -119,6 +119,12 @@
                         <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">Productos</p>
                         <button @click="agregarItem()" style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">+ Agregar</button>
                     </div>
+                    <!-- Lector código barras -->
+                    <div style="display:flex; gap:8px; margin-bottom:12px;">
+                        <input ref="inputScan" v-model="codigoScan" @input="autoScan"
+                            placeholder="📷 Escanea código de barras para agregar producto..."
+                            style="flex:1; padding:10px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
+                    </div>
                     <div v-for="(item,i) in form.items" :key="i" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px;">
                         <select v-model="item.producto_id" @change="e => llenarItem(e, i)" style="padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;">
                             <option value="">Seleccionar...</option>
@@ -211,6 +217,9 @@ const modalNueva    = ref(false)
 const modalDetalle  = ref(false)
 const cotizacionVer = ref(null)
 const procesando    = ref(false)
+const codigoScan    = ref('')
+const inputScan     = ref(null)
+const scanTimer     = ref(null)
 
 const hoy = new Date().toISOString().split('T')[0]
 const en30 = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]
@@ -250,6 +259,38 @@ const estadoStyle = (estado) => {
         rechazada: { padding:'4px 10px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', background:'#FEF2F2', color:'#991B1B' },
     }
     return estilos[estado] || estilos.borrador
+}
+
+const autoScan = () => {
+    clearTimeout(scanTimer.value)
+    if (codigoScan.value.length < 3) return
+    scanTimer.value = setTimeout(() => {
+        const p = props.productos.find(p => p.codigo_barras === codigoScan.value || p.codigo === codigoScan.value)
+        if (p) {
+            const existe = form.value.items.find(i => i.producto_id == p.id)
+            if (existe) {
+                existe.cantidad++
+            } else {
+                form.value.items.push({
+                    producto_id: p.id,
+                    descripcion: p.descripcion,
+                    unidad_medida: p.unidad_medida || 'UND',
+                    cantidad: 1,
+                    precio_unitario: p.precio_venta
+                })
+            }
+            if (inputScan.value) {
+                inputScan.value.style.border = '2px solid #16A34A'
+                setTimeout(() => { inputScan.value.style.border = '2px solid #E2E8F0' }, 500)
+            }
+        } else {
+            if (inputScan.value) {
+                inputScan.value.style.border = '2px solid #DC2626'
+                setTimeout(() => { inputScan.value.style.border = '2px solid #E2E8F0' }, 800)
+            }
+        }
+        codigoScan.value = ''
+    }, 300)
 }
 
 const abrirNueva = () => {
