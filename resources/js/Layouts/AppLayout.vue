@@ -5,7 +5,7 @@
         <aside :style="{width: collapsed ? '64px' : '230px', height:'100vh', background:'white', borderRight:'1px solid #E2E8F0', display:'flex', flexDirection:'column', position:'fixed', top:0, left:0, zIndex:100, overflow:'hidden', transition:'width 0.25s ease'}">
 
             <!-- Logo -->
-            <div style="padding:24px 20px 20px; border-bottom:1px solid #F0F2F5;">
+            <div style="padding:14px 16px; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
                         {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : '🔧' }}
@@ -18,7 +18,7 @@
             </div>
 
             <!-- Botón colapsar -->
-            <div style="display:flex; justify-content:center; padding:8px 0; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
+            <div style="display:flex; justify-content:center; padding:6px 0; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
                 <button @click="collapsed = !collapsed" style="width:32px; height:32px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#64748B;">
                     <svg :style="{transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition:'transform 0.25s ease'}" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M15 18l-6-6 6-6"/>
@@ -26,7 +26,7 @@
                 </button>
             </div>
 
-            <nav style="flex:1; min-height:0; padding:16px 12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;">
+            <nav style="flex:1; min-height:0; padding:8px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
     
                 <!-- Dashboard siempre visible -->
                 <a href="/dashboard" :style="menuItem('/dashboard')">
@@ -94,7 +94,7 @@
             </nav>
 
             <!-- Usuario -->
-            <div style="padding:16px 20px; border-top:1px solid #F0F2F5; display:flex; align-items:center; gap:12px;">
+            <div :style="{padding: collapsed ? '12px 8px' : '16px 20px', borderTop:'1px solid #F0F2F5', display:'flex', alignItems:'center', justifyContent: collapsed ? 'center' : 'flex-start', gap:'12px'}">
                 <div style="width:38px; height:38px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:white; flex-shrink:0;">
                     {{ initials }}
                 </div>
