@@ -446,3 +446,4 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ferreteria/caja',                [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'index'])->name('ferreteria.caja');
     Route::post('/ferreteria/caja/abrir',         [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'abrir'])->name('ferreteria.caja.abrir');
     Route::post('/ferreteria/caja/{caja}/cerrar', [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'cerrar'])->name('ferreteria.caja.cerrar');
+    Route::get('/ferreteria/reportes', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'index'])->name('ferreteria.reportes');
