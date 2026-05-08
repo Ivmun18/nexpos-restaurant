@@ -443,3 +443,6 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/ferreteria/garantias/{garantia}',         [\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'update'])->name('ferreteria.garantias.update');
     Route::patch('/ferreteria/garantias/{garantia}/estado',[\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'cambiarEstado'])->name('ferreteria.garantias.estado');
     Route::delete('/ferreteria/garantias/{garantia}',      [\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'destroy'])->name('ferreteria.garantias.destroy');
+    Route::get('/ferreteria/caja',                [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'index'])->name('ferreteria.caja');
+    Route::post('/ferreteria/caja/abrir',         [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'abrir'])->name('ferreteria.caja.abrir');
+    Route::post('/ferreteria/caja/{caja}/cerrar', [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'cerrar'])->name('ferreteria.caja.cerrar');
