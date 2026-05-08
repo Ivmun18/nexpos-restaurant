@@ -429,3 +429,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ferreteria/proveedores',              [\App\Http\Controllers\Ferreteria\ProveedoresFerretoriaController::class, 'store'])->name('ferreteria.proveedores.store');
     Route::put('/ferreteria/proveedores/{proveedor}',   [\App\Http\Controllers\Ferreteria\ProveedoresFerretoriaController::class, 'update'])->name('ferreteria.proveedores.update');
     Route::delete('/ferreteria/proveedores/{proveedor}',[\App\Http\Controllers\Ferreteria\ProveedoresFerretoriaController::class, 'destroy'])->name('ferreteria.proveedores.destroy');
+    Route::get('/ferreteria/cotizaciones',                    [\App\Http\Controllers\Ferreteria\CotizacionesFerretoriaController::class, 'index'])->name('ferreteria.cotizaciones');
+    Route::post('/ferreteria/cotizaciones',                   [\App\Http\Controllers\Ferreteria\CotizacionesFerretoriaController::class, 'store'])->name('ferreteria.cotizaciones.store');
+    Route::patch('/ferreteria/cotizaciones/{cotizacion}/estado', [\App\Http\Controllers\Ferreteria\CotizacionesFerretoriaController::class, 'cambiarEstado'])->name('ferreteria.cotizaciones.estado');
+    Route::delete('/ferreteria/cotizaciones/{cotizacion}',    [\App\Http\Controllers\Ferreteria\CotizacionesFerretoriaController::class, 'destroy'])->name('ferreteria.cotizaciones.destroy');
