@@ -2,7 +2,7 @@
     <div style="display:flex; min-height:100vh; background:#F7F8FA; font-family:system-ui,sans-serif;">
 
         <!-- Sidebar -->
-        <aside style="width:230px; height:100vh; background:white; border-right:1px solid #E2E8F0; display:flex; flex-direction:column; position:fixed; top:0; left:0; z-index:100; overflow:hidden;">
+        <aside :style="{width: collapsed ? '64px' : '230px', height:'100vh', background:'white', borderRight:'1px solid #E2E8F0', display:'flex', flexDirection:'column', position:'fixed', top:0, left:0, zIndex:100, overflow:'hidden', transition:'width 0.25s ease'}">
 
             <!-- Logo -->
             <div style="padding:24px 20px 20px; border-bottom:1px solid #F0F2F5;">
