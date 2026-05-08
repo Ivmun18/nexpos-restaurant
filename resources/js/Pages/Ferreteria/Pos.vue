@@ -12,7 +12,7 @@
                         <div style="flex:1; position:relative;">
                             <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:18px;">🔍</span>
                             <input ref="inputBusqueda" v-model="busqueda"
-                                @keyup.enter="escanearCodigo"
+                                @keyup.enter="escanearCodigo" @input="autoEscanear"
                                 placeholder="Escanea código de barras o busca por nombre..."
                                 style="width:100%; padding:12px 12px 12px 42px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;">
                         </div>
@@ -165,6 +165,7 @@ const montoPagado     = ref('')
 const tipoComprobante = ref('ninguno')
 const procesando      = ref(false)
 const inputBusqueda   = ref(null)
+const scanTimer        = ref(null)
 
 const productosFiltrados = computed(() => {
     return props.productos.filter(p => {
@@ -184,6 +185,14 @@ const subtotal = computed(() => {
 const igv   = computed(() => (carrito.value.reduce((s,i) => s + i.precio_venta * i.cantidad, 0) - parseFloat(subtotal.value)).toFixed(2))
 const total = computed(() => carrito.value.reduce((s,i) => s + i.precio_venta * i.cantidad, 0).toFixed(2))
 const vuelto = computed(() => montoPagado.value ? (parseFloat(montoPagado.value) - parseFloat(total.value)).toFixed(2) : -1)
+
+const autoEscanear = () => {
+    clearTimeout(scanTimer.value)
+    if (busqueda.value.length < 3) return
+    scanTimer.value = setTimeout(() => {
+        escanearCodigo()
+    }, 300)
+}
 
 const escanearCodigo = () => {
     const codigo = busqueda.value.trim()
