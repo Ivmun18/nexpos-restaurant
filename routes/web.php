@@ -438,3 +438,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/ferreteria/ordenes/{orden}',          [\App\Http\Controllers\Ferreteria\OrdenesFerretoriaController::class, 'update'])->name('ferreteria.ordenes.update');
     Route::patch('/ferreteria/ordenes/{orden}/estado', [\App\Http\Controllers\Ferreteria\OrdenesFerretoriaController::class, 'cambiarEstado'])->name('ferreteria.ordenes.estado');
     Route::delete('/ferreteria/ordenes/{orden}',       [\App\Http\Controllers\Ferreteria\OrdenesFerretoriaController::class, 'destroy'])->name('ferreteria.ordenes.destroy');
+    Route::get('/ferreteria/garantias',                    [\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'index'])->name('ferreteria.garantias');
+    Route::post('/ferreteria/garantias',                   [\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'store'])->name('ferreteria.garantias.store');
+    Route::put('/ferreteria/garantias/{garantia}',         [\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'update'])->name('ferreteria.garantias.update');
+    Route::patch('/ferreteria/garantias/{garantia}/estado',[\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'cambiarEstado'])->name('ferreteria.garantias.estado');
+    Route::delete('/ferreteria/garantias/{garantia}',      [\App\Http\Controllers\Ferreteria\GarantiasFerretoriaController::class, 'destroy'])->name('ferreteria.garantias.destroy');
