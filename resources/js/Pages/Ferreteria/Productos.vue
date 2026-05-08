@@ -97,7 +97,7 @@
 
         <!-- Modal Producto -->
         <div v-if="modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
-            <div style="background:white; border-radius:16px; padding:28px; width:580px; max-height:90vh; overflow-y:auto;">
+            <div style="background:white; border-radius:16px; padding:28px; width:580px; margin:auto;">
                 <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 20px;">{{ editando ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
