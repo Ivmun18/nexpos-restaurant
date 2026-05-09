@@ -130,7 +130,7 @@ function cobrar() {
                     </div>
 
                     <!-- Monto y vuelto -->
-                    <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💵 Monto recibido</p>
 
                         <input
@@ -176,6 +176,7 @@ function cobrar() {
                     <!-- Botón cobrar -->
                     <button
                         @click="cobrar"
+                        v-if="$page.props.auth.user.rol !== 'mozo'"
                         :disabled="form.processing || !form.monto_pagado"
                         :style="{
                             width: '100%',

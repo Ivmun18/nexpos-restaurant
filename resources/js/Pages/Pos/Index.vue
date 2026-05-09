@@ -204,6 +204,7 @@ function cerrarMesa() {
                    <button
                         @click="cerrarMesa"
                          style="background:rgba(255,255,255,0.2); color:white; border:2px solid rgba(255,255,255,0.4); border-radius:12px; padding:12px 18px; font-size:15px; font-weight:600; cursor:pointer;"
+                        v-if="$page.props.auth.user.rol !== 'mozo'"
                             >
                          💳 Cobrar S/ {{ totalGeneral.toFixed(2) }}
                         </button>
