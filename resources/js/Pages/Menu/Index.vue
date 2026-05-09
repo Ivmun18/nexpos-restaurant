@@ -8,6 +8,7 @@ const props = defineProps({ categorias: Array })
 const categoriaActiva   = ref(props.categorias[0]?.id ?? null)
 const modalCategoria    = ref(false)
 const modalProducto     = ref(false)
+const modalProductoKey  = ref(0)
 const editandoCategoria = ref(null)
 const editandoProducto  = ref(null)
 
@@ -63,6 +64,7 @@ function abrirModalProducto(prod = null, catId = null) {
         formProducto.orden              = 0
         formProducto.tiempo_preparacion = 10
     }
+    modalProductoKey.value++
     modalProducto.value = true
 }
 
@@ -417,7 +419,7 @@ const iconos = ['🍽️','🥗','🍖','🍔','🍕','🌮','🥩','🍜','🥤
         <!-- ══ MODAL PRODUCTO ══ -->
         <Teleport to="body">
             <div v-if="modalProducto"
-                :key="editandoProducto ? editandoProducto.id : 'nuevo-' + Date.now()"
+                :key="modalProductoKey"
                 style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px;"
                 @click.self="modalProducto=false">
                 <div style="background:white; border-radius:24px; padding:32px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.25);">
