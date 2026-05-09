@@ -288,6 +288,7 @@ const menuItems = computed(() => {
         if (rol === 'cajero')   return modulosCajero.includes(item.path)
         if (rol === 'mozo')     return modulosMozo.includes(item.path)
         if (rol === 'cocinero') return modulosCocinero.includes(item.path)
+        if (rol === 'cocina')    return modulosCocinero.includes(item.path)
 
         // Ocultar admin para no-admins
         if (item.module === 'admin' && rol !== 'admin' && rol !== 'superadmin') return false
