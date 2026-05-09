@@ -1,7 +1,19 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+let pollingInterval = null
+
+onMounted(() => {
+    pollingInterval = setInterval(() => {
+        router.reload({ only: ['mesas', 'turno'] })
+    }, 30000) // cada 30 segundos
+})
+
+onUnmounted(() => {
+    clearInterval(pollingInterval)
+})
 
 const props = defineProps({
     turnoActivo: Object,
