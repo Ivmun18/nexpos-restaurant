@@ -1,7 +1,19 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+let pollingInterval = null
+
+onMounted(() => {
+    pollingInterval = setInterval(() => {
+        router.reload({ only: ['mesa', 'pedidos', 'total'] })
+    }, 15000) // cada 15 segundos
+})
+
+onUnmounted(() => {
+    clearInterval(pollingInterval)
+})
 
 const props = defineProps({
     mesa:    Object,
