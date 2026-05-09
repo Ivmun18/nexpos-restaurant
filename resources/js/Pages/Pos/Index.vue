@@ -306,6 +306,24 @@ function cerrarMesa() {
                 </div>
             </div>
         </div>
+        <!-- Botón flotante móvil -->
+        <div v-if="isMobilePOS && carrito.length && tabMovil === 'carta'"
+            style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:200;">
+            <button @click="tabMovil = 'pedido'"
+                style="padding:16px 28px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:50px; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 8px 24px rgba(20,184,166,0.5); display:flex; align-items:center; gap:10px; white-space:nowrap;">
+                🛒 Ver pedido ({{ carrito.length }}) — S/ {{ totalCarrito.toFixed(2) }}
+            </button>
+        </div>
+
+        <!-- Botón flotante volver a carta en móvil -->
+        <div v-if="isMobilePOS && tabMovil === 'pedido'"
+            style="position:fixed; bottom:20px; left:16px; z-index:200;">
+            <button @click="tabMovil = 'carta'"
+                style="padding:14px 20px; background:white; color:#0F766E; border:2px solid #14B8A6; border-radius:50px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                ← Carta
+            </button>
+        </div>
+
     </AppLayout>
 </template>
 
