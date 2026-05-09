@@ -176,9 +176,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+let pollingInterval = null
+
+onMounted(() => {
+    pollingInterval = setInterval(() => {
+        router.reload({ only: ['mesas'] })
+    }, 10000)
+})
+
+onUnmounted(() => {
+    clearInterval(pollingInterval)
+})
 
 const props = defineProps({
     mesas:   Array,

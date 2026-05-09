@@ -8,7 +8,7 @@ let pollingInterval = null
 onMounted(() => {
     pollingInterval = setInterval(() => {
         router.reload({ only: ['mesas', 'turno'] })
-    }, 30000) // cada 30 segundos
+    }, 10000) // cada 10 segundos
 })
 
 onUnmounted(() => {
