@@ -14,6 +14,9 @@ const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
 const notasPedido     = ref('')
 const busqueda        = ref('')
+const tabMovil        = ref('carta')
+const isMobilePOS     = ref(window.innerWidth < 768)
+window.addEventListener('resize', () => { isMobilePOS.value = window.innerWidth < 768 })
 
 const categoriaSeleccionada = computed(() =>
     props.categorias.find(c => c.id === categoriaActiva.value)
@@ -92,10 +95,15 @@ function cerrarMesa() {
 
 <template>
     <AppLayout :title="`🍽️ Mesa ${mesa.numero} · POS`">
-        <div style="display:flex; height:calc(100vh - 110px); gap:16px; overflow:hidden;">
+        <!-- Tabs móvil -->
+        <div class="tabs-movil" style="display:none; gap:0; margin-bottom:12px; background:white; border-radius:12px; padding:4px; border:1px solid #E2E8F0;">
+            <button @click="tabMovil='carta'" :style="{flex:1, padding:'10px', borderRadius:'8px', border:'none', fontWeight:'700', fontSize:'14px', cursor:'pointer', background: tabMovil==='carta' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : 'transparent', color: tabMovil==='carta' ? 'white' : '#64748B'}">🍽️ Carta</button>
+            <button @click="tabMovil='pedido'" :style="{flex:1, padding:'10px', borderRadius:'8px', border:'none', fontWeight:'700', fontSize:'14px', cursor:'pointer', background: tabMovil==='pedido' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : 'transparent', color: tabMovil==='pedido' ? 'white' : '#64748B'}">🛒 Pedido ({{ carrito.length }})</button>
+        </div>
+        <div :style="{display:'flex', flexDirection: isMobilePOS ? 'column' : 'row', height: isMobilePOS ? 'calc(100vh - 170px)' : 'calc(100vh - 110px)', gap:'12px', overflow:'hidden'}" class="pos-container">
 
             <!-- ══ PANEL IZQUIERDO: CARTA ══ -->
-            <div style="display:flex; flex-direction:column; width:58%; background:white; border-radius:20px; border:1px solid #E2E8F0; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+            <div class="panel-carta" :style="{display: isMobilePOS && tabMovil==='pedido' ? 'none' : 'flex', flexDirection:'column', width: isMobilePOS ? '100%' : '58%', background:'white', borderRadius:'20px', border:'1px solid #E2E8F0', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}">
 
                 <!-- Búsqueda -->
                 <div style="padding:14px; border-bottom:1px solid #F0F4F8; background:#FAFBFC;">
@@ -177,7 +185,7 @@ function cerrarMesa() {
             </div>
 
             <!-- ══ PANEL DERECHO: PEDIDO ══ -->
-            <div style="display:flex; flex-direction:column; width:42%; gap:12px;">
+            <div :style="{display: isMobilePOS && tabMovil==='carta' ? 'none' : 'flex', flexDirection:'column', width: isMobilePOS ? '100%' : '42%', gap:'12px', flex: isMobilePOS ? '1' : 'none', minHeight:0}">
 
                 <!-- Header mesa -->
                 <div style="background:linear-gradient(135deg, #14B8A6, #0F766E); border-radius:20px; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 20px rgba(20,184,166,0.3);">
@@ -300,3 +308,12 @@ function cerrarMesa() {
         </div>
     </AppLayout>
 </template>
+
+<style>
+@media (max-width: 767px) {
+    .tabs-movil { display: flex !important; }
+    .pos-container { flex-direction: column !important; height: calc(100vh - 160px) !important; }
+    .pos-container > div { width: 100% !important; }
+
+}
+</style>
