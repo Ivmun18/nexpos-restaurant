@@ -280,7 +280,7 @@ const menuItems = computed(() => {
     const industry = empresa.value.industry_type
     const rol = page.props.auth?.user?.rol
 
-    const modulosCajero   = ['/dashboard', '/minimarket/pos', '/minimarket/ventas', '/minimarket/caja']
+    const modulosCajero   = ['/dashboard', '/mesas', '/caja', '/reportes-restaurante']
     const modulosMozo     = ['/dashboard', '/mesas']
     const modulosCocinero = ['/dashboard', '/cocina']
 
