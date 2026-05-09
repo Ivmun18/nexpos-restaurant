@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
+const page = usePage()
 const props = defineProps({
     mesa:            Object,
     categorias:      Array,
@@ -28,6 +30,11 @@ const productosFiltrados = computed(() => {
     return categoriaSeleccionada.value.productos_activos.filter(p =>
         p.nombre.toLowerCase().includes(busqueda.value.toLowerCase())
     )
+})
+
+const puedeCobar = computed(() => {
+    const rol = page.props.auth?.user?.rol
+    return rol === 'admin' || rol === 'cajero' || rol === 'superadmin'
 })
 
 const totalCarrito = computed(() =>
@@ -322,7 +329,7 @@ function cerrarMesa() {
                 style="padding:14px 20px; background:white; color:#0F766E; border:2px solid #14B8A6; border-radius:50px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1); flex-shrink:0;">
                 ← Carta
             </button>
-            <button @click="cerrarMesa"
+            <button v-if="puedeCobar" @click="cerrarMesa"
                 style="flex:1; padding:14px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:50px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 8px 24px rgba(20,184,166,0.4);">
                 💳 Cobrar S/ {{ totalGeneral.toFixed(2) }}
             </button>

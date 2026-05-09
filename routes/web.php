@@ -323,9 +323,9 @@ Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middlewa
 
 
 // Cocina
-Route::get('/cocina',                          [CocinaController::class, 'index'])->name('cocina.index');
-Route::post('/cocina/{pedido}/listo',          [CocinaController::class, 'marcarListo'])->name('cocina.listo');
-Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, 'marcarDetalleListo'])->name('cocina.detalle.listo');
+Route::get('/cocina',                          [CocinaController::class, 'index'])->name('cocina.index')->middleware('rol:cocina,admin');
+Route::post('/cocina/{pedido}/listo',          [CocinaController::class, 'marcarListo'])->name('cocina.listo')->middleware('rol:cocina,admin');
+Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, 'marcarDetalleListo'])->name('cocina.detalle.listo')->middleware('rol:cocina,admin');
 
 // Caja Restaurante
 Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');

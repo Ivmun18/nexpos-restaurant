@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'solo_admin' => \App\Http\Middleware\SoloAdmin::class,
+            'rol' => \App\Http\Middleware\RolMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
