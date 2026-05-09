@@ -315,12 +315,16 @@ function cerrarMesa() {
             </button>
         </div>
 
-        <!-- Botón flotante volver a carta en móvil -->
+        <!-- Botones flotantes en tab Pedido -->
         <div v-if="isMobilePOS && tabMovil === 'pedido'"
-            style="position:fixed; bottom:20px; left:16px; z-index:200;">
+            style="position:fixed; bottom:20px; left:16px; right:16px; z-index:200; display:flex; gap:10px;">
             <button @click="tabMovil = 'carta'"
-                style="padding:14px 20px; background:white; color:#0F766E; border:2px solid #14B8A6; border-radius:50px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                style="padding:14px 20px; background:white; color:#0F766E; border:2px solid #14B8A6; border-radius:50px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.1); flex-shrink:0;">
                 ← Carta
+            </button>
+            <button @click="cerrarMesa"
+                style="flex:1; padding:14px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:50px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 8px 24px rgba(20,184,166,0.4);">
+                💳 Cobrar S/ {{ totalGeneral.toFixed(2) }}
             </button>
         </div>
 
