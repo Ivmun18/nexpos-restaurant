@@ -34,8 +34,14 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::middleware('auth')->group(function () {
 
 Route::get('/dashboard', function () {
+    $rol = auth()->user()->rol ?? 'admin';
     $industryType = auth()->user()->empresa->industry_type ?? 'restaurante';
     $industryName = ucfirst($industryType);
+    if ($industryType === 'restaurante') {
+        if ($rol === 'cocina') return redirect('/cocina');
+        if ($rol === 'cajero') return redirect('/mesas');
+        if ($rol === 'mozo')   return redirect('/mesas');
+    }
 
 
     if ($industryType === 'ferreteria') {
