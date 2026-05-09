@@ -417,6 +417,7 @@ const iconos = ['🍽️','🥗','🍖','🍔','🍕','🌮','🥩','🍜','🥤
         <!-- ══ MODAL PRODUCTO ══ -->
         <Teleport to="body">
             <div v-if="modalProducto"
+                :key="editandoProducto ? editandoProducto.id : 'nuevo-' + Date.now()"
                 style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px;"
                 @click.self="modalProducto=false">
                 <div style="background:white; border-radius:24px; padding:32px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.25);">
