@@ -13,7 +13,14 @@ class RolMiddleware
             return redirect('/login');
         }
 
-        $userRol = auth()->user()->rol;
+        $user = auth()->user();
+        $userRol = $user->rol;
+        $industryType = $user->empresa->industry_type ?? 'restaurante';
+
+        // Solo aplicar control de roles en restaurante
+        if ($industryType !== 'restaurante') {
+            return $next($request);
+        }
 
         // Admin siempre tiene acceso
         if ($userRol === 'admin' || $userRol === 'superadmin') {
