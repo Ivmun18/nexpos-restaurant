@@ -3,3 +3,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ══ RESPONSIVE MÓVIL (max 767px) ══ */
+@media (max-width: 767px) {
+
+    /* Tablas — scroll horizontal */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Grids — colapsar a 1 columna */
+    [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Stats cards — 2 columnas en móvil */
+    [style*="repeat(4,1fr)"],
+    [style*="repeat(4, 1fr)"] {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    [style*="repeat(3,1fr)"],
+    [style*="repeat(3, 1fr)"] {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    [style*="repeat(5,1fr)"],
+    [style*="repeat(5, 1fr)"] {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    /* Topbar — ocultar fecha y botones grandes */
+    [style*="padding:10px 20px"][style*="border-radius:10px"][href] {
+        display: none !important;
+    }
+
+    /* Padding general del contenido */
+    [style*="padding:28px"],
+    [style*="padding:32px"],
+    [style*="padding:24px 28px"] {
+        padding: 12px !important;
+    }
+
+    /* Modales — ancho completo */
+    [style*="border-radius:16px"][style*="padding:28px"] {
+        padding: 16px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Inputs y selects — tamaño mínimo táctil */
+    input, select, textarea, button {
+        min-height: 44px;
+        font-size: 16px !important; /* evita zoom en iOS */
+    }
+
+    /* Botones de acción en tablas — solo ícono */
+    [style*="font-size:12px"][style*="cursor:pointer"] {
+        padding: 8px !important;
+    }
+
+    /* Ocultar columnas menos importantes en tablas móvil */
+    .hide-mobile { display: none !important; }
+
+    /* Flex — cambiar a columna */
+    [style*="display:flex"][style*="justify-content:space-between"] {
+        flex-wrap: wrap;
+        gap: 8px !important;
+    }
+
+    /* Búsqueda — ancho completo */
+    input[placeholder*="Buscar"],
+    input[placeholder*="buscar"] {
+        width: 100% !important;
+    }
+
+    /* Header topbar compacto */
+    header [style*="font-size:18px"] {
+        font-size: 15px !important;
+    }
+
+    header [style*="font-size:13px"][style*="color:#94A3B8"] {
+        display: none !important;
+    }
+}
