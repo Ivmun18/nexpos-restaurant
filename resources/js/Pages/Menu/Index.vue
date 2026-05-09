@@ -54,10 +54,13 @@ function abrirModalProducto(prod = null, catId = null) {
         formProducto.orden              = prod.orden
         formProducto.tiempo_preparacion = prod.tiempo_preparacion
     } else {
-        formProducto.reset()
         formProducto.menu_categoria_id  = catId ?? categoriaActiva.value
+        formProducto.nombre             = ''
+        formProducto.descripcion        = ''
+        formProducto.precio             = ''
         formProducto.disponible         = true
         formProducto.activo             = true
+        formProducto.orden              = 0
         formProducto.tiempo_preparacion = 10
     }
     modalProducto.value = true
