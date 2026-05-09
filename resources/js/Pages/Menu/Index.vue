@@ -66,11 +66,11 @@ function abrirModalProducto(prod = null, catId = null) {
 function guardarCategoria() {
     if (editandoCategoria.value) {
         formCategoria.put(`/menu/categorias/${editandoCategoria.value.id}`, {
-            onSuccess: () => { modalCategoria.value = false }
+            onSuccess: () => { modalCategoria.value = false; formCategoria.reset() }
         })
     } else {
         formCategoria.post('/menu/categorias', {
-            onSuccess: () => { modalCategoria.value = false }
+            onSuccess: () => { modalCategoria.value = false; formCategoria.reset() }
         })
     }
 }
@@ -78,11 +78,11 @@ function guardarCategoria() {
 function guardarProducto() {
     if (editandoProducto.value) {
         formProducto.put(`/menu/productos/${editandoProducto.value.id}`, {
-            onSuccess: () => { modalProducto.value = false }
+            onSuccess: () => { modalProducto.value = false; formProducto.reset() }
         })
     } else {
         formProducto.post('/menu/productos', {
-            onSuccess: () => { modalProducto.value = false }
+            onSuccess: () => { modalProducto.value = false; formProducto.reset() }
         })
     }
 }
