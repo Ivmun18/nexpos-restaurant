@@ -86,8 +86,8 @@
         </div>
 
         <!-- Modal Nueva Cotización -->
-        <div v-if="modalNueva" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:20px;">
-            <div style="background:white; border-radius:16px; padding:28px; width:700px; margin:auto;">
+        <div v-if="modalNueva" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:12px;">
+            <div style="background:white; border-radius:16px; padding:28px; width:100%; max-width:700px; margin:auto;">
                 <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 20px;">Nueva Cotización</h2>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
@@ -163,7 +163,7 @@
         </div>
 
         <!-- Modal Detalle -->
-        <div v-if="modalDetalle && cotizacionVer" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:20px;">
+        <div v-if="modalDetalle && cotizacionVer" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:12px;">
             <div style="background:white; border-radius:16px; padding:28px; width:600px; margin:auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0;">{{ cotizacionVer.numero }}</h2>

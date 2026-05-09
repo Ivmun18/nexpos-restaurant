@@ -36,7 +36,7 @@
 
         <!-- Modal -->
         <div v-if="modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
-            <div style="background:white; border-radius:16px; padding:28px; width:420px;">
+            <div style="background:white; border-radius:16px; padding:28px; width:100%; max-width:420px;">
                 <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 20px;">{{ editando ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
 
                 <div style="display:flex; flex-direction:column; gap:16px;">
