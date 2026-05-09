@@ -66,11 +66,27 @@ function abrirModalProducto(prod = null, catId = null) {
 function guardarCategoria() {
     if (editandoCategoria.value) {
         formCategoria.put(`/menu/categorias/${editandoCategoria.value.id}`, {
-            onSuccess: () => { modalCategoria.value = false; formCategoria.reset() }
+            onSuccess: () => {
+                modalCategoria.value = false
+                formCategoria.nombre = ''
+                formCategoria.descripcion = ''
+                formCategoria.icono = '🍽️'
+                formCategoria.color = '#14B8A6'
+                formCategoria.orden = 0
+                formCategoria.activo = true
+            }
         })
     } else {
         formCategoria.post('/menu/categorias', {
-            onSuccess: () => { modalCategoria.value = false; formCategoria.reset() }
+            onSuccess: () => {
+                modalCategoria.value = false
+                formCategoria.nombre = ''
+                formCategoria.descripcion = ''
+                formCategoria.icono = '🍽️'
+                formCategoria.color = '#14B8A6'
+                formCategoria.orden = 0
+                formCategoria.activo = true
+            }
         })
     }
 }
@@ -78,11 +94,31 @@ function guardarCategoria() {
 function guardarProducto() {
     if (editandoProducto.value) {
         formProducto.put(`/menu/productos/${editandoProducto.value.id}`, {
-            onSuccess: () => { modalProducto.value = false; formProducto.reset() }
+            onSuccess: () => {
+                modalProducto.value = false
+                formProducto.menu_categoria_id = null
+                formProducto.nombre = ''
+                formProducto.descripcion = ''
+                formProducto.precio = ''
+                formProducto.disponible = true
+                formProducto.activo = true
+                formProducto.orden = 0
+                formProducto.tiempo_preparacion = 10
+            }
         })
     } else {
         formProducto.post('/menu/productos', {
-            onSuccess: () => { modalProducto.value = false; formProducto.reset() }
+            onSuccess: () => {
+                modalProducto.value = false
+                formProducto.menu_categoria_id = null
+                formProducto.nombre = ''
+                formProducto.descripcion = ''
+                formProducto.precio = ''
+                formProducto.disponible = true
+                formProducto.activo = true
+                formProducto.orden = 0
+                formProducto.tiempo_preparacion = 10
+            }
         })
     }
 }
