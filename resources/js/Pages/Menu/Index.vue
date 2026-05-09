@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
+import { watch as vWatch } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({ categorias: Array })
@@ -16,10 +17,11 @@ const formCategoria = useForm({
     nombre: '', descripcion: '', icono: '🍽️', color: '#14B8A6', orden: 0, activo: true,
 })
 
-const formProducto = useForm({
+const formProducto = ref({
     menu_categoria_id: null, nombre: '', descripcion: '',
     precio: '', disponible: true, activo: true, orden: 0, tiempo_preparacion: 10,
 })
+const procesandoProducto = ref(false)
 
 const categoriaSeleccionada = computed(() =>
     props.categorias.find(c => c.id === categoriaActiva.value)
@@ -46,23 +48,27 @@ function abrirModalCategoria(cat = null) {
 function abrirModalProducto(prod = null, catId = null) {
     editandoProducto.value = prod
     if (prod) {
-        formProducto.menu_categoria_id  = prod.menu_categoria_id
-        formProducto.nombre             = prod.nombre
-        formProducto.descripcion        = prod.descripcion ?? ''
-        formProducto.precio             = prod.precio
-        formProducto.disponible         = prod.disponible
-        formProducto.activo             = prod.activo
-        formProducto.orden              = prod.orden
-        formProducto.tiempo_preparacion = prod.tiempo_preparacion
+        formProducto.value = {
+            menu_categoria_id:  prod.menu_categoria_id,
+            nombre:             prod.nombre,
+            descripcion:        prod.descripcion ?? '',
+            precio:             prod.precio,
+            disponible:         prod.disponible,
+            activo:             prod.activo,
+            orden:              prod.orden,
+            tiempo_preparacion: prod.tiempo_preparacion
+        }
     } else {
-        formProducto.menu_categoria_id  = catId ?? categoriaActiva.value
-        formProducto.nombre             = ''
-        formProducto.descripcion        = ''
-        formProducto.precio             = ''
-        formProducto.disponible         = true
-        formProducto.activo             = true
-        formProducto.orden              = 0
-        formProducto.tiempo_preparacion = 10
+        formProducto.value = {
+            menu_categoria_id:  catId ?? categoriaActiva.value,
+            nombre:             '',
+            descripcion:        '',
+            precio:             '',
+            disponible:         true,
+            activo:             true,
+            orden:              0,
+            tiempo_preparacion: 10
+        }
     }
     modalProductoKey.value++
     modalProducto.value = true
@@ -96,34 +102,33 @@ function guardarCategoria() {
     }
 }
 
+function limpiarFormProducto() {
+    formProducto.value = {
+        menu_categoria_id: categoriaActiva.value,
+        nombre: '', descripcion: '', precio: '',
+        disponible: true, activo: true, orden: 0, tiempo_preparacion: 10
+    }
+}
+
 function guardarProducto() {
+    procesandoProducto.value = true
     if (editandoProducto.value) {
-        formProducto.put(`/menu/productos/${editandoProducto.value.id}`, {
+        router.put(`/menu/productos/${editandoProducto.value.id}`, formProducto.value, {
             onSuccess: () => {
                 modalProducto.value = false
-                formProducto.menu_categoria_id = null
-                formProducto.nombre = ''
-                formProducto.descripcion = ''
-                formProducto.precio = ''
-                formProducto.disponible = true
-                formProducto.activo = true
-                formProducto.orden = 0
-                formProducto.tiempo_preparacion = 10
-            }
+                limpiarFormProducto()
+                procesandoProducto.value = false
+            },
+            onError: () => { procesandoProducto.value = false }
         })
     } else {
-        formProducto.post('/menu/productos', {
+        router.post('/menu/productos', formProducto.value, {
             onSuccess: () => {
                 modalProducto.value = false
-                formProducto.menu_categoria_id = null
-                formProducto.nombre = ''
-                formProducto.descripcion = ''
-                formProducto.precio = ''
-                formProducto.disponible = true
-                formProducto.activo = true
-                formProducto.orden = 0
-                formProducto.tiempo_preparacion = 10
-            }
+                limpiarFormProducto()
+                procesandoProducto.value = false
+            },
+            onError: () => { procesandoProducto.value = false }
         })
     }
 }
@@ -149,6 +154,19 @@ async function toggleDisponible(prod) {
 }
 
 const iconos = ['🍽️','🥗','🍖','🍔','🍕','🌮','🥩','🍜','🥤','🧃','🍷','☕','🍮','🍰','🧁','🥐','🫕','🥘']
+
+vWatch(modalProducto, (val) => {
+    if (!val) {
+        formProducto.nombre = ''
+        formProducto.descripcion = ''
+        formProducto.precio = ''
+        formProducto.menu_categoria_id = null
+        formProducto.disponible = true
+        formProducto.activo = true
+        formProducto.orden = 0
+        formProducto.tiempo_preparacion = 10
+    }
+})
 </script>
 
 <template>
@@ -501,9 +519,9 @@ const iconos = ['🍽️','🥗','🍖','🍔','🍕','🌮','🥩','🍜','🥤
                             style="flex:1; padding:14px; background:#F1F5F9; color:#475569; border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;">
                             Cancelar
                         </button>
-                        <button @click="guardarProducto" :disabled="formProducto.processing"
+                        <button @click="guardarProducto" :disabled="procesandoProducto.value"
                             style="flex:1; padding:14px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer;">
-                            {{ formProducto.processing ? 'Guardando...' : 'Guardar' }}
+                            {{ procesandoProducto.value ? 'Guardando...' : 'Guardar' }}
                         </button>
                     </div>
                 </div>
