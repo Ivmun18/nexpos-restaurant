@@ -1,8 +1,27 @@
 <template>
     <div style="display:flex; min-height:100vh; background:#F7F8FA; font-family:system-ui,sans-serif;">
 
+        <!-- Overlay móvil -->
+        <div v-if="mobileOpen" @click="mobileOpen=false"
+            style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:99; display:none;"
+            :style="{display: mobileOpen ? 'block' : 'none'}">
+        </div>
+
         <!-- Sidebar -->
-        <aside :style="{width: collapsed ? '64px' : '230px', height:'100vh', background:'white', borderRight:'1px solid #E2E8F0', display:'flex', flexDirection:'column', position:'fixed', top:0, left:0, zIndex:100, overflow:'hidden', transition:'width 0.25s ease'}">
+        <aside :style="{
+            width: isMobile ? '230px' : (collapsed ? '64px' : '230px'),
+            height:'100vh',
+            background:'white',
+            borderRight:'1px solid #E2E8F0',
+            display:'flex',
+            flexDirection:'column',
+            position:'fixed',
+            top:0,
+            left: isMobile ? (mobileOpen ? '0' : '-230px') : '0',
+            zIndex:100,
+            overflow:'hidden',
+            transition:'width 0.25s ease, left 0.25s ease'
+        }">
 
             <!-- Logo -->
             <div style="padding:14px 16px; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
@@ -107,13 +126,22 @@
         </aside>
 
         <!-- Contenido -->
-        <main :style="{marginLeft: collapsed ? '64px' : '230px', flex:1, display:'flex', flexDirection:'column', minHeight:'100vh', transition:'margin-left 0.25s ease'}">
+        <main :style="{marginLeft: isMobile ? '0' : (collapsed ? '64px' : '230px'), flex:1, display:'flex', flexDirection:'column', minHeight:'100vh', transition:'margin-left 0.25s ease'}">
 
             <!-- Topbar -->
-            <header style="background:white; padding:16px 28px; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;">
-                <div>
-                    <p style="font-size:18px; font-weight:700; color:#1E293B; margin:0;">{{ title }}</p>
-                    <p style="font-size:13px; color:#94A3B8; margin:0;">{{ subtitle }}</p>
+            <header style="background:white; padding:16px 20px; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <!-- Botón hamburguesa móvil -->
+                    <button v-if="isMobile" @click="mobileOpen=!mobileOpen"
+                        style="width:36px; height:36px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="18" height="18" fill="none" stroke="#64748B" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 12h18M3 6h18M3 18h18"/>
+                        </svg>
+                    </button>
+                    <div>
+                        <p style="font-size:18px; font-weight:700; color:#1E293B; margin:0;">{{ title }}</p>
+                        <p style="font-size:13px; color:#94A3B8; margin:0;">{{ subtitle }}</p>
+                    </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px;">
                     <span style="font-size:13px; color:#94A3B8;">{{ today }}</span>
@@ -160,6 +188,17 @@ defineProps({
 
 const page = usePage()
 const collapsed = ref(false)
+const mobileOpen = ref(false)
+const isMobile = ref(window.innerWidth < 768)
+
+const handleResize = () => {
+    isMobile.value = window.innerWidth < 768
+    if (!isMobile.value) mobileOpen.value = false
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleResize)
+}
 
 const initials = computed(() => {
     const name = page.props.auth?.user?.name || 'U'
