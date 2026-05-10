@@ -120,10 +120,11 @@
                     </div>
 
                     <!-- Método de pago -->
-                    <div style="display:flex; gap:8px; margin-bottom:12px;">
-                        <button @click="metodoPago='efectivo'" :style="{flex:1, padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='efectivo' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='efectivo' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='efectivo' ? '#0F766E' : '#64748B', cursor:'pointer'}">💵 Efectivo</button>
-                        <button @click="metodoPago='tarjeta'" :style="{flex:1, padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='tarjeta' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='tarjeta' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='tarjeta' ? '#0F766E' : '#64748B', cursor:'pointer'}">💳 Tarjeta</button>
-                        <button @click="metodoPago='yape'" :style="{flex:1, padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='yape' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='yape' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='yape' ? '#0F766E' : '#64748B', cursor:'pointer'}">📱 Yape</button>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                        <button @click="metodoPago='efectivo'" :style="{padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='efectivo' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='efectivo' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='efectivo' ? '#0F766E' : '#64748B', cursor:'pointer'}">💵 Efectivo</button>
+                        <button @click="metodoPago='tarjeta'" :style="{padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='tarjeta' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='tarjeta' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='tarjeta' ? '#0F766E' : '#64748B', cursor:'pointer'}">💳 Tarjeta</button>
+                        <button @click="metodoPago='yape'" :style="{padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='yape' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='yape' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='yape' ? '#0F766E' : '#64748B', cursor:'pointer'}">📱 Yape</button>
+                        <button @click="metodoPago='plin'" :style="{padding:'8px', borderRadius:'8px', border:'1px solid', borderColor: metodoPago==='plin' ? '#14B8A6' : '#E2E8F0', background: metodoPago==='plin' ? '#F0FDFA' : 'white', fontSize:'12px', fontWeight:'600', color: metodoPago==='plin' ? '#0F766E' : '#64748B', cursor:'pointer'}">📲 Plin</button>
                     </div>
 
                     <!-- Monto pagado si efectivo -->
@@ -133,6 +134,22 @@
                         <p v-if="vuelto >= 0" style="font-size:13px; color:#16A34A; font-weight:600; margin:6px 0 0; text-align:right;">
                             Vuelto: S/ {{ vuelto }}
                         </p>
+                    </div>
+
+                    <!-- Datos cliente -->
+                    <div v-if="tipoComprobante !== 'ninguno'" style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+                        <input v-model="clienteDni" type="text"
+                            :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                        />
+                        <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
+                            placeholder="Razón social del cliente *"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                        />
+                        <input v-model="clienteEmail" type="email"
+                            placeholder="Email (para enviar comprobante)"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                        />
                     </div>
 
                     <button @click="cobrar" :disabled="!carrito.length || procesando"
@@ -162,8 +179,11 @@ const vistaGrid       = ref(false)
 const carrito         = ref([])
 const metodoPago      = ref('efectivo')
 const montoPagado     = ref('')
-const tipoComprobante = ref('ninguno')
-const procesando      = ref(false)
+const tipoComprobante    = ref('ninguno')
+const clienteDni         = ref('')
+const clienteRazonSocial = ref('')
+const clienteEmail       = ref('')
+const procesando         = ref(false)
 const inputBusqueda   = ref(null)
 const scanTimer        = ref(null)
 
@@ -238,17 +258,23 @@ const cobrar = () => {
     if (!carrito.value.length || procesando.value) return
     procesando.value = true
     router.post('/ferreteria/pos', {
-        items:            carrito.value,
-        metodo_pago:      metodoPago.value,
-        total:            total.value,
-        monto_pagado:     montoPagado.value || null,
-        tipo_comprobante: tipoComprobante.value,
+        items:               carrito.value,
+        metodo_pago:         metodoPago.value,
+        total:               total.value,
+        monto_pagado:        montoPagado.value || null,
+        tipo_comprobante:    tipoComprobante.value,
+        cliente_dni:         clienteDni.value,
+        cliente_razon_social: clienteRazonSocial.value,
+        cliente_email:       clienteEmail.value,
     }, {
         onSuccess: () => {
-            carrito.value         = []
-            montoPagado.value     = ''
-            procesando.value      = false
-            tipoComprobante.value = 'ninguno'
+            carrito.value            = []
+            montoPagado.value        = ''
+            procesando.value         = false
+            tipoComprobante.value    = 'ninguno'
+            clienteDni.value         = ''
+            clienteRazonSocial.value = ''
+            clienteEmail.value       = ''
         },
         onError: () => { procesando.value = false }
     })

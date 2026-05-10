@@ -215,55 +215,20 @@
             </div>
         </form>
 
-        <!-- Sección Nubefact - Solo Superadmin -->
-        <div v-if="es_superadmin" style="margin-top:1.5rem; background:white; border-radius:10px; border:2px solid #0891b2; padding:1.5rem;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.2rem;">
-                <div style="width:36px; height:36px; background:linear-gradient(135deg,#0891b2,#0e7490); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px;">⚡</div>
-                <div>
-                    <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">Configuración Nubefact</p>
-                    <p style="font-size:11px; color:#64748B; margin:0;">Solo visible para SuperAdmin</p>
+        <!-- Facturación Electrónica -->
+        <div style="background:white; border-radius:16px; padding:20px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; border-radius:10px; background:#F0FDFA; display:flex; align-items:center; justify-content:center; font-size:20px;">🧾</div>
+                    <div>
+                        <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">Facturación Electrónica</p>
+                        <p style="font-size:12px; color:#64748B; margin:2px 0 0;">Configura APISUNAT y régimen tributario</p>
+                    </div>
                 </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-                <div style="grid-column:1/-1;">
-                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Token Nubefact</label>
-                    <input v-model="nubefact.token" type="text" placeholder="Token de tu cuenta Nubefact"
-                        style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; box-sizing:border-box; font-family:monospace;"/>
-                </div>
-                <div>
-                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Serie Boleta</label>
-                    <input v-model="nubefact.serie_boleta" type="text" maxlength="4" placeholder="B001"
-                        style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; box-sizing:border-box; text-transform:uppercase;"/>
-                </div>
-                <div>
-                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Serie Factura</label>
-                    <input v-model="nubefact.serie_factura" type="text" maxlength="4" placeholder="F001"
-                        style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; box-sizing:border-box; text-transform:uppercase;"/>
-                </div>
-            </div>
-
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
-                <input type="checkbox" v-model="nubefact.demo" id="nubefact_demo" style="width:16px; height:16px; accent-color:#0891b2;"/>
-                <label for="nubefact_demo" style="font-size:13px; color:#374151;">Modo Demo (pruebas)</label>
-                <span style="padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-left:8px;" :style="nubefact.demo ? 'background:#fef3c7; color:#92400e;' : 'background:#dcfce7; color:#166534;'">
-                    {{ nubefact.demo ? "🧪 Demo" : "🚀 Producción" }}
-                </span>
-            </div>
-
-            <div style="display:flex; gap:10px;">
-                <button type="button" @click="guardarNubefact" :disabled="procesandoNubefact"
-                    style="flex:1; padding:12px; background:linear-gradient(135deg,#0891b2,#0e7490); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
-                    {{ procesandoNubefact ? "Guardando..." : "💾 Guardar Nubefact" }}
-                </button>
-                <button type="button" @click="testNubefact"
-                    style="padding:12px 20px; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
-                    🔌 Probar conexión
-                </button>
-            </div>
-
-            <div v-if="testResultado" :style="testResultado.success ? 'margin-top:12px; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; color:#166534; font-size:13px;' : 'margin-top:12px; padding:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#dc2626; font-size:13px;'">
-                {{ testResultado.success ? testResultado.mensaje : testResultado.error }}
+                <a href="/configuracion/facturacion"
+                    style="padding:10px 20px; border-radius:10px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; font-size:13px; font-weight:700; text-decoration:none; display:inline-block;">
+                    ⚙️ Configurar
+                </a>
             </div>
         </div>
 
@@ -318,40 +283,7 @@ const onCertificado = (e) => {
     certNombre.value = certFile.value?.name || ''
 }
 
-// Nubefact
-const nubefact = ref({
-    token: props.empresa?.nubefact_token ?? '',
-    demo: props.empresa?.nubefact_demo ?? true,
-    zona_exonerada: props.empresa?.zona_exonerada ?? false,
-    serie_boleta: props.empresa?.serie_boleta ?? 'B001',
-    serie_factura: props.empresa?.serie_factura ?? 'F001',
-})
-const procesandoNubefact = ref(false)
-const testResultado = ref(null)
-
-const guardarNubefact = () => {
-    procesandoNubefact.value = true
-    router.post('/configuracion/nubefact', {
-        nubefact_token: nubefact.value.token,
-        nubefact_demo: nubefact.value.demo,
-        zona_exonerada: nubefact.value.zona_exonerada,
-        serie_boleta: nubefact.value.serie_boleta,
-        serie_factura: nubefact.value.serie_factura,
-    }, {
-        onSuccess: () => { procesandoNubefact.value = false },
-        onError: () => { procesandoNubefact.value = false },
-    })
-}
-
-const testNubefact = async () => {
-    testResultado.value = null
-    try {
-        const res = await fetch('/configuracion/nubefact/test')
-        testResultado.value = await res.json()
-    } catch (e) {
-        testResultado.value = { error: 'Error de conexión' }
-    }
-}
+// Facturación: ver /configuracion/facturacion
 
 const guardar = () => {
     procesando.value = true

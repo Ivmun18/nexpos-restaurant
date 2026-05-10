@@ -498,3 +498,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/ferreteria/caja/abrir',         [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'abrir'])->name('ferreteria.caja.abrir');
     Route::post('/ferreteria/caja/{caja}/cerrar', [\App\Http\Controllers\Ferreteria\CajaFerretoriaController::class, 'cerrar'])->name('ferreteria.caja.cerrar');
     Route::get('/ferreteria/reportes', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'index'])->name('ferreteria.reportes');
+
+// Configuración facturación
+Route::middleware(['auth'])->group(function () {
+    Route::get('/configuracion/facturacion', [\App\Http\Controllers\ConfiguracionFacturacionController::class, 'index'])->name('configuracion.facturacion');
+    Route::post('/configuracion/facturacion', [\App\Http\Controllers\ConfiguracionFacturacionController::class, 'guardar'])->name('configuracion.facturacion.guardar');
+    Route::post('/configuracion/facturacion/probar', [\App\Http\Controllers\ConfiguracionFacturacionController::class, 'probar'])->name('configuracion.facturacion.probar');
+});
