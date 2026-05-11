@@ -195,6 +195,35 @@
             </div>
         </div>
 
+        <!-- Modal de Alerta -->
+        <div v-if="productoAlerta" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
+            <div style="background:white; border-radius:16px; padding:28px; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 6px;">{{ productoAlerta.descripcion }}</p>
+                <p style="font-size:12px; color:#94A3B8; margin:0 0 16px;">{{ productoAlerta.codigo_barras || 'Sin código' }}</p>
+
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+                    <div v-for="a in alertasProducto" :key="a.tipo"
+                        :style="`display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; background:${a.color}15; border:1px solid ${a.color}40;`">
+                        <span style="font-size:20px;">{{ a.icon }}</span>
+                        <span :style="`font-size:13px; font-weight:600; color:${a.color};`">{{ a.msg }}</span>
+                    </div>
+                </div>
+
+                <p style="font-size:13px; color:#64748B; margin:0 0 20px;">¿Deseas agregar este producto de todas formas?</p>
+
+                <div style="display:flex; gap:10px;">
+                    <button @click="productoAlerta = null; alertasProducto = []"
+                        style="flex:1; padding:12px; background:#F1F5F9; border:none; border-radius:10px; font-size:14px; font-weight:600; color:#64748B; cursor:pointer;">
+                        Cancelar
+                    </button>
+                    <button @click="confirmarAgregar(productoAlerta)"
+                        style="flex:1; padding:12px; background:#14B8A6; border:none; border-radius:10px; font-size:14px; font-weight:600; color:white; cursor:pointer;">
+                        Agregar igual
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -274,32 +303,45 @@ const escanearCodigo = () => {
     }
 }
 
+const productoAlerta = ref(null)
+const alertasProducto = ref([])
+
 const agregarAlCarrito = (p) => {
     if (p.stock_actual <= 0) return
 
-    // Alerta vencimiento
+    const alertas = []
     if (p.fecha_vencimiento) {
         const hoy = new Date()
         const vence = new Date(p.fecha_vencimiento)
         const dias = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24))
         if (dias < 0) {
-            if (!confirm(`🚨 PRODUCTO VENCIDO\n"${p.descripcion}" venció hace ${Math.abs(dias)} días.\n¿Agregar de todas formas?`)) return
+            alertas.push({ tipo: 'vencido', msg: `Venció hace ${Math.abs(dias)} día(s)`, color: '#EF4444', icon: '🚨' })
         } else if (dias <= 30) {
-            if (!confirm(`⚠️ PRÓXIMO A VENCER\n"${p.descripcion}" vence en ${dias} días.\n¿Agregar de todas formas?`)) return
+            alertas.push({ tipo: 'proximo', msg: `Vence en ${dias} día(s)`, color: '#F59E0B', icon: '⚠️' })
         }
     }
-
-    // Alerta stock bajo
     if (p.stock_minimo && p.stock_actual <= p.stock_minimo) {
-        alert(`📦 Stock bajo: "${p.descripcion}" tiene solo ${p.stock_actual} unidades (mínimo: ${p.stock_minimo})`)
+        alertas.push({ tipo: 'stock', msg: `Stock bajo: ${p.stock_actual} unid. (mín: ${p.stock_minimo})`, color: '#F59E0B', icon: '📦' })
     }
 
+    if (alertas.length > 0) {
+        productoAlerta.value = p
+        alertasProducto.value = alertas
+        return
+    }
+
+    confirmarAgregar(p)
+}
+
+const confirmarAgregar = (p) => {
     const existe = carrito.value.find(i => i.id === p.id)
     if (existe) {
         if (existe.cantidad < p.stock_actual) existe.cantidad++
     } else {
         carrito.value.push({ ...p, cantidad: 1 })
     }
+    productoAlerta.value = null
+    alertasProducto.value = []
 }
 
 const incrementar = (i) => {
