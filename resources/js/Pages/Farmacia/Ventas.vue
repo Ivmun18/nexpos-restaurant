@@ -1,5 +1,5 @@
 <template>
-    <AppLayout title="Ventas" subtitle="Historial de ventas del minimarket">
+    <AppLayout title="Ventas" subtitle="Historial de ventas de farmacia">
 
         <!-- Header -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
