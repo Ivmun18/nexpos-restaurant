@@ -78,7 +78,6 @@ class ReportesFerretoriaController extends Controller
                 'total_yape'    => round($ventas->where('metodo_pago','yape')->sum('total'), 2),
                 'total_tarjeta' => round($ventas->where('metodo_pago','tarjeta')->sum('total'), 2),
                 'cantidad'      => $ventas->count(),
-                'aperturas'     => $cajas->count(),
             ],
         ]);
     }

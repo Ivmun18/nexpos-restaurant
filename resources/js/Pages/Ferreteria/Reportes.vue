@@ -150,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -168,12 +168,12 @@ const props = defineProps({
 const desde = ref(props.desde)
 const hasta = ref(props.hasta)
 
-const stockBajo            = ref(props.stock_bajo)
-const valorInventario      = ref(props.valor_inventario)
-const resumenCotizaciones  = ref(props.resumen_cotizaciones)
-const resumenOrdenes       = ref(props.resumen_ordenes)
-const resumenGarantias     = ref(props.resumen_garantias)
-const resumenCaja          = ref(props.resumen_caja)
+const stockBajo            = computed(() => props.stock_bajo)
+const valorInventario      = computed(() => props.valor_inventario)
+const resumenCotizaciones  = computed(() => props.resumen_cotizaciones)
+const resumenOrdenes       = computed(() => props.resumen_ordenes)
+const resumenGarantias     = computed(() => props.resumen_garantias)
+const resumenCaja          = computed(() => props.resumen_caja)
 
 const filtrar = () => {
     router.get('/ferreteria/reportes', { desde: desde.value, hasta: hasta.value }, { preserveState: true })
