@@ -52,6 +52,29 @@ class ReportesFerretoriaController extends Controller
             ->where('estado', '!=', 'anulado')
             ->get();
 
+        // Ventas por vendedor
+        $ventasPorVendedor = \App\Models\Venta::where('empresa_id', $empresa_id)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->where('estado', '!=', 'anulado')
+            ->with('usuario:id,name,rol')
+            ->get()
+            ->groupBy('usuario_id')
+            ->map(function($ventas, $userId) {
+                $usuario = $ventas->first()->usuario;
+                return [
+                    'usuario_id'   => $userId,
+                    'nombre'       => $usuario?->name ?? 'Sin usuario',
+                    'rol'          => $usuario?->rol ?? '',
+                    'cantidad'     => $ventas->count(),
+                    'total'        => round($ventas->sum('total'), 2),
+                    'efectivo'     => round($ventas->where('metodo_pago','efectivo')->sum('total'), 2),
+                    'yape'         => round($ventas->where('metodo_pago','yape')->sum('total'), 2),
+                    'plin'         => round($ventas->where('metodo_pago','plin')->sum('total'), 2),
+                    'tarjeta'      => round($ventas->where('metodo_pago','tarjeta')->sum('total'), 2),
+                ];
+            })->values();
+
         return Inertia::render('Ferreteria/Reportes', [
             'desde'           => $desde,
             'hasta'           => $hasta,
@@ -72,6 +95,7 @@ class ReportesFerretoriaController extends Controller
                 'vencidas'  => $garantias->where('estado', 'vencida')->count(),
                 'reclamadas'=> $garantias->where('estado', 'reclamada')->count(),
             ],
+            'ventas_por_vendedor' => $ventasPorVendedor,
             'resumen_caja' => [
                 'total_ventas'  => round($ventas->sum('total'), 2),
                 'total_efectivo'=> round($ventas->where('metodo_pago','efectivo')->sum('total'), 2),
