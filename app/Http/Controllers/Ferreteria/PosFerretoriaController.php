@@ -18,9 +18,20 @@ class PosFerretoriaController extends Controller
     public function index()
     {
         $empresa_id = auth()->user()->empresa_id;
+
+        $cajaAbierta = \App\Models\CajaMinimarket::where('empresa_id', $empresa_id)
+            ->where('estado', 'abierta')
+            ->latest()->first();
+
+        if (!$cajaAbierta) {
+            return redirect()->route('ferreteria.caja')->with('warning', '⚠️ Debes abrir la caja antes de vender.');
+        }
+
         $productos  = Producto::where('empresa_id', $empresa_id)->where('activo', true)->with('categoria')->get();
         $categorias = Categoria::where('empresa_id', $empresa_id)->orderBy('nombre')->get();
-        return Inertia::render('Ferreteria/Pos', compact('productos', 'categorias'));
+        $clientes   = \App\Models\Cliente::where('empresa_id', $empresa_id)->orderBy('razon_social')->get(['id','razon_social','numero_documento','tipo_documento','email']);
+
+        return Inertia::render('Ferreteria/Pos', compact('productos', 'categorias', 'clientes', 'cajaAbierta'));
     }
 
     public function store(Request $request)
