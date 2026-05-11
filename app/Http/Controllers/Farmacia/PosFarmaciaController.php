@@ -60,6 +60,7 @@ class PosFarmaciaController extends Controller
 
     // Calcular IGV según régimen tributario
     $regimen = $empresa->regimen_tributario ?? 'GENERAL';
+    $esRus = in_array($regimen, ['RUS', 'EXONERADO']) || $empresa->zona_exonerada;
     if ($regimen === 'RUS') {
         $igv      = 0;
         $gravado  = 0;
@@ -134,7 +135,6 @@ class PosFarmaciaController extends Controller
 private function emitirNubefact($venta, $empresa)
 {
     $venta->load('detalle');
-    $esRus     = $empresa->regimen_tributario === 'RUS' || $empresa->zona_exonerada;
     $proveedor = $empresa->proveedor_facturacion ?? 'apisunat';
 
     // Formatear items según régimen

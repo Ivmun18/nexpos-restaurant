@@ -216,7 +216,7 @@ const imprimir = () => {
     setTimeout(() => ventana.print(), 500)
 }
 
-const enviarWhatsApp = () => {
+const enviarWhatsApp = async () => {
     const tel = prompt('📱 Ingresa el número de WhatsApp del cliente (ej: 987654321):')
     if (!tel) return
     const numero = '51' + tel.replace(/[^0-9]/g, '').slice(-9)
@@ -232,8 +232,27 @@ const enviarWhatsApp = () => {
         `💰 *Total: S/ ${(Number(props.venta.total_gravado) + Number(props.venta.total_igv) + Number(props.venta.total_inafecto) + Number(props.venta.total_exonerado)).toFixed(2)}*\n\n` +
         `Gracias por su compra 🙏`
 
-    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`
-    window.open(url, '_blank')
+    try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
+        const res = await fetch('/api/whatsapp/enviar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({ telefono: numero, mensaje })
+        })
+        const data = await res.json()
+        if (data.ok) {
+            alert('✅ Mensaje enviado correctamente')
+        } else {
+            alert('❌ Error: ' + (data.error || 'No se pudo enviar'))
+        }
+    } catch(e) {
+        alert('❌ Error de conexión')
+    }
 }
 
 const imprimirA4 = () => {

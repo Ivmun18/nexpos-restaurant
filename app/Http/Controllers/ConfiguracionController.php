@@ -29,7 +29,7 @@ class ConfiguracionController extends Controller
             'email'        => 'nullable|email|max:150',
         ]);
 
-        $empresa = Empresa::first();
+        $empresa = auth()->user()->empresa;
 
         $datos = [
             'ruc'                => $request->ruc,
@@ -134,7 +134,7 @@ class ConfiguracionController extends Controller
             'serie_factura'  => 'required|string|max:4',
         ]);
 
-        $empresa = Empresa::first();
+        $empresa = auth()->user()->empresa;
 
         $empresa->update([
             'nubefact_token' => $request->nubefact_token,
@@ -149,7 +149,7 @@ class ConfiguracionController extends Controller
 
     public function testNubefact()
     {
-        $empresa = Empresa::first();
+        $empresa = auth()->user()->empresa;
 
         if (!$empresa->nubefact_token) {
             return response()->json(['error' => 'No hay token configurado'], 400);
