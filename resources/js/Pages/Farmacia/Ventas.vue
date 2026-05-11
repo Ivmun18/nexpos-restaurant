@@ -103,7 +103,7 @@
                         </td>
                         <td style="padding:14px 20px; text-align:center;">
                             <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
-                                <a :href="`/minimarket/ventas/${venta.id}`"
+                                <a :href="`/farmacia/ventas/${venta.id}`"
                                     style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; border:1px solid #CCFBF1;">
                                     👁 Ver
                                 </a>
@@ -129,7 +129,7 @@
         <!-- Paginación -->
         <div v-if="ventas.last_page > 1" style="display:flex; justify-content:center; gap:8px; margin-top:20px;">
             <a v-for="page in ventas.last_page" :key="page"
-                :href="`/minimarket/ventas?page=${page}`"
+                :href="`/farmacia/ventas?page=${page}`"
                 :style="{
                     padding: '8px 14px',
                     borderRadius: '8px',
@@ -147,11 +147,12 @@
 
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const reintentar = (id) => {
     if (confirm('¿Reintentar envío a SUNAT?')) {
-        router.post(`/minimarket/ventas/${id}/reintentar`)
+        router.post(`/farmacia/ventas/${id}/reintentar`)
     }
 }
 
@@ -180,7 +181,7 @@ const enviarWhatsApp = async (venta) => {
 
 const anular = (id) => {
     if (confirm('¿Anular este comprobante en SUNAT?')) {
-        router.post(`/minimarket/ventas/${id}/anular`)
+        router.post(`/farmacia/ventas/${id}/anular`)
     }
 }
 

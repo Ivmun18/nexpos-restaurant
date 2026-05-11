@@ -5,7 +5,7 @@
 
             <!-- Botones -->
             <div style="display:flex; gap:12px; margin-bottom:24px;">
-                <a href="/minimarket/ventas" style="padding:10px 20px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #E2E8F0;">
+                <a href="/farmacia/ventas" style="padding:10px 20px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #E2E8F0;">
                     ← Volver
                 </a>
                 <button @click="imprimir"
@@ -178,13 +178,13 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 
 const reintentar = () => {
     if (confirm('¿Reintentar envío a SUNAT?')) {
-        router.post(`/minimarket/ventas/${props.venta.id}/reintentar`)
+        router.post(`/farmacia/ventas/${props.venta.id}/reintentar`)
     }
 }
 
 const anular = () => {
     if (confirm('¿Anular este comprobante?')) {
-        router.post(`/minimarket/ventas/${props.venta.id}/anular`)
+        router.post(`/farmacia/ventas/${props.venta.id}/anular`)
     }
 }
 
