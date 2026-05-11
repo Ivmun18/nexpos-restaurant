@@ -202,30 +202,79 @@ const formatFecha = (fecha) => {
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
 const imprimir = () => {
-    const contenido = document.getElementById('ticket').innerHTML
+    const v = props.venta
+    const emp = props.empresa
+    const total = Number(v.total).toFixed(2)
+    const items = v.detalle?.map(d => {
+        const nom = d.descripcion.substring(0, 20).padEnd(20)
+        const cant = String(d.cantidad).padStart(3)
+        const precio = ('S/'+Number(d.precio_unitario).toFixed(2)).padStart(8)
+        const subtotal = ('S/'+Number(d.total).toFixed(2)).padStart(8)
+        return `<tr>
+            <td colspan="2" style="padding:1px 0; font-size:11px;">${d.descripcion}</td>
+        </tr>
+        <tr>
+            <td style="padding:1px 0; font-size:11px;">${cant} x ${Number(d.precio_unitario).toFixed(2)}</td>
+            <td style="text-align:right; padding:1px 0; font-size:11px;">S/ ${Number(d.total).toFixed(2)}</td>
+        </tr>`
+    }).join('') || ''
+
     const ventana = window.open('', '_blank')
     ventana.document.write(`
         <html>
         <head>
-            <title>Ticket - ${props.venta.numero_completo}</title>
+            <title>Ticket - ${v.numero_completo}</title>
             <style>
                 @media print {
                     body { margin: 0; }
-                    @page { margin: 5mm; size: 80mm auto; }
+                    @page { margin: 2mm; size: 80mm auto; }
+                    .no-print { display: none; }
                 }
-                body { 
-                    font-family: 'Courier New', monospace; 
-                    padding: 10px; 
-                    max-width: 80mm; 
+                body {
+                    font-family: 'Courier New', monospace;
+                    width: 76mm;
                     margin: 0 auto;
-                    font-size: 12px;
+                    padding: 4px;
+                    font-size: 11px;
+                    color: #000;
                 }
-                * { box-sizing: border-box; }
+                .center { text-align: center; }
+                .right { text-align: right; }
+                .bold { font-weight: bold; }
+                .line { border-top: 1px dashed #000; margin: 4px 0; }
                 table { width: 100%; border-collapse: collapse; }
-                img { max-width: 100%; }
+                .total-row td { font-size: 13px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px; }
             </style>
         </head>
-        <body>${contenido}</body>
+        <body>
+            <div class="center bold" style="font-size:13px;">${emp?.nombre_comercial || 'FARMACIA'}</div>
+            <div class="center">RUC: ${emp?.ruc || ''}</div>
+            <div class="center">${emp?.direccion || ''}</div>
+            ${emp?.telefono ? `<div class="center">Tel: ${emp.telefono}</div>` : ''}
+            <div class="line"></div>
+            <div class="center bold" style="font-size:12px;">${v.tipo_comprobante === '03' ? 'BOLETA DE VENTA' : 'FACTURA'}</div>
+            <div class="center bold">${v.numero_completo}</div>
+            <div class="center">${v.fecha_emision?.substring(0,10) || ''}</div>
+            <div class="line"></div>
+            ${v.cliente_razon_social ? `<div>Cliente: ${v.cliente_razon_social}</div>` : ''}
+            ${v.cliente_num_doc ? `<div>Doc: ${v.cliente_num_doc}</div>` : ''}
+            <div class="line"></div>
+            <table>${items}</table>
+            <div class="line"></div>
+            <table>
+                ${Number(v.total_gravado) > 0 ? `<tr><td>Op. Gravada</td><td class="right">S/ ${Number(v.total_gravado).toFixed(2)}</td></tr>` : ''}
+                ${Number(v.total_igv) > 0 ? `<tr><td>IGV (18%)</td><td class="right">S/ ${Number(v.total_igv).toFixed(2)}</td></tr>` : ''}
+                ${Number(v.total_exonerado) > 0 ? `<tr><td>Op. Exonerada</td><td class="right">S/ ${Number(v.total_exonerado).toFixed(2)}</td></tr>` : ''}
+                ${Number(v.total_inafecto) > 0 ? `<tr><td>Op. Inafecta</td><td class="right">S/ ${Number(v.total_inafecto).toFixed(2)}</td></tr>` : ''}
+                <tr class="total-row"><td class="bold">TOTAL</td><td class="right bold">S/ ${total}</td></tr>
+                <tr><td>Método de pago</td><td class="right">${v.metodo_pago || ''}</td></tr>
+            </table>
+            <div class="line"></div>
+            <div class="center" style="font-size:10px;">Gracias por su compra</div>
+            <div class="center" style="font-size:10px;">Representación impresa de comprobante electrónico</div>
+            <div class="line"></div>
+            <button class="no-print" onclick="window.print()" style="width:100%; padding:8px; margin-top:8px; cursor:pointer;">🖨️ Imprimir</button>
+        </body>
         </html>
     `)
     ventana.document.close()
