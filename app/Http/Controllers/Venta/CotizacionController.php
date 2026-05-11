@@ -124,6 +124,7 @@ class CotizacionController extends Controller
     {
         $cotizacion->load('detalle', 'cliente');
         return Inertia::render('Cotizaciones/Show', [
+            'empresa' => auth()->user()->empresa,
             'cotizacion' => $cotizacion,
         ]);
     }

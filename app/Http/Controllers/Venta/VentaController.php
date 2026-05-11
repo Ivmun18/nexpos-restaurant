@@ -171,7 +171,8 @@ class VentaController extends Controller
     {
         $venta->load('detalle.producto', 'cliente');
         return Inertia::render('Ventas/Show', [
-            'venta' => $venta,
+            'venta'   => $venta,
+            'empresa' => auth()->user()->empresa,
         ]);
     }
 

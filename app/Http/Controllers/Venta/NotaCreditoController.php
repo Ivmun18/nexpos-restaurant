@@ -151,6 +151,7 @@ class NotaCreditoController extends Controller
     {
         $notaCredito->load('detalle', 'venta');
         return Inertia::render('Ventas/NotaCreditoShow', [
+            'empresa' => auth()->user()->empresa,
             'nota' => $notaCredito,
         ]);
     }
