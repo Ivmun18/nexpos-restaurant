@@ -20,6 +20,14 @@
                     style="padding:10px 20px; background:linear-gradient(135deg,#25D366,#128C7E); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
                     📱 Enviar WhatsApp
                 </button>
+                <button v-if="venta.nubefact_estado === 'rechazado'" @click="reintentar"
+                    style="padding:10px 20px; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                    🔄 Reintentar SUNAT
+                </button>
+                <button v-if="venta.estado !== 'anulado'" @click="anular"
+                    style="padding:10px 20px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                    🚫 Anular
+                </button>
             </div>
 
             <!-- Ticket -->

@@ -606,6 +606,8 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     // Ventas
     Route::get('/ventas', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'ventas'])->name('ventas');
     Route::get('/ventas/{venta}', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'show'])->name('ventas.show');
+    Route::post('/ventas/{venta}/anular', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'anular'])->name('ventas.anular');
+    Route::post('/ventas/{venta}/reintentar', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'reintentar'])->name('ventas.reintentar');
 
     // Reportes
     Route::get('/reportes', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'index'])->name('reportes');

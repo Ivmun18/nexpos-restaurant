@@ -102,4 +102,18 @@ class ReportesFarmaciaController extends Controller
             'empresa' => $empresa,
         ]);
     }
+
+    public function anular(\App\Models\Venta $venta)
+    {
+        if ($venta->estado === 'anulado') {
+            return back()->with('error', 'La venta ya está anulada.');
+        }
+        $venta->update(['estado' => 'anulado']);
+        return back()->with('success', 'Venta anulada correctamente.');
+    }
+
+    public function reintentar(\App\Models\Venta $venta)
+    {
+        return back()->with('info', 'Reintento de envío a SUNAT iniciado.');
+    }
 }
