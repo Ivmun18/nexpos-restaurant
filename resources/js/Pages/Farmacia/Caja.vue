@@ -233,6 +233,7 @@ const props = defineProps({
 
 const montoInicial = ref('')
 const modalCierre  = ref(false)
+const cajaDetalle  = ref(null)
 const formCierre   = ref({ monto_final: '', observaciones: '' })
 
 const maxHora = computed(() => {
