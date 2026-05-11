@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CajaMinimarket;
 use App\Models\Venta;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Inertia\Inertia;
 
 class CajaFarmaciaController extends Controller
@@ -50,8 +51,22 @@ class CajaFarmaciaController extends Controller
         $historialCajas = CajaMinimarket::where('empresa_id', $empresaId)
             ->where('estado', 'cerrada')
             ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+            ->limit(10)
+            ->get()
+            ->map(function($caja) use ($empresaId) {
+                $ventas = Venta::where('empresa_id', $empresaId)
+                    ->whereDate('fecha_emision', Carbon::parse($caja->apertura_at)->toDateString())
+                    ->where('estado', '!=', 'anulado')
+                    ->get();
+                $caja->cantidad_ventas = $ventas->count();
+                $caja->total_ventas    = round($ventas->sum('total'), 2);
+                $caja->total_efectivo  = round($ventas->where('metodo_pago','efectivo')->sum('total'), 2);
+                $caja->total_yape      = round($ventas->where('metodo_pago','yape')->sum('total'), 2);
+                $caja->total_plin      = round($ventas->where('metodo_pago','plin')->sum('total'), 2);
+                $caja->total_tarjeta   = round($ventas->where('metodo_pago','tarjeta')->sum('total'), 2);
+                $caja->diferencia      = round($caja->monto_final - ($caja->monto_inicial + $caja->total_efectivo), 2);
+                return $caja;
+            });
 
         return Inertia::render('Farmacia/Caja', [
             'caja_abierta' => $cajaAbierta,
