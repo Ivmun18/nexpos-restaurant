@@ -7,9 +7,39 @@
                 <p style="font-size:24px; font-weight:800; color:#1E293B; margin:0;">🧾 Historial de Ventas</p>
                 <p style="font-size:14px; color:#94A3B8; margin:4px 0 0;">{{ ventas.total }} ventas registradas</p>
             </div>
-            <a href="/minimarket/pos" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none;">
+            <a href="/farmacia/pos" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none;">
                 + Nueva Venta
             </a>
+        </div>
+
+        <!-- Filtros -->
+        <div style="background:white; border-radius:16px; padding:16px 20px; border:1px solid #E2E8F0; margin-bottom:16px; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#64748B;">Desde</label>
+                <input v-model="filtros.desde" type="date"
+                    style="display:block; margin-top:4px; padding:8px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none;"
+                    @focus="$event.target.style.borderColor='#14B8A6'"
+                    @blur="$event.target.style.borderColor='#E2E8F0'" />
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#64748B;">Hasta</label>
+                <input v-model="filtros.hasta" type="date"
+                    style="display:block; margin-top:4px; padding:8px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none;"
+                    @focus="$event.target.style.borderColor='#14B8A6'"
+                    @blur="$event.target.style.borderColor='#E2E8F0'" />
+            </div>
+            <button @click="filtrar"
+                style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                🔍 Filtrar
+            </button>
+            <button @click="setHoy"
+                style="padding:10px 16px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                Hoy
+            </button>
+            <button @click="setMes"
+                style="padding:10px 16px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                Este mes
+            </button>
         </div>
 
         <!-- Tabla -->
@@ -157,6 +187,31 @@ const anular = (id) => {
 const props = defineProps({
     ventas: { type: Object, default: () => ({ data: [], total: 0, last_page: 1, current_page: 1 }) },
 })
+
+const props = defineProps({
+    ventas: Object,
+    desde:  { type: String, default: '' },
+    hasta:  { type: String, default: '' },
+})
+
+const filtros = ref({ desde: props.desde, hasta: props.hasta })
+
+const filtrar = () => router.get('/farmacia/ventas', filtros.value, { preserveState: false })
+
+const setHoy = () => {
+    const hoy = new Date().toISOString().split('T')[0]
+    filtros.value = { desde: hoy, hasta: hoy }
+    filtrar()
+}
+
+const setMes = () => {
+    const now = new Date()
+    filtros.value = {
+        desde: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0],
+        hasta: now.toISOString().split('T')[0]
+    }
+    filtrar()
+}
 
 const formatFecha = (fecha) => {
     if (!fecha) return '-'

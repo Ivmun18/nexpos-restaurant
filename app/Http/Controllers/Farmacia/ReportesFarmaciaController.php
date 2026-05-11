@@ -74,15 +74,22 @@ class ReportesFarmaciaController extends Controller
         ]);
     }
 
-    public function ventas()
+    public function ventas(Request $request)
     {
         $empresaId = auth()->user()->empresa_id;
+        $desde = $request->desde ?? now()->toDateString();
+        $hasta = $request->hasta ?? now()->toDateString();
+
         $ventas = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->orderBy('created_at', 'desc')
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->orderBy('fecha_emision', 'desc')
             ->paginate(20);
 
         return \Inertia\Inertia::render('Farmacia/Ventas', [
             'ventas' => $ventas,
+            'desde'  => $desde,
+            'hasta'  => $hasta,
         ]);
     }
 
