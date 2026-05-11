@@ -110,10 +110,10 @@
                             <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Régimen tributario</label>
                             <select v-model="form.regimen_tributario"
                                 style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; background:white;">
-                                <option value="1">Régimen General</option>
-                                <option value="2">Régimen Especial</option>
-                                <option value="3">Régimen MYPE</option>
-                                <option value="4">RUS</option>
+                                <option value="GENERAL">Régimen General</option>
+                                <option value="RER">Régimen Especial (RER)</option>
+                                <option value="MYPE">Régimen MYPE</option>
+                                <option value="RUS">RUS</option>
                             </select>
                         </div>
 
@@ -259,7 +259,7 @@ const form = ref({
     telefono:           props.empresa?.telefono ?? '',
     email:              props.empresa?.email ?? '',
     web:                props.empresa?.web ?? '',
-    regimen_tributario: props.empresa?.regimen_tributario ?? 1,
+    regimen_tributario: props.empresa?.regimen_tributario ?? 'GENERAL',
     buen_contribuyente: props.empresa?.buen_contribuyente ?? false,
     agente_retencion:   props.empresa?.agente_retencion ?? false,
     ambiente:           props.empresa?.ambiente ?? 'beta',

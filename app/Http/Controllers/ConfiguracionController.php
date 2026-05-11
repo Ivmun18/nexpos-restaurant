@@ -43,7 +43,7 @@ class ConfiguracionController extends Controller
             'telefono'           => $request->telefono,
             'email'              => $request->email,
             'web'                => $request->web,
-            'regimen_tributario' => $request->regimen_tributario ?? 1,
+            'regimen_tributario' => $request->regimen_tributario ?? 'GENERAL',
             'buen_contribuyente' => $request->buen_contribuyente ?? false,
             'agente_retencion'   => $request->agente_retencion ?? false,
             'ambiente'           => $request->ambiente ?? 'beta',
