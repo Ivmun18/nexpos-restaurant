@@ -278,6 +278,7 @@ const allMenuItems = [
     { path: '/farmacia/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/compras',               icon: 'receipt',  label: 'Compras',            module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/proveedores',           icon: 'users',    label: 'Proveedores',        module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/usuarios',     icon: 'users',    label: 'Usuarios',      module: 'admin', section: 'AJUSTES' },
     { path: '/configuracion',icon: 'settings', label: 'Configuración', module: 'admin', section: 'AJUSTES' },
 ]

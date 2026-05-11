@@ -72,4 +72,24 @@ $metodosPago = collect([
             'hasta'          => $hasta,
         ]);
     }
+
+    public function ventas()
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $ventas = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return \Inertia\Inertia::render('Farmacia/Ventas', [
+            'ventas' => $ventas,
+        ]);
+    }
+
+    public function show($id)
+    {
+        $venta = \App\Models\Venta::with('detalles')->findOrFail($id);
+        return \Inertia\Inertia::render('Farmacia/VentaDetalle', [
+            'venta' => $venta,
+        ]);
+    }
 }
