@@ -28,9 +28,14 @@ class PosFarmaciaController extends Controller
             return redirect()->route('farmacia.caja')->with('warning', '⚠️ Debes abrir la caja antes de vender.');
         }
 
+        $clientes = \App\Models\Cliente::where('empresa_id', $empresaId)
+            ->orderBy('razon_social')
+            ->get(['id', 'razon_social', 'numero_documento', 'tipo_documento', 'email', 'telefono']);
+
         return Inertia::render('Farmacia/Pos', [
             'productos'    => $productos,
             'caja_abierta' => $cajaAbierta,
+            'clientes'     => $clientes,
         ]);
     }
 

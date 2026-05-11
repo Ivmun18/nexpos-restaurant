@@ -159,6 +159,38 @@
 
                         <!-- Datos cliente para boleta/factura -->
                         <div v-if="tipoComprobante !== 'ninguno'" style="display:flex; flex-direction:column; gap:8px;">
+
+                            <!-- Buscador de cliente -->
+                            <div style="position:relative;">
+                                <input v-model="busquedaCliente" type="text"
+                                    placeholder="🔍 Buscar cliente por nombre o DNI..."
+                                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                                    @focus="mostrarSugerencias = true"
+                                    @blur="setTimeout(() => mostrarSugerencias = false, 200)"
+                                />
+                                <!-- Sugerencias -->
+                                <div v-if="mostrarSugerencias && clientesFiltrados.length"
+                                    style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #E2E8F0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:100; max-height:180px; overflow-y:auto;">
+                                    <div v-for="cl in clientesFiltrados" :key="cl.id"
+                                        @mousedown="seleccionarCliente(cl)"
+                                        style="padding:10px 14px; cursor:pointer; border-bottom:1px solid #F1F5F9; font-size:13px;"
+                                        @mouseover="$event.target.style.background='#F0FDFA'"
+                                        @mouseout="$event.target.style.background='white'">
+                                        <span style="font-weight:600; color:#1E293B;">{{ cl.razon_social }}</span>
+                                        <span style="color:#94A3B8; margin-left:8px;">{{ cl.numero_documento }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cliente seleccionado -->
+                            <div v-if="clienteSeleccionado" style="padding:8px 12px; background:#F0FDFA; border-radius:8px; border:1px solid #CCFBF1; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <span style="font-size:13px; font-weight:600; color:#0F766E;">{{ clienteSeleccionado.razon_social }}</span>
+                                    <span style="font-size:12px; color:#64748B; margin-left:8px;">{{ clienteSeleccionado.numero_documento }}</span>
+                                </div>
+                                <button @click="limpiarCliente" style="background:none; border:none; color:#94A3B8; cursor:pointer; font-size:16px;">✕</button>
+                            </div>
+
                             <input v-model="clienteDni" type="text"
                                 :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
                                 style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
@@ -234,6 +266,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
     productos: { type: Array, default: () => [] },
+    clientes:  { type: Array, default: () => [] },
 })
 
 const busqueda   = ref('')
@@ -262,6 +295,35 @@ const tipoComprobante = ref('ninguno')
 const clienteDni = ref('')
 const clienteRazonSocial = ref('')
 const clienteEmail = ref('')
+const busquedaCliente = ref('')
+const clienteSeleccionado = ref(null)
+const mostrarSugerencias = ref(false)
+
+const clientesFiltrados = computed(() => {
+    if (!busquedaCliente.value || busquedaCliente.value.length < 2) return []
+    const q = busquedaCliente.value.toLowerCase()
+    return props.clientes.filter(cl =>
+        cl.razon_social?.toLowerCase().includes(q) ||
+        cl.numero_documento?.includes(q)
+    ).slice(0, 6)
+})
+
+const seleccionarCliente = (cl) => {
+    clienteSeleccionado.value = cl
+    clienteDni.value = cl.numero_documento
+    clienteRazonSocial.value = cl.razon_social
+    clienteEmail.value = cl.email ?? ''
+    busquedaCliente.value = cl.razon_social
+    mostrarSugerencias.value = false
+}
+
+const limpiarCliente = () => {
+    clienteSeleccionado.value = null
+    clienteDni.value = ''
+    clienteRazonSocial.value = ''
+    clienteEmail.value = ''
+    busquedaCliente.value = ''
+}
 
 const total = computed(() =>
     carrito.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
