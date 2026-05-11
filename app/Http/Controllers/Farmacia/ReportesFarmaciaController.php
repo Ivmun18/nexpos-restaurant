@@ -87,9 +87,11 @@ $metodosPago = collect([
 
     public function show($id)
     {
-        $venta = \App\Models\Venta::with('detalle')->findOrFail($id);
+        $venta   = \App\Models\Venta::with('detalle')->findOrFail($id);
+        $empresa = auth()->user()->empresa;
         return \Inertia\Inertia::render('Farmacia/VentaDetalle', [
-            'venta' => $venta,
+            'venta'   => $venta,
+            'empresa' => $empresa,
         ]);
     }
 }

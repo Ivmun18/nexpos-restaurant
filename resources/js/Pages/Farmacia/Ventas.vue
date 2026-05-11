@@ -54,7 +54,7 @@
                             }">{{ iconMetodo(venta.metodo_pago) }} {{ venta.metodo_pago || 'efectivo' }}</span>
                         </td>
                         <td style="padding:14px 20px; text-align:right; font-size:16px; font-weight:800; color:#14B8A6;">
-                            S/ {{ Number(venta.total_gravado).toFixed(2) }}
+                            S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv) + Number(venta.total_inafecto) + Number(venta.total_exonerado)).toFixed(2) }}
                         </td>
                         <td style="padding:14px 20px; text-align:center;">
                             <span v-if="venta.nubefact_estado === 'aceptado'"

@@ -128,10 +128,14 @@
                         <span style="font-size:13px; color:#64748B;">Subtotal</span>
                         <span style="font-size:13px; color:#1E293B;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv) + Number(venta.total_inafecto) + Number(venta.total_exonerado)).toFixed(2) }}</span>
                     </div>
-                    <!-- IGV o Exonerado -->
+                    <!-- IGV o Exonerado o Inafecto (RUS) -->
                     <div v-if="Number(venta.total_exonerado) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">🌿 Exonerado IGV</span>
                         <span style="font-size:13px; color:#16a34a;">S/ {{ Number(venta.total_exonerado).toFixed(2) }}</span>
+                    </div>
+                    <div v-else-if="Number(venta.total_inafecto) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:13px; color:#64748B;">⚡ Inafecto (RUS)</span>
+                        <span style="font-size:13px; color:#f59e0b;">IGV no aplica</span>
                     </div>
                     <div v-else style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">IGV (18%)</span>
