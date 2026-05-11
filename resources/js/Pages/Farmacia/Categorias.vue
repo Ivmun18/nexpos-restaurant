@@ -122,12 +122,12 @@ const abrirModal = (cat = null) => {
 const guardar = () => {
     procesando.value = true
     if (editando.value) {
-        router.put(`/minimarket/categorias/${editando.value.id}`, form.value, {
+        router.put(`/farmacia/categorias/${editando.value.id}`, form.value, {
             onSuccess: () => { modal.value = false; procesando.value = false },
             onError:   () => { procesando.value = false },
         })
     } else {
-        router.post('/minimarket/categorias', form.value, {
+        router.post('/farmacia/categorias', form.value, {
             onSuccess: () => { modal.value = false; procesando.value = false },
             onError:   () => { procesando.value = false },
         })
@@ -136,7 +136,7 @@ const guardar = () => {
 
 const eliminar = (cat) => {
     if (confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) {
-        router.delete(`/minimarket/categorias/${cat.id}`)
+        router.delete(`/farmacia/categorias/${cat.id}`)
     }
 }
 </script>

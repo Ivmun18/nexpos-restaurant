@@ -1,5 +1,5 @@
 <template>
-    <AppLayout title="POS Minimarket" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
+    <AppLayout title="POS Farmacia" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
 
         <div style="display:grid; grid-template-columns:1fr min(380px, 40vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
 

@@ -373,7 +373,7 @@ const ajustarStock = (p) => {
 
 const guardar = () => {
     if (modalEditar.value) {
-        router.put(`/minimarket/productos/${productoSeleccionado.value.id}`, {
+        router.put(`/farmacia/productos/${productoSeleccionado.value.id}`, {
             descripcion:   form.value.descripcion,
             codigo:        form.value.codigo,
             codigo_barras: form.value.codigo_barras,
@@ -385,14 +385,14 @@ const guardar = () => {
             onSuccess: () => {
                 modalNuevo.value = false
                 modalEditar.value = false
-                window.location.replace('/minimarket/productos')
+                window.location.replace('/farmacia/productos')
             },
             onError: (errors) => {
                 alert('Error: ' + JSON.stringify(errors))
             }
         })
     } else {
-        router.post('/minimarket/productos', {
+        router.post('/farmacia/productos', {
             descripcion:   form.value.descripcion,
             codigo:        form.value.codigo,
             codigo_barras: form.value.codigo_barras,
@@ -405,7 +405,7 @@ const guardar = () => {
             onSuccess: () => {
                 modalNuevo.value = false
                 modalEditar.value = false
-                window.location.replace('/minimarket/productos')
+                window.location.replace('/farmacia/productos')
             },
             onError: (errors) => {
                 alert('Error: ' + JSON.stringify(errors))
@@ -415,10 +415,10 @@ const guardar = () => {
 }
 
 const guardarStock = () => {
-    router.post(`/minimarket/productos/${productoSeleccionado.value.id}/stock`, formStock.value, {
+    router.post(`/farmacia/productos/${productoSeleccionado.value.id}/stock`, formStock.value, {
         onSuccess: () => {
             modalStock.value = false
-            window.location.href = '/minimarket/productos'
+            window.location.href = '/farmacia/productos'
         }
     })
 }

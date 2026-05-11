@@ -128,7 +128,7 @@
                 <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0;">🧾 Últimas ventas</p>
-                        <a href="/minimarket/ventas" style="font-size:13px; color:#14B8A6; font-weight:600; text-decoration:none;">Ver todas →</a>
+                        <a href="/farmacia/ventas" style="font-size:13px; color:#14B8A6; font-weight:600; text-decoration:none;">Ver todas →</a>
                     </div>
                     <div v-if="!ultimas_ventas.length" style="text-align:center; padding:30px 0; color:#CBD5E1;">
                         <p style="font-size:32px; margin:0 0 8px;">📭</p>
@@ -259,17 +259,17 @@ const formatHora = (fecha) => {
 }
 
 const abrirCaja = () => {
-    router.post('/minimarket/caja/abrir', {
+    router.post('/farmacia/caja/abrir', {
         monto_inicial: montoInicial.value,
     }, {
-        onSuccess: () => { window.location.replace('/minimarket/caja') },
+        onSuccess: () => { window.location.replace('/farmacia/caja') },
         onError: (e) => alert('Error: ' + JSON.stringify(e))
     })
 }
 
 const cerrarCaja = () => {
-    router.post(`/minimarket/caja/${props.caja_abierta.id}/cerrar`, formCierre.value, {
-        onSuccess: () => { window.location.replace('/minimarket/caja') },
+    router.post(`/farmacia/caja/${props.caja_abierta.id}/cerrar`, formCierre.value, {
+        onSuccess: () => { window.location.replace('/farmacia/caja') },
         onError: (e) => alert('Error: ' + JSON.stringify(e))
     })
 }
