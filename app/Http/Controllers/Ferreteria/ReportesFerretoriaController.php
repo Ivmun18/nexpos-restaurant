@@ -45,11 +45,11 @@ class ReportesFerretoriaController extends Controller
         // Garantías
         $garantias = Garantia::where('empresa_id', $empresa_id)->get();
 
-        // Cajas cerradas del período
-        $cajas = Caja::where('empresa_id', $empresa_id)
-            ->where('estado', 'cerrada')
-            ->whereDate('created_at', '>=', $desde)
-            ->whereDate('created_at', '<=', $hasta)
+        // Ventas del período
+        $ventas = \App\Models\Venta::where('empresa_id', $empresa_id)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->where('estado', '!=', 'anulado')
             ->get();
 
         return Inertia::render('Ferreteria/Reportes', [
@@ -73,10 +73,11 @@ class ReportesFerretoriaController extends Controller
                 'reclamadas'=> $garantias->where('estado', 'reclamada')->count(),
             ],
             'resumen_caja' => [
-                'total_ventas'  => round($cajas->sum('total_ventas'), 2),
-                'total_efectivo'=> round($cajas->sum('total_efectivo'), 2),
-                'total_yape'    => round($cajas->sum('total_yape'), 2),
-                'total_tarjeta' => round($cajas->sum('total_tarjeta'), 2),
+                'total_ventas'  => round($ventas->sum('total'), 2),
+                'total_efectivo'=> round($ventas->where('metodo_pago','efectivo')->sum('total'), 2),
+                'total_yape'    => round($ventas->where('metodo_pago','yape')->sum('total'), 2),
+                'total_tarjeta' => round($ventas->where('metodo_pago','tarjeta')->sum('total'), 2),
+                'cantidad'      => $ventas->count(),
                 'aperturas'     => $cajas->count(),
             ],
         ]);
