@@ -31,16 +31,52 @@
             <div v-if="historial_cajas.length" style="margin-top:24px; background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0;">
                 <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">📋 Historial de cajas</p>
                 <div v-for="c in historial_cajas" :key="c.id"
-                    style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #F1F5F9;">
-                    <div>
-                        <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ formatFecha(c.apertura_at) }}</p>
-                        <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">{{ c.cantidad_ventas }} ventas</p>
+                    @click="cajaDetalle = cajaDetalle?.id === c.id ? null : c"
+                    style="cursor:pointer; border-bottom:1px solid #F1F5F9;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0;">
+                        <div>
+                            <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ formatFecha(c.apertura_at) }}</p>
+                            <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">{{ c.cantidad_ventas }} ventas</p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="text-align:right;">
+                                <p style="font-size:16px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ Number(c.total_ventas).toFixed(2) }}</p>
+                                <p :style="{ fontSize:'12px', margin:'2px 0 0', color: c.diferencia >= 0 ? '#166534' : '#991B1B', fontWeight:'600' }">
+                                    {{ c.diferencia >= 0 ? '+' : '' }}{{ Number(c.diferencia).toFixed(2) }} diferencia
+                                </p>
+                            </div>
+                            <span style="font-size:12px; color:#94A3B8;">{{ cajaDetalle?.id === c.id ? '▲' : '▼' }}</span>
+                        </div>
                     </div>
-                    <div style="text-align:right;">
-                        <p style="font-size:16px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ Number(c.total_ventas).toFixed(2) }}</p>
-                        <p :style="{ fontSize:'12px', margin:'2px 0 0', color: c.diferencia >= 0 ? '#166534' : '#991B1B', fontWeight:'600' }">
-                            {{ c.diferencia >= 0 ? '+' : '' }}{{ Number(c.diferencia).toFixed(2) }} diferencia
-                        </p>
+                    <div v-if="cajaDetalle?.id === c.id" style="background:#F8FAFC; border-radius:10px; padding:14px; margin-bottom:10px;">
+                        <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0 0 10px;">📊 Detalle de caja</p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                            <div style="background:white; border-radius:8px; padding:10px; border:1px solid #E2E8F0;">
+                                <p style="font-size:11px; color:#94A3B8; margin:0;">Monto inicial</p>
+                                <p style="font-size:15px; font-weight:700; color:#1E293B; margin:4px 0 0;">S/ {{ Number(c.monto_inicial).toFixed(2) }}</p>
+                            </div>
+                            <div style="background:white; border-radius:8px; padding:10px; border:1px solid #E2E8F0;">
+                                <p style="font-size:11px; color:#94A3B8; margin:0;">Monto final</p>
+                                <p style="font-size:15px; font-weight:700; color:#1E293B; margin:4px 0 0;">S/ {{ Number(c.monto_final || 0).toFixed(2) }}</p>
+                            </div>
+                            <div style="background:white; border-radius:8px; padding:10px; border:1px solid #E2E8F0;">
+                                <p style="font-size:11px; color:#94A3B8; margin:0;">💵 Efectivo</p>
+                                <p style="font-size:15px; font-weight:700; color:#1E293B; margin:4px 0 0;">S/ {{ Number(c.total_efectivo || 0).toFixed(2) }}</p>
+                            </div>
+                            <div style="background:white; border-radius:8px; padding:10px; border:1px solid #E2E8F0;">
+                                <p style="font-size:11px; color:#94A3B8; margin:0;">📱 Yape/Plin</p>
+                                <p style="font-size:15px; font-weight:700; color:#1E293B; margin:4px 0 0;">S/ {{ (Number(c.total_yape || 0) + Number(c.total_plin || 0)).toFixed(2) }}</p>
+                            </div>
+                            <div style="background:white; border-radius:8px; padding:10px; border:1px solid #E2E8F0;">
+                                <p style="font-size:11px; color:#94A3B8; margin:0;">💳 Tarjeta</p>
+                                <p style="font-size:15px; font-weight:700; color:#1E293B; margin:4px 0 0;">S/ {{ Number(c.total_tarjeta || 0).toFixed(2) }}</p>
+                            </div>
+                            <div style="background:#F0FDFA; border-radius:8px; padding:10px; border:1px solid #CCFBF1;">
+                                <p style="font-size:11px; color:#0F766E; margin:0;">Total ventas</p>
+                                <p style="font-size:15px; font-weight:700; color:#0F766E; margin:4px 0 0;">S/ {{ Number(c.total_ventas).toFixed(2) }}</p>
+                            </div>
+                        </div>
+                        <p style="font-size:11px; color:#94A3B8; margin:0;">Apertura: {{ c.apertura_at }} | Cierre: {{ c.cierre_at || 'Abierta' }}</p>
                     </div>
                 </div>
             </div>
