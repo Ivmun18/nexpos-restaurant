@@ -1,5 +1,5 @@
 <template>
-    <AppLayout title="Categorías" subtitle="Gestión de categorías del minimarket">
+    <AppLayout title="Categorías" subtitle="Gestión de categorías de farmacia">
 
         <div style="display:flex; justify-content:flex-end; margin-bottom:1.5rem;">
             <button @click="abrirModal()"
@@ -66,7 +66,7 @@
                 <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:20px;">
                     <div>
                         <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Nombre *</label>
-                        <input v-model="form.nombre" required style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; color:#1E293B; outline:none; box-sizing:border-box;" placeholder="Ej: Bebidas, Lácteos, Snacks..." />
+                        <input v-model="form.nombre" required style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; color:#1E293B; outline:none; box-sizing:border-box;" placeholder="Ej: Analgésicos, Antibióticos, Vitaminas..." />
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                         <div>

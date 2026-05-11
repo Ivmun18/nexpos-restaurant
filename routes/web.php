@@ -610,3 +610,11 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     // Reportes
     Route::get('/reportes', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'index'])->name('reportes');
 });
+
+// Categorías Farmacia
+Route::middleware(['auth'])->group(function () {
+    Route::get('/farmacia/categorias', [\App\Http\Controllers\Farmacia\CategoriasFarmaciaController::class, 'index'])->name('farmacia.categorias');
+    Route::post('/farmacia/categorias', [\App\Http\Controllers\Farmacia\CategoriasFarmaciaController::class, 'store'])->name('farmacia.categorias.store');
+    Route::put('/farmacia/categorias/{categoria}', [\App\Http\Controllers\Farmacia\CategoriasFarmaciaController::class, 'update'])->name('farmacia.categorias.update');
+    Route::delete('/farmacia/categorias/{categoria}', [\App\Http\Controllers\Farmacia\CategoriasFarmaciaController::class, 'destroy'])->name('farmacia.categorias.destroy');
+});

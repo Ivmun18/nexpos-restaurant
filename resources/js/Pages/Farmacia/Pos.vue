@@ -276,6 +276,24 @@ const escanearCodigo = () => {
 
 const agregarAlCarrito = (p) => {
     if (p.stock_actual <= 0) return
+
+    // Alerta vencimiento
+    if (p.fecha_vencimiento) {
+        const hoy = new Date()
+        const vence = new Date(p.fecha_vencimiento)
+        const dias = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24))
+        if (dias < 0) {
+            if (!confirm(`🚨 PRODUCTO VENCIDO\n"${p.descripcion}" venció hace ${Math.abs(dias)} días.\n¿Agregar de todas formas?`)) return
+        } else if (dias <= 30) {
+            if (!confirm(`⚠️ PRÓXIMO A VENCER\n"${p.descripcion}" vence en ${dias} días.\n¿Agregar de todas formas?`)) return
+        }
+    }
+
+    // Alerta stock bajo
+    if (p.stock_minimo && p.stock_actual <= p.stock_minimo) {
+        alert(`📦 Stock bajo: "${p.descripcion}" tiene solo ${p.stock_actual} unidades (mínimo: ${p.stock_minimo})`)
+    }
+
     const existe = carrito.value.find(i => i.id === p.id)
     if (existe) {
         if (existe.cantidad < p.stock_actual) existe.cantidad++

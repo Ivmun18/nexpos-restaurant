@@ -16,7 +16,7 @@ class PosFarmaciaController extends Controller
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
             ->orderBy('descripcion')
-            ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'categoria_id']);
+            ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'stock_minimo', 'categoria_id', 'fecha_vencimiento', 'lote', 'laboratorio']);
 
         // Verificar caja abierta
         $empresaId = auth()->user()->empresa_id;
