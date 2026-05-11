@@ -108,6 +108,7 @@
                         </div>
                         <div>
                             <label style="font-size:13px; font-weight:600; color:#64748B;">Rol *</label>
+                            <p style="font-size:11px; color:red;">DEBUG industria: {{ industria }}</p>
                             <select v-model="form.rol" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;">
                                 <option value="admin">👑 Administrador</option>
                                 <option value="cajero">💰 Cajero</option>
@@ -138,13 +139,11 @@
 </template>
 
 <script setup>
-import { ref, computed, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({ usuarios: { type: Array, default: () => [] }, industria: { type: String, default: 'restaurante' } })
-import { usePage } from '@inertiajs/vue3'
-const page = usePage()
 const industria = computed(() => props.industria)
 const busqueda = ref('')
 const modal = ref(false)
