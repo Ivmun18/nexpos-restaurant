@@ -56,6 +56,29 @@ class ReportesFarmaciaController extends Controller
             ['metodo_pago' => 'tarjeta',  'cantidad' => $ventas->where('metodo_pago','tarjeta')->count(),  'total' => $totalTarjeta],
         ])->filter(fn($m) => $m['total'] > 0)->values();
 
+        // Ventas por vendedor
+        $ventasPorVendedor = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->where('estado', '!=', 'anulado')
+            ->with('usuario:id,name,rol')
+            ->get()
+            ->groupBy('usuario_id')
+            ->map(function($ventas, $userId) {
+                $usuario = $ventas->first()->usuario;
+                return [
+                    'usuario_id' => $userId,
+                    'nombre'     => $usuario?->name ?? 'Sin usuario',
+                    'rol'        => $usuario?->rol ?? '',
+                    'cantidad'   => $ventas->count(),
+                    'total'      => round($ventas->sum('total'), 2),
+                    'efectivo'   => round($ventas->where('metodo_pago','efectivo')->sum('total'), 2),
+                    'yape'       => round($ventas->where('metodo_pago','yape')->sum('total'), 2),
+                    'plin'       => round($ventas->where('metodo_pago','plin')->sum('total'), 2),
+                    'tarjeta'    => round($ventas->where('metodo_pago','tarjeta')->sum('total'), 2),
+                ];
+            })->values();
+
         return Inertia::render('Farmacia/Reportes', [
             'resumen' => [
                 'total_periodo'  => round($totalPeriodo, 2),
@@ -68,9 +91,10 @@ class ReportesFarmaciaController extends Controller
             ],
             'ventas_por_dia' => $ventasPorDia,
             'top_productos'  => $topProductos,
-            'metodos_pago'   => $metodosPago,
-            'desde'          => $desde,
-            'hasta'          => $hasta,
+            'metodos_pago'        => $metodosPago,
+            'ventas_por_vendedor' => $ventasPorVendedor,
+            'desde'               => $desde,
+            'hasta'               => $hasta,
         ]);
     }
 

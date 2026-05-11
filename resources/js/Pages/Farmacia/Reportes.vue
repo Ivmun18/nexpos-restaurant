@@ -163,6 +163,40 @@
             </table>
         </div>
 
+        <!-- Ventas por Vendedor -->
+        <div v-if="ventas_por_vendedor.length" style="background:white; border-radius:16px; border:1px solid #E2E8F0; overflow:hidden; margin-top:24px;">
+            <div style="background:linear-gradient(135deg,#14B8A6,#0F766E); padding:16px 20px; display:flex; align-items:center; gap:10px;">
+                <span style="font-size:20px;">👥</span>
+                <h3 style="margin:0; color:white; font-size:15px; font-weight:700;">Ventas por Vendedor</h3>
+            </div>
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#F8FAFC;">
+                        <th style="padding:12px 16px; text-align:left; font-size:12px; color:#64748B; font-weight:600;">Vendedor</th>
+                        <th style="padding:12px 16px; text-align:center; font-size:12px; color:#64748B; font-weight:600;">Rol</th>
+                        <th style="padding:12px 16px; text-align:center; font-size:12px; color:#64748B; font-weight:600;">Ventas</th>
+                        <th style="padding:12px 16px; text-align:right; font-size:12px; color:#64748B; font-weight:600;">💵 Efectivo</th>
+                        <th style="padding:12px 16px; text-align:right; font-size:12px; color:#64748B; font-weight:600;">📱 Yape/Plin</th>
+                        <th style="padding:12px 16px; text-align:right; font-size:12px; color:#64748B; font-weight:600;">💳 Tarjeta</th>
+                        <th style="padding:12px 16px; text-align:right; font-size:12px; color:#14B8A6; font-weight:700;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="v in ventas_por_vendedor" :key="v.usuario_id" style="border-top:1px solid #F1F5F9;">
+                        <td style="padding:12px 16px; font-size:14px; font-weight:600; color:#1E293B;">{{ v.nombre }}</td>
+                        <td style="padding:12px 16px; text-align:center;">
+                            <span style="font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; background:#F0FDFA; color:#0F766E;">{{ v.rol }}</span>
+                        </td>
+                        <td style="padding:12px 16px; text-align:center; font-size:14px; color:#475569;">{{ v.cantidad }}</td>
+                        <td style="padding:12px 16px; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(v.efectivo).toFixed(2) }}</td>
+                        <td style="padding:12px 16px; text-align:right; font-size:13px; color:#475569;">S/ {{ (Number(v.yape) + Number(v.plin)).toFixed(2) }}</td>
+                        <td style="padding:12px 16px; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(v.tarjeta).toFixed(2) }}</td>
+                        <td style="padding:12px 16px; text-align:right; font-size:15px; font-weight:800; color:#14B8A6;">S/ {{ Number(v.total).toFixed(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -177,6 +211,7 @@ const props = defineProps({
     top_productos:   { type: Array,  default: () => [] },
     metodos_pago:    { type: Array,  default: () => [] },
     desde:           { type: String, default: '' },
+    ventas_por_vendedor: { type: Array, default: () => [] },
     hasta:           { type: String, default: '' },
 })
 
