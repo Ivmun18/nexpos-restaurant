@@ -18,21 +18,23 @@ class ReportesMinimarketController extends Controller
 
         // Ventas del período
         $ventas = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', '>=', $desde)
-            ->whereDate('created_at', '<=', $hasta)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->where('estado', '!=', 'anulado')
             ->get();
 
-        $totalPeriodo   = $ventas->sum('total_gravado');
-        $totalEfectivo  = $ventas->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape      = $ventas->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin      = $ventas->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta   = $ventas->where('metodo_pago', 'tarjeta')->sum('total_gravado');
+        $totalPeriodo   = $ventas->sum('total');
+        $totalEfectivo  = $ventas->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape      = $ventas->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin      = $ventas->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta   = $ventas->where('metodo_pago', 'tarjeta')->sum('total');
 
         // Ventas por día
         $ventasPorDia = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', '>=', $desde)
-            ->whereDate('created_at', '<=', $hasta)
-            ->selectRaw('DATE(created_at) as fecha, COUNT(*) as cantidad, SUM(total_gravado) as total')
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->where('estado', '!=', 'anulado')
+            ->selectRaw('DATE(fecha_emision) as fecha, COUNT(*) as cantidad, SUM(total) as total')
             ->groupBy('fecha')
             ->orderBy('fecha')
             ->get();
@@ -40,20 +42,44 @@ class ReportesMinimarketController extends Controller
         // Top productos
         $topProductos = VentaDetalle::selectRaw('descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
             ->whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId)
-                ->whereDate('created_at', '>=', $desde)
-                ->whereDate('created_at', '<=', $hasta))
+                ->whereDate('fecha_emision', '>=', $desde)
+                ->whereDate('fecha_emision', '<=', $hasta)
+                ->where('estado', '!=', 'anulado'))
             ->groupBy('descripcion')
             ->orderByDesc('total_monto')
             ->limit(10)
             ->get();
 
-       // Métodos de pago desde cajas_minimarket
-$metodosPago = collect([
-    ['metodo_pago' => 'efectivo', 'cantidad' => $ventas->count(), 'total' => $totalEfectivo],
-    ['metodo_pago' => 'yape',     'cantidad' => 0, 'total' => $totalYape],
-    ['metodo_pago' => 'plin',     'cantidad' => 0, 'total' => $totalPlin],
-    ['metodo_pago' => 'tarjeta',  'cantidad' => 0, 'total' => $totalTarjeta],
-])->filter(fn($m) => $m['total'] > 0)->values();
+        // Métodos de pago
+        $metodosPago = collect([
+            ['metodo_pago' => 'efectivo', 'cantidad' => $ventas->where('metodo_pago','efectivo')->count(), 'total' => $totalEfectivo],
+            ['metodo_pago' => 'yape',     'cantidad' => $ventas->where('metodo_pago','yape')->count(),     'total' => $totalYape],
+            ['metodo_pago' => 'plin',     'cantidad' => $ventas->where('metodo_pago','plin')->count(),     'total' => $totalPlin],
+            ['metodo_pago' => 'tarjeta',  'cantidad' => $ventas->where('metodo_pago','tarjeta')->count(),  'total' => $totalTarjeta],
+        ])->filter(fn($m) => $m['total'] > 0)->values();
+
+        // Ventas por vendedor
+        $ventasPorVendedor = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->where('estado', '!=', 'anulado')
+            ->with('usuario:id,name,rol')
+            ->get()
+            ->groupBy('usuario_id')
+            ->map(function($ventas, $userId) {
+                $usuario = $ventas->first()->usuario;
+                return [
+                    'usuario_id' => $userId,
+                    'nombre'     => $usuario?->name ?? 'Sin usuario',
+                    'rol'        => $usuario?->rol ?? '',
+                    'cantidad'   => $ventas->count(),
+                    'total'      => round($ventas->sum('total'), 2),
+                    'efectivo'   => round($ventas->where('metodo_pago','efectivo')->sum('total'), 2),
+                    'yape'       => round($ventas->where('metodo_pago','yape')->sum('total'), 2),
+                    'plin'       => round($ventas->where('metodo_pago','plin')->sum('total'), 2),
+                    'tarjeta'    => round($ventas->where('metodo_pago','tarjeta')->sum('total'), 2),
+                ];
+            })->values();
 
         return Inertia::render('Minimarket/Reportes', [
             'resumen' => [
@@ -67,9 +93,10 @@ $metodosPago = collect([
             ],
             'ventas_por_dia' => $ventasPorDia,
             'top_productos'  => $topProductos,
-            'metodos_pago'   => $metodosPago,
-            'desde'          => $desde,
-            'hasta'          => $hasta,
+            'metodos_pago'        => $metodosPago,
+            'ventas_por_vendedor' => $ventasPorVendedor,
+            'desde'               => $desde,
+            'hasta'               => $hasta,
         ]);
     }
 }
