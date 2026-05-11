@@ -277,6 +277,7 @@ const allMenuItems = [
     { path: '/farmacia/vencimientos', icon: 'clock',    label: '⚠️ Vencimientos',     module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/cajero',       icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/compras',               icon: 'receipt',  label: 'Compras',            module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/proveedores',           icon: 'users',    label: 'Proveedores',        module: 'pos_farmacia', section: 'FARMACIA' },

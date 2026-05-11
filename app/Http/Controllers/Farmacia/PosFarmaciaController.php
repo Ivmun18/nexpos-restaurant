@@ -84,9 +84,13 @@ class PosFarmaciaController extends Controller
         $inafecto = 0;
     }
 
+    $modalidad = $empresa->modalidad_cobro ?? 'directo';
+    $estadoVenta = $modalidad === 'cajero' ? 'pendiente' : 'emitido';
+
     $venta = \App\Models\Venta::create([
         'empresa_id'          => $empresa->id,
         'usuario_id'          => auth()->id(),
+        'estado'              => $estadoVenta,
         'tipo_comprobante'    => $tipo,
         'serie'               => $serie,
         'correlativo'         => $correlativo,

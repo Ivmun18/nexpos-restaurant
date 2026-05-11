@@ -610,6 +610,8 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::post('/caja/{caja}/cerrar', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'cerrar'])->name('caja.cerrar');
 
     // Ventas
+    Route::get('/cajero', [\App\Http\Controllers\Farmacia\CajeroFarmaciaController::class, 'index'])->name('cajero');
+    Route::post('/cajero/{venta}/cobrar', [\App\Http\Controllers\Farmacia\CajeroFarmaciaController::class, 'cobrar'])->name('cajero.cobrar');
     Route::get('/ventas', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'ventas'])->name('ventas');
     Route::get('/ventas/{venta}', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'show'])->name('ventas.show');
     Route::post('/ventas/{venta}/anular', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'anular'])->name('ventas.anular');
