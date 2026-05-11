@@ -1,6 +1,36 @@
 <template>
     <AppLayout title="Ventas" subtitle="Historial de ventas del minimarket">
 
+        <!-- Filtros -->
+        <div style="background:white; border-radius:16px; padding:16px 20px; border:1px solid #E2E8F0; margin-bottom:16px; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#64748B;">Desde</label>
+                <input v-model="filtros.desde" type="date"
+                    style="display:block; margin-top:4px; padding:8px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none;"
+                    @focus="$event.target.style.borderColor='#14B8A6'"
+                    @blur="$event.target.style.borderColor='#E2E8F0'" />
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#64748B;">Hasta</label>
+                <input v-model="filtros.hasta" type="date"
+                    style="display:block; margin-top:4px; padding:8px 12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none;"
+                    @focus="$event.target.style.borderColor='#14B8A6'"
+                    @blur="$event.target.style.borderColor='#E2E8F0'" />
+            </div>
+            <button @click="filtrar"
+                style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                🔍 Filtrar
+            </button>
+            <button @click="setHoy"
+                style="padding:10px 16px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                Hoy
+            </button>
+            <button @click="setMes"
+                style="padding:10px 16px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                Este mes
+            </button>
+        </div>
+
         <!-- Header -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
             <div>
@@ -39,8 +69,10 @@
                         @mouseleave="e => e.currentTarget.style.background='white'">
                         <td style="padding:14px 20px; font-size:14px; color:#94A3B8;">{{ venta.id }}</td>
                         <td style="padding:14px 20px;">
-                            <span style="font-size:14px; font-weight:600; color:#1E293B;">{{ venta.numero_completo }}</span>
+                            <span :style="`font-size:14px; font-weight:600; color:${venta.estado === 'anulado' ? '#EF4444' : '#1E293B'}; ${venta.estado === 'anulado' ? 'text-decoration:line-through;' : ''}`">{{ venta.numero_completo }}</span>
                             <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">{{ venta.tipo_comprobante === '03' ? 'Boleta' : 'Factura' }}</p>
+                            <span v-if="venta.estado === 'anulado'" style="font-size:10px; font-weight:700; color:#EF4444; background:#FEE2E2; padding:2px 6px; border-radius:4px;">ANULADO</span>
+                            <span v-if="venta.estado === 'pendiente'" style="font-size:10px; font-weight:700; color:#F59E0B; background:#FEF3C7; padding:2px 6px; border-radius:4px;">⏳ PENDIENTE</span>
                         </td>
                         <td style="padding:14px 20px; font-size:14px; color:#475569;">{{ formatFecha(venta.fecha_emision) }}</td>
                         <td style="padding:14px 20px;">
@@ -54,7 +86,7 @@
                             }">{{ iconMetodo(venta.metodo_pago) }} {{ venta.metodo_pago || 'efectivo' }}</span>
                         </td>
                         <td style="padding:14px 20px; text-align:right; font-size:16px; font-weight:800; color:#14B8A6;">
-                            S/ {{ Number(venta.total_gravado).toFixed(2) }}
+                            S/ {{ Number(venta.total).toFixed(2) }}
                         </td>
                         <td style="padding:14px 20px; text-align:center;">
                             <span v-if="venta.nubefact_estado === 'aceptado'"
@@ -113,6 +145,7 @@
 
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
+import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const reintentar = (id) => {
@@ -129,7 +162,28 @@ const anular = (id) => {
 
 const props = defineProps({
     ventas: { type: Object, default: () => ({ data: [], total: 0, last_page: 1, current_page: 1 }) },
+    desde:  { type: String, default: '' },
+    hasta:  { type: String, default: '' },
 })
+
+const filtros = ref({ desde: props.desde, hasta: props.hasta })
+
+const filtrar = () => router.get('/minimarket/ventas', filtros.value, { preserveState: false })
+
+const setHoy = () => {
+    const hoy = new Date().toISOString().split('T')[0]
+    filtros.value = { desde: hoy, hasta: hoy }
+    filtrar()
+}
+
+const setMes = () => {
+    const now = new Date()
+    filtros.value = {
+        desde: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0],
+        hasta: now.toISOString().split('T')[0]
+    }
+    filtrar()
+}
 
 const formatFecha = (fecha) => {
     if (!fecha) return '-'

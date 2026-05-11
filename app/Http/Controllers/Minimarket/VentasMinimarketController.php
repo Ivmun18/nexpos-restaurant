@@ -9,15 +9,23 @@ use Inertia\Inertia;
 
 class VentasMinimarketController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $empresaId = auth()->user()->empresa_id;
+        $desde = $request->desde ?? now()->startOfMonth()->toDateString();
+        $hasta = $request->hasta ?? now()->toDateString();
+
         $ventas = Venta::with('detalle')
-            ->where('empresa_id', auth()->user()->empresa_id)
-            ->orderBy('created_at', 'desc')
+            ->where('empresa_id', $empresaId)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
+            ->orderBy('fecha_emision', 'desc')
             ->paginate(20);
 
         return Inertia::render('Minimarket/Ventas', [
             'ventas' => $ventas,
+            'desde'  => $desde,
+            'hasta'  => $hasta,
         ]);
     }
 
