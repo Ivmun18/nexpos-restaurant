@@ -186,10 +186,6 @@ const anular = (id) => {
 
 const props = defineProps({
     ventas: { type: Object, default: () => ({ data: [], total: 0, last_page: 1, current_page: 1 }) },
-})
-
-const props = defineProps({
-    ventas: Object,
     desde:  { type: String, default: '' },
     hasta:  { type: String, default: '' },
 })

@@ -77,7 +77,7 @@ class ReportesFarmaciaController extends Controller
     public function ventas(Request $request)
     {
         $empresaId = auth()->user()->empresa_id;
-        $desde = $request->desde ?? now()->toDateString();
+        $desde = $request->desde ?? now()->startOfMonth()->toDateString();
         $hasta = $request->hasta ?? now()->toDateString();
 
         $ventas = \App\Models\Venta::where('empresa_id', $empresaId)
