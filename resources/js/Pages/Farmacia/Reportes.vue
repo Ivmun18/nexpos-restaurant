@@ -198,7 +198,7 @@ const formatFecha = (fecha) => {
 }
 
 const filtrar = () => {
-    router.get('/minimarket/reportes', filtros.value, { preserveState: false })
+    router.get('/farmacia/reportes', filtros.value, { preserveState: false })
 }
 
 const setHoy = () => {
