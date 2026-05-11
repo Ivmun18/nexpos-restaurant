@@ -108,7 +108,6 @@
                         </div>
                         <div>
                             <label style="font-size:13px; font-weight:600; color:#64748B;">Rol *</label>
-                            <p style="font-size:11px; color:red;">DEBUG industria: {{ industria }}</p>
                             <select v-model="form.rol" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;">
                                 <option value="admin">👑 Administrador</option>
                                 <option value="cajero">💰 Cajero</option>
