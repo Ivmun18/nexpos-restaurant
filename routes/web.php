@@ -88,6 +88,77 @@ Route::get('/dashboard', function () {
         ]);
     }
 
+    if ($industryType === 'farmacia') {
+        // ── Dashboard Farmacia ──
+        $empresaId = auth()->user()->empresa_id;
+        $hoy  = now()->toDateString();
+        $mes  = now()->month;
+        $anio = now()->year;
+
+        $ventasHoy = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)->sum('total_gravado');
+
+        $ventasMes = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('total_gravado');
+
+        $totalVentas = \App\Models\Venta::where('empresa_id', $empresaId)->count();
+
+        $ventasHoyCount = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)->count();
+
+        $productosStockBajo = \App\Models\Producto::where('empresa_id', $empresaId)
+            ->whereColumn('stock_actual', '<=', 'stock_minimo')->count();
+
+        // Vencimientos
+        $vencidosCount = \App\Models\Producto::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->whereNotNull('fecha_vencimiento')
+            ->where('fecha_vencimiento', '<', now()->toDateString())
+            ->count();
+
+        $porVencerCount = \App\Models\Producto::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->whereNotNull('fecha_vencimiento')
+            ->whereBetween('fecha_vencimiento', [now()->toDateString(), now()->addDays(30)->toDateString()])
+            ->count();
+
+        $ventasPorDia = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $fecha = now()->subDays($i);
+            $total = \App\Models\Venta::where('empresa_id', $empresaId)
+                ->whereDate('created_at', $fecha->toDateString())->sum('total_gravado');
+            $ventasPorDia[] = [
+                'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
+                'total' => round($total, 2),
+            ];
+        }
+
+        $topProductos = \App\Models\VentaDetalle::selectRaw('descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
+            ->whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId))
+            ->groupBy('descripcion')
+            ->orderByDesc('total_monto')
+            ->limit(5)->get();
+
+        $ultimasVentas = \App\Models\Venta::where('empresa_id', $empresaId)
+            ->orderBy('created_at', 'desc')->limit(5)->get();
+
+        return Inertia::render('Dashboard/Farmacia', [
+            'industry_name'    => $industryName,
+            'vencidos_count'   => $vencidosCount,
+            'por_vencer_count' => $porVencerCount,
+            'stats' => [
+                'ventas_hoy'         => $ventasHoy,
+                'ventas_mes'         => $ventasMes,
+                'total_ventas'       => $totalVentas,
+                'ventas_hoy_count'   => $ventasHoyCount,
+                'stock_bajo'         => $productosStockBajo,
+            ],
+            'ventas_por_dia'  => $ventasPorDia,
+            'top_productos'   => $topProductos,
+            'ultimas_ventas'  => $ultimasVentas,
+        ]);
+    }
+
     if ($industryType === 'minimarket') {
         // ── Dashboard Minimarket ──
         $hoy  = now()->toDateString();
@@ -508,3 +579,34 @@ Route::middleware(['auth'])->group(function () {
 
 // API Onboarding - recibe registro desde nexposolution.com
 Route::post('/api/onboarding/crear-empresa', [\App\Http\Controllers\Api\OnboardingApiController::class, 'crearEmpresa']);
+
+// ═══════════════════════════════════
+// FARMACIA
+// ═══════════════════════════════════
+Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(function () {
+    // POS
+    Route::get('/pos', [\App\Http\Controllers\Farmacia\PosFarmaciaController::class, 'index'])->name('pos');
+    Route::post('/pos', [\App\Http\Controllers\Farmacia\PosFarmaciaController::class, 'store'])->name('pos.store');
+
+    // Productos
+    Route::get('/productos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'index'])->name('productos');
+    Route::post('/productos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'store'])->name('productos.store');
+    Route::put('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'update'])->name('productos.update');
+    Route::delete('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroy'])->name('productos.destroy');
+    Route::post('/productos/{producto}/stock', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'actualizarStock'])->name('productos.stock');
+
+    // Vencimientos
+    Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->name('vencimientos');
+
+    // Caja
+    Route::get('/caja', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'index'])->name('caja');
+    Route::post('/caja/abrir', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'abrir'])->name('caja.abrir');
+    Route::post('/caja/{caja}/cerrar', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'cerrar'])->name('caja.cerrar');
+
+    // Ventas
+    Route::get('/ventas', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'ventas'])->name('ventas');
+    Route::get('/ventas/{venta}', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'show'])->name('ventas.show');
+
+    // Reportes
+    Route::get('/reportes', [\App\Http\Controllers\Farmacia\ReportesFarmaciaController::class, 'index'])->name('reportes');
+});

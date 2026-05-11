@@ -271,8 +271,15 @@ const allMenuItems = [
     { path: '/ferreteria/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
-    { path: '/usuarios',     icon: 'users',    label: 'Usuarios',      module: 'admin', section: 'GENERAL' },
-    { path: '/configuracion',icon: 'settings', label: 'Configuración', module: 'admin', section: 'GENERAL' },
+    { path: '/farmacia/pos',          icon: 'receipt',  label: 'Punto de Venta',    module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/productos',    icon: 'menu',     label: 'Productos',          module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/vencimientos', icon: 'clock',    label: '⚠️ Vencimientos',     module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/compras',               icon: 'receipt',  label: 'Compras',            module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/usuarios',     icon: 'users',    label: 'Usuarios',      module: 'admin', section: 'AJUSTES' },
+    { path: '/configuracion',icon: 'settings', label: 'Configuración', module: 'admin', section: 'AJUSTES' },
 ]
 
 const menuItems = computed(() => {
@@ -307,6 +314,11 @@ const menuItems = computed(() => {
         // Ocultar módulos de ferretería si no es ferretería
         if (industry !== 'ferreteria') {
             if (item.section === 'FERRETERIA') return false
+        }
+
+        // Ocultar módulos de farmacia si no es farmacia
+        if (industry !== 'farmacia') {
+            if (item.section === 'FARMACIA') return false
         }
 
         // Ocultar módulos de restaurante si no es restaurante

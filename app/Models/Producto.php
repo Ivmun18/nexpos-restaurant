@@ -31,6 +31,14 @@ class Producto extends Model
         'stock_minimo',
         'stock_actual',
         'activo',
+        'fecha_vencimiento',
+        'dias_alerta_vencimiento',
+        'lote',
+        'laboratorio',
+        'principio_activo',
+        'presentacion',
+        'concentracion',
+        'requiere_receta',
     ];
 
     protected $casts = [
