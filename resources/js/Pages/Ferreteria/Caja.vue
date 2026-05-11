@@ -135,6 +135,7 @@ const montoInicial       = ref('')
 const montoCierre        = ref('')
 const observacionesCierre = ref('')
 const procesando         = ref(false)
+const cajaDetalle        = ref(null)
 
 const efectivoEsperado = computed(() => {
     if (!props.cajaAbierta) return 0
