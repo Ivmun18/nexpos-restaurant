@@ -16,6 +16,10 @@
                     style="padding:10px 20px; background:white; color:#0F766E; border-radius:10px; font-size:14px; font-weight:600; border:1px solid #CCFBF1; cursor:pointer;">
                     📄 Imprimir A4
                 </button>
+                <button @click="enviarWhatsApp"
+                    style="padding:10px 20px; background:linear-gradient(135deg,#25D366,#128C7E); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                    📱 Enviar WhatsApp
+                </button>
             </div>
 
             <!-- Ticket -->
@@ -210,6 +214,26 @@ const imprimir = () => {
     `)
     ventana.document.close()
     setTimeout(() => ventana.print(), 500)
+}
+
+const enviarWhatsApp = () => {
+    const tel = prompt('📱 Ingresa el número de WhatsApp del cliente (ej: 987654321):')
+    if (!tel) return
+    const numero = '51' + tel.replace(/[^0-9]/g, '').slice(-9)
+    
+    const items = props.venta.detalles?.map(d => 
+        `• ${d.descripcion} x${d.cantidad} = S/ ${Number(d.total).toFixed(2)}`
+    ).join('\n') || ''
+
+    const mensaje = `🧾 *Comprobante NEXPOS*\n\n` +
+        `📋 *${props.venta.numero_completo}*\n` +
+        `📅 Fecha: ${props.venta.created_at?.slice(0,10)}\n\n` +
+        `${items}\n\n` +
+        `💰 *Total: S/ ${Number(props.venta.total_gravado).toFixed(2)}*\n\n` +
+        `Gracias por su compra 🙏`
+
+    const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`
+    window.open(url, '_blank')
 }
 
 const imprimirA4 = () => {
