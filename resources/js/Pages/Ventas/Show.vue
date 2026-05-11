@@ -63,17 +63,25 @@
                 <!-- Resumen -->
                 <div style="background:white; border-radius:10px; border:1px solid #E2E8F0; padding:1.5rem; margin-bottom:1rem;">
                     <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0 0 1.2rem;">Resumen</p>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                        <span style="font-size:13px; color:#64748B;">Op. gravadas</span>
+                    <div v-if="Number(venta.total_gravado) > 0" style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#64748B;">Op. Gravada</span>
                         <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_gravado).toFixed(2) }}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                        <span style="font-size:13px; color:#64748B;">Op. exoneradas</span>
-                        <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_exonerado).toFixed(2) }}</span>
+                    <div v-if="Number(venta.total_exonerado) > 0" style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#64748B;">Op. Exonerada</span>
+                        <span style="font-size:13px; color:#16a34a;">S/ {{ Number(venta.total_exonerado).toFixed(2) }}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <div v-if="Number(venta.total_inafecto) > 0" style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#64748B;">Op. Inafecta</span>
+                        <span style="font-size:13px; color:#f59e0b;">S/ {{ Number(venta.total_inafecto).toFixed(2) }}</span>
+                    </div>
+                    <div v-if="Number(venta.total_igv) > 0" style="display:flex; justify-content:space-between; margin-bottom:8px;">
                         <span style="font-size:13px; color:#64748B;">IGV (18%)</span>
                         <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_igv).toFixed(2) }}</span>
+                    </div>
+                    <div v-if="Number(venta.total_igv) === 0" style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-size:13px; color:#64748B;">IGV</span>
+                        <span style="font-size:13px; color:#94a3b8;">S/ 0.00</span>
                     </div>
                     <div style="border-top:2px solid #E2E8F0; margin:12px 0; padding-top:12px; display:flex; justify-content:space-between;">
                         <span style="font-size:15px; font-weight:700; color:#1E293B;">Total</span>
