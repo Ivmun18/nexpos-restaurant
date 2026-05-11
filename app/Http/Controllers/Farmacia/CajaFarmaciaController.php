@@ -22,26 +22,26 @@ class CajaFarmaciaController extends Controller
 
         // Ventas del día
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
+            ->whereDate('fecha_emision', $hoy)
             ->get();
 
-        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total_gravado');
-        $totalDia      = $ventasHoy->sum('total_gravado');
+        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalDia      = $ventasHoy->sum('total');
 
         // Ventas por hora
         $ventasPorHora = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
-            ->selectRaw('HOUR(created_at) as hora, COUNT(*) as cantidad, SUM(total_gravado) as total')
+            ->whereDate('fecha_emision', $hoy)
+            ->selectRaw('HOUR(created_at) as hora, COUNT(*) as cantidad, SUM(total) as total')
             ->groupBy('hora')
             ->orderBy('hora')
             ->get();
 
         // Últimas ventas
         $ultimasVentas = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
+            ->whereDate('fecha_emision', $hoy)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -108,13 +108,13 @@ class CajaFarmaciaController extends Controller
         $hoy = now()->toDateString();
 
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->get();
+            ->whereDate('fecha_emision', $hoy)->get();
 
-        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total_gravado');
-        $totalVentas   = $ventasHoy->sum('total_gravado');
+        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalVentas   = $ventasHoy->sum('total');
 
         $efectivoEsperado = $caja->monto_inicial + $totalEfectivo;
         $diferencia = $request->monto_final - $efectivoEsperado;
