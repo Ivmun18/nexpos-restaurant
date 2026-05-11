@@ -31,7 +31,8 @@ class PosFerretoriaController extends Controller
         $categorias = Categoria::where('empresa_id', $empresa_id)->orderBy('nombre')->get();
         $clientes   = \App\Models\Cliente::where('empresa_id', $empresa_id)->orderBy('razon_social')->get(['id','razon_social','numero_documento','tipo_documento','email']);
 
-        return Inertia::render('Ferreteria/Pos', compact('productos', 'categorias', 'clientes', 'cajaAbierta'));
+        $empresa_obj = auth()->user()->empresa;
+        return Inertia::render('Ferreteria/Pos', compact('productos', 'categorias', 'clientes', 'cajaAbierta', 'empresa_obj'));
     }
 
     public function store(Request $request)

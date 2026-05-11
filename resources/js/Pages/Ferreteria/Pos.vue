@@ -104,8 +104,8 @@
                         <span style="font-size:13px; color:#1E293B;">S/ {{ subtotal }}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-size:13px; color:#64748B;">IGV (18%)</span>
-                        <span style="font-size:13px; color:#1E293B;">S/ {{ igv }}</span>
+                        <span style="font-size:13px; color:#64748B;">{{ esRus ? 'Inafecto (RUS)' : 'IGV (18%)' }}</span>
+                        <span :style="`font-size:13px; color:${esRus ? '#f59e0b' : '#1E293B'};`">{{ esRus ? 'S/ 0.00' : 'S/ ' + igv }}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:16px; padding-top:12px; border-top:2px solid #F0F2F5;">
                         <span style="font-size:16px; font-weight:700; color:#1E293B;">TOTAL</span>
@@ -169,6 +169,7 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
+    empresa_obj: { type: Object, default: () => ({}) },
     productos:  { type: Array, default: () => [] },
     categorias: { type: Array, default: () => [] },
 })
@@ -198,11 +199,13 @@ const productosFiltrados = computed(() => {
     })
 })
 
+const esRus = computed(() => props.empresa_obj?.regimen_tributario === 'RUS' || props.empresa_obj?.zona_exonerada)
+
 const subtotal = computed(() => {
     const s = carrito.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
-    return (s / 1.18).toFixed(2)
+    return esRus.value ? s.toFixed(2) : (s / 1.18).toFixed(2)
 })
-const igv   = computed(() => (carrito.value.reduce((s,i) => s + i.precio_venta * i.cantidad, 0) - parseFloat(subtotal.value)).toFixed(2))
+const igv   = computed(() => esRus.value ? '0.00' : (carrito.value.reduce((s,i) => s + i.precio_venta * i.cantidad, 0) - parseFloat(subtotal.value)).toFixed(2))
 const total = computed(() => carrito.value.reduce((s,i) => s + i.precio_venta * i.cantidad, 0).toFixed(2))
 const vuelto = computed(() => montoPagado.value ? (parseFloat(montoPagado.value) - parseFloat(total.value)).toFixed(2) : -1)
 
