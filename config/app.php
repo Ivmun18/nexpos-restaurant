@@ -96,6 +96,7 @@ return [
     */
 
     'cipher' => 'AES-256-CBC',
+    'nexpos_secret_key' => env('NEXPOS_SECRET_KEY'),
 
     'key' => env('APP_KEY'),
 

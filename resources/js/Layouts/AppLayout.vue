@@ -263,7 +263,6 @@ const allMenuItems = [
     { path: '/ferreteria/pos',          icon: 'receipt',  label: 'Punto de Venta',    module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/productos',    icon: 'menu',     label: 'Productos',          module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/categorias',   icon: 'kanban',   label: 'Categorías',         module: 'pos_ferreteria',    section: 'FERRETERIA' },
-    { path: '/ferreteria/stock',        icon: 'chart',    label: 'Inventario/Stock',   module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/proveedores',  icon: 'users',    label: 'Proveedores',        module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/clientes',     icon: 'users',    label: 'Clientes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/cotizaciones', icon: 'receipt',  label: 'Cotizaciones',       module: 'pos_ferreteria',    section: 'FERRETERIA' },

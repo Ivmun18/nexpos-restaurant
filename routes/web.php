@@ -505,3 +505,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/configuracion/facturacion', [\App\Http\Controllers\ConfiguracionFacturacionController::class, 'guardar'])->name('configuracion.facturacion.guardar');
     Route::post('/configuracion/facturacion/probar', [\App\Http\Controllers\ConfiguracionFacturacionController::class, 'probar'])->name('configuracion.facturacion.probar');
 });
+
+// API Onboarding - recibe registro desde nexposolution.com
+Route::post('/api/onboarding/crear-empresa', [\App\Http\Controllers\Api\OnboardingApiController::class, 'crearEmpresa']);
