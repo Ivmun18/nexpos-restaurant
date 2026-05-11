@@ -111,9 +111,9 @@
                             <select v-model="form.rol" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;">
                                 <option value="admin">👑 Administrador</option>
                                 <option value="cajero">💰 Cajero</option>
-                                <option value="mozo">🍽️ Mozo</option>
-                                <option value="cocinero">👨‍🍳 Cocinero</option>
-                                <option value="vendedor">🛍️ Vendedor</option>
+                                <option v-if="industria === 'restaurante'" value="mozo">🍽️ Mozo</option>
+                                <option v-if="industria === 'restaurante'" value="cocinero">👨‍🍳 Cocinero</option>
+                                <option v-if="['ferreteria','minimarket','farmacia'].includes(industria)" value="vendedor">🛍️ Vendedor</option>
                             </select>
                         </div>
                     </div>
@@ -138,11 +138,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({ usuarios: { type: Array, default: () => [] } })
+import { usePage } from '@inertiajs/vue3'
+const page = usePage()
+const industria = computed(() => page.props.auth?.user?.empresa?.industry_type || 'restaurante')
 const busqueda = ref('')
 const modal = ref(false)
 const error = ref('')
