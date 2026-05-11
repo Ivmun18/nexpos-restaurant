@@ -59,18 +59,19 @@ class PosFarmaciaController extends Controller
         ->where('serie', $serie)->max('correlativo') ?? 0) + 1;
 
     // Calcular IGV según régimen tributario
-    $esRus = $empresa->regimen_tributario === 'RUS';
-    if ($esRus) {
+    $regimen = $empresa->regimen_tributario ?? 'GENERAL';
+    if ($regimen === 'RUS') {
         $igv      = 0;
         $gravado  = 0;
         $exonerado= 0;
         $inafecto = $request->total;
-    } elseif ($empresa->zona_exonerada) {
+    } elseif ($regimen === 'EXONERADO' || $empresa->zona_exonerada) {
         $igv      = 0;
         $gravado  = 0;
         $exonerado= $request->total;
         $inafecto = 0;
     } else {
+        // GENERAL, MYPE, RER — todos con IGV 18%
         $igv      = round($request->total / 1.18 * 0.18, 2);
         $gravado  = round($request->total - $igv, 2);
         $exonerado= 0;

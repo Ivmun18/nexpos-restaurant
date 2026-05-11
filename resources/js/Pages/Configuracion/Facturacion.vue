@@ -235,10 +235,11 @@ const config = computed(() => ({
 }))
 
 const regimenes = [
-    { valor: 'GENERAL', label: 'General',  icon: '🏢' },
-    { valor: 'MYPE',    label: 'MYPE',     icon: '🏪' },
-    { valor: 'RER',     label: 'RER',      icon: '📋' },
-    { valor: 'RUS',     label: 'RUS',      icon: '🛒' },
+    { valor: 'GENERAL',   label: 'Régimen General',      icon: '🏢', desc: 'IGV 18% + IR 29.5%' },
+    { valor: 'MYPE',      label: 'MYPE Tributario',      icon: '🏪', desc: 'IGV 18% + IR 10% hasta 15 UIT' },
+    { valor: 'RER',       label: 'Régimen Especial RER', icon: '📋', desc: 'IGV 18% + IR 1.5%' },
+    { valor: 'RUS',       label: 'Nuevo RUS (NRUS)',     icon: '🛒', desc: 'Sin IGV, cuota fija mensual' },
+    { valor: 'EXONERADO', label: 'Zona Exonerada',       icon: '🌿', desc: 'Amazonia - Sin IGV' },
 ]
 
 const proveedores = [

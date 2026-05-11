@@ -126,7 +126,7 @@
                 <div style="border-top:2px solid #1E293B; padding-top:12px; margin-bottom:16px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Subtotal</span>
-                        <span style="font-size:13px; color:#1E293B;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv)).toFixed(2) }}</span>
+                        <span style="font-size:13px; color:#1E293B;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv) + Number(venta.total_inafecto) + Number(venta.total_exonerado)).toFixed(2) }}</span>
                     </div>
                     <!-- IGV o Exonerado -->
                     <div v-if="Number(venta.total_exonerado) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
@@ -139,7 +139,7 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; padding:10px 16px; background:#1E293B; border-radius:10px; margin-top:8px;">
                         <span style="font-size:16px; font-weight:700; color:white;">TOTAL</span>
-                        <span style="font-size:24px; font-weight:900; color:white;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv)).toFixed(2) }}</span>
+                        <span style="font-size:24px; font-weight:900; color:white;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv) + Number(venta.total_inafecto) + Number(venta.total_exonerado)).toFixed(2) }}</span>
                     </div>
                 </div>
 
@@ -221,7 +221,7 @@ const enviarWhatsApp = () => {
     if (!tel) return
     const numero = '51' + tel.replace(/[^0-9]/g, '').slice(-9)
     
-    const items = props.venta.detalles?.map(d => 
+    const items = props.venta.detalle?.map(d => 
         `• ${d.descripcion} x${d.cantidad} = S/ ${Number(d.total).toFixed(2)}`
     ).join('\n') || ''
 
@@ -229,7 +229,7 @@ const enviarWhatsApp = () => {
         `📋 *${props.venta.numero_completo}*\n` +
         `📅 Fecha: ${props.venta.created_at?.slice(0,10)}\n\n` +
         `${items}\n\n` +
-        `💰 *Total: S/ ${Number(props.venta.total_gravado).toFixed(2)}*\n\n` +
+        `💰 *Total: S/ ${(Number(props.venta.total_gravado) + Number(props.venta.total_igv) + Number(props.venta.total_inafecto) + Number(props.venta.total_exonerado)).toFixed(2)}*\n\n` +
         `Gracias por su compra 🙏`
 
     const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`

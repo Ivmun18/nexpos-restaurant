@@ -305,7 +305,7 @@ const agregarAlCarrito = (p) => {
 const incrementar = (i) => {
     const item = carrito.value[i]
     const prod = props.productos.find(p => p.id === item.id)
-    if (item.cantidad < prod.stock) item.cantidad++
+    if (item.cantidad < prod.stock_actual) item.cantidad++
 }
 
 const decrementar = (i) => {
@@ -317,7 +317,7 @@ const cobrar = () => {
     if (!carrito.value.length || procesando.value) return
     procesando.value = true
 
-    router.post('/minimarket/pos', {
+    router.post('/farmacia/pos', {
         items:              carrito.value,
         metodo_pago:        metodoPago.value,
         total:              total.value,
