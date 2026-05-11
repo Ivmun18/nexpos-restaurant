@@ -72,6 +72,7 @@
                             <span :style="`font-size:14px; font-weight:600; color:${venta.estado === 'anulado' ? '#EF4444' : '#1E293B'}; ${venta.estado === 'anulado' ? 'text-decoration:line-through;' : ''}`">{{ venta.numero_completo }}</span>
                             <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">{{ venta.tipo_comprobante === '03' ? 'Boleta' : 'Factura' }}</p>
                             <span v-if="venta.estado === 'anulado'" style="font-size:10px; font-weight:700; color:#EF4444; background:#FEE2E2; padding:2px 6px; border-radius:4px;">ANULADO</span>
+                            <span v-if="venta.estado === 'pendiente'" style="font-size:10px; font-weight:700; color:#F59E0B; background:#FEF3C7; padding:2px 6px; border-radius:4px;">⏳ PENDIENTE</span>
                         </td>
                         <td style="padding:14px 20px; font-size:14px; color:#475569;">{{ formatFecha(venta.fecha_emision) }}</td>
                         <td style="padding:14px 20px;">
