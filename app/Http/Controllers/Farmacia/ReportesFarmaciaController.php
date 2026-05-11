@@ -109,7 +109,7 @@ class ReportesFarmaciaController extends Controller
             return back()->with('error', 'La venta ya está anulada.');
         }
         $venta->update(['estado' => 'anulado']);
-        return back()->with('success', 'Venta anulada correctamente.');
+        return redirect('/farmacia/ventas')->with('success', '✅ Venta anulada correctamente.');
     }
 
     public function reintentar(\App\Models\Venta $venta)
