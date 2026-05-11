@@ -96,15 +96,15 @@ Route::get('/dashboard', function () {
         $anio = now()->year;
 
         $ventasHoy = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->sum('total_gravado');
+            ->whereDate('fecha_emision', $hoy)->where('estado','!=','anulado')->sum('total');
 
         $ventasMes = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('total_gravado');
+            ->whereMonth('fecha_emision', $mes)->whereYear('fecha_emision', $anio)->where('estado','!=','anulado')->sum('total');
 
-        $totalVentas = \App\Models\Venta::where('empresa_id', $empresaId)->count();
+        $totalVentas = \App\Models\Venta::where('empresa_id', $empresaId)->where('estado','!=','anulado')->count();
 
         $ventasHoyCount = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->count();
+            ->whereDate('fecha_emision', $hoy)->where('estado','!=','anulado')->count();
 
         $productosStockBajo = \App\Models\Producto::where('empresa_id', $empresaId)
             ->whereColumn('stock_actual', '<=', 'stock_minimo')->count();
@@ -126,7 +126,7 @@ Route::get('/dashboard', function () {
         for ($i = 6; $i >= 0; $i--) {
             $fecha = now()->subDays($i);
             $total = \App\Models\Venta::where('empresa_id', $empresaId)
-                ->whereDate('created_at', $fecha->toDateString())->sum('total_gravado');
+                ->whereDate('fecha_emision', $fecha->toDateString())->where('estado','!=','anulado')->sum('total');
             $ventasPorDia[] = [
                 'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
                 'total' => round($total, 2),
@@ -167,15 +167,15 @@ Route::get('/dashboard', function () {
         $empresaId = auth()->user()->empresa_id;
 
         $ventasHoy = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->sum('total_gravado');
+            ->whereDate('fecha_emision', $hoy)->where('estado','!=','anulado')->sum('total');
 
         $ventasMes = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('total_gravado');
+            ->whereMonth('fecha_emision', $mes)->whereYear('fecha_emision', $anio)->where('estado','!=','anulado')->sum('total');
 
-        $totalVentas = \App\Models\Venta::where('empresa_id', $empresaId)->count();
+        $totalVentas = \App\Models\Venta::where('empresa_id', $empresaId)->where('estado','!=','anulado')->count();
 
         $ventasHoyCount = \App\Models\Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->count();
+            ->whereDate('fecha_emision', $hoy)->where('estado','!=','anulado')->count();
 
         $productosStockBajo = \App\Models\Producto::where('empresa_id', $empresaId)
             ->whereColumn('stock_actual', '<=', 'stock_minimo')->count();
@@ -184,7 +184,7 @@ Route::get('/dashboard', function () {
         for ($i = 6; $i >= 0; $i--) {
             $fecha = now()->subDays($i);
             $total = \App\Models\Venta::where('empresa_id', $empresaId)
-                ->whereDate('created_at', $fecha->toDateString())->sum('total_gravado');
+                ->whereDate('fecha_emision', $fecha->toDateString())->where('estado','!=','anulado')->sum('total');
             $ventasPorDia[] = [
                 'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
                 'total' => round($total, 2),
