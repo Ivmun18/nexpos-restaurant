@@ -142,10 +142,10 @@ import { ref, computed, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
-const props = defineProps({ usuarios: { type: Array, default: () => [] } })
+const props = defineProps({ usuarios: { type: Array, default: () => [] }, industria: { type: String, default: 'restaurante' } })
 import { usePage } from '@inertiajs/vue3'
 const page = usePage()
-const industria = computed(() => page.props.empresa?.industry_type || 'restaurante')
+const industria = computed(() => props.industria)
 const busqueda = ref('')
 const modal = ref(false)
 const error = ref('')

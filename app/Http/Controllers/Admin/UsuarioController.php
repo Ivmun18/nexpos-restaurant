@@ -17,7 +17,8 @@ class UsuarioController extends Controller
             ->get();
 
         return Inertia::render('Admin/Usuarios', [
-            'usuarios' => $usuarios,
+            'usuarios'  => $usuarios,
+            'industria' => auth()->user()->empresa->industry_type ?? 'restaurante',
         ]);
     }
 
