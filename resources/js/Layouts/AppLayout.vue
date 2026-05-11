@@ -336,7 +336,7 @@ const menuItems = computed(() => {
 })
 
 const menuSections = computed(() => {
-    const orden = [null, 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL']
+    const orden = [null, 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {
