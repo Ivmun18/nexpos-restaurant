@@ -48,6 +48,7 @@ class ConfiguracionController extends Controller
             'agente_retencion'   => $request->agente_retencion ?? false,
             'ambiente'           => $request->ambiente ?? 'beta',
             'zona_exonerada'     => $request->zona_exonerada ?? false,
+            'modalidad_cobro'    => $request->modalidad_cobro ?? 'directo',
         ];
 
         // Credenciales SUNAT

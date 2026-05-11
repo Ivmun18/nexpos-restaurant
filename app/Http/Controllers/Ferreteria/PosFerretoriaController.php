@@ -32,7 +32,8 @@ class PosFerretoriaController extends Controller
         $clientes   = \App\Models\Cliente::where('empresa_id', $empresa_id)->orderBy('razon_social')->get(['id','razon_social','numero_documento','tipo_documento','email']);
 
         $empresa_obj = auth()->user()->empresa;
-        return Inertia::render('Ferreteria/Pos', compact('productos', 'categorias', 'clientes', 'cajaAbierta', 'empresa_obj'));
+        $modalidad = $empresa_obj->modalidad_cobro ?? 'directo';
+        return Inertia::render('Ferreteria/Pos', compact('productos', 'categorias', 'clientes', 'cajaAbierta', 'empresa_obj', 'modalidad'));
     }
 
     public function store(Request $request)
@@ -71,9 +72,13 @@ class PosFerretoriaController extends Controller
             $inafecto = 0;
         }
 
+        $modalidad = $empresa->modalidad_cobro ?? 'directo';
+        $estadoVenta = $modalidad === 'cajero' ? 'pendiente' : 'emitido';
+
         $venta = Venta::create([
             'empresa_id'          => $empresa->id,
             'usuario_id'          => auth()->id(),
+            'estado'              => $estadoVenta,
             'tipo_comprobante'    => $tipo,
             'serie'               => $serie,
             'correlativo'         => $correlativo,

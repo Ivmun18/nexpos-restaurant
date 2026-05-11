@@ -117,6 +117,16 @@
                             </select>
                         </div>
 
+                        <div>
+                            <label style="font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">Modalidad de cobro</label>
+                            <select v-model="form.modalidad_cobro"
+                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; background:white;">
+                                <option value="directo">💰 Vendedor cobra directamente</option>
+                                <option value="cajero">🏦 Cajero centralizado cobra</option>
+                            </select>
+                            <p style="font-size:11px; color:#94A3B8; margin:4px 0 0;">Define si cada vendedor cobra o si hay un cajero que centraliza los cobros</p>
+                        </div>
+
                         <div style="display:flex; flex-direction:column; gap:10px;">
                             <label style="display:flex; align-items:center; gap:10px; font-size:13px; color:#64748B; cursor:pointer;">
                                 <input v-model="form.buen_contribuyente" type="checkbox" style="accent-color:#2563EB;"/>
@@ -264,6 +274,7 @@ const form = ref({
     agente_retencion:   props.empresa?.agente_retencion ?? false,
     ambiente:           props.empresa?.ambiente ?? 'beta',
     zona_exonerada:     props.empresa?.zona_exonerada ?? false,
+    modalidad_cobro:    props.empresa?.modalidad_cobro ?? 'directo',
     sol_usuario:        props.empresa?.sol_usuario ?? '',
     sol_clave:          '',
     cert_password:      '',

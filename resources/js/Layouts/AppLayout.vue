@@ -270,6 +270,7 @@ const allMenuItems = [
     { path: '/ferreteria/garantias',    icon: 'settings', label: 'Garantías',          module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_ferreteria',    section: 'FERRETERIA' },
+    { path: '/ferreteria/cajero',       icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/farmacia/pos',          icon: 'receipt',  label: 'Punto de Venta',    module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/productos',    icon: 'menu',     label: 'Productos',          module: 'pos_farmacia', section: 'FARMACIA' },

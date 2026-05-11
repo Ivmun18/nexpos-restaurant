@@ -24,6 +24,7 @@ class Empresa extends Model
         'nubefact_demo',
         'zona_exonerada' => 'boolean',
         'regimen_tributario',
+        'modalidad_cobro',
         'proveedor_facturacion',
         'proveedor_facturacion',
         'serie_boleta',
