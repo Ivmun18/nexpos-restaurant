@@ -80,6 +80,13 @@ class ProductosFarmaciaController extends Controller
             Carbon::parse($p->fecha_vencimiento)->lte($hoy->copy()->addDays(90))
         )->values();
 
-        return Inertia::render('Farmacia/Vencimientos', compact('vencidos', 'porVencer', 'porVencer90'));
+        $stockBajo = Producto::where('empresa_id', $empresa_id)
+            ->where('activo', true)
+            ->whereNotNull('stock_minimo')
+            ->whereRaw('stock_actual <= stock_minimo')
+            ->orderBy('stock_actual')
+            ->get();
+
+        return Inertia::render('Farmacia/Vencimientos', compact('vencidos', 'porVencer', 'porVencer90', 'stockBajo'));
     }
 }

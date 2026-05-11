@@ -3,7 +3,7 @@
         <div style="padding:24px; max-width:1200px; margin:0 auto;">
 
             <!-- Header stats -->
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
                 <div style="background:linear-gradient(135deg,#dc2626,#991b1b); border-radius:16px; padding:20px; color:white;">
                     <p style="margin:0 0 8px; font-size:13px; opacity:0.85;">🚨 Vencidos</p>
                     <p style="margin:0; font-size:32px; font-weight:800;">{{ vencidos.length }}</p>
@@ -18,6 +18,11 @@
                     <p style="margin:0 0 8px; font-size:13px; opacity:0.85;">📅 Por vencer (90 días)</p>
                     <p style="margin:0; font-size:32px; font-weight:800;">{{ porVencer90.length }}</p>
                     <p style="margin:4px 0 0; font-size:12px; opacity:0.75;">Monitorear</p>
+                </div>
+                <div style="background:linear-gradient(135deg,#ea580c,#9a3412); border-radius:16px; padding:20px; color:white;">
+                    <p style="margin:0 0 8px; font-size:13px; opacity:0.85;">📦 Stock Bajo</p>
+                    <p style="margin:0; font-size:32px; font-weight:800;">{{ stockBajo.length }}</p>
+                    <p style="margin:4px 0 0; font-size:12px; opacity:0.75;">Reabastecer</p>
                 </div>
             </div>
 
@@ -108,7 +113,41 @@
                 </table>
             </div>
 
-            <div v-if="!vencidos.length && !porVencer.length && !porVencer90.length"
+            <!-- Stock Bajo -->
+            <div v-if="stockBajo.length" style="background:white; border-radius:16px; border:1px solid #fed7aa; overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#ea580c,#c2410c); padding:16px 20px; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">📦</span>
+                    <h3 style="margin:0; color:white; font-size:15px; font-weight:700;">Stock Bajo ({{ stockBajo.length }} productos)</h3>
+                </div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#fff7ed;">
+                            <th style="padding:10px 16px; text-align:left; font-size:12px; color:#9a3412; font-weight:600;">Producto</th>
+                            <th style="padding:10px 16px; text-align:center; font-size:12px; color:#9a3412; font-weight:600;">Stock Actual</th>
+                            <th style="padding:10px 16px; text-align:center; font-size:12px; color:#9a3412; font-weight:600;">Stock Mínimo</th>
+                            <th style="padding:10px 16px; text-align:center; font-size:12px; color:#9a3412; font-weight:600;">Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="p in stockBajo" :key="p.id" style="border-bottom:1px solid #ffedd5;">
+                            <td style="padding:10px 16px; font-size:13px; color:#1E293B; font-weight:500;">{{ p.descripcion }}</td>
+                            <td style="padding:10px 16px; text-align:center;">
+                                <span :style="`font-size:13px; font-weight:700; color:${p.stock_actual === 0 ? '#EF4444' : '#ea580c'};`">
+                                    {{ p.stock_actual }}
+                                </span>
+                            </td>
+                            <td style="padding:10px 16px; text-align:center; font-size:13px; color:#64748B;">{{ p.stock_minimo }}</td>
+                            <td style="padding:10px 16px; text-align:center;">
+                                <span style="font-size:12px; font-weight:600; color:#EF4444;">
+                                    -{{ p.stock_minimo - p.stock_actual }} unid.
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div v-if="!vencidos.length && !porVencer.length && !porVencer90.length && !stockBajo.length"
                 style="text-align:center; padding:60px; background:white; border-radius:16px; border:1px solid #E2E8F0;">
                 <p style="font-size:48px; margin:0 0 12px;">✅</p>
                 <p style="font-size:16px; color:#64748b;">Todos los productos están en buen estado</p>
@@ -124,6 +163,7 @@ const props = defineProps({
     vencidos:    { type: Array, default: () => [] },
     porVencer:   { type: Array, default: () => [] },
     porVencer90: { type: Array, default: () => [] },
+    stockBajo:   { type: Array, default: () => [] },
 })
 
 const diasRestantes = (fecha) => {

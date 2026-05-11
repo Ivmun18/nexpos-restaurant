@@ -18,8 +18,8 @@ class ReportesFarmaciaController extends Controller
 
         // Ventas del período
         $ventas = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', '>=', $desde)
-            ->whereDate('created_at', '<=', $hasta)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
             ->where('estado', '!=', 'anulado')
             ->get();
 
@@ -31,8 +31,8 @@ class ReportesFarmaciaController extends Controller
 
         // Ventas por día
         $ventasPorDia = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', '>=', $desde)
-            ->whereDate('created_at', '<=', $hasta)
+            ->whereDate('fecha_emision', '>=', $desde)
+            ->whereDate('fecha_emision', '<=', $hasta)
             ->where('estado', '!=', 'anulado')
             ->selectRaw('DATE(created_at) as fecha, COUNT(*) as cantidad, SUM(total) as total')
             ->groupBy('fecha')
@@ -42,8 +42,8 @@ class ReportesFarmaciaController extends Controller
         // Top productos
         $topProductos = VentaDetalle::selectRaw('descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
             ->whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId)
-                ->whereDate('created_at', '>=', $desde)
-                ->whereDate('created_at', '<=', $hasta))
+                ->whereDate('fecha_emision', '>=', $desde)
+                ->whereDate('fecha_emision', '<=', $hasta))
             ->groupBy('descripcion')
             ->orderByDesc('total_monto')
             ->limit(10)
