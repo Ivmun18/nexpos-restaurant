@@ -287,7 +287,7 @@ const agregarAlCarrito = (p) => {
 const incrementar = (i) => {
     const item = carrito.value[i]
     const prod = props.productos.find(p => p.id === item.id)
-    if (item.cantidad < prod.stock) item.cantidad++
+    if (item.cantidad < (prod?.stock_actual ?? 999)) item.cantidad++
 }
 
 const decrementar = (i) => {
