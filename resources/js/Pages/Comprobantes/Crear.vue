@@ -31,14 +31,21 @@
                     📄 Tipo de Comprobante
                 </h3>
                 
-                <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:16px;">
+                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
                     <button @click="tipoComprobante = 'boleta'"
                         :style="tipoButtonStyle(tipoComprobante === 'boleta')">
                         <div style="font-size:32px; margin-bottom:8px;">🧾</div>
                         <div style="font-size:16px; font-weight:700;">BOLETA</div>
-                        <div style="font-size:12px; margin-top:4px; opacity:0.8;">Para público en general</div>
+                        <div style="font-size:12px; margin-top:4px; opacity:0.8;">Con datos del cliente</div>
                     </button>
                     
+                    <button @click="emitirSinDatos"
+                        :style="tipoButtonStyle(tipoComprobante === 'sin_datos', '#F0FDFA', '#14B8A6')">
+                        <div style="font-size:32px; margin-bottom:8px;">⚡</div>
+                        <div style="font-size:16px; font-weight:700;">BOLETA RÁPIDA</div>
+                        <div style="font-size:12px; margin-top:4px; opacity:0.8;">Sin datos del cliente</div>
+                    </button>
+
                     <button @click="tipoComprobante = 'factura'"
                         :style="tipoButtonStyle(tipoComprobante === 'factura')">
                         <div style="font-size:32px; margin-bottom:8px;">📑</div>
@@ -240,6 +247,18 @@ const formatNumber = (num) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(num || 0)
+}
+
+const emitirSinDatos = () => {
+    router.post(`/comprobantes/caja/${props.caja.id}/boleta`, {
+        cliente_tipo_documento: '1',
+        cliente_documento: '00000000',
+        cliente_nombre: 'CLIENTE VARIOS',
+        cliente_email: '',
+    }, {
+        onSuccess: () => {},
+        onError: (e) => alert('Error: ' + JSON.stringify(e))
+    })
 }
 
 const emitirBoleta = () => {
