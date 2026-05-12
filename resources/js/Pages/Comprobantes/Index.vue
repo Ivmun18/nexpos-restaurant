@@ -37,6 +37,14 @@
                         style="width:100%; padding:10px 14px; border:1px solid #E2E8F0; border-radius:10px; font-size:14px; color:#1E293B;">
                 </div>
 
+                <!-- Botón filtrar -->
+                <div style="flex:1; min-width:180px; display:flex; align-items:flex-end;">
+                    <button @click="aplicarFiltros"
+                        style="width:100%; padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                        🔍 Filtrar
+                    </button>
+                </div>
+
                 <!-- Botón limpiar -->
                 <div style="flex:1; min-width:180px; display:flex; align-items:flex-end;">
                     <button @click="limpiarFiltros"
