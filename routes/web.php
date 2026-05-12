@@ -415,7 +415,7 @@ Route::post('/turnos/{turno}/cerrar', [TurnoController::class, 'cerrar'])->name(
 Route::get('/turnos/{turno}',   [TurnoController::class, 'show'])->name('turnos.show');
 
 
-Route::middleware(['auth', 'admin'])
+Route::middleware(['auth'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -429,7 +429,7 @@ Route::middleware(['auth', 'admin'])
 
 
 // Reportes Restaurante
-Route::middleware(['auth', 'admin'])->prefix('reportes-restaurante')->group(function () {
+Route::middleware(['auth'])->prefix('reportes-restaurante')->group(function () {
     Route::get('/', [\App\Http\Controllers\ReporteRestauranteController::class, 'index'])->name('reportes.restaurante');
     Route::get('/exportar-excel', [\App\Http\Controllers\ReporteRestauranteController::class, 'exportarExcel'])->name('reportes.restaurante.excel');
     Route::get('/exportar-pdf', [\App\Http\Controllers\ReporteRestauranteController::class, 'exportarPdf'])->name('reportes.restaurante.pdf');
