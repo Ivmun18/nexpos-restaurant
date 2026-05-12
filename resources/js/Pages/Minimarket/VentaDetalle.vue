@@ -264,16 +264,16 @@ const imprimir = () => {
                 }
                 body { 
                     font-family: 'Courier New', monospace; 
-                    padding: 10px; 
+                    padding: 4px; 
                     max-width: 80mm; 
                     margin: 0 auto;
-                    font-size: 12px;
+                    font-size: 11px;
+                    line-height: 1.2;
                 }
-                * { box-sizing: border-box; }
+                * { box-sizing: border-box; margin: 0; padding: 0; }
                 table { width: 100%; border-collapse: collapse; }
-                img { max-width: 100%; }
-                div { page-break-inside: avoid; }
-                h3 { font-size: 13px; }
+                p { margin: 1px 0; }
+                div { margin-bottom: 2px; }
             </style>
         </head>
         <body>${contenido}</body>
