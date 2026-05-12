@@ -4,7 +4,7 @@
         <div style="max-width:1100px; margin:0 auto;">
 
             <!-- Botones -->
-            <div style="display:flex; gap:12px; margin-bottom:24px;">
+            <div style="display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap;">
                 <a href="/minimarket/ventas" style="padding:10px 20px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #E2E8F0;">
                     ← Volver
                 </a>
