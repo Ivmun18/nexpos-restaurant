@@ -264,12 +264,24 @@ class ComprobanteSunatController extends Controller
     /**
      * Ver detalle de comprobante
      */
-    public function show(ComprobanteSunat $comprobante): Response
+    public function show(ComprobanteSunat $comprobante)
     {
         $comprobante->load(['caja.mesa', 'empresa']);
 
+        // Cargar pedidos cerrados de la mesa para mostrar detalle
+        $pedidos = [];
+        if ($comprobante->caja && $comprobante->caja->mesa_id) {
+            $pedidos = \App\Models\Pedido::with('detalles.menuProducto')
+                ->where('mesa_id', $comprobante->caja->mesa_id)
+                ->where('estado', 'cerrado')
+                ->whereDate('updated_at', $comprobante->fecha_emision)
+                ->get();
+        }
+
         return Inertia::render('Comprobantes/Show', [
             'comprobante' => $comprobante,
+            'pedidos'     => $pedidos,
+            'imprimir'    => session('imprimir', false),
         ]);
     }
 }

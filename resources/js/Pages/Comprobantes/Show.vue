@@ -57,6 +57,31 @@
                         </p>
                     </div>
 
+                    <!-- Detalle productos -->
+                    <div v-if="pedidos && pedidos.length" style="margin-bottom:20px;">
+                        <p style="font-size:12px; color:#64748B; font-weight:700; margin:0 0 8px;">DETALLE DEL CONSUMO</p>
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#F8FAFC;">
+                                    <th style="padding:8px; text-align:left; font-size:12px; color:#64748B;">Producto</th>
+                                    <th style="padding:8px; text-align:center; font-size:12px; color:#64748B;">Cant.</th>
+                                    <th style="padding:8px; text-align:right; font-size:12px; color:#64748B;">Precio</th>
+                                    <th style="padding:8px; text-align:right; font-size:12px; color:#64748B;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-for="pedido in pedidos" :key="pedido.id">
+                                    <tr v-for="item in pedido.detalles" :key="item.id" style="border-top:1px solid #F1F5F9;">
+                                        <td style="padding:8px; font-size:13px; color:#1E293B;">{{ item.menu_producto?.nombre || item.nombre }}</td>
+                                        <td style="padding:8px; text-align:center; font-size:13px; color:#475569;">{{ item.cantidad }}</td>
+                                        <td style="padding:8px; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(item.precio_unitario).toFixed(2) }}</td>
+                                        <td style="padding:8px; text-align:right; font-size:13px; font-weight:600; color:#1E293B;">S/ {{ Number(item.total).toFixed(2) }}</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <!-- Desglose -->
                     <div style="background:#F8FAFC; border-radius:12px; padding:16px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
