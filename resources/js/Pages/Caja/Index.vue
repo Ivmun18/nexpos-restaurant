@@ -275,7 +275,7 @@ const tipoEgresoBadge  = { fontSize:'11px', background:'#FEF2F2', color:'#991B1B
 
 const totalIngresos = computed(() => {
     if (!props.sesionActiva?.movimientos) return 0
-    return props.sesionActiva.movimientos
+    return props.sesionActiva.movimientos.filter(m => m.concepto !== 'Apertura de caja')
         .filter(m => m.tipo === 'ingreso')
         .reduce((sum, m) => sum + parseFloat(m.monto), 0)
 })
