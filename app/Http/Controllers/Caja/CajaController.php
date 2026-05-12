@@ -70,14 +70,7 @@ class CajaController extends Controller
             'observaciones'  => $request->observaciones,
         ]);
 
-        // Registrar movimiento de apertura
-        CajaMovimiento::create([
-            'sesion_id'  => $sesion->id,
-            'usuario_id' => Auth::id(),
-            'tipo'       => 'ingreso',
-            'concepto'   => 'Apertura de caja',
-            'monto'      => $request->monto_apertura,
-        ]);
+        // El monto de apertura ya queda en sesion->monto_apertura, no se registra como movimiento
 
         return back()->with('success', 'Caja abierta correctamente.');
     }
