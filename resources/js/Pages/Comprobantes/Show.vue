@@ -167,6 +167,7 @@ import { computed, onMounted } from 'vue'
 
 const props = defineProps({
     comprobante: Object,
+    pedidos:  { type: Array, default: () => [] },
     imprimir: { type: Boolean, default: false },
 })
 
