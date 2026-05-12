@@ -92,6 +92,7 @@ class PosMinimarketController extends Controller
         'total_exonerado'     => $exonerado ?? 0,
         'total_inafecto'      => $inafecto ?? 0,
         'total_igv'           => $igv,
+        'total'               => $request->total,
         'total_descuento'     => 0,
         'metodo_pago'         => $request->metodo_pago,
         'cliente_tipo_doc'    => $tipoComprobante === 'factura' ? '6' : '1',

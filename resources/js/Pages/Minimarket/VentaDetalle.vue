@@ -141,7 +141,6 @@
                         <span style="font-size:13px; color:#64748B;">Op. Exonerada</span>
                         <span style="font-size:13px; color:#16a34a;">S/ {{ Number(venta.total_exonerado).toFixed(2) }}</span>
                     </div>
-                    <- Menú Op. Inafecta (código 30 - RUS) -->
                     <div v-if="Number(venta.total_inafecto) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Op. Inafecta</span>
                         <span style="font-size:13px; color:#f59e0b;">S/ {{ Number(venta.total_inafecto).toFixed(2) }}</span>
