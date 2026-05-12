@@ -136,7 +136,7 @@
                         <span style="font-size:13px; color:#64748B;">Op. Gravada</span>
                         <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_gravado).toFixed(2) }}</span>
                     </div>
-                    <- Menú Op. Exonerada (código 20) -->
+                    
                     <div v-if="Number(venta.total_exonerado) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Op. Exonerada</span>
                         <span style="font-size:13px; color:#16a34a;">S/ {{ Number(venta.total_exonerado).toFixed(2) }}</span>
@@ -146,7 +146,7 @@
                         <span style="font-size:13px; color:#64748B;">Op. Inafecta</span>
                         <span style="font-size:13px; color:#f59e0b;">S/ {{ Number(venta.total_inafecto).toFixed(2) }}</span>
                     </div>
-                    <- Menú IGV solo si hay operación gravada -->
+                    
                     <div v-if="Number(venta.total_igv) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">IGV (18%)</span>
                         <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total_igv).toFixed(2) }}</span>
@@ -205,8 +205,9 @@ const formatFecha = (fecha) => {
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
 const imprimir = () => {
-    const contenido = document.getElementById('ticket').innerHTML +
-        '<div style="margin-top:24px;">' + (document.getElementById('ticket-productos')?.innerHTML || '') + '</div>'
+    const izq = document.getElementById('ticket')?.innerHTML || ''
+    const der = document.getElementById('ticket-productos')?.innerHTML || ''
+    const contenido = `<div style="display:flex;gap:0;flex-direction:column;">${izq}<div style="margin-top:16px;">${der}</div></div>`
     const ventana = window.open('', '_blank')
     ventana.document.write(`
         <html>
@@ -227,6 +228,8 @@ const imprimir = () => {
                 * { box-sizing: border-box; }
                 table { width: 100%; border-collapse: collapse; }
                 img { max-width: 100%; }
+                div { page-break-inside: avoid; }
+                h3 { font-size: 13px; }
             </style>
         </head>
         <body>${contenido}</body>
@@ -237,8 +240,9 @@ const imprimir = () => {
 }
 
 const imprimirA4 = () => {
-    const contenido = document.getElementById('ticket').innerHTML +
-        '<div style="margin-top:24px;">' + (document.getElementById('ticket-productos')?.innerHTML || '') + '</div>'
+    const izq = document.getElementById('ticket')?.innerHTML || ''
+    const der = document.getElementById('ticket-productos')?.innerHTML || ''
+    const contenido = `<div style="display:flex;gap:0;flex-direction:column;">${izq}<div style="margin-top:16px;">${der}</div></div>`
     const ventana = window.open('', '_blank')
     ventana.document.write(`
         <html>
@@ -258,6 +262,7 @@ const imprimirA4 = () => {
                 * { box-sizing: border-box; }
                 table { width: 100%; border-collapse: collapse; }
                 img { max-width: 100%; }
+                div { page-break-inside: avoid; }
             </style>
         </head>
         <body>${contenido}</body>
