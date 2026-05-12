@@ -104,7 +104,7 @@
             </div><!-- fin columna izquierda -->
 
             <!-- Columna derecha: productos -->
-            <div style="background:white; border-radius:20px; padding:32px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+            <div id="ticket-productos" style="background:white; border-radius:20px; padding:32px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                 <h3 style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 20px; padding-bottom:12px; border-bottom:2px solid #E2E8F0;">🛒 Productos ({{ venta.detalle?.length || 0 }} items)</h3>
                 <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                     <thead>
@@ -205,7 +205,8 @@ const formatFecha = (fecha) => {
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
 const imprimir = () => {
-    const contenido = document.getElementById('ticket').innerHTML
+    const contenido = document.getElementById('ticket').innerHTML +
+        '<div style="margin-top:24px;">' + (document.getElementById('ticket-productos')?.innerHTML || '') + '</div>'
     const ventana = window.open('', '_blank')
     ventana.document.write(`
         <html>
@@ -236,7 +237,8 @@ const imprimir = () => {
 }
 
 const imprimirA4 = () => {
-    const contenido = document.getElementById('ticket').innerHTML
+    const contenido = document.getElementById('ticket').innerHTML +
+        '<div style="margin-top:24px;">' + (document.getElementById('ticket-productos')?.innerHTML || '') + '</div>'
     const ventana = window.open('', '_blank')
     ventana.document.write(`
         <html>
