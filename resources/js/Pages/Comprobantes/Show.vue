@@ -148,7 +148,6 @@ const props = defineProps({
 const alertStyle = computed(() => {
     return {
         background: props.comprobante.aceptada_por_sunat ? '#D1FAE5' : (props.comprobante.enlace_pdf ? '#FEF3C7' : '#F1F5F9'),
-            : 'linear-gradient(135deg,#FEF3C7,#FDE68A)',
         color: props.comprobante.aceptada_por_sunat ? '#065F46' : (props.comprobante.enlace_pdf ? '#92400E' : '#475569'),
     }
 })
