@@ -666,3 +666,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/minimarket/clientes/{cliente}',         [\App\Http\Controllers\Minimarket\ClientesMinimarketController::class, 'update'])->name('minimarket.clientes.update');
     Route::delete('/minimarket/clientes/{cliente}',      [\App\Http\Controllers\Minimarket\ClientesMinimarketController::class, 'destroy'])->name('minimarket.clientes.destroy');
 });
+
+// Cajero Minimarket
+Route::middleware(['auth'])->group(function () {
+    Route::get('/minimarket/cajero',                    [\App\Http\Controllers\Minimarket\CajeroMinimarketController::class, 'index'])->name('minimarket.cajero');
+    Route::post('/minimarket/cajero/{venta}/cobrar',    [\App\Http\Controllers\Minimarket\CajeroMinimarketController::class, 'cobrar'])->name('minimarket.cajero.cobrar');
+});
