@@ -6,14 +6,14 @@
             <!-- Estado SUNAT -->
             <div :style="alertStyle" style="border-radius:16px; padding:20px; margin-bottom:24px; display:flex; align-items:center; gap:16px;">
                 <div style="font-size:48px;">
-                    {{ comprobante.aceptada_por_sunat ? '✅' : '⏳' }}
+                    {{ comprobante.aceptada_por_sunat ? '✅' : (comprobante.enlace_pdf ? '⏳' : '📋') }}
                 </div>
                 <div style="flex:1;">
                     <h3 style="font-size:18px; font-weight:700; margin:0 0 4px;">
-                        {{ comprobante.aceptada_por_sunat ? '¡Comprobante Aceptado por SUNAT!' : 'Comprobante en Proceso' }}
+                        {{ comprobante.aceptada_por_sunat ? '¡Comprobante Aceptado por SUNAT!' : (comprobante.enlace_pdf ? 'Comprobante en Proceso' : 'Comprobante Local') }}
                     </h3>
                     <p style="font-size:14px; margin:0; opacity:0.9;">
-                        {{ comprobante.aceptada_por_sunat ? 'El comprobante fue enviado y aceptado correctamente.' : 'El comprobante está siendo procesado por SUNAT.' }}
+                        {{ comprobante.aceptada_por_sunat ? 'El comprobante fue enviado y aceptado correctamente.' : (comprobante.enlace_pdf ? 'El comprobante está siendo procesado por SUNAT.' : 'Comprobante registrado localmente. Sin envío a SUNAT.') }}
                     </p>
                 </div>
             </div>
@@ -137,10 +137,9 @@ const props = defineProps({
 
 const alertStyle = computed(() => {
     return {
-        background: props.comprobante.aceptada_por_sunat 
-            ? 'linear-gradient(135deg,#D1FAE5,#A7F3D0)' 
+        background: props.comprobante.aceptada_por_sunat ? '#D1FAE5' : (props.comprobante.enlace_pdf ? '#FEF3C7' : '#F1F5F9'),
             : 'linear-gradient(135deg,#FEF3C7,#FDE68A)',
-        color: props.comprobante.aceptada_por_sunat ? '#065F46' : '#92400E',
+        color: props.comprobante.aceptada_por_sunat ? '#065F46' : (props.comprobante.enlace_pdf ? '#92400E' : '#475569'),
     }
 })
 
