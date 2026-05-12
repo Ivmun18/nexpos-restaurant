@@ -12,6 +12,18 @@ class MesaController extends Controller
 {
     public function index()
     {
+        // Verificar caja abierta
+        $empresaId = auth()->user()->empresa_id;
+        $caja = \App\Models\Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        if (!$caja) {
+            $caja = \App\Models\Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+        }
+        $sesionAbierta = \App\Models\SesionCaja::where('caja_id', $caja->id)
+            ->where('estado', 'abierta')->first();
+        if (!$sesionAbierta) {
+            return redirect()->route('caja.index')->with('warning', '⚠️ Debes abrir la caja antes de atender mesas.');
+        }
+
         $mesas = Mesa::where('empresa_id', EmpresaHelper::id())
             ->where('activo', true)
             ->orderBy('orden')

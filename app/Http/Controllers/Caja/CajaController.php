@@ -16,7 +16,11 @@ class CajaController extends Controller
 {
     public function index()
     {
-        $caja = Caja::where('empresa_id', 1)->where('activo', true)->first();
+        $empresaId = auth()->user()->empresa_id;
+        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        if (!$caja) {
+            $caja = Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+        }
         $sesionActiva = SesionCaja::where('caja_id', $caja->id)
             ->where('estado', 'abierta')
             ->with('movimientos', 'usuario')
@@ -42,7 +46,11 @@ class CajaController extends Controller
             'monto_apertura' => 'required|numeric|min:0',
         ]);
 
-        $caja = Caja::where('empresa_id', 1)->first();
+        $empresaId = auth()->user()->empresa_id;
+        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        if (!$caja) {
+            $caja = Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+        }
 
         // Verificar que no haya sesión abierta
         $sesionExistente = SesionCaja::where('caja_id', $caja->id)
