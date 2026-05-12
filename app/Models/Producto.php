@@ -9,6 +9,20 @@ class Producto extends Model
 {
     protected $table = 'productos';
 
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($producto) {
+            if (empty($producto->codigo)) {
+                $ultimo = static::where('empresa_id', $producto->empresa_id)
+                    ->whereNotNull('codigo')
+                    ->orderByDesc('id')->first();
+                $numero = $ultimo ? ((int) preg_replace('/[^0-9]/', '', $ultimo->codigo) + 1) : 1;
+                $producto->codigo = 'PROD-' . str_pad($numero, 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     protected $fillable = [
         'empresa_id',
         'categoria_id',
