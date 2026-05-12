@@ -72,10 +72,10 @@
                             <tbody>
                                 <template v-for="pedido in pedidos" :key="pedido.id">
                                     <tr v-for="item in pedido.detalles" :key="item.id" style="border-top:1px solid #F1F5F9;">
-                                        <td style="padding:8px; font-size:13px; color:#1E293B;">{{ item.producto?.nombre || item.descripcion || item.nombre }}</td>
+                                        <td style="padding:8px; font-size:13px; color:#1E293B;">{{ item.producto?.nombre || item.descripcion || item.nombre || 'Producto' }}</td>
                                         <td style="padding:8px; text-align:center; font-size:13px; color:#475569;">{{ item.cantidad }}</td>
                                         <td style="padding:8px; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(item.precio_unitario).toFixed(2) }}</td>
-                                        <td style="padding:8px; text-align:right; font-size:13px; font-weight:600; color:#1E293B;">S/ {{ Number(item.total).toFixed(2) }}</td>
+                                        <td style="padding:8px; text-align:right; font-size:13px; font-weight:600; color:#1E293B;">S/ {{ (Number(item.total) || Number(item.precio_unitario||0)*Number(item.cantidad||1)).toFixed(2) }}</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -185,7 +185,7 @@ const imprimir = () => {
         '<tr><td style="padding:2px 0;font-size:11px;">' + (i.producto?.nombre || i.descripcion || 'Producto') + '</td>' +
         '<td style="text-align:center;font-size:11px;">' + i.cantidad + '</td>' +
         '<td style="text-align:right;font-size:11px;">S/ ' + Number(i.precio_unitario||0).toFixed(2) + '</td>' +
-        '<td style="text-align:right;font-size:11px;font-weight:bold;">S/ ' + Number(i.total||0).toFixed(2) + '</td></tr>'
+        '<td style="text-align:right;font-size:11px;font-weight:bold;">S/ ' + (Number(i.total||0) || Number(i.precio_unitario||0)*Number(i.cantidad||1)).toFixed(2) + '</td></tr>'
     ).join('')
     const contenido = '<div style="text-align:center;margin-bottom:8px;">' +
         '<p style="font-size:14px;font-weight:bold;margin:0;">' + (e.nombre_comercial || e.razon_social || 'RESTAURANTE') + '</p>' +
