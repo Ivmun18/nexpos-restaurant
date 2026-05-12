@@ -33,9 +33,10 @@ class CajaRestauranteController extends Controller
     public function cobrar(Request $request, Mesa $mesa)
     {
         $request->validate([
-            'metodo_pago'  => 'required|in:efectivo,tarjeta,yape,plin',
-            'monto_pagado' => 'required|numeric|min:0',
-            'notas'        => 'nullable|string',
+            'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin',
+            'monto_pagado'      => 'required|numeric|min:0',
+            'notas'             => 'nullable|string',
+            'tipo_comprobante'  => 'nullable|in:boleta,factura,ninguno',
         ]);
 
         $pedidos = Pedido::where('mesa_id', $mesa->id)
@@ -65,7 +66,15 @@ class CajaRestauranteController extends Controller
         $mesa->update(['estado' => 'libre']);
 
         // Redirigir a emitir comprobante
+        $tipo = $request->tipo_comprobante ?? 'boleta';
+
+        if ($tipo === 'ninguno') {
+            return redirect()->route('mesas.index')
+                ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}");
+        }
+
         return redirect()->route('comprobantes.crear', $caja)
-            ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}");
+            ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}")
+            ->with('tipo_comprobante', $tipo);
     }
 }

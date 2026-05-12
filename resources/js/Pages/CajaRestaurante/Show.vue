@@ -22,8 +22,9 @@ const props = defineProps({
 })
 
 const form = useForm({
-    metodo_pago:  'efectivo',
-    monto_pagado: '',
+    metodo_pago:       'efectivo',
+    monto_pagado:      '',
+    tipo_comprobante:  'boleta',
     notas:        '',
 })
 
@@ -193,6 +194,25 @@ function cobrar() {
                     >
                         {{ form.processing ? '⏳ Procesando...' : `✅ Cobrar S/ ${Number(total).toFixed(2)}` }}
                     </button>
+
+                    <!-- Tipo comprobante -->
+                    <div style="margin-top:16px;">
+                        <p style="font-size:14px; font-weight:600; color:#64748B; margin:0 0 10px;">📄 Tipo de comprobante</p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                            <button @click="form.tipo_comprobante='boleta'"
+                                :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='boleta' ? '2px solid #14B8A6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='boleta' ? '#F0FDFA' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='boleta' ? '#0F766E' : '#64748B'}">
+                                🧾 Boleta
+                            </button>
+                            <button @click="form.tipo_comprobante='factura'"
+                                :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='factura' ? '2px solid #3B82F6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='factura' ? '#EFF6FF' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='factura' ? '#1D4ED8' : '#64748B'}">
+                                🏢 Factura
+                            </button>
+                            <button @click="form.tipo_comprobante='ninguno'"
+                                :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='ninguno' ? '2px solid #94A3B8' : '2px solid #E2E8F0', background: form.tipo_comprobante==='ninguno' ? '#F8FAFC' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='ninguno' ? '#475569' : '#64748B'}">
+                                🚫 Sin boleta
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Botón emitir comprobante -->
                 </div>
