@@ -13,13 +13,25 @@ class PosMinimarketController extends Controller
 {
     public function index()
     {
+        $empresaId = auth()->user()->empresa_id;
+
+        // Verificar caja abierta
+        $cajaAbierta = \App\Models\CajaMinimarket::where('empresa_id', $empresaId)
+            ->where('estado', 'abierta')
+            ->first();
+
+        if (!$cajaAbierta) {
+            return redirect()->route('minimarket.caja')->with('warning', '⚠️ Debes abrir la caja antes de vender.');
+        }
+
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
             ->orderBy('descripcion')
             ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'categoria_id']);
 
         return Inertia::render('Minimarket/Pos', [
-            'productos' => $productos,
+            'productos'    => $productos,
+            'caja_abierta' => $cajaAbierta,
         ]);
     }
 
