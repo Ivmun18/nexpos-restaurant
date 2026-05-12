@@ -111,14 +111,22 @@
             </div>
 
             <!-- Botones -->
-            <div style="display:flex; gap:12px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
                 <button @click="$inertia.visit('/comprobantes')"
                     style="flex:1; padding:14px; background:#F1F5F9; color:#64748B; border:1px solid #E2E8F0; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                     ← Volver a Lista
                 </button>
-                <button v-if="comprobante.caja" @click="$inertia.visit('/caja-restaurante/' + comprobante.caja.mesa_id)"
+                <button @click="imprimir"
                     style="flex:1; padding:14px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
-                    Ver Mesa {{ comprobante.caja.mesa.numero }}
+                    🖨️ Imprimir Ticket
+                </button>
+                <button @click="enviarWhatsApp"
+                    style="flex:1; padding:14px; background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                    📱 WhatsApp
+                </button>
+                <button v-if="comprobante.caja" @click="$inertia.visit('/mesas')"
+                    style="flex:1; padding:14px; background:#1E293B; color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                    🪑 Ver Mesas
                 </button>
             </div>
 
@@ -128,6 +136,7 @@
 </template>
 
 <script setup>
+import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { computed } from 'vue'
 
@@ -142,6 +151,36 @@ const alertStyle = computed(() => {
         color: props.comprobante.aceptada_por_sunat ? '#065F46' : (props.comprobante.enlace_pdf ? '#92400E' : '#475569'),
     }
 })
+
+const imprimir = () => {
+    const contenido = document.getElementById('comprobante-content')?.innerHTML || document.body.innerHTML
+    const ventana = window.open('', '_blank')
+    ventana.document.write('<html><head><title>Comprobante</title><style>body{font-family:monospace;padding:10px;max-width:80mm;margin:0 auto;font-size:12px;}*{box-sizing:border-box;}table{width:100%;border-collapse:collapse;}@media print{@page{margin:2mm;size:80mm auto;}}</style></head><body>' + contenido + '</body></html>')
+    ventana.document.close()
+    setTimeout(() => ventana.print(), 500)
+}
+
+const enviarWhatsApp = async () => {
+    const raw = prompt('Número WhatsApp (9 dígitos):')
+    if (!raw) return
+    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
+    const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
+    const c = props.comprobante
+    const mensaje = '🧾 *Comprobante NEXPOS*\n\n📋 *' + (c.numero_completo || c.serie + '-' + c.numero) + '*\n📅 Fecha: ' + c.fecha_emision + '\n👤 Cliente: ' + c.cliente_nombre + '\n\n💰 *TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita 🙏'
+    try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
+        const res = await fetch('/api/whatsapp/enviar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ telefono: numeroFinal, mensaje })
+        })
+        const data = await res.json()
+        alert(data.ok ? 'Mensaje enviado' : 'Error: ' + data.error)
+    } catch(e) {
+        alert('Error de conexión')
+    }
+}
 
 const formatFecha = (fecha) => {
     return new Date(fecha).toLocaleDateString('es-PE', {
