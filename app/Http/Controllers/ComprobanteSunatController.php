@@ -268,13 +268,14 @@ class ComprobanteSunatController extends Controller
     {
         $comprobante->load(['caja.mesa', 'empresa']);
 
-        // Cargar pedidos cerrados de la mesa para mostrar detalle
+        // Cargar pedidos de la mesa asociada al cobro
         $pedidos = [];
         if ($comprobante->caja && $comprobante->caja->mesa_id) {
             $pedidos = \App\Models\Pedido::with('detalles.producto')
                 ->where('mesa_id', $comprobante->caja->mesa_id)
                 ->where('estado', 'cerrado')
-                ->whereDate('updated_at', $comprobante->fecha_emision)
+                ->orderBy('updated_at', 'desc')
+                ->take(10)
                 ->get();
         }
 

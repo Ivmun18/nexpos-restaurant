@@ -197,7 +197,7 @@ const imprimir = () => {
         '<p style="font-size:12px;font-weight:bold;margin:4px 0;">' + (c.serie + '-' + String(c.numero).padStart(8,'0')) + '</p>' +
         '</div>' +
         '<div style="font-size:11px;margin-bottom:8px;">' +
-        '<div style="display:flex;justify-content:space-between;"><span>Fecha:</span><span>' + c.fecha_emision + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span>Fecha:</span><span>' + new Date(c.fecha_emision).toLocaleDateString('es-PE') + '</span></div>' +
         '<div style="display:flex;justify-content:space-between;"><span>Cliente:</span><span>' + c.cliente_nombre + '</span></div>' +
         '</div>' +
         '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
