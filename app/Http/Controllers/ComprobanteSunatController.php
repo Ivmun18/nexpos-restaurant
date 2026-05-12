@@ -45,7 +45,7 @@ class ComprobanteSunatController extends Controller
     /**
      * Formulario para emitir comprobante desde caja
      */
-    public function crear(CajaRestaurante $caja): Response
+    public function crear(CajaRestaurante $caja)
     {
         // Verificar que la caja pertenece a la empresa del usuario
         if ($caja->mesa && auth()->user()->empresa_id != auth()->user()->empresa_id) {
