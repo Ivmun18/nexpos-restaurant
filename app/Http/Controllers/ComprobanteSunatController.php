@@ -102,7 +102,7 @@ class ComprobanteSunatController extends Controller
                 'total_gravada'           => $totalGravada,
                 'total_igv'               => $totalIgv,
                 'total'                   => $total,
-                'estado'                  => 'pendiente',
+                'estado'                  => 'emitido',
                 'enlace_pdf'              => null,
             ]);
             return redirect()->route('comprobantes.index')->with('success', 'Boleta registrada localmente (sin token SUNAT).');
