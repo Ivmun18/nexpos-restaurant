@@ -109,6 +109,10 @@
                                     style="padding:6px 14px; background:#F0FDFA; color:#0F766E; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; border:1px solid #CCFBF1;">
                                     👁 Ver
                                 </a>
+                                <button @click="enviarWhatsApp(venta)"
+                                    style="padding:6px 12px; background:#dcfce7; color:#16a34a; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                                    📱 WhatsApp
+                                </button>
                                 <button v-if="venta.nubefact_estado === 'rechazado'" @click="reintentar(venta.id)"
                                     style="padding:6px 12px; background:#e0f2fe; color:#0369a1; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
                                     🔄 Reintentar
@@ -147,6 +151,33 @@
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
+
+const enviarWhatsApp = async (venta) => {
+    const numero = prompt('📱 Número de WhatsApp (con código país, ej: 51987654321):')
+    if (!numero) return
+    const total = Number(venta.total || 0).toFixed(2)
+    const mensaje = `🧾 *Comprobante NEXPOS*
+
+📋 *${venta.numero_completo}*
+📅 Fecha: ${venta.fecha_emision}
+
+💰 *Total: S/ ${total}*
+
+Gracias por su compra 🙏`
+    try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
+        const res = await fetch('/api/whatsapp/enviar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ telefono: numero, mensaje })
+        })
+        const data = await res.json()
+        alert(data.ok ? '✅ Mensaje enviado' : '❌ Error: ' + data.error)
+    } catch(e) {
+        alert('❌ Error de conexión')
+    }
+}
 
 const reintentar = (id) => {
     if (confirm('¿Reintentar envío a SUNAT?')) {
