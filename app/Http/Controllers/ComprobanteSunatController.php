@@ -268,15 +268,18 @@ class ComprobanteSunatController extends Controller
     {
         $comprobante->load(['caja.mesa', 'empresa']);
 
-        // Cargar pedidos de la mesa asociada al cobro
+        // Cargar pedidos asociados a este cobro específico
         $pedidos = [];
-        if ($comprobante->caja && $comprobante->caja->mesa_id) {
+        if ($comprobante->caja_restaurante_id) {
+            $pedidos = \App\Models\Pedido::with('detalles.producto')
+                ->where('caja_restaurante_id', $comprobante->caja_restaurante_id)
+                ->get();
+        } elseif ($comprobante->caja && $comprobante->caja->mesa_id) {
+            // Fallback para comprobantes anteriores
             $pedidos = \App\Models\Pedido::with('detalles.producto')
                 ->where('mesa_id', $comprobante->caja->mesa_id)
                 ->where('estado', 'cerrado')
-                ->orderBy('updated_at', 'desc')
-                ->take(10)
-                ->get();
+                ->latest()->take(3)->get();
         }
 
         return Inertia::render('Comprobantes/Show', [

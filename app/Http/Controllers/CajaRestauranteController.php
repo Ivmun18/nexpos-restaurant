@@ -57,10 +57,10 @@ class CajaRestauranteController extends Controller
             'notas'        => $request->notas,
         ]);
 
-        // Cerrar pedidos
+        // Cerrar pedidos y asociar al cobro
         Pedido::where('mesa_id', $mesa->id)
             ->whereIn('estado', ['enviado', 'listo'])
-            ->update(['estado' => 'cerrado']);
+            ->update(['estado' => 'cerrado', 'caja_restaurante_id' => $caja->id]);
 
         // Liberar mesa
         $mesa->update(['estado' => 'libre']);
