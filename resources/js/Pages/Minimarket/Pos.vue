@@ -1,7 +1,7 @@
 <template>
     <AppLayout title="POS Minimarket" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
 
-        <div style="display:grid; grid-template-columns:1fr min(380px, 40vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1.2fr min(480px, 42vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
 
             <!-- ══ PANEL IZQUIERDO: Búsqueda + Catálogo ══ -->
             <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden; min-height:0;">
@@ -25,7 +25,7 @@
                 <!-- Catálogo -->
                 <div style="flex:1; overflow-y:auto; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                     <p style="font-size:13px; color:#94A3B8; margin:0 0 12px;">{{ productosFiltrados.length }} productos</p>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:12px;">
                         <div
                             v-for="p in productosFiltrados" :key="p.id"
                             @click="agregarAlCarrito(p)"
@@ -41,7 +41,7 @@
                             @mouseenter="e => { if(p.stock_actual > 0) e.currentTarget.style.borderColor='#14B8A6'; e.currentTarget.style.boxShadow='0 4px 12px rgba(20,184,166,0.15)' }"
                             @mouseleave="e => { e.currentTarget.style.borderColor = p.stock_actual <= 0 ? '#FEE2E2' : '#E2E8F0'; e.currentTarget.style.boxShadow='none' }"
                         >
-                            <div style="font-size:32px; text-align:center; margin-bottom:8px;">
+                            <div style="font-size:24px; text-align:center; margin-bottom:6px;">
                                 {{ iconProducto(p.categoria) }}
                             </div>
                             <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0 0 4px; line-height:1.3;">{{ p.descripcion }}</p>
