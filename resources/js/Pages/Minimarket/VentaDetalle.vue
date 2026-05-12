@@ -1,7 +1,7 @@
 <template>
     <AppLayout title="Ticket de Venta" subtitle="Detalle del comprobante">
 
-        <div style="max-width:600px; margin:0 auto;">
+        <div style="max-width:1100px; margin:0 auto;">
 
             <!-- Botones -->
             <div style="display:flex; gap:12px; margin-bottom:24px;">
@@ -18,7 +18,10 @@
                 </button>
             </div>
 
-            <!-- Ticket -->
+            <!-- Layout 2 columnas -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start;">
+
+            <!-- Columna izquierda: info empresa + comprobante + totales -->
             <div id="ticket" style="background:white; border-radius:20px; padding:32px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
                 <!-- Encabezado -->
@@ -98,7 +101,11 @@
                     </div>
                 </div>
 
-                <!-- Productos -->
+            </div><!-- fin columna izquierda -->
+
+            <!-- Columna derecha: productos -->
+            <div style="background:white; border-radius:20px; padding:32px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                <h3 style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 20px; padding-bottom:12px; border-bottom:2px solid #E2E8F0;">🛒 Productos ({{ venta.detalle?.length || 0 }} items)</h3>
                 <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
                     <thead>
                         <tr style="border-bottom:2px solid #1E293B;">
@@ -155,12 +162,13 @@
                 </div>
 
                 <!-- Pie -->
-                <div style="text-align:center; padding-top:16px; border-top:2px dashed #E2E8F0;">
+                <div style="text-align:center; padding-top:16px; border-top:2px dashed #E2E8F0; margin-top:20px;">
                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">¡Gracias por su compra!</p>
                     <p style="font-size:12px; color:#94A3B8; margin:4px 0 0;">Vuelva pronto 😊</p>
                     <p style="font-size:11px; color:#CBD5E1; margin:8px 0 0;">Powered by NEXPOS</p>
                 </div>
-            </div>
+            </div><!-- fin columna derecha -->
+            </div><!-- fin grid -->
         </div>
 
     </AppLayout>
