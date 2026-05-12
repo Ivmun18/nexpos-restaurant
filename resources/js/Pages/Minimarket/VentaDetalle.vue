@@ -16,6 +16,10 @@
                     style="padding:10px 20px; background:white; color:#0F766E; border-radius:10px; font-size:14px; font-weight:600; border:1px solid #CCFBF1; cursor:pointer;">
                     📄 Imprimir A4
                 </button>
+                <button @click="enviarWhatsApp"
+                    style="padding:10px 20px; background:#dcfce7; color:#16a34a; border-radius:10px; font-size:14px; font-weight:600; border:1px solid #bbf7d0; cursor:pointer;">
+                    📱 WhatsApp
+                </button>
             </div>
 
             <!-- Layout 2 columnas -->
@@ -313,6 +317,38 @@ const imprimirA4 = () => {
     `)
     ventana.document.close()
     setTimeout(() => ventana.print(), 500)
+}
+
+const enviarWhatsApp = async () => {
+    const numero = prompt('📱 Número de WhatsApp (con código país, ej: 51987654321):')
+    if (!numero) return
+    const total = Number(props.venta.total || 0).toFixed(2)
+    const mensaje = `🧾 *Comprobante NEXPOS*
+
+📋 *${props.venta.numero_completo}*
+📅 Fecha: ${props.venta.fecha_emision}
+💵 Método: ${props.venta.metodo_pago || 'efectivo'}
+
+🛒 *Productos:*
+${(props.venta.detalle || []).map(d => `  • ${d.descripcion} x${d.cantidad} = S/ ${Number(d.total).toFixed(2)}`).join('
+')}
+
+💰 *TOTAL: S/ ${total}*
+
+Gracias por su compra 🙏`
+    try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
+        const res = await fetch('/api/whatsapp/enviar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ telefono: numero, mensaje })
+        })
+        const data = await res.json()
+        alert(data.ok ? '✅ Mensaje enviado' : '❌ Error: ' + data.error)
+    } catch(e) {
+        alert('❌ Error de conexión')
+    }
 }
 
 onMounted(() => {
