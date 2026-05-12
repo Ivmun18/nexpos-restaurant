@@ -320,8 +320,10 @@ const imprimirA4 = () => {
 }
 
 const enviarWhatsApp = async () => {
-    const numero = prompt('Numero WhatsApp (ej: 51987654321):')
-    if (!numero) return
+    const raw = prompt('Numero WhatsApp (9 digitos):')
+    if (!raw) return
+    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
+    const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
     const total = Number(props.venta.total || 0).toFixed(2)
     const items = (props.venta.detalle || []).map(d => '  - ' + d.descripcion + ' x' + d.cantidad + ' = S/ ' + Number(d.total).toFixed(2)).join('\n')
     const mensaje = '🧾 *Comprobante NEXPOS*\n\n📋 *' + props.venta.numero_completo + '*\n📅 Fecha: ' + props.venta.fecha_emision + '\n\n🛒 *Productos:*\n' + items + '\n\n💰 *TOTAL: S/ ' + total + '*\n\nGracias por su compra 🙏'
@@ -331,7 +333,7 @@ const enviarWhatsApp = async () => {
         const res = await fetch('/api/whatsapp/enviar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ telefono: numero, mensaje })
+            body: JSON.stringify({ telefono: numeroFinal, mensaje })
         })
         const data = await res.json()
         alert(data.ok ? 'Mensaje enviado' : 'Error: ' + data.error)

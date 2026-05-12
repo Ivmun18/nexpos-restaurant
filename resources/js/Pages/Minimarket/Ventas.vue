@@ -153,8 +153,10 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const enviarWhatsApp = async (venta) => {
-    const numero = prompt('📱 Número de WhatsApp (con código país, ej: 51987654321):')
-    if (!numero) return
+    const raw = prompt('📱 Número de WhatsApp (9 dígitos):')
+    if (!raw) return
+    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
+    const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
     const total = Number(venta.total || 0).toFixed(2)
     const mensaje = `🧾 *Comprobante NEXPOS*
 
@@ -170,7 +172,7 @@ Gracias por su compra 🙏`
         const res = await fetch('/api/whatsapp/enviar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ telefono: numero, mensaje })
+            body: JSON.stringify({ telefono: numeroFinal, mensaje })
         })
         const data = await res.json()
         alert(data.ok ? '✅ Mensaje enviado' : '❌ Error: ' + data.error)
