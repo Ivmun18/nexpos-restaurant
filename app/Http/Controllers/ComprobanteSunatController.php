@@ -103,7 +103,7 @@ class ComprobanteSunatController extends Controller
         if (!$empresa->nubefact_token) {
             $serie = $empresa->serie_boleta ?? 'B001';
             $numero = ComprobanteSunat::where('empresa_id', $empresa->id)->where('serie', $serie)->max('numero') + 1;
-            ComprobanteSunat::create([
+            $comprobante = ComprobanteSunat::create([
                 'empresa_id'              => $empresa->id,
                 'caja_restaurante_id'     => $caja->id,
                 'tipo_comprobante'        => '03',
