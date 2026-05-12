@@ -129,7 +129,7 @@
                 <div style="border-top:2px solid #1E293B; padding-top:12px; margin-bottom:16px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Subtotal</span>
-                        <span style="font-size:13px; color:#1E293B;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv)).toFixed(2) }}</span>
+                        <span style="font-size:13px; color:#1E293B;">S/ {{ Number(venta.total || (Number(venta.total_gravado) + Number(venta.total_igv))).toFixed(2) }}</span>
                     </div>
                     <!-- Op. Gravada -->
                     <div v-if="Number(venta.total_gravado) > 0" style="display:flex; justify-content:space-between; margin-bottom:6px;">
@@ -157,7 +157,7 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; padding:10px 16px; background:#1E293B; border-radius:10px; margin-top:8px;">
                         <span style="font-size:16px; font-weight:700; color:white;">TOTAL</span>
-                        <span style="font-size:24px; font-weight:900; color:white;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv)).toFixed(2) }}</span>
+                        <span style="font-size:24px; font-weight:900; color:white;">S/ {{ Number(venta.total || (Number(venta.total_gravado) + Number(venta.total_igv))).toFixed(2) }}</span>
                     </div>
                 </div>
 
@@ -246,7 +246,7 @@ const imprimir = () => {
             <div style="display:flex; justify-content:space-between;"><span>Op. Gravada:</span><span>S/ ${Number(v.total_gravado).toFixed(2)}</span></div>
             <div style="display:flex; justify-content:space-between;"><span>IGV (18%):</span><span>S/ ${Number(v.total_igv).toFixed(2)}</span></div>
             <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:4px; border-top:1px solid #000; padding-top:4px;">
-                <span>TOTAL:</span><span>S/ ${(Number(v.total_gravado)+Number(v.total_igv)).toFixed(2)}</span>
+                <span>TOTAL:</span><span>S/ ${Number(v.total || (Number(v.total_gravado)+Number(v.total_igv))).toFixed(2)}</span>
             </div>
         </div>
         <div style="text-align:center; margin-top:12px; font-size:11px;">
