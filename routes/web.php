@@ -519,6 +519,18 @@ Route::middleware(['auth'])->group(function () {
 // Reportes Minimarket
 Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/reportes', [\App\Http\Controllers\Minimarket\ReportesMinimarketController::class, 'index'])->name('minimarket.reportes');
+
+// Proveedores y Clientes Minimarket
+Route::middleware(['auth'])->group(function () {
+    Route::get('/minimarket/proveedores',                [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'index'])->name('minimarket.proveedores');
+    Route::post('/minimarket/proveedores',               [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'store'])->name('minimarket.proveedores.store');
+    Route::put('/minimarket/proveedores/{proveedor}',    [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'update'])->name('minimarket.proveedores.update');
+    Route::delete('/minimarket/proveedores/{proveedor}', [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'destroy'])->name('minimarket.proveedores.destroy');
+    Route::get('/minimarket/clientes',                   [AppHttpControllersMinimarketClientesMinimarketController::class, 'index'])->name('minimarket.clientes');
+    Route::post('/minimarket/clientes',                  [AppHttpControllersMinimarketClientesMinimarketController::class, 'store'])->name('minimarket.clientes.store');
+    Route::put('/minimarket/clientes/{cliente}',         [AppHttpControllersMinimarketClientesMinimarketController::class, 'update'])->name('minimarket.clientes.update');
+    Route::delete('/minimarket/clientes/{cliente}',      [AppHttpControllersMinimarketClientesMinimarketController::class, 'destroy'])->name('minimarket.clientes.destroy');
+});
 });
 
 // Proveedores
@@ -641,4 +653,16 @@ Route::middleware('auth')->post('/api/whatsapp/enviar', function (\Illuminate\Ht
     } catch (\Exception $e) {
         return response()->json(['ok' => false, 'error' => $e->getMessage()]);
     }
+});
+
+// Proveedores y Clientes Minimarket
+Route::middleware(['auth'])->group(function () {
+    Route::get('/minimarket/proveedores',                [\App\Http\Controllers\Minimarket\ProveedoresMinimarketController::class, 'index'])->name('minimarket.proveedores');
+    Route::post('/minimarket/proveedores',               [\App\Http\Controllers\Minimarket\ProveedoresMinimarketController::class, 'store'])->name('minimarket.proveedores.store');
+    Route::put('/minimarket/proveedores/{proveedor}',    [\App\Http\Controllers\Minimarket\ProveedoresMinimarketController::class, 'update'])->name('minimarket.proveedores.update');
+    Route::delete('/minimarket/proveedores/{proveedor}', [\App\Http\Controllers\Minimarket\ProveedoresMinimarketController::class, 'destroy'])->name('minimarket.proveedores.destroy');
+    Route::get('/minimarket/clientes',                   [\App\Http\Controllers\Minimarket\ClientesMinimarketController::class, 'index'])->name('minimarket.clientes');
+    Route::post('/minimarket/clientes',                  [\App\Http\Controllers\Minimarket\ClientesMinimarketController::class, 'store'])->name('minimarket.clientes.store');
+    Route::put('/minimarket/clientes/{cliente}',         [\App\Http\Controllers\Minimarket\ClientesMinimarketController::class, 'update'])->name('minimarket.clientes.update');
+    Route::delete('/minimarket/clientes/{cliente}',      [\App\Http\Controllers\Minimarket\ClientesMinimarketController::class, 'destroy'])->name('minimarket.clientes.destroy');
 });
