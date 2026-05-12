@@ -79,10 +79,25 @@ class ComprobanteSunatController extends Controller
 
         $empresa = auth()->user()->empresa;
 
-        // Calcular montos (IGV incluido)
+        // Calcular montos según régimen tributario
         $total = $caja->total;
-        $totalGravada = round($total / 1.18, 2);
-        $totalIgv = $total - $totalGravada;
+        $regimen = $empresa->regimen_tributario ?? 'GENERAL';
+        $esRus = in_array($regimen, ['RUS', 'EXONERADO']) || $empresa->zona_exonerada;
+
+        if ($esRus) {
+            $totalGravada = 0;
+            $totalIgv     = 0;
+            $totalInafecto = $total;
+        } elseif ($empresa->zona_exonerada) {
+            $totalGravada  = 0;
+            $totalIgv      = 0;
+            $totalInafecto = 0;
+            $totalExonerado = $total;
+        } else {
+            $totalGravada  = round($total / 1.18, 2);
+            $totalIgv      = round($total - $totalGravada, 2);
+            $totalInafecto = 0;
+        }
 
         // Si no hay token, guardar comprobante local sin enviar a SUNAT
         if (!$empresa->nubefact_token) {
@@ -101,6 +116,7 @@ class ComprobanteSunatController extends Controller
                 'cliente_email'           => $request->cliente_email ?? '',
                 'total_gravada'           => $totalGravada,
                 'total_igv'               => $totalIgv,
+                'total_inafecta'          => $totalInafecto ?? 0,
                 'total'                   => $total,
                 'estado'                  => 'emitido',
                 'enlace_pdf'              => null,
