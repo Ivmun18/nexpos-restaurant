@@ -178,9 +178,41 @@ const alertStyle = computed(() => {
 })
 
 const imprimir = () => {
-    const contenido = document.getElementById('comprobante-content')?.innerHTML || document.body.innerHTML
+    const c = props.comprobante
+    const e = c.empresa || {}
+    const items = (props.pedidos || []).flatMap(p => p.detalles || [])
+    const itemsHtml = items.map(i =>
+        '<tr><td style="padding:2px 0;font-size:11px;">' + (i.producto?.nombre || i.descripcion || 'Producto') + '</td>' +
+        '<td style="text-align:center;font-size:11px;">' + i.cantidad + '</td>' +
+        '<td style="text-align:right;font-size:11px;">S/ ' + Number(i.precio_unitario||0).toFixed(2) + '</td>' +
+        '<td style="text-align:right;font-size:11px;font-weight:bold;">S/ ' + Number(i.total||0).toFixed(2) + '</td></tr>'
+    ).join('')
+    const contenido = '<div style="text-align:center;margin-bottom:8px;">' +
+        '<p style="font-size:14px;font-weight:bold;margin:0;">' + (e.nombre_comercial || e.razon_social || 'RESTAURANTE') + '</p>' +
+        '<p style="font-size:11px;margin:2px 0;">RUC: ' + (e.ruc || '') + '</p>' +
+        '<p style="font-size:11px;margin:2px 0;">' + (e.direccion || '') + '</p>' +
+        '</div>' +
+        '<div style="text-align:center;margin-bottom:8px;">' +
+        '<span style="font-size:13px;font-weight:bold;border:1px solid #000;padding:2px 10px;">BOLETA DE VENTA</span>' +
+        '<p style="font-size:12px;font-weight:bold;margin:4px 0;">' + (c.serie + '-' + String(c.numero).padStart(8,'0')) + '</p>' +
+        '</div>' +
+        '<div style="font-size:11px;margin-bottom:8px;">' +
+        '<div style="display:flex;justify-content:space-between;"><span>Fecha:</span><span>' + c.fecha_emision + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span>Cliente:</span><span>' + c.cliente_nombre + '</span></div>' +
+        '</div>' +
+        '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
+        '<thead><tr style="border-bottom:1px solid #000;">' +
+        '<th style="text-align:left;font-size:11px;">Producto</th>' +
+        '<th style="text-align:center;font-size:11px;">Cant</th>' +
+        '<th style="text-align:right;font-size:11px;">P.U.</th>' +
+        '<th style="text-align:right;font-size:11px;">Total</th>' +
+        '</tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
+        '<div style="border-top:1px solid #000;padding-top:4px;font-size:11px;">' +
+        '<div style="display:flex;justify-content:space-between;font-weight:bold;font-size:14px;">' +
+        '<span>TOTAL:</span><span>S/ ' + Number(c.total||0).toFixed(2) + '</span></div></div>' +
+        '<div style="text-align:center;margin-top:8px;font-size:11px;"><p>¡Gracias por su visita!</p></div>'
     const ventana = window.open('', '_blank')
-    ventana.document.write('<html><head><title>Comprobante</title><style>body{font-family:monospace;padding:10px;max-width:80mm;margin:0 auto;font-size:12px;}*{box-sizing:border-box;}table{width:100%;border-collapse:collapse;}@media print{@page{margin:2mm;size:80mm auto;}}</style></head><body>' + contenido + '</body></html>')
+    ventana.document.write('<html><head><title>Comprobante</title><style>body{font-family:monospace;padding:4px;max-width:80mm;margin:0 auto;font-size:11px;line-height:1.2;}*{box-sizing:border-box;margin:0;padding:0;}p{margin:1px 0;}@media print{@page{margin:2mm;size:80mm auto;}}</style></head><body>' + contenido + '</body></html>')
     ventana.document.close()
     setTimeout(() => ventana.print(), 500)
 }
