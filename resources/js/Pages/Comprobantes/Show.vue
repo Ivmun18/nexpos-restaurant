@@ -72,7 +72,7 @@
                             <tbody>
                                 <template v-for="pedido in pedidos" :key="pedido.id">
                                     <tr v-for="item in pedido.detalles" :key="item.id" style="border-top:1px solid #F1F5F9;">
-                                        <td style="padding:8px; font-size:13px; color:#1E293B;">{{ item.menu_producto?.nombre || item.nombre }}</td>
+                                        <td style="padding:8px; font-size:13px; color:#1E293B;">{{ item.producto?.nombre || item.descripcion || item.nombre }}</td>
                                         <td style="padding:8px; text-align:center; font-size:13px; color:#475569;">{{ item.cantidad }}</td>
                                         <td style="padding:8px; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(item.precio_unitario).toFixed(2) }}</td>
                                         <td style="padding:8px; text-align:right; font-size:13px; font-weight:600; color:#1E293B;">S/ {{ Number(item.total).toFixed(2) }}</td>
