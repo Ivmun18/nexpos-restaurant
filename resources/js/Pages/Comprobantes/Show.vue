@@ -19,7 +19,7 @@
             </div>
 
             <!-- Información del comprobante -->
-            <div style="background:white; border-radius:16px; padding:24px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div id="comprobante-content" style="background:white; border-radius:16px; padding:24px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                 
                 <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:24px;">
                     <div>
@@ -140,8 +140,11 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { computed } from 'vue'
 
+import { onMounted } from 'vue'
+
 const props = defineProps({
     comprobante: Object,
+    imprimir: { type: Boolean, default: false },
 })
 
 const alertStyle = computed(() => {
@@ -190,6 +193,12 @@ const formatFecha = (fecha) => {
         year: 'numeric'
     })
 }
+
+onMounted(() => {
+    if (props.imprimir) {
+        setTimeout(() => imprimir(), 800)
+    }
+})
 
 const formatNumber = (num) => {
     return new Intl.NumberFormat('es-PE', {

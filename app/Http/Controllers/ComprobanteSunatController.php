@@ -121,7 +121,9 @@ class ComprobanteSunatController extends Controller
                 'estado'                  => 'emitido',
                 'enlace_pdf'              => null,
             ]);
-            return redirect()->route('comprobantes.index')->with('success', 'Boleta registrada localmente (sin token SUNAT).');
+            return redirect()->route('comprobantes.show', $comprobante)
+                ->with('success', 'Boleta registrada correctamente.')
+                ->with('imprimir', true);
         }
 
         $nubefact = new NubefactService($empresa);
