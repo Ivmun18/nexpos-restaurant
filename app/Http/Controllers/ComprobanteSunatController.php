@@ -78,12 +78,37 @@ class ComprobanteSunatController extends Controller
         ]);
 
         $empresa = auth()->user()->empresa;
-        $nubefact = new NubefactService($empresa);
 
         // Calcular montos (IGV incluido)
         $total = $caja->total;
         $totalGravada = round($total / 1.18, 2);
         $totalIgv = $total - $totalGravada;
+
+        // Si no hay token, guardar comprobante local sin enviar a SUNAT
+        if (!$empresa->nubefact_token) {
+            $serie = $empresa->serie_boleta ?? 'B001';
+            $numero = ComprobanteSunat::where('empresa_id', $empresa->id)->where('serie', $serie)->max('numero') + 1;
+            ComprobanteSunat::create([
+                'empresa_id'              => $empresa->id,
+                'caja_restaurante_id'     => $caja->id,
+                'tipo_comprobante'        => '03',
+                'serie'                   => $serie,
+                'numero'                  => $numero,
+                'fecha_emision'           => now(),
+                'cliente_tipo_documento'  => $request->cliente_tipo_documento,
+                'cliente_numero_documento'=> $request->cliente_documento,
+                'cliente_nombre'          => $request->cliente_nombre,
+                'cliente_email'           => $request->cliente_email ?? '',
+                'total_gravada'           => $totalGravada,
+                'total_igv'               => $totalIgv,
+                'total'                   => $total,
+                'estado'                  => 'pendiente',
+                'enlace_pdf'              => null,
+            ]);
+            return redirect()->route('comprobantes.index')->with('success', 'Boleta registrada localmente (sin token SUNAT).');
+        }
+
+        $nubefact = new NubefactService($empresa);
 
         // Preparar items
         $items = [[
