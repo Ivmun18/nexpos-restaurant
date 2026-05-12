@@ -1,7 +1,7 @@
 <template>
     <AppLayout title="POS Minimarket" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
 
-        <div style="display:grid; grid-template-columns:1.2fr min(480px, 42vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1.2fr min(480px, 42vw); gap:16px; min-height:calc(100vh - 140px); overflow-y:auto;">
 
             <!-- ══ PANEL IZQUIERDO: Búsqueda + Catálogo ══ -->
             <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden; min-height:0;">
@@ -60,10 +60,10 @@
             </div>
 
             <!-- ══ PANEL DERECHO: Carrito + Cobro ══ -->
-            <div style="display:flex; flex-direction:column; gap:16px; overflow-y:auto; min-height:0;">
+            <div style="display:flex; flex-direction:column; gap:16px; min-height:0; height:100%; overflow:hidden;">
 
                 <!-- Carrito -->
-                <div style="flex:1; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow-y:auto;">
+                <div style="flex:1; min-height:0; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow-y:auto;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
                         <p style="font-size:16px; font-weight:800; color:#1E293B; margin:0;">🛒 Carrito</p>
                         <button v-if="carrito.length" @click="carrito = []"
@@ -99,7 +99,7 @@
                 </div>
 
                 <!-- Cobro -->
-                <div style="background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="flex-shrink:0; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
 
                     <!-- Total -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 16px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px;">
