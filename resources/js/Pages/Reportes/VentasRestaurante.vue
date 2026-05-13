@@ -122,6 +122,7 @@
                             <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Mesa</th>
                             <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Mozo / Cajero</th>
                             <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Método</th>
+                            <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Comprobante</th>
                             <th style="padding:10px 16px; text-align:right; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Total</th>
                             <th style="padding:10px 16px; text-align:right; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Pagó</th>
                             <th style="padding:10px 16px; text-align:right; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Vuelto</th>
@@ -146,6 +147,11 @@
                             <td style="padding:12px 16px;">
                                 <span :style="estiloMetodo(v.metodo_pago)">
                                     {{ iconMetodo(v.metodo_pago) }} {{ v.metodo_pago }}
+                                </span>
+                            </td>
+                            <td style="padding:12px 16px;">
+                                <span :style="estiloComprobante(v.tipo_comprobante)">
+                                    {{ iconComprobante(v.tipo_comprobante) }} {{ v.tipo_comprobante || 'ninguno' }}
                                 </span>
                             </td>
                             <td style="padding:12px 16px; text-align:right; font-weight:800; color:#0F766E; font-size:14px;">S/ {{ Number(v.total).toFixed(2) }}</td>
@@ -231,6 +237,19 @@ function formatFecha(f) {
 
 function iconMetodo(m) {
     return { efectivo: '💵', tarjeta: '💳', yape: '📱', plin: '📲', transferencia: '🏦' }[m] ?? '💰'
+}
+
+function iconComprobante(c) {
+    return { boleta: '🧾', factura: '📄', ninguno: '—' }[c] ?? '—'
+}
+
+function estiloComprobante(c) {
+    const map = {
+        boleta:  { background: '#EFF6FF', color: '#1D4ED8' },
+        factura: { background: '#F0FDF4', color: '#166534' },
+        ninguno: { background: '#F1F5F9', color: '#64748B' },
+    }
+    return { ...(map[c] || map.ninguno), fontSize: '12px', padding: '3px 10px', borderRadius: '20px', fontWeight: '600', textTransform: 'capitalize' }
 }
 
 function estiloMetodo(m) {

@@ -33,6 +33,11 @@ class ReporteRestauranteController extends Controller
             'total'    => round($g->sum('total'), 2),
         ]);
 
+        $porComprobante = $ventas->groupBy(fn($v) => $v->tipo_comprobante ?? 'ninguno')->map(fn($g) => [
+            'cantidad' => $g->count(),
+            'total'    => round($g->sum('total'), 2),
+        ]);
+
         $porDia = $ventas->groupBy(fn($v) => $v->created_at->toDateString())
             ->map(fn($g) => [
                 'fecha'    => $g->first()->created_at->locale('es')->isoFormat('ddd D MMM'),
@@ -60,7 +65,8 @@ class ReporteRestauranteController extends Controller
                 'cantidad_ventas' => $cantidadVentas,
                 'ticket_promedio' => round($ticketPromedio, 2),
             ],
-            'por_metodo' => $porMetodo,
+            'por_metodo'      => $porMetodo,
+            'por_comprobante' => $porComprobante,
             'por_dia'    => $porDia,
             'top_mozos'  => $topMozos,
             'mozos'      => $mozos,

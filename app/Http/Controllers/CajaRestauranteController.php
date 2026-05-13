@@ -48,13 +48,14 @@ class CajaRestauranteController extends Controller
 
         // Registrar en caja
         $caja = CajaRestaurante::create([
-            'mesa_id'      => $mesa->id,
-            'user_id'      => auth()->id(),
-            'total'        => $total,
-            'monto_pagado' => $request->monto_pagado,
-            'vuelto'       => $vuelto,
-            'metodo_pago'  => $request->metodo_pago,
-            'notas'        => $request->notas,
+            'mesa_id'          => $mesa->id,
+            'user_id'          => auth()->id(),
+            'total'            => $total,
+            'monto_pagado'     => $request->monto_pagado,
+            'vuelto'           => $vuelto,
+            'metodo_pago'      => $request->metodo_pago,
+            'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
+            'notas'            => $request->notas,
         ]);
 
         // Cerrar pedidos y asociar al cobro

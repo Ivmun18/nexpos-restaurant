@@ -321,7 +321,7 @@ const iniciarPreparacion = (comanda) => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        onSuccess: () => refrescar()
+        onSuccess: () => setTimeout(() => refrescar(), 300)
     })
 }
 
@@ -331,7 +331,7 @@ const marcarListo = (comanda) => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        onSuccess: () => refrescar()
+        onSuccess: () => setTimeout(() => refrescar(), 300)
     })
 }
 
