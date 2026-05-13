@@ -401,4 +401,27 @@ const cerrarCaja = () => {
         observaciones:     observacionesCierre.value,
     })
 }
+
+const modalCorreccion  = ref(false)
+const sesionCorreccion = ref(null)
+const correccionForm   = ref({ monto_real: '', observaciones: '' })
+
+function abrirCorreccion(sesion) {
+    sesionCorreccion.value = sesion
+    correccionForm.value   = { monto_real: sesion.monto_cierre_real, observaciones: '' }
+    modalCorreccion.value  = true
+}
+
+function guardarCorreccion() {
+    if (!correccionForm.value.monto_real) { alert('Ingresa el monto real'); return }
+    if (!correccionForm.value.observaciones) { alert('Ingresa el motivo'); return }
+    router.post('/caja/corregir-sesion', {
+        sesion_id:     sesionCorreccion.value.id,
+        monto_real:    correccionForm.value.monto_real,
+        observaciones: correccionForm.value.observaciones,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => { modalCorreccion.value = false }
+    })
+}
 </script>

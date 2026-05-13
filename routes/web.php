@@ -308,7 +308,7 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
     Route::get('/caja', [CajaController::class, 'index'])->name('caja.index');
     Route::post('/caja/abrir', [CajaController::class, 'abrir'])->name('caja.abrir');
     Route::post('/caja/movimiento', [CajaController::class, 'agregarMovimiento'])->name('caja.movimiento');
-    Route::post('/caja/corregir-sesion', [\App\Http\Controllers\Caja\CajaController::class, 'corregirSesion'])->name('caja.corregir')->middleware('admin');
+    Route::post('/caja/corregir-sesion', [\App\Http\Controllers\Caja\CajaController::class, 'corregirSesion'])->name('caja.corregir')->middleware('rol:admin');
     Route::post('/caja/cerrar', [CajaController::class, 'cerrar'])->name('caja.cerrar');
 
 // Notas de crédito

@@ -132,7 +132,7 @@ class CajaController extends Controller
     public function corregirSesion(Request $request)
     {
         $request->validate([
-            'sesion_id'     => 'required|exists:sesion_cajas,id',
+            'sesion_id'     => 'required|exists:sesiones_caja,id',
             'monto_real'    => 'required|numeric|min:0',
             'observaciones' => 'required|string|max:500',
         ]);
