@@ -440,6 +440,8 @@ Route::middleware(['auth'])->prefix('reportes-restaurante')->group(function () {
 // ==========================================
 // COMANDAS (Pantalla Kanban)
 // ==========================================
+Route::get('/reportes/turnos', [\App\Http\Controllers\ReporteTurnoController::class, 'index'])->middleware('auth')->name('reportes.turnos');
+
 Route::middleware(['auth'])->prefix('comandas')->group(function () {
     Route::get('/', [\App\Http\Controllers\ComandaController::class, 'index'])->name('comandas.index');
     Route::post('/{pedido}/estado', [\App\Http\Controllers\ComandaController::class, 'cambiarEstado'])->name('comandas.estado');
