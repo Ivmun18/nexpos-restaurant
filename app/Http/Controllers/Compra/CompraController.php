@@ -9,6 +9,8 @@ use App\Models\CompraDetalle;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
+use App\Models\CajaMovimiento;
+use App\Models\SesionCaja;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -126,6 +128,22 @@ class CompraController extends Controller
                 ]));
             }
         });
+
+        // Registrar egreso en caja si hay sesión abierta y pago contado
+        if (($request->forma_pago ?? 'contado') === 'contado') {
+            $sesion = SesionCaja::where('estado', 'abierta')->first();
+            if ($sesion) {
+                CajaMovimiento::create([
+                    'sesion_id'    => $sesion->id,
+                    'usuario_id'   => auth()->id(),
+                    'tipo'         => 'egreso',
+                    'concepto'     => 'Compra ' . strtoupper($request->serie_proveedor) . '-' . str_pad($request->correlativo_proveedor, 8, '0', STR_PAD_LEFT),
+                    'referencia_id'=> null,
+                    'monto'        => round($total, 2),
+                    'observaciones'=> $request->observaciones ?? null,
+                ]);
+            }
+        }
 
         return redirect('/compras')->with('success', 'Compra registrada correctamente.');
     }

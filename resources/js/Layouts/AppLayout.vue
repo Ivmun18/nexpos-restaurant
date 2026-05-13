@@ -246,6 +246,8 @@ const allMenuItems = [
     { path: '/admin/mozos',          icon: 'users',   label: 'Mozos',        module: 'mozos',       section: 'SISTEMA' },
     { path: '/reportes-restaurante', icon: 'chart',   label: 'Reporte ventas',  module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/reportes/turnos',       icon: 'chart',   label: 'Reporte mozos',   module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/compras',               icon: 'receipt',  label: 'Compras',          module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/proveedores',           icon: 'truck',    label: 'Proveedores',      module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/comprobantes',         icon: 'receipt', label: 'Comprobantes', module: 'facturacion', section: 'SISTEMA' },
     { path: '/caja',                 icon: 'receipt', label: 'Caja',         module: 'caja',        section: 'SISTEMA' },
 
