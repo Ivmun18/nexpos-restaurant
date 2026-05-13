@@ -685,3 +685,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/insumos/{insumo}/movimiento', [App\Http\Controllers\InsumoController::class, 'movimiento'])->name('insumos.movimiento');
     Route::delete('/insumos/{insumo}', [App\Http\Controllers\InsumoController::class, 'destroy'])->name('insumos.destroy');
 });
+
+// Recetas
+Route::middleware(['auth'])->group(function () {
+    Route::get('/recetas', [App\Http\Controllers\RecetaController::class, 'index'])->name('recetas.index');
+    Route::post('/recetas', [App\Http\Controllers\RecetaController::class, 'store'])->name('recetas.store');
+    Route::delete('/recetas/{receta}', [App\Http\Controllers\RecetaController::class, 'destroy'])->name('recetas.destroy');
+});

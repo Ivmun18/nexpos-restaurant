@@ -7,6 +7,8 @@ use App\Models\Pedido;
 use App\Models\CajaRestaurante;
 use App\Models\CajaMovimiento;
 use App\Models\SesionCaja;
+use App\Models\Receta;
+use App\Models\InsumoMovimiento;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,6 +74,39 @@ class CajaRestauranteController extends Controller
                 'monto'        => $total,
                 'observaciones'=> $request->notas ?? null,
             ]);
+        }
+
+        // Descontar insumos según recetas de los productos vendidos
+        $pedidosItems = \App\Models\PedidoDetalle::whereIn('pedido_id',
+            \App\Models\Pedido::where('mesa_id', $mesa->id)
+                ->whereIn('estado', ['enviado', 'listo'])
+                ->pluck('id')
+        )->get();
+
+        foreach ($pedidosItems as $item) {
+            $recetas = Receta::with('insumo')
+                ->where('menu_producto_id', $item->menu_producto_id)
+                ->get();
+
+            foreach ($recetas as $receta) {
+                $insumo = $receta->insumo;
+                $cantidadTotal = $receta->cantidad * $item->cantidad;
+                $stockAnterior = $insumo->stock_actual;
+                $stockNuevo = max(0, $stockAnterior - $cantidadTotal);
+
+                $insumo->update(['stock_actual' => $stockNuevo]);
+
+                InsumoMovimiento::create([
+                    'insumo_id'      => $insumo->id,
+                    'user_id'        => auth()->id(),
+                    'tipo'           => 'salida',
+                    'cantidad'       => $cantidadTotal,
+                    'costo_unitario' => $insumo->precio_promedio,
+                    'stock_anterior' => $stockAnterior,
+                    'stock_nuevo'    => $stockNuevo,
+                    'motivo'         => 'Venta Mesa ' . $mesa->numero,
+                ]);
+            }
         }
 
         // Cerrar pedidos y asociar al cobro

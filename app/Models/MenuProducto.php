@@ -39,4 +39,4 @@ class MenuProducto extends Model
     {
         return $query->where('activo', true)->where('disponible', true)->orderBy('orden');
     }
-}
+}// Relación recetas - agregado automáticamente

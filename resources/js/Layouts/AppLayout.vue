@@ -255,6 +255,7 @@ const allMenuItems = [
     { path: '/compras',               icon: 'receipt',  label: 'Compras',          module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/proveedores',           icon: 'truck',    label: 'Proveedores',      module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/insumos',               icon: 'box',      label: 'Inventario',       module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/recetas',               icon: 'chef',     label: 'Recetas',          module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/comprobantes',         icon: 'receipt', label: 'Comprobantes', module: 'facturacion', section: 'SISTEMA' },
     { path: '/caja',                 icon: 'receipt', label: 'Caja',         module: 'caja',        section: 'SISTEMA' },
 
