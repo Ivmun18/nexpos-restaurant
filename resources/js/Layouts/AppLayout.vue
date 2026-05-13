@@ -236,7 +236,7 @@ const allMenuItems = [
     { path: '/dashboard', icon: 'dashboard', label: 'Dashboard', module: null, section: null },
     
     // RESTAURANTE
-    { path: '/mesas',    icon: 'table',  label: 'Mesas',        module: 'mesas',    section: 'RESTAURANTE' },
+    { path: '/mesas',              icon: 'table',    label: 'Mesas',              module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/turnos',   icon: 'clock',  label: 'Turnos',       module: 'turnos',   section: 'RESTAURANTE' },
     { path: '/menu',     icon: 'menu',   label: 'Carta / Menú', module: 'carta',    section: 'RESTAURANTE' },
     { path: '/cocina',   icon: 'chef',   label: 'Cocina',       module: 'cocina',   section: 'RESTAURANTE' },
@@ -244,7 +244,7 @@ const allMenuItems = [
     
     // SISTEMA
     { path: '/admin/mozos',          icon: 'users',   label: 'Mozos',        module: 'mozos',       section: 'SISTEMA' },
-    { path: '/reportes-restaurante', icon: 'chart',   label: 'Reportes',     module: 'reportes',    section: 'SISTEMA' },
+    { path: '/reportes-restaurante', icon: 'chart',   label: 'Reporte ventas', module: 'pos_restaurante',    section: 'SISTEMA' },
     { path: '/comprobantes',         icon: 'receipt', label: 'Comprobantes', module: 'facturacion', section: 'SISTEMA' },
     { path: '/caja',                 icon: 'receipt', label: 'Caja',         module: 'caja',        section: 'SISTEMA' },
 

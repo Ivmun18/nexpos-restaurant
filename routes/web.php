@@ -20,6 +20,7 @@ use App\Http\Controllers\MenuCategoriaController;
 use App\Http\Controllers\MenuProductoController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\CocinaController;
+use App\Http\Controllers\ReporteRestauranteController;
 use App\Http\Controllers\CajaRestauranteController;
 use App\Http\Controllers\TurnoController;
 use App\Http\Controllers\Admin\MozoController;
