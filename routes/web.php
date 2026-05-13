@@ -676,3 +676,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/cajero',                    [\App\Http\Controllers\Minimarket\CajeroMinimarketController::class, 'index'])->name('minimarket.cajero');
     Route::post('/minimarket/cajero/{venta}/cobrar',    [\App\Http\Controllers\Minimarket\CajeroMinimarketController::class, 'cobrar'])->name('minimarket.cajero.cobrar');
 });
+
+// Inventario Insumos Restaurante
+Route::middleware(['auth'])->group(function () {
+    Route::get('/insumos', [App\Http\Controllers\InsumoController::class, 'index'])->name('insumos.index');
+    Route::post('/insumos', [App\Http\Controllers\InsumoController::class, 'store'])->name('insumos.store');
+    Route::put('/insumos/{insumo}', [App\Http\Controllers\InsumoController::class, 'update'])->name('insumos.update');
+    Route::post('/insumos/{insumo}/movimiento', [App\Http\Controllers\InsumoController::class, 'movimiento'])->name('insumos.movimiento');
+    Route::delete('/insumos/{insumo}', [App\Http\Controllers\InsumoController::class, 'destroy'])->name('insumos.destroy');
+});
