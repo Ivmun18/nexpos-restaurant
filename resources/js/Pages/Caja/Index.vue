@@ -133,6 +133,12 @@
                                     :style="Number(s.diferencia) >= 0 ? {color:'#166534'} : {color:'#991B1B'}">
                                     {{ Number(s.diferencia) >= 0 ? '+' : '' }}S/ {{ Number(s.diferencia).toFixed(2) }}
                                 </td>
+                                <td v-if="$page.props.auth.user.rol === 'admin'" style="padding:10px 16px; text-align:center;">
+                                    <button @click="abrirCorreccion(s)"
+                                        style="padding:4px 12px; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
+                                        ✏️ Corregir
+                                    </button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -250,6 +256,49 @@
         </div>
 
     </AppLayout>
+
+    <!-- Modal corrección sesión cerrada -->
+    <div v-if="modalCorreccion" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; padding:1.5rem; width:420px; max-width:95vw;">
+            <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 4px;">✏️ Corregir arqueo de caja</p>
+            <p style="font-size:12px; color:#94A3B8; margin:0 0 1.5rem;">Sesión apertura: {{ sesionCorreccion ? formatFecha(sesionCorreccion.fecha_apertura) : '' }}</p>
+            <div style="background:#F8FAFC; border-radius:10px; padding:12px 16px; margin-bottom:1rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <span style="font-size:13px; color:#64748B;">Monto sistema</span>
+                    <span style="font-size:13px; font-weight:700;">S/ {{ sesionCorreccion ? Number(sesionCorreccion.monto_cierre_sistema).toFixed(2) : '0.00' }}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="font-size:13px; color:#64748B;">Monto real anterior</span>
+                    <span style="font-size:13px; font-weight:700; color:#991B1B;">S/ {{ sesionCorreccion ? Number(sesionCorreccion.monto_cierre_real).toFixed(2) : '0.00' }}</span>
+                </div>
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Nuevo monto real contado (S/) *</label>
+                <input v-model="correccionForm.monto_real" type="number" step="0.01" min="0"
+                    style="width:100%; padding:12px; border:2px solid #E2E8F0; border-radius:10px; font-size:18px; font-weight:700; color:#1E293B; outline:none; box-sizing:border-box; text-align:right;"/>
+                <p v-if="correccionForm.monto_real && sesionCorreccion" style="font-size:12px; margin:6px 0 0;"
+                    :style="(Number(correccionForm.monto_real) - Number(sesionCorreccion.monto_cierre_sistema)) >= 0 ? {color:'#166534'} : {color:'#991B1B'}">
+                    Nueva diferencia: {{ (Number(correccionForm.monto_real) - Number(sesionCorreccion.monto_cierre_sistema)) >= 0 ? '+' : '' }}S/ {{ (Number(correccionForm.monto_real) - Number(sesionCorreccion.monto_cierre_sistema)).toFixed(2) }}
+                </p>
+            </div>
+            <div style="margin-bottom:1.5rem;">
+                <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Motivo de la corrección *</label>
+                <input v-model="correccionForm.observaciones" type="text" placeholder="Ej: Error al contar billetes..."
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button @click="modalCorreccion=false"
+                    style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">
+                    Cancelar
+                </button>
+                <button @click="guardarCorreccion"
+                    style="padding:10px 20px; background:#D97706; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                    ✅ Guardar corrección
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>

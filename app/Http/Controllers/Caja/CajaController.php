@@ -128,6 +128,24 @@ class CajaController extends Controller
 
         return back()->with('success', 'Caja cerrada correctamente.');
     }
-}
 
-    // PARCHE: se agrega antes del cierre de clase
+    public function corregirSesion(Request $request)
+    {
+        $request->validate([
+            'sesion_id'     => 'required|exists:sesion_cajas,id',
+            'monto_real'    => 'required|numeric|min:0',
+            'observaciones' => 'required|string|max:500',
+        ]);
+
+        $sesion     = \App\Models\SesionCaja::findOrFail($request->sesion_id);
+        $diferencia = round($request->monto_real - $sesion->monto_cierre_sistema, 2);
+
+        $sesion->update([
+            'monto_cierre_real' => round($request->monto_real, 2),
+            'diferencia'        => $diferencia,
+            'observaciones'     => ($sesion->observaciones ?? '') . ' | CORRECCIÓN Admin: ' . $request->observaciones,
+        ]);
+
+        return back()->with('success', 'Arqueo corregido correctamente.');
+    }
+}
