@@ -129,3 +129,5 @@ class CajaController extends Controller
         return back()->with('success', 'Caja cerrada correctamente.');
     }
 }
+
+    // PARCHE: se agrega antes del cierre de clase
