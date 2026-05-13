@@ -48,6 +48,70 @@
             </div>
         </div>
 
+        <!-- CUADRE DE CAJA -->
+        <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.2rem 1.5rem; margin-bottom:1.5rem;">
+            <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0 0 1rem;">📊 Cuadre de caja</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+                <!-- Por método de pago -->
+                <div>
+                    <p style="font-size:11px; font-weight:600; color:#94A3B8; text-transform:uppercase; margin:0 0 10px;">Por método de pago</p>
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:#F8FAFC;">
+                                <th style="padding:8px 12px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600;">Método</th>
+                                <th style="padding:8px 12px; text-align:center; font-size:11px; color:#94A3B8; font-weight:600;">Ventas</th>
+                                <th style="padding:8px 12px; text-align:right; font-size:11px; color:#94A3B8; font-weight:600;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(v, metodo) in por_metodo" :key="metodo" style="border-top:1px solid #F1F5F9;">
+                                <td style="padding:10px 12px;">
+                                    <span :style="estiloMetodo(metodo)">{{ iconMetodo(metodo) }} {{ metodo }}</span>
+                                </td>
+                                <td style="padding:10px 12px; text-align:center; color:#64748B;">{{ v.cantidad }}</td>
+                                <td style="padding:10px 12px; text-align:right; font-weight:700; color:#0F766E;">S/ {{ v.total.toFixed(2) }}</td>
+                            </tr>
+                            <tr style="border-top:2px solid #E2E8F0; background:#F8FAFC;">
+                                <td style="padding:10px 12px; font-weight:700; color:#1E293B;">TOTAL</td>
+                                <td style="padding:10px 12px; text-align:center; font-weight:700; color:#1E293B;">{{ resumen.cantidad_ventas }}</td>
+                                <td style="padding:10px 12px; text-align:right; font-weight:800; color:#0F766E; font-size:15px;">S/ {{ resumen.total_ventas?.toFixed(2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Por tipo de comprobante -->
+                <div>
+                    <p style="font-size:11px; font-weight:600; color:#94A3B8; text-transform:uppercase; margin:0 0 10px;">Por tipo de comprobante</p>
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:#F8FAFC;">
+                                <th style="padding:8px 12px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600;">Comprobante</th>
+                                <th style="padding:8px 12px; text-align:center; font-size:11px; color:#94A3B8; font-weight:600;">Ventas</th>
+                                <th style="padding:8px 12px; text-align:right; font-size:11px; color:#94A3B8; font-weight:600;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(v, comp) in por_comprobante" :key="comp" style="border-top:1px solid #F1F5F9;">
+                                <td style="padding:10px 12px;">
+                                    <span :style="estiloComprobante(comp)">{{ iconComprobante(comp) }} {{ comp }}</span>
+                                </td>
+                                <td style="padding:10px 12px; text-align:center; color:#64748B;">{{ v.cantidad }}</td>
+                                <td style="padding:10px 12px; text-align:right; font-weight:700; color:#0F766E;">S/ {{ v.total.toFixed(2) }}</td>
+                            </tr>
+                            <tr style="border-top:2px solid #E2E8F0; background:#F8FAFC;">
+                                <td style="padding:10px 12px; font-weight:700; color:#1E293B;">TOTAL</td>
+                                <td style="padding:10px 12px; text-align:center; font-weight:700; color:#1E293B;">{{ resumen.cantidad_ventas }}</td>
+                                <td style="padding:10px 12px; text-align:right; font-weight:800; color:#0F766E; font-size:15px;">S/ {{ resumen.total_ventas?.toFixed(2) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
         <!-- GRÁFICO + TOP MOZOS -->
         <div style="display:grid; grid-template-columns:1fr 300px; gap:16px; margin-bottom:1.5rem;">
 
@@ -174,7 +238,8 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
     ventas:     { type: Array,  default: () => [] },
     resumen:    { type: Object, default: () => ({}) },
-    por_metodo: { type: Object, default: () => ({}) },
+    por_metodo:      { type: Object, default: () => ({}) },
+    por_comprobante: { type: Object, default: () => ({}) },
     por_dia:    { type: Array,  default: () => [] },
     top_mozos:  { type: Array,  default: () => [] },
     mozos:      { type: Array,  default: () => [] },

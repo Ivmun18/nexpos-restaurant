@@ -208,7 +208,18 @@
                 </div>
 
                 <div style="margin-bottom:1rem;">
-                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Concepto *</label>
+                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Concepto rápido</label>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">
+                        <button v-for="c in conceptosRapidos" :key="c"
+                            @click="movForm.concepto = c"
+                            :style="{
+                                padding:'5px 10px', borderRadius:'20px', fontSize:'11px', cursor:'pointer', fontWeight:'600',
+                                border: movForm.concepto === c ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                                background: movForm.concepto === c ? '#EFF6FF' : '#F8FAFC',
+                                color: movForm.concepto === c ? '#1D4ED8' : '#64748B'
+                            }">{{ c }}</button>
+                    </div>
+                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">O escribe un concepto *</label>
                     <input v-model="movForm.concepto" type="text" placeholder="Ej: Pago de servicios, Venta efectivo..."
                         style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#1E293B; outline:none; box-sizing:border-box;"/>
                 </div>
@@ -317,6 +328,15 @@ const abrirCaja = () => {
 
 const guardarMovimiento = () => {
     if (!movForm.value.concepto || !movForm.value.monto) return
+    const conceptosRapidos = [
+        'Ajuste por error de cobro',
+        'Corrección de monto',
+        'Ingreso no registrado',
+        'Devolución a cliente',
+        'Gasto operativo',
+        'Fondo de cambio',
+    ]
+
     router.post('/caja/movimiento', movForm.value, {
         onSuccess: () => {
             modalMovimiento.value = false

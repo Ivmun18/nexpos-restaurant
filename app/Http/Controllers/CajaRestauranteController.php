@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Mesa;
 use App\Models\Pedido;
 use App\Models\CajaRestaurante;
+use App\Models\CajaMovimiento;
+use App\Models\SesionCaja;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -57,6 +59,20 @@ class CajaRestauranteController extends Controller
             'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
             'notas'            => $request->notas,
         ]);
+
+        // Registrar movimiento en caja si hay sesión abierta
+        $sesion = SesionCaja::where('estado', 'abierta')->first();
+        if ($sesion) {
+            CajaMovimiento::create([
+                'sesion_id'    => $sesion->id,
+                'usuario_id'   => auth()->id(),
+                'tipo'         => 'ingreso',
+                'concepto'     => 'Cobro Mesa ' . $mesa->numero . ' (' . $request->metodo_pago . ')',
+                'referencia_id'=> $caja->id,
+                'monto'        => $total,
+                'observaciones'=> $request->notas ?? null,
+            ]);
+        }
 
         // Cerrar pedidos y asociar al cobro
         Pedido::where('mesa_id', $mesa->id)
