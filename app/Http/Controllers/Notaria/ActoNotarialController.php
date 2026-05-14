@@ -44,7 +44,7 @@ class ActoNotarialController extends Controller
             'cobrado'     => round($actos->sum('monto_pagado'), 2),
         ];
 
-        $clientes = Cliente::where('empresa_id', $empresaId)->orderBy('nombre')->get(['id', 'nombre', 'numero_documento']);
+        $clientes = Cliente::where('empresa_id', $empresaId)->orderBy('razon_social')->get(['id', 'razon_social as nombre', 'numero_documento']);
 
         return Inertia::render('Notaria/Actos/Index', [
             'actos'    => $actos,
