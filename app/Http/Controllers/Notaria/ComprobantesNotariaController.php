@@ -72,9 +72,7 @@ class ComprobantesNotariaController extends Controller
 
         try {
             // Usar Nubefact
-            $url = ($empresa->nubefact_demo ?? true)
-                ? 'https://demo-api.nubefact.com/api/v1/'
-                : 'https://api.nubefact.com/api/v1/';
+            $url = 'https://api.nubefact.com/api/v1/';
 
             $nubefactPayload = [
                 'operacion'              => 'generar_comprobante',
