@@ -133,13 +133,30 @@
                         style="width:100%; padding:10px; background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer;">
                         💵 Registrar pago
                     </button>
-                    <div v-else style="text-align:center;">
+                    <div v-else-if="acto.estado_pago === 'pagado'" style="text-align:center;">
                         <p style="color:#10B981; font-weight:600; font-size:13px; margin:0 0 8px;">✅ Cobro completado</p>
                         <button @click="modalComprobante=true"
                             style="width:100%; padding:10px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer;">
                             🧾 Emitir Boleta / Factura
                         </button>
                     </div>
+                </div>
+
+                <!-- EMITIR COMPROBANTE -->
+                <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+                    <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0 0 10px;">🧾 Comprobante electrónico</p>
+                    <p style="font-size:12px; color:#64748B; margin:0 0 10px;">
+                        {{ acto.estado_pago === 'pagado' ? 'Servicio cancelado — listo para emitir comprobante' : 'Podrá emitir el comprobante cuando el servicio esté cancelado completamente' }}
+                    </p>
+                    <button @click="modalComprobante=true"
+                        :style="{
+                            width:'100%', padding:'10px', border:'none', borderRadius:'9px',
+                            fontSize:'13px', fontWeight:'600', cursor: 'pointer',
+                            background: acto.estado_pago==='pagado' ? 'linear-gradient(135deg,#6366F1,#4F46E5)' : '#F1F5F9',
+                            color: acto.estado_pago==='pagado' ? 'white' : '#94A3B8'
+                        }">
+                        🧾 {{ acto.estado_pago==='pagado' ? 'Emitir Boleta / Factura' : 'Emitir comprobante (pendiente de pago)' }}
+                    </button>
                 </div>
 
                 <!-- CAMBIAR ESTADO RÁPIDO -->
