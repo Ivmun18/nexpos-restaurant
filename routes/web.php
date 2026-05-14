@@ -732,3 +732,6 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/notaria/requisitos/{requisito}/toggle', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'toggleRequisito'])->name('notaria.actos.requisitos.toggle');
     Route::delete('/notaria/requisitos/{requisito}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'eliminarRequisito'])->name('notaria.actos.requisitos.destroy');
 });
+
+// Seguimiento trámites notaría
+Route::middleware(['auth'])->get('/notaria/seguimiento', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'seguimiento'])->name('notaria.seguimiento');

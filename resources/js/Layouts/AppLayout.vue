@@ -254,6 +254,7 @@ const allMenuItems = [
     // SISTEMA
     { path: '/admin/mozos',          icon: 'users',   label: 'Mozos',        module: 'mozos',       section: 'SISTEMA' },
     { path: '/notaria/actos',         icon: 'notaria',  label: 'Expedientes',      module: 'actos',           section: 'NOTARIA' },
+    { path: '/notaria/seguimiento',   icon: 'kanban',   label: 'Seguimiento',      module: 'actos',           section: 'NOTARIA' },
     { path: '/notaria/caja',          icon: 'receipt',  label: 'Caja notarial',    module: 'caja',            section: 'NOTARIA' },
     { path: '/clientes',              icon: 'users',    label: 'Clientes',         module: 'clientes',        section: 'NOTARIA' },
     { path: '/reportes-restaurante', icon: 'chart',   label: 'Reporte ventas',  module: 'pos_restaurante', section: 'RESTAURANTE' },

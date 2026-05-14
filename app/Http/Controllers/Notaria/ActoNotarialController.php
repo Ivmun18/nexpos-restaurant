@@ -115,6 +115,40 @@ class ActoNotarialController extends Controller
         return Inertia::render('Notaria/Actos/Show', ['acto' => $acto, 'datos' => $datosMapa]);
     }
 
+    public function seguimiento(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+
+        $actos = ActoNotarial::with(['cliente', 'usuario', 'requisitos'])
+            ->where('empresa_id', $empresaId)
+            ->whereIn('estado', ['pendiente', 'en_proceso', 'finalizado'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($a) => [
+                'id'                    => $a->id,
+                'numero_expediente'     => $a->numero_expediente,
+                'tipo_acto'             => $a->tipo_acto,
+                'asunto'                => $a->asunto,
+                'partes_intervinientes' => $a->partes_intervinientes,
+                'estado'                => $a->estado,
+                'estado_pago'           => $a->estado_pago,
+                'fecha_ingreso'         => $a->fecha_ingreso,
+                'fecha_entrega'         => $a->fecha_entrega,
+                'monto_cobrar'          => $a->monto_cobrar,
+                'monto_pagado'          => $a->monto_pagado,
+                'usuario'               => $a->usuario?->name,
+                'requisitos_total'      => $a->requisitos->count(),
+                'requisitos_pendientes' => $a->requisitos->where('entregado', false)->count(),
+            ]);
+
+        return Inertia::render('Notaria/Seguimiento/Index', [
+            'pendientes'  => $actos->where('estado', 'pendiente')->values(),
+            'en_proceso'  => $actos->where('estado', 'en_proceso')->values(),
+            'finalizados' => $actos->where('estado', 'finalizado')->values(),
+            'todos'       => $actos->values(),
+        ]);
+    }
+
     public function agregarRequisito(Request $request, ActoNotarial $acto)
     {
         $request->validate(['documento' => 'required|string|max:200']);
