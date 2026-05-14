@@ -249,7 +249,7 @@ const filtros         = ref({ ...props.filtros })
 const modalNuevo      = ref(false)
 const modalPago       = ref(false)
 const actoSeleccionado = ref(null)
-const formNuevo = ref({ tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date().toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' })
+const formNuevo = ref({ tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' })
 const formPago  = ref({ monto: '' })
 
 const tiposActo = [
@@ -291,7 +291,7 @@ function guardarNuevo() {
         preserveScroll: true,
         onSuccess: () => {
             modalNuevo.value = false
-            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date().toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' }
+            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' }
             formDatosNuevo.value = {}
         }
     })
@@ -363,5 +363,78 @@ function estiloPago(p) {
         pagado:    { background: '#F0FDF4', color: '#166534' },
     }
     return { ...(map[p] || {}), fontSize: '11px', padding: '3px 9px', borderRadius: '20px', fontWeight: '600', whiteSpace: 'nowrap' }
+}
+
+// ── Plantillas por tipo de acto ──
+const formDatosNuevo = ref({})
+
+const plantillas = {
+    escritura_publica: [
+        { key: 'vendedor',         label: 'Vendedor(es)',          tipo: 'text',     full: true },
+        { key: 'comprador',        label: 'Comprador(es)',         tipo: 'text',     full: true },
+        { key: 'bien_inmueble',    label: 'Descripción del bien',  tipo: 'textarea', full: true, rows: 3 },
+        { key: 'partida_registral',label: 'Partida registral',     tipo: 'text' },
+        { key: 'valor_venta',      label: 'Valor de venta (S/)',   tipo: 'number' },
+        { key: 'forma_pago',       label: 'Forma de pago',         tipo: 'select', opciones: ['Contado','Crédito','Mixto'] },
+        { key: 'cargas',           label: 'Cargas y gravámenes',   tipo: 'textarea', full: true, rows: 2 },
+    ],
+    poder: [
+        { key: 'poderdante',       label: 'Poderdante',            tipo: 'text',     full: true },
+        { key: 'apoderado',        label: 'Apoderado',             tipo: 'text',     full: true },
+        { key: 'tipo_poder',       label: 'Tipo de poder',         tipo: 'select', opciones: ['Poder especial','Poder general','Poder específico','Poder irrevocable'] },
+        { key: 'facultades',       label: 'Facultades otorgadas',  tipo: 'textarea', full: true, rows: 3 },
+        { key: 'vigencia',         label: 'Vigencia',              tipo: 'select', opciones: ['Sin límite','1 año','2 años','3 años','Hasta revocación'] },
+    ],
+    testamento: [
+        { key: 'testador',         label: 'Testador',              tipo: 'text',     full: true },
+        { key: 'dni_testador',     label: 'DNI del testador',      tipo: 'text' },
+        { key: 'estado_civil',     label: 'Estado civil',          tipo: 'select', opciones: ['Soltero','Casado','Viudo','Divorciado'] },
+        { key: 'herederos',        label: 'Herederos',             tipo: 'textarea', full: true, rows: 3 },
+        { key: 'bienes',           label: 'Bienes a legar',        tipo: 'textarea', full: true, rows: 3 },
+    ],
+    legalizacion: [
+        { key: 'tipo_doc',         label: 'Tipo de documento',     tipo: 'select', opciones: ['Contrato','Acta','Carta','Solicitud','DNI','Otro'] },
+        { key: 'num_hojas',        label: 'N° de hojas',           tipo: 'number' },
+        { key: 'num_copias',       label: 'N° de copias',          tipo: 'number' },
+        { key: 'firmante',         label: 'Firmante',              tipo: 'text',     full: true },
+        { key: 'dni_firmante',     label: 'DNI del firmante',      tipo: 'text' },
+        { key: 'finalidad',        label: 'Finalidad',             tipo: 'textarea', full: true, rows: 2 },
+    ],
+    carta_notarial: [
+        { key: 'remitente',        label: 'Remitente',             tipo: 'text',     full: true },
+        { key: 'dni_remitente',    label: 'DNI/RUC remitente',     tipo: 'text' },
+        { key: 'destinatario',     label: 'Destinatario',          tipo: 'text',     full: true },
+        { key: 'dir_destinatario', label: 'Dirección destinatario',tipo: 'text',     full: true },
+        { key: 'asunto_carta',     label: 'Asunto de la carta',    tipo: 'textarea', full: true, rows: 2 },
+        { key: 'plazo_respuesta',  label: 'Plazo de respuesta',    tipo: 'select', opciones: ['24 horas','3 días','5 días','7 días','15 días','30 días','Sin plazo'] },
+        { key: 'contenido',        label: 'Contenido',             tipo: 'textarea', full: true, rows: 4 },
+    ],
+    protesto: [
+        { key: 'tipo_titulo',      label: 'Tipo de título valor',  tipo: 'select', opciones: ['Cheque','Pagaré','Letra de cambio','Factura negociable'] },
+        { key: 'num_documento',    label: 'N° de documento',       tipo: 'text' },
+        { key: 'monto_titulo',     label: 'Monto (S/)',            tipo: 'number' },
+        { key: 'fecha_venc',       label: 'Fecha de vencimiento',  tipo: 'date' },
+        { key: 'girador',          label: 'Girador/Emisor',        tipo: 'text',     full: true },
+        { key: 'aceptante',        label: 'Aceptante/Deudor',      tipo: 'text',     full: true },
+        { key: 'motivo_protesto',  label: 'Motivo del protesto',   tipo: 'select', opciones: ['Falta de pago','Falta de aceptación'] },
+    ],
+    acta_notarial: [
+        { key: 'tipo_acta',        label: 'Tipo de acta',          tipo: 'select', opciones: ['Acta de constatación','Acta de destrucción','Acta de transferencia','Acta de entrega','Otro'] },
+        { key: 'lugar',            label: 'Lugar de realización',  tipo: 'text',     full: true },
+        { key: 'fecha_acta',       label: 'Fecha del acta',        tipo: 'date' },
+        { key: 'comparecientes',   label: 'Comparecientes',        tipo: 'textarea', full: true, rows: 3 },
+        { key: 'hechos',           label: 'Hechos constatados',    tipo: 'textarea', full: true, rows: 4 },
+    ],
+    otro: [
+        { key: 'descripcion',      label: 'Descripción del acto',  tipo: 'textarea', full: true, rows: 3 },
+        { key: 'partes',           label: 'Partes intervinientes', tipo: 'textarea', full: true, rows: 2 },
+        { key: 'detalles',         label: 'Detalles adicionales',  tipo: 'textarea', full: true, rows: 3 },
+    ],
+}
+
+const camposPlantillaNuevo = computed(() => plantillas[formNuevo.value.tipo_acto] || [])
+
+function labelTipoActo(t) {
+    return tiposActo.find(x => x.value === t)?.label ?? t
 }
 </script>

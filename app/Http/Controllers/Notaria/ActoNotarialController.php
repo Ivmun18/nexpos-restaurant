@@ -19,7 +19,7 @@ class ActoNotarialController extends Controller
         $tipo      = $request->get('tipo', '');
         $estado    = $request->get('estado', '');
         $desde     = $request->get('desde', now()->startOfMonth()->toDateString());
-        $hasta     = $request->get('hasta', now()->toDateString());
+        $hasta     = $request->get('hasta', now()->addDay()->toDateString());
 
         $query = ActoNotarial::with(['cliente', 'usuario'])
             ->where('empresa_id', $empresaId)
