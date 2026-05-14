@@ -83,7 +83,7 @@
                         <td style="padding:11px 16px; text-align:right; font-weight:700; color:#0F766E;">S/ {{ Number(a.monto_cobrar).toFixed(2) }}</td>
                         <td style="padding:11px 16px; text-align:center; display:flex; gap:5px; justify-content:center;">
                             <button @click="verDetalle(a)" style="padding:4px 10px; background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Ver</button>
-                            <button @click="abrirPago(a)" style="padding:4px 10px; background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Pagar</button>
+                            <button @click="irACaja(a)" style="padding:4px 10px; background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">💰 Ir a caja</button>
                         </td>
                     </tr>
                 </tbody>
@@ -299,6 +299,10 @@ function guardarNuevo() {
 
 function verDetalle(acto) {
     router.visit('/notaria/actos/' + acto.id)
+}
+
+function irACaja(acto) {
+    router.visit('/notaria/caja?buscar=' + acto.numero_expediente)
 }
 
 function abrirPago(acto) {
