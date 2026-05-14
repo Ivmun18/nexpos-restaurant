@@ -358,6 +358,12 @@ const menuItems = computed(() => {
             if (item.section === 'NOTARIA') return false
         }
 
+        // En notaría ocultar caja general y reportes de otros módulos
+        if (industry === 'notaria') {
+            const ocultarEnNotaria = ['/caja', '/reportes-restaurante', '/reportes/turnos', '/mesas', '/compras', '/proveedores', '/insumos', '/recetas']
+            if (ocultarEnNotaria.includes(item.path)) return false
+        }
+
         if (!item.module) return true
         if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
         return modulesEnabled.value.includes(item.module)

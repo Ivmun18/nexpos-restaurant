@@ -1,11 +1,96 @@
 <template>
     <AppLayout title="Caja notarial" subtitle="Cobro de expedientes y adelantos">
 
-        <!-- ALERTA CAJA CERRADA -->
-        <div v-if="!sesionAbierta" style="background:#FEF3C7; border:1px solid #FDE68A; border-radius:10px; padding:12px 16px; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px;">
-            <span style="font-size:20px;">⚠️</span>
-            <p style="font-size:13px; color:#92400E; font-weight:600; margin:0;">La caja está cerrada. Abre la caja antes de registrar cobros.</p>
-            <a href="/caja" style="margin-left:auto; padding:6px 14px; background:#F59E0B; color:white; border-radius:7px; font-size:12px; font-weight:600; text-decoration:none;">Ir a caja →</a>
+        <!-- PANEL CAJA -->
+        <div v-if="!sesionAbierta" style="background:white; border-radius:12px; border:2px solid #FDE68A; padding:1.5rem; margin-bottom:1.5rem; text-align:center;">
+            <p style="font-size:32px; margin:0 0 8px;">🔒</p>
+            <p style="font-size:16px; font-weight:700; color:#92400E; margin:0 0 4px;">Caja cerrada</p>
+            <p style="font-size:13px; color:#B45309; margin:0 0 1.2rem;">Ingresa el fondo inicial para comenzar a operar</p>
+            <div style="display:flex; gap:10px; justify-content:center; align-items:center; max-width:300px; margin:0 auto;">
+                <div style="flex:1;">
+                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:4px; font-weight:600;">Fondo inicial (S/)</label>
+                    <input v-model="fondoApertura" type="number" step="0.01" min="0" placeholder="0.00"
+                        style="width:100%; padding:10px 12px; border:2px solid #FDE68A; border-radius:8px; font-size:16px; font-weight:700; outline:none; box-sizing:border-box; text-align:right;" />
+                </div>
+                <button @click="abrirCaja" style="margin-top:20px; padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                    🔓 Abrir caja
+                </button>
+            </div>
+        </div>
+
+        <!-- RESUMEN CAJA ABIERTA -->
+        <div v-if="sesionAbierta && resumenCaja" style="background:white; border-radius:12px; border:1px solid #BBF7D0; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:20px;">🟢</span>
+                <div>
+                    <p style="font-size:12px; color:#166534; font-weight:600; margin:0;">Caja abierta</p>
+                    <p style="font-size:11px; color:#94A3B8; margin:0;">Desde {{ formatFecha(resumenCaja.apertura) }}</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:20px; flex:1; flex-wrap:wrap;">
+                <div style="text-align:center;">
+                    <p style="font-size:11px; color:#94A3B8; margin:0;">Fondo inicial</p>
+                    <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">S/ {{ Number(resumenCaja.fondo_inicial).toFixed(2) }}</p>
+                </div>
+                <div style="text-align:center;">
+                    <p style="font-size:11px; color:#94A3B8; margin:0;">Ingresos</p>
+                    <p style="font-size:14px; font-weight:700; color:#10B981; margin:0;">S/ {{ Number(resumenCaja.ingresos).toFixed(2) }}</p>
+                </div>
+                <div style="text-align:center;">
+                    <p style="font-size:11px; color:#94A3B8; margin:0;">Egresos</p>
+                    <p style="font-size:14px; font-weight:700; color:#EF4444; margin:0;">S/ {{ Number(resumenCaja.egresos).toFixed(2) }}</p>
+                </div>
+                <div style="text-align:center;">
+                    <p style="font-size:11px; color:#94A3B8; margin:0;">Saldo sistema</p>
+                    <p style="font-size:16px; font-weight:800; color:#0F766E; margin:0;">S/ {{ Number(resumenCaja.saldo_sistema).toFixed(2) }}</p>
+                </div>
+            </div>
+            <button @click="modalCerrar=true" style="padding:8px 16px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                🔒 Cerrar caja
+            </button>
+        </div>
+
+        <!-- MODAL CIERRE DE CAJA -->
+        <div v-if="modalCerrar" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center;">
+            <div style="background:white; border-radius:16px; padding:1.5rem; width:420px; max-width:95vw;">
+                <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 1.2rem;">🔒 Cerrar caja</p>
+                <div style="background:#F8FAFC; border-radius:10px; padding:12px 16px; margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:13px; color:#64748B;">Fondo inicial</span>
+                        <span style="font-size:13px; font-weight:700;">S/ {{ Number(resumenCaja?.fondo_inicial).toFixed(2) }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:13px; color:#64748B;">+ Ingresos</span>
+                        <span style="font-size:13px; font-weight:700; color:#10B981;">S/ {{ Number(resumenCaja?.ingresos).toFixed(2) }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:13px; color:#64748B;">- Egresos</span>
+                        <span style="font-size:13px; font-weight:700; color:#EF4444;">S/ {{ Number(resumenCaja?.egresos).toFixed(2) }}</span>
+                    </div>
+                    <div style="border-top:1px solid #E2E8F0; padding-top:6px; display:flex; justify-content:space-between;">
+                        <span style="font-size:14px; font-weight:700;">Saldo sistema</span>
+                        <span style="font-size:16px; font-weight:800; color:#0F766E;">S/ {{ Number(resumenCaja?.saldo_sistema).toFixed(2) }}</span>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px; font-weight:600;">Monto contado físicamente (S/)</label>
+                    <input v-model="formCierre.monto_real" type="number" step="0.01" min="0"
+                        style="width:100%; padding:10px; border:2px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:700; outline:none; box-sizing:border-box; text-align:right;" />
+                    <p v-if="formCierre.monto_real" style="font-size:12px; margin:4px 0 0;"
+                        :style="(Number(formCierre.monto_real) - Number(resumenCaja?.saldo_sistema)) >= 0 ? {color:'#166534'} : {color:'#991B1B'}">
+                        Diferencia: {{ (Number(formCierre.monto_real) - Number(resumenCaja?.saldo_sistema)) >= 0 ? '+' : '' }}S/ {{ (Number(formCierre.monto_real) - Number(resumenCaja?.saldo_sistema)).toFixed(2) }}
+                    </p>
+                </div>
+                <div style="margin-bottom:1.2rem;">
+                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px; font-weight:600;">Observaciones</label>
+                    <input v-model="formCierre.observaciones" type="text" placeholder="Notas del cierre..."
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                    <button @click="modalCerrar=false" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cancelar</button>
+                    <button @click="cerrarCaja" style="padding:9px 18px; background:#EF4444; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">🔒 Confirmar cierre</button>
+                </div>
+            </div>
         </div>
 
         <!-- BUSCADOR -->
@@ -281,6 +366,7 @@ const props = defineProps({
     pendientes:    { type: Array,   default: () => [] },
     pagadosHoy:    { type: Array,   default: () => [] },
     sesionAbierta: { type: Boolean, default: false },
+    resumenCaja:   { type: Object,  default: null },
     filtros:       { type: Object,  default: () => ({}) },
 })
 
@@ -319,6 +405,21 @@ function seleccionar(e) {
         tipo:        e.monto_pagado > 0 ? 'pago_final' : 'pago_parcial',
         referencia:  ''
     }
+}
+
+const fondoApertura = ref(0)
+const modalCerrar   = ref(false)
+const formCierre    = ref({ monto_real: '', observaciones: '' })
+
+function abrirCaja() {
+    router.post('/notaria/caja/abrir', { monto_apertura: fondoApertura.value }, { preserveScroll: true })
+}
+
+function cerrarCaja() {
+    router.post('/notaria/caja/cerrar', formCierre.value, {
+        preserveScroll: true,
+        onSuccess: () => { modalCerrar.value = false }
+    })
 }
 
 const modalComprobante = ref(false)

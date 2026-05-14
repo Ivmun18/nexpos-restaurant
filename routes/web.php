@@ -719,3 +719,9 @@ Route::middleware(['auth'])->group(function () {
 
 // Comprobantes Notaría
 Route::middleware(['auth'])->post('/notaria/comprobantes/{acto}/emitir', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'emitir'])->name('notaria.comprobantes.emitir');
+
+// Apertura y cierre caja notaría
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notaria/caja/abrir', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'abrir'])->name('notaria.caja.abrir');
+    Route::post('/notaria/caja/cerrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cerrar'])->name('notaria.caja.cerrar');
+});
