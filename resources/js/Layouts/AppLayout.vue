@@ -311,11 +311,14 @@ const menuItems = computed(() => {
     const rol = page.props.auth?.user?.rol
 
     const modulosCajero   = ['/dashboard', '/mesas', '/caja', '/reportes-restaurante']
+    const modulosVentanilla = ['/dashboard', '/notaria/actos', '/clientes']
+    const modulosCajeroNotaria = ['/dashboard', '/notaria/caja', '/caja']
     const modulosMozo     = ['/dashboard', '/mesas']
     const modulosCocinero = ['/dashboard', '/cocina']
 
     return allMenuItems.filter(item => {
         if (rol === 'cajero')   return modulosCajero.includes(item.path)
+        if (rol === 'vendedor' && industry === 'notaria') return modulosVentanilla.includes(item.path)
         if (rol === 'mozo')     return modulosMozo.includes(item.path)
         if (rol === 'cocinero') return modulosCocinero.includes(item.path)
         if (rol === 'cocina')    return modulosCocinero.includes(item.path)
