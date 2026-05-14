@@ -328,8 +328,14 @@ const pdfComp          = ref('')
 const formComp = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
 
 async function emitirComprobante() {
-    if (!formComp.value.cliente_numero_documento || !formComp.value.cliente_nombre) {
-        errorComp.value = 'Completa el documento y nombre del cliente'
+    const doc    = formComp.value.cliente_numero_documento?.trim()
+    const nombre = formComp.value.cliente_nombre?.trim()
+    if (!doc || doc.length < 8) {
+        errorComp.value = 'Ingresa el DNI (8 dígitos) o RUC (11 dígitos)'
+        return
+    }
+    if (!nombre || nombre.length < 3) {
+        errorComp.value = 'Ingresa el nombre completo del cliente'
         return
     }
     emitiendo.value = true
