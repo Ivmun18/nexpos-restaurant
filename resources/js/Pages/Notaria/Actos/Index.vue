@@ -83,7 +83,7 @@
                         <td style="padding:11px 16px; text-align:right; font-weight:700; color:#0F766E;">S/ {{ Number(a.monto_cobrar).toFixed(2) }}</td>
                         <td style="padding:11px 16px; text-align:center; display:flex; gap:5px; justify-content:center;">
                             <button @click="verDetalle(a)" style="padding:4px 10px; background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Ver</button>
-                            <button v-if="$page.props.auth.user.rol === 'admin' || $page.props.auth.user.rol === 'cajero'" @click="irACaja(a)" style="padding:4px 10px; background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">💰 Cobrar</button>
+                            <button v-if="$page.props.auth.user.rol === 'admin' || $page.props.auth.user.rol === 'cajero'" @click="abrirPago(a)" style="padding:4px 10px; background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">💰 Pagar</button>
                         </td>
                     </tr>
                 </tbody>
@@ -321,7 +321,9 @@ function guardarPago() {
 
 function formatFecha(f) {
     if (!f) return '—'
-    return new Date(f + 'T00:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    const fecha = f.includes('T') || f.includes(' ') ? new Date(f) : new Date(f + 'T12:00:00')
+    if (isNaN(fecha)) return '—'
+    return fecha.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
 function labelTipo(t) {
