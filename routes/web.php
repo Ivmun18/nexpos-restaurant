@@ -707,3 +707,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notaria/caja', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'index'])->name('notaria.caja.index');
     Route::post('/notaria/caja/{acto}/cobrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cobrar'])->name('notaria.caja.cobrar');
 });
+
+// Datos plantilla acto
+Route::middleware(['auth'])->post('/notaria/actos/{acto}/datos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'guardarDatos'])->name('notaria.actos.datos');

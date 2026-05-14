@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Notaria;
 use App\Http\Controllers\Controller;
 use App\Models\ActoNotarial;
 use App\Models\ActoSeguimiento;
+use App\Models\ActoDato;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -95,8 +96,23 @@ class ActoNotarialController extends Controller
 
     public function show(ActoNotarial $acto)
     {
-        $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario']);
-        return Inertia::render('Notaria/Actos/Show', ['acto' => $acto]);
+        $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos']);
+        $datosMapa = $acto->datos->pluck('valor', 'campo');
+        return Inertia::render('Notaria/Actos/Show', ['acto' => $acto, 'datos' => $datosMapa]);
+    }
+
+    public function guardarDatos(Request $request, ActoNotarial $acto)
+    {
+        $request->validate(['datos' => 'required|array']);
+
+        foreach ($request->datos as $campo => $valor) {
+            ActoDato::updateOrCreate(
+                ['acto_id' => $acto->id, 'campo' => $campo],
+                ['valor'   => $valor]
+            );
+        }
+
+        return back()->with('success', 'Datos guardados correctamente.');
     }
 
     public function cambiarEstado(Request $request, ActoNotarial $acto)
