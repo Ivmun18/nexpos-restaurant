@@ -119,7 +119,7 @@ class ActoNotarialController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
-        $actos = ActoNotarial::with(['cliente', 'usuario', 'requisitos'])
+        $actos = ActoNotarial::with(['cliente', 'usuario', 'requisitos', 'seguimientos.user'])
             ->where('empresa_id', $empresaId)
             ->whereIn('estado', ['pendiente', 'en_proceso', 'finalizado'])
             ->orderBy('created_at', 'desc')
@@ -139,6 +139,15 @@ class ActoNotarialController extends Controller
                 'usuario'               => $a->usuario?->name,
                 'requisitos_total'      => $a->requisitos->count(),
                 'requisitos_pendientes' => $a->requisitos->where('entregado', false)->count(),
+                'requisitos_entregados' => $a->requisitos->where('entregado', true)->count(),
+                'requisitos_faltantes'  => $a->requisitos->where('entregado', false)->values(),
+                'requisitos_ok'         => $a->requisitos->where('entregado', true)->values(),
+                'ultimo_seguimiento'    => $a->seguimientos->last() ? [
+                    'estado_nuevo' => $a->seguimientos->last()->estado_nuevo,
+                    'comentario'   => $a->seguimientos->last()->comentario,
+                    'created_at'   => $a->seguimientos->last()->created_at,
+                    'usuario'      => $a->seguimientos->last()->user?->name,
+                ] : null,
             ]);
 
         return Inertia::render('Notaria/Seguimiento/Index', [

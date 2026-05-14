@@ -1,183 +1,129 @@
 <template>
-    <AppLayout title="Seguimiento de trámites" subtitle="Estado en tiempo real de todos los expedientes">
+    <AppLayout title="Seguimiento de trámites" subtitle="Consulta el estado de un expediente notarial">
 
-        <!-- TOGGLE VISTA -->
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
-            <div style="display:flex; gap:6px;">
-                <button @click="vista='kanban'"
-                    :style="{padding:'8px 16px', borderRadius:'8px', border:'1.5px solid', fontSize:'13px', fontWeight:'600', cursor:'pointer',
-                        borderColor: vista==='kanban'?'#6366F1':'#E2E8F0',
-                        background: vista==='kanban'?'#EEF2FF':'white',
-                        color: vista==='kanban'?'#4F46E5':'#64748B'}">
-                    🗂️ Kanban
-                </button>
-                <button @click="vista='lista'"
-                    :style="{padding:'8px 16px', borderRadius:'8px', border:'1.5px solid', fontSize:'13px', fontWeight:'600', cursor:'pointer',
-                        borderColor: vista==='lista'?'#6366F1':'#E2E8F0',
-                        background: vista==='lista'?'#EEF2FF':'white',
-                        color: vista==='lista'?'#4F46E5':'#64748B'}">
-                    📋 Lista
-                </button>
+        <!-- BUSCADOR PRINCIPAL -->
+        <div style="max-width:700px; margin:0 auto;">
+
+            <div style="background:white; border-radius:16px; border:1px solid #E2E8F0; padding:2rem; margin-bottom:1.5rem; text-align:center;">
+                <p style="font-size:32px; margin:0 0 8px;">🔍</p>
+                <p style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 4px;">Consulta tu trámite</p>
+                <p style="font-size:13px; color:#94A3B8; margin:0 0 1.5rem;">Ingresa el número de expediente, nombre o DNI para ver el estado</p>
+                <div style="display:flex; gap:8px;">
+                    <input v-model="busqueda" @keyup.enter="buscar" type="text"
+                        placeholder="Ej: EXP-2026-00001, Juan Pérez, 23456789..."
+                        style="flex:1; padding:12px 16px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; transition:border .2s;"
+                        @focus="e => e.target.style.borderColor='#6366F1'"
+                        @blur="e => e.target.style.borderColor='#E2E8F0'" />
+                    <button @click="buscar"
+                        style="padding:12px 24px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                        Buscar
+                    </button>
+                </div>
             </div>
-            <div style="display:flex; gap:8px;">
-                <input v-model="busqueda" placeholder="Buscar expediente..." style="padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; width:220px;" />
-                <button @click="router.reload()" style="padding:8px 14px; background:#F1F5F9; border:none; border-radius:8px; font-size:13px; cursor:pointer; color:#64748B;">🔄 Actualizar</button>
+
+            <!-- RESULTADOS -->
+            <div v-if="buscado && resultados.length === 0" style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:2rem; text-align:center; color:#94A3B8;">
+                <p style="font-size:24px; margin:0 0 8px;">😕</p>
+                <p style="font-size:14px; margin:0;">No se encontraron expedientes con ese criterio</p>
             </div>
-        </div>
 
-        <!-- VISTA KANBAN -->
-        <div v-if="vista === 'kanban'" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+            <div v-for="a in resultados" :key="a.id" style="background:white; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:12px; overflow:hidden;">
 
-            <!-- PENDIENTE -->
-            <div style="background:#FFFBEB; border-radius:14px; padding:1rem; border:2px solid #FDE68A; min-height:400px;">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
-                    <div style="width:40px; height:40px; background:linear-gradient(135deg,#F59E0B,#D97706); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🕐</div>
-                    <div>
-                        <p style="font-size:14px; font-weight:700; color:#92400E; margin:0;">PENDIENTE</p>
-                        <p style="font-size:12px; color:#B45309; margin:0;">{{ pendientesFiltrados.length }} expedientes</p>
+                <!-- Header expediente -->
+                <div :style="{padding:'1rem 1.25rem', borderBottom:'1px solid #F1F5F9', background: bgEstado(a.estado)}">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <span style="font-family:monospace; font-size:14px; font-weight:700; color:#4F46E5;">{{ a.numero_expediente }}</span>
+                            <span style="margin-left:10px; font-size:12px; color:#64748B;">{{ labelTipo(a.tipo_acto) }}</span>
+                        </div>
+                        <span :style="estiloEstado(a.estado)">{{ labelEstado(a.estado) }}</span>
+                    </div>
+                    <p style="font-size:14px; font-weight:600; color:#1E293B; margin:4px 0 0;">{{ a.asunto }}</p>
+                    <p style="font-size:12px; color:#64748B; margin:2px 0 0;">{{ a.partes_intervinientes || '—' }}</p>
+                </div>
+
+                <div style="padding:1rem 1.25rem;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:1rem;">
+                        <div>
+                            <p style="font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase; margin:0 0 3px;">Fecha ingreso</p>
+                            <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0;">{{ formatFecha(a.fecha_ingreso) }}</p>
+                        </div>
+                        <div>
+                            <p style="font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase; margin:0 0 3px;">Fecha entrega</p>
+                            <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0;">{{ a.fecha_entrega ? formatFecha(a.fecha_entrega) : 'Por definir' }}</p>
+                        </div>
+                        <div>
+                            <p style="font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase; margin:0 0 3px;">Estado de pago</p>
+                            <span :style="estiloPago(a.estado_pago)">{{ labelPago(a.estado_pago) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Documentos pendientes -->
+                    <div v-if="a.requisitos_pendientes > 0"
+                        style="background:#FEF2F2; border:1px solid #FECACA; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
+                        <p style="font-size:12px; font-weight:700; color:#991B1B; margin:0 0 8px;">⚠️ Documentos pendientes de entrega</p>
+                        <div v-for="r in a.requisitos_faltantes" :key="r.id" style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span style="color:#EF4444; font-size:14px;">❌</span>
+                            <span style="font-size:13px; color:#991B1B;">{{ r.documento }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Documentos entregados -->
+                    <div v-if="a.requisitos_entregados > 0"
+                        style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
+                        <p style="font-size:12px; font-weight:700; color:#166534; margin:0 0 8px;">✅ Documentos recibidos</p>
+                        <div v-for="r in a.requisitos_ok" :key="r.id" style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span style="color:#10B981; font-size:14px;">✅</span>
+                            <span style="font-size:13px; color:#166534;">{{ r.documento }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Último seguimiento -->
+                    <div v-if="a.ultimo_seguimiento" style="background:#F8FAFC; border-radius:10px; padding:10px 14px;">
+                        <p style="font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase; margin:0 0 4px;">Última actualización</p>
+                        <p style="font-size:13px; color:#1E293B; margin:0;">
+                            <span :style="estiloEstado(a.ultimo_seguimiento.estado_nuevo)">{{ labelEstado(a.ultimo_seguimiento.estado_nuevo) }}</span>
+                            <span v-if="a.ultimo_seguimiento.comentario" style="margin-left:8px; color:#64748B;">— {{ a.ultimo_seguimiento.comentario }}</span>
+                        </p>
+                        <p style="font-size:11px; color:#94A3B8; margin:4px 0 0;">{{ formatFechaHora(a.ultimo_seguimiento.created_at) }} · {{ a.ultimo_seguimiento.usuario }}</p>
                     </div>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <div v-if="pendientesFiltrados.length === 0" style="text-align:center; color:#B45309; font-size:13px; padding:2rem;">Sin expedientes pendientes</div>
-                    <div v-for="a in pendientesFiltrados" :key="a.id" @click="verExpediente(a.id)"
-                        style="background:white; border-radius:10px; padding:12px; cursor:pointer; border:1px solid #FDE68A; transition:all .15s;"
-                        @mouseover="e => e.currentTarget.style.boxShadow='0 4px 12px rgba(245,158,11,.15)'"
-                        @mouseleave="e => e.currentTarget.style.boxShadow='none'">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            </div>
+
+            <!-- LISTA COMPLETA (filtro por estado) -->
+            <div v-if="!buscado" style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
+                <div style="padding:1rem 1.25rem; border-bottom:1px solid #F1F5F9; display:flex; gap:8px; flex-wrap:wrap;">
+                    <button v-for="f in filtros" :key="f.value" @click="filtroActivo=f.value"
+                        :style="{padding:'5px 14px', borderRadius:'20px', border:'1.5px solid', fontSize:'12px', fontWeight:'600', cursor:'pointer',
+                            borderColor: filtroActivo===f.value ? f.color : '#E2E8F0',
+                            background: filtroActivo===f.value ? f.bg : 'white',
+                            color: filtroActivo===f.value ? f.color : '#64748B'}">
+                        {{ f.label }} ({{ contarEstado(f.value) }})
+                    </button>
+                </div>
+                <div v-if="listaActiva.length === 0" style="padding:2rem; text-align:center; color:#94A3B8; font-size:13px;">
+                    Sin expedientes en este estado
+                </div>
+                <div v-for="a in listaActiva" :key="a.id"
+                    style="padding:12px 16px; border-top:1px solid #F1F5F9; display:flex; align-items:center; gap:12px; cursor:pointer;"
+                    @click="router.visit('/notaria/actos/' + a.id)"
+                    @mouseover="e => e.currentTarget.style.background='#F8FAFC'"
+                    @mouseleave="e => e.currentTarget.style.background='white'">
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
                             <span style="font-family:monospace; font-size:12px; font-weight:700; color:#4F46E5;">{{ a.numero_expediente }}</span>
-                            <span v-if="a.requisitos_pendientes > 0" style="background:#FEF2F2; color:#991B1B; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:600;">❌ {{ a.requisitos_pendientes }} docs</span>
+                            <span style="font-size:11px; color:#94A3B8;">{{ labelTipo(a.tipo_acto) }}</span>
+                            <span v-if="a.requisitos_pendientes > 0" style="background:#FEF2F2; color:#991B1B; padding:1px 6px; border-radius:10px; font-size:10px; font-weight:600;">❌ {{ a.requisitos_pendientes }} docs</span>
                         </div>
-                        <p style="font-size:12px; font-weight:600; color:#1E293B; margin:0 0 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.asunto }}</p>
-                        <p style="font-size:11px; color:#94A3B8; margin:0 0 6px;">{{ labelTipo(a.tipo_acto) }}</p>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:11px; color:#64748B;">{{ a.partes_intervinientes?.split('/')[0]?.trim() || '—' }}</span>
-                            <span :style="estiloPago(a.estado_pago)">{{ labelPago(a.estado_pago) }}</span>
-                        </div>
-                        <div v-if="a.fecha_entrega" style="margin-top:6px; font-size:10px; color:#94A3B8;">
-                            📅 Entrega: {{ formatFecha(a.fecha_entrega) }}
-                        </div>
+                        <p style="font-size:13px; color:#1E293B; font-weight:500; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.asunto }}</p>
+                        <p style="font-size:11px; color:#94A3B8; margin:2px 0 0;">{{ a.partes_intervinientes || '—' }}</p>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                        <span :style="estiloPago(a.estado_pago)">{{ labelPago(a.estado_pago) }}</span>
+                        <p style="font-size:11px; color:#94A3B8; margin:4px 0 0;">{{ a.fecha_entrega ? formatFecha(a.fecha_entrega) : '—' }}</p>
                     </div>
                 </div>
             </div>
-
-            <!-- EN PROCESO -->
-            <div style="background:#EFF6FF; border-radius:14px; padding:1rem; border:2px solid #BFDBFE; min-height:400px;">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
-                    <div style="width:40px; height:40px; background:linear-gradient(135deg,#3B82F6,#1D4ED8); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🔄</div>
-                    <div>
-                        <p style="font-size:14px; font-weight:700; color:#1D4ED8; margin:0;">EN PROCESO</p>
-                        <p style="font-size:12px; color:#3B82F6; margin:0;">{{ enProcesoFiltrados.length }} expedientes</p>
-                    </div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <div v-if="enProcesoFiltrados.length === 0" style="text-align:center; color:#3B82F6; font-size:13px; padding:2rem;">Sin expedientes en proceso</div>
-                    <div v-for="a in enProcesoFiltrados" :key="a.id" @click="verExpediente(a.id)"
-                        style="background:white; border-radius:10px; padding:12px; cursor:pointer; border:1px solid #BFDBFE; transition:all .15s;"
-                        @mouseover="e => e.currentTarget.style.boxShadow='0 4px 12px rgba(59,130,246,.15)'"
-                        @mouseleave="e => e.currentTarget.style.boxShadow='none'">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-family:monospace; font-size:12px; font-weight:700; color:#4F46E5;">{{ a.numero_expediente }}</span>
-                            <span v-if="a.requisitos_pendientes > 0" style="background:#FEF2F2; color:#991B1B; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:600;">❌ {{ a.requisitos_pendientes }} docs</span>
-                        </div>
-                        <p style="font-size:12px; font-weight:600; color:#1E293B; margin:0 0 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.asunto }}</p>
-                        <p style="font-size:11px; color:#94A3B8; margin:0 0 6px;">{{ labelTipo(a.tipo_acto) }}</p>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:11px; color:#64748B;">{{ a.partes_intervinientes?.split('/')[0]?.trim() || '—' }}</span>
-                            <span :style="estiloPago(a.estado_pago)">{{ labelPago(a.estado_pago) }}</span>
-                        </div>
-                        <div v-if="a.fecha_entrega" style="margin-top:6px; font-size:10px; color:#94A3B8;">
-                            📅 Entrega: {{ formatFecha(a.fecha_entrega) }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FINALIZADO -->
-            <div style="background:#F0FDF4; border-radius:14px; padding:1rem; border:2px solid #BBF7D0; min-height:400px;">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
-                    <div style="width:40px; height:40px; background:linear-gradient(135deg,#10B981,#059669); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">✅</div>
-                    <div>
-                        <p style="font-size:14px; font-weight:700; color:#065F46; margin:0;">FINALIZADO</p>
-                        <p style="font-size:12px; color:#059669; margin:0;">{{ finalizadosFiltrados.length }} expedientes</p>
-                    </div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <div v-if="finalizadosFiltrados.length === 0" style="text-align:center; color:#059669; font-size:13px; padding:2rem;">Sin expedientes finalizados</div>
-                    <div v-for="a in finalizadosFiltrados" :key="a.id" @click="verExpediente(a.id)"
-                        style="background:white; border-radius:10px; padding:12px; cursor:pointer; border:1px solid #BBF7D0; transition:all .15s;"
-                        @mouseover="e => e.currentTarget.style.boxShadow='0 4px 12px rgba(16,185,129,.15)'"
-                        @mouseleave="e => e.currentTarget.style.boxShadow='none'">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <span style="font-family:monospace; font-size:12px; font-weight:700; color:#4F46E5;">{{ a.numero_expediente }}</span>
-                            <span :style="estiloPago(a.estado_pago)">{{ labelPago(a.estado_pago) }}</span>
-                        </div>
-                        <p style="font-size:12px; font-weight:600; color:#1E293B; margin:0 0 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.asunto }}</p>
-                        <p style="font-size:11px; color:#94A3B8; margin:0 0 6px;">{{ labelTipo(a.tipo_acto) }}</p>
-                        <span style="font-size:11px; color:#64748B;">{{ a.partes_intervinientes?.split('/')[0]?.trim() || '—' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- VISTA LISTA -->
-        <div v-if="vista === 'lista'" style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
-            <div style="padding:1rem 1.5rem; border-bottom:1px solid #F1F5F9; display:flex; gap:8px;">
-                <button v-for="f in ['todos','pendiente','en_proceso','finalizado']" :key="f" @click="filtroEstado=f"
-                    :style="{padding:'5px 14px', borderRadius:'20px', border:'1.5px solid', fontSize:'12px', fontWeight:'600', cursor:'pointer',
-                        borderColor: filtroEstado===f ? colorEstado(f) : '#E2E8F0',
-                        background: filtroEstado===f ? bgEstado(f) : 'white',
-                        color: filtroEstado===f ? colorEstado(f) : '#64748B'}">
-                    {{ f === 'todos' ? 'Todos' : f === 'en_proceso' ? 'En proceso' : f.charAt(0).toUpperCase() + f.slice(1) }}
-                    ({{ contarEstado(f) }})
-                </button>
-            </div>
-            <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                <thead>
-                    <tr style="background:#F8FAFC;">
-                        <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Expediente</th>
-                        <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Tipo</th>
-                        <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Asunto</th>
-                        <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Partes</th>
-                        <th style="padding:10px 16px; text-align:center; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Estado</th>
-                        <th style="padding:10px 16px; text-align:center; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Docs</th>
-                        <th style="padding:10px 16px; text-align:center; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Pago</th>
-                        <th style="padding:10px 16px; text-align:left; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Entrega</th>
-                        <th style="padding:10px 16px; text-align:center; font-size:11px; color:#94A3B8; font-weight:600; text-transform:uppercase;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="listaFiltrada.length === 0">
-                        <td colspan="9" style="padding:2rem; text-align:center; color:#94A3B8;">Sin expedientes</td>
-                    </tr>
-                    <tr v-for="a in listaFiltrada" :key="a.id" style="border-top:1px solid #F1F5F9; cursor:pointer;"
-                        @mouseover="e => e.currentTarget.style.background='#F8FAFC'"
-                        @mouseleave="e => e.currentTarget.style.background='white'">
-                        <td style="padding:11px 16px; font-family:monospace; font-size:12px; font-weight:700; color:#4F46E5;">{{ a.numero_expediente }}</td>
-                        <td style="padding:11px 16px; font-size:12px;">{{ labelTipo(a.tipo_acto) }}</td>
-                        <td style="padding:11px 16px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.asunto }}</td>
-                        <td style="padding:11px 16px; font-size:12px; color:#64748B; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ a.partes_intervinientes || '—' }}</td>
-                        <td style="padding:11px 16px; text-align:center;">
-                            <span :style="estiloEstado(a.estado)">{{ labelEstado(a.estado) }}</span>
-                        </td>
-                        <td style="padding:11px 16px; text-align:center;">
-                            <span v-if="a.requisitos_total > 0"
-                                :style="{fontSize:'11px', padding:'3px 8px', borderRadius:'20px', fontWeight:'600',
-                                    background: a.requisitos_pendientes > 0 ? '#FEF2F2' : '#F0FDF4',
-                                    color: a.requisitos_pendientes > 0 ? '#991B1B' : '#166534'}">
-                                {{ a.requisitos_total - a.requisitos_pendientes }}/{{ a.requisitos_total }}
-                            </span>
-                            <span v-else style="color:#94A3B8; font-size:12px;">—</span>
-                        </td>
-                        <td style="padding:11px 16px; text-align:center;">
-                            <span :style="estiloPago(a.estado_pago)">{{ labelPago(a.estado_pago) }}</span>
-                        </td>
-                        <td style="padding:11px 16px; font-size:12px; color:#64748B;">{{ a.fecha_entrega ? formatFecha(a.fecha_entrega) : '—' }}</td>
-                        <td style="padding:11px 16px; text-align:center;">
-                            <button @click="verExpediente(a.id)" style="padding:4px 12px; background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Ver →</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
 
     </AppLayout>
@@ -195,30 +141,36 @@ const props = defineProps({
     todos:       { type: Array, default: () => [] },
 })
 
-const vista        = ref('kanban')
-const busqueda     = ref('')
-const filtroEstado = ref('todos')
+const busqueda    = ref('')
+const buscado     = ref(false)
+const filtroActivo = ref('todos')
 
-function filtrar(lista) {
-    if (!busqueda.value) return lista
+const filtros = [
+    { value: 'todos',      label: 'Todos',      color: '#6366F1', bg: '#EEF2FF' },
+    { value: 'pendiente',  label: 'Pendiente',  color: '#F59E0B', bg: '#FEF3C7' },
+    { value: 'en_proceso', label: 'En proceso', color: '#3B82F6', bg: '#EFF6FF' },
+    { value: 'finalizado', label: 'Finalizado', color: '#10B981', bg: '#F0FDF4' },
+]
+
+const resultados = ref([])
+
+function buscar() {
+    if (!busqueda.value.trim()) { buscado.value = false; return }
+    buscado.value = true
     const q = busqueda.value.toLowerCase()
-    return lista.filter(a =>
+    resultados.value = props.todos.filter(a =>
         a.numero_expediente.toLowerCase().includes(q) ||
         a.asunto.toLowerCase().includes(q) ||
         (a.partes_intervinientes || '').toLowerCase().includes(q)
     )
 }
 
-const pendientesFiltrados  = computed(() => filtrar(props.pendientes))
-const enProcesoFiltrados   = computed(() => filtrar(props.en_proceso))
-const finalizadosFiltrados = computed(() => filtrar(props.finalizados))
-
-const listaFiltrada = computed(() => {
-    const base = filtroEstado.value === 'todos' ? props.todos
-        : filtroEstado.value === 'pendiente'  ? props.pendientes
-        : filtroEstado.value === 'en_proceso' ? props.en_proceso
+const listaActiva = computed(() => {
+    const base = filtroActivo.value === 'todos' ? props.todos
+        : filtroActivo.value === 'pendiente'  ? props.pendientes
+        : filtroActivo.value === 'en_proceso' ? props.en_proceso
         : props.finalizados
-    return filtrar(base)
+    return base
 })
 
 function contarEstado(e) {
@@ -228,8 +180,6 @@ function contarEstado(e) {
         : props.finalizados.length
 }
 
-function verExpediente(id) { router.visit('/notaria/actos/' + id) }
-
 function formatFecha(f) {
     if (!f) return '—'
     const fecha = f.includes('T') || f.includes(' ') ? new Date(f) : new Date(f + 'T12:00:00')
@@ -237,23 +187,24 @@ function formatFecha(f) {
     return fecha.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit' })
 }
 
-const tiposActo = {
-    escritura_publica:'📜 Escritura', poder:'✍️ Poder', testamento:'📋 Testamento',
-    legalizacion:'🔏 Legalización', carta_notarial:'✉️ Carta notarial',
-    protesto:'⚖️ Protesto', acta_notarial:'📝 Acta', otro:'📁 Otro'
+function formatFechaHora(f) {
+    if (!f) return '—'
+    const d = new Date(f)
+    return d.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit' }) + ' ' +
+           d.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' })
 }
-function labelTipo(t) { return tiposActo[t] ?? t }
 
+const tiposActo = { escritura_publica:'📜 Escritura', poder:'✍️ Poder', testamento:'📋 Testamento', legalizacion:'🔏 Legalización', carta_notarial:'✉️ Carta notarial', protesto:'⚖️ Protesto', acta_notarial:'📝 Acta', otro:'📁 Otro' }
+function labelTipo(t) { return tiposActo[t] ?? t }
 function labelEstado(e) { return {pendiente:'🕐 Pendiente', en_proceso:'🔄 En proceso', finalizado:'✅ Finalizado', cancelado:'❌ Cancelado'}[e] ?? e }
 function estiloEstado(e) {
     const m = {pendiente:{background:'#FEF3C7',color:'#92400E'}, en_proceso:{background:'#EFF6FF',color:'#1D4ED8'}, finalizado:{background:'#F0FDF4',color:'#166534'}, cancelado:{background:'#FEF2F2',color:'#991B1B'}}
-    return {...(m[e]||{}), fontSize:'11px', padding:'3px 9px', borderRadius:'20px', fontWeight:'600', whiteSpace:'nowrap'}
+    return {...(m[e]||{}), fontSize:'12px', padding:'4px 10px', borderRadius:'20px', fontWeight:'600'}
 }
 function labelPago(p) { return {pendiente:'⏳ Pendiente', parcial:'◑ Parcial', pagado:'✅ Pagado'}[p] ?? p }
 function estiloPago(p) {
     const m = {pendiente:{background:'#FEF2F2',color:'#991B1B'}, parcial:{background:'#FEF3C7',color:'#92400E'}, pagado:{background:'#F0FDF4',color:'#166534'}}
-    return {...(m[p]||{}), fontSize:'10px', padding:'2px 7px', borderRadius:'20px', fontWeight:'600', whiteSpace:'nowrap'}
+    return {...(m[p]||{}), fontSize:'11px', padding:'3px 9px', borderRadius:'20px', fontWeight:'600'}
 }
-function colorEstado(e) { return {todos:'#6366F1', pendiente:'#F59E0B', en_proceso:'#3B82F6', finalizado:'#10B981'}[e] ?? '#94A3B8' }
-function bgEstado(e) { return {todos:'#EEF2FF', pendiente:'#FEF3C7', en_proceso:'#EFF6FF', finalizado:'#F0FDF4'}[e] ?? '#F1F5F9' }
+function bgEstado(e) { return {pendiente:'#FFFBEB', en_proceso:'#EFF6FF', finalizado:'#F0FDF4', cancelado:'#FEF2F2'}[e] ?? '#F8FAFC' }
 </script>
