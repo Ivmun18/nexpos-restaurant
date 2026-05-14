@@ -120,6 +120,7 @@ class ComprobantesNotariaController extends Controller
             ])->post($url, $nubefactPayload);
 
             $data     = $response->json();
+            \Illuminate\Support\Facades\Log::info('Nubefact response: ' . json_encode($data));
             $aceptada = $response->successful() && isset($data['enlace_del_pdf']);
 
             // Guardar comprobante
@@ -157,9 +158,10 @@ class ComprobantesNotariaController extends Controller
                 ]);
             }
 
+            $mensaje = $data['errors'] ?? $data['error'] ?? $data['mensaje'] ?? 'Token de facturación no configurado. Configure su token Nubefact en Ajustes → Configuración → Facturación.';
             return response()->json([
                 'success' => false,
-                'mensaje' => 'Error al emitir: ' . json_encode($data),
+                'mensaje' => is_array($mensaje) ? implode(', ', $mensaje) : $mensaje,
             ], 422);
 
         } catch (\Exception $e) {
