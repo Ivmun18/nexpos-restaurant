@@ -71,13 +71,58 @@ class ComprobantesNotariaController extends Controller
         ];
 
         try {
+            // Usar Nubefact
+            $url = ($empresa->nubefact_demo ?? true)
+                ? 'https://demo-api.nubefact.com/api/v1/'
+                : 'https://api.nubefact.com/api/v1/';
+
+            $nubefactPayload = [
+                'operacion'              => 'generar_comprobante',
+                'tipo_de_comprobante'    => $request->tipo_comprobante === '01' ? 1 : 2,
+                'serie'                  => $serie,
+                'numero'                 => $correlativo,
+                'sunat_transaction'      => 1,
+                'cliente_tipo_de_documento' => $request->tipo_comprobante === '01' ? 6 : 1,
+                'cliente_numero_de_documento' => $request->cliente_numero_documento,
+                'cliente_denominacion'   => strtoupper($request->cliente_nombre),
+                'cliente_direccion'      => $request->cliente_direccion ?? '',
+                'cliente_email'          => $request->cliente_email ?? '',
+                'cliente_email_1'        => '',
+                'fecha_de_emision'       => now()->format('d-m-Y'),
+                'fecha_de_vencimiento'   => '',
+                'moneda'                 => 1,
+                'tipo_de_cambio'         => '',
+                'porcentaje_de_igv'      => 18,
+                'total_gravada'          => $gravada,
+                'total_exonerada'        => '',
+                'total_inafecta'         => '',
+                'total_igv'              => $igv,
+                'total'                  => $total,
+                'detraccion'             => false,
+                'observaciones'          => $acto->asunto,
+                'items'                  => [[
+                    'unidad_de_medida'   => 'ZZ',
+                    'codigo'             => 'S/C',
+                    'descripcion'        => $acto->asunto,
+                    'cantidad'           => 1,
+                    'valor_unitario'     => $gravada,
+                    'precio_unitario'    => $total,
+                    'descuento'          => '',
+                    'subtotal'           => $gravada,
+                    'tipo_de_igv'        => 1,
+                    'igv'                => $igv,
+                    'total'              => $total,
+                    'anticipo_regularizacion' => false,
+                ]],
+            ];
+
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $empresa->nubefact_token,
+                'Authorization' => 'Token token=' . $empresa->nubefact_token,
                 'Content-Type'  => 'application/json',
-            ])->post('https://api.apisunat.com/v1/personas/' . $empresa->ruc . '/documentos', $payload);
+            ])->post($url, $nubefactPayload);
 
             $data     = $response->json();
-            $aceptada = $response->successful();
+            $aceptada = $response->successful() && isset($data['enlace_del_pdf']);
 
             // Guardar comprobante
             $comprobante = \DB::table('comprobantes_sunat')->insertGetId([
@@ -95,8 +140,8 @@ class ComprobantesNotariaController extends Controller
                 'total'                    => $total,
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : json_encode($data),
-                'enlace_pdf'               => $data['payload']['pdf'] ?? null,
-                'enlace_xml'               => $data['payload']['xml'] ?? null,
+                'enlace_pdf'               => $data['enlace_del_pdf'] ?? null,
+                'enlace_xml'               => $data['enlace_del_xml'] ?? null,
                 'estado'                   => $aceptada ? 'aceptado' : 'rechazado',
                 'created_at'               => now(),
                 'updated_at'               => now(),
@@ -105,12 +150,12 @@ class ComprobantesNotariaController extends Controller
             // Marcar acto como facturado
             $acto->update(['estado_pago' => 'pagado']);
 
-            if ($aceptada && isset($data['payload']['pdf'])) {
+            if ($aceptada) {
                 return response()->json([
                     'success'   => true,
                     'mensaje'   => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT) . ' emitida correctamente',
-                    'pdf'       => $data['payload']['pdf'],
-                    'xml'       => $data['payload']['xml'] ?? null,
+                    'pdf'       => $data['enlace_del_pdf'] ?? null,
+                    'xml'       => $data['enlace_del_xml'] ?? null,
                 ]);
             }
 
