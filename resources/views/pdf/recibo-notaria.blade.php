@@ -106,7 +106,7 @@
 </div>
 @else
 <div class="saldo-box" style="background:#e8f5e9;">
-    <div class="saldo-label" style="color:#2e7d32;">✓ SERVICIO CANCELADO COMPLETAMENTE</div>
+    <div class="saldo-label" style="color:#2e7d32;">SERVICIO CANCELADO COMPLETAMENTE</div>
 </div>
 @endif
 

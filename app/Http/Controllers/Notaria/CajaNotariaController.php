@@ -55,8 +55,28 @@ class CajaNotariaController extends Controller
 
         $sesionAbierta = SesionCaja::where('estado', 'abierta')->exists();
 
+        // Expedientes pagados hoy para emitir comprobante
+        $pagadosHoy = ActoNotarial::with(['cliente', 'pagos'])
+            ->where('empresa_id', $empresaId)
+            ->where('estado_pago', 'pagado')
+            ->whereDate('updated_at', today())
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->map(fn($a) => [
+                'id'                    => $a->id,
+                'numero_expediente'     => $a->numero_expediente,
+                'tipo_acto'             => $a->tipo_acto,
+                'asunto'                => $a->asunto,
+                'partes_intervinientes' => $a->partes_intervinientes,
+                'monto_cobrar'          => $a->monto_cobrar,
+                'monto_pagado'          => $a->monto_pagado,
+                'saldo'                 => 0,
+                'estado_pago'           => $a->estado_pago,
+            ]);
+
         return Inertia::render('Notaria/Caja/Index', [
             'pendientes'    => $pendientes,
+            'pagadosHoy'    => $pagadosHoy,
             'sesionAbierta' => $sesionAbierta,
             'filtros'       => ['buscar' => $buscar],
         ]);
