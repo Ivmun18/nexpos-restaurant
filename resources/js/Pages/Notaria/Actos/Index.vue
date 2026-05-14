@@ -90,53 +90,111 @@
             </table>
         </div>
 
-        <!-- MODAL NUEVO EXPEDIENTE -->
-        <div v-if="modalNuevo" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
-            <div style="background:white; border-radius:16px; padding:1.5rem; width:560px; max-width:95vw; max-height:90vh; overflow-y:auto;">
-                <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 1.2rem;">📄 Nuevo expediente notarial</p>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <div style="grid-column:1/-1;">
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Tipo de acto *</label>
-                        <select v-model="formNuevo.tipo_acto" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
-                            <option value="">Seleccionar...</option>
-                            <option v-for="t in tiposActo" :key="t.value" :value="t.value">{{ t.label }}</option>
-                        </select>
+        <!-- MODAL NUEVO EXPEDIENTE CON PLANTILLA DINÁMICA -->
+        <div v-if="modalNuevo" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem;">
+            <div style="background:white; border-radius:16px; width:700px; max-width:95vw; max-height:92vh; overflow-y:auto; display:flex; flex-direction:column;">
+
+                <!-- Header modal -->
+                <div style="padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; position:sticky; top:0; background:white; z-index:10; border-radius:16px 16px 0 0;">
+                    <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0;">📄 Nuevo expediente notarial</p>
+                    <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">Selecciona el tipo de servicio para ver la plantilla correspondiente</p>
+                </div>
+
+                <div style="padding:1.25rem 1.5rem; flex:1;">
+
+                    <!-- PASO 1: Tipo de acto -->
+                    <div style="margin-bottom:1.2rem;">
+                        <label style="font-size:11px; color:#64748B; display:block; margin-bottom:8px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Tipo de servicio *</label>
+                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
+                            <button v-for="t in tiposActo" :key="t.value" @click="formNuevo.tipo_acto = t.value"
+                                :style="{
+                                    padding:'10px 6px', borderRadius:'10px', border:'2px solid', fontSize:'12px',
+                                    fontWeight:'600', cursor:'pointer', textAlign:'center', lineHeight:'1.4',
+                                    borderColor: formNuevo.tipo_acto===t.value ? '#6366F1' : '#E2E8F0',
+                                    background: formNuevo.tipo_acto===t.value ? '#EEF2FF' : 'white',
+                                    color: formNuevo.tipo_acto===t.value ? '#4F46E5' : '#64748B'
+                                }">
+                                {{ t.label }}
+                            </button>
+                        </div>
                     </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Asunto *</label>
-                        <input v-model="formNuevo.asunto" type="text" placeholder="Descripción del acto notarial" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+
+                    <!-- DATOS GENERALES -->
+                    <div v-if="formNuevo.tipo_acto" style="border-top:1px solid #F1F5F9; padding-top:1.2rem; margin-bottom:1.2rem;">
+                        <p style="font-size:12px; font-weight:700; color:#6366F1; text-transform:uppercase; letter-spacing:.04em; margin:0 0 10px;">📋 Datos generales</p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <div style="grid-column:1/-1;">
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Asunto / Descripción *</label>
+                                <input v-model="formNuevo.asunto" type="text" placeholder="Descripción breve del acto"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Fecha ingreso *</label>
+                                <input v-model="formNuevo.fecha_ingreso" type="date"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Fecha entrega estimada</label>
+                                <input v-model="formNuevo.fecha_entrega" type="date"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+                            </div>
+                            <div>
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Monto a cobrar (S/) *</label>
+                                <input v-model="formNuevo.monto_cobrar" type="number" step="0.01" min="0"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                            </div>
+                            <div style="grid-column:1/-1;">
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Cliente registrado</label>
+                                <select v-model="formNuevo.cliente_id"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
+                                    <option value="">Sin cliente registrado</option>
+                                    <option v-for="c in clientes" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Partes intervinientes</label>
-                        <textarea v-model="formNuevo.partes_intervinientes" placeholder="Nombres de las partes involucradas..." rows="2" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
+
+                    <!-- PLANTILLA ESPECÍFICA POR TIPO -->
+                    <div v-if="formNuevo.tipo_acto && camposPlantillaNuevo.length > 0"
+                        style="border-top:1px solid #F1F5F9; padding-top:1.2rem; margin-bottom:1.2rem;">
+                        <p style="font-size:12px; font-weight:700; color:#14B8A6; text-transform:uppercase; letter-spacing:.04em; margin:0 0 10px;">
+                            📋 Datos específicos — {{ labelTipoActo(formNuevo.tipo_acto) }}
+                        </p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <template v-for="campo in camposPlantillaNuevo" :key="campo.key">
+                                <div :style="campo.full ? 'grid-column:1/-1' : ''">
+                                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600; text-transform:uppercase;">{{ campo.label }}</label>
+                                    <textarea v-if="campo.tipo === 'textarea'" v-model="formDatosNuevo[campo.key]" :rows="campo.rows || 2"
+                                        style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
+                                    <select v-else-if="campo.tipo === 'select'" v-model="formDatosNuevo[campo.key]"
+                                        style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
+                                        <option value="">Seleccionar...</option>
+                                        <option v-for="op in campo.opciones" :key="op" :value="op">{{ op }}</option>
+                                    </select>
+                                    <input v-else v-model="formDatosNuevo[campo.key]" :type="campo.tipo || 'text'"
+                                        style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                </div>
+                            </template>
+                        </div>
                     </div>
-                    <div>
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Fecha de ingreso *</label>
-                        <input v-model="formNuevo.fecha_ingreso" type="date" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
-                    </div>
-                    <div>
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Fecha entrega estimada</label>
-                        <input v-model="formNuevo.fecha_entrega" type="date" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
-                    </div>
-                    <div>
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Monto a cobrar (S/) *</label>
-                        <input v-model="formNuevo.monto_cobrar" type="number" step="0.01" min="0" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                    </div>
-                    <div>
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Cliente</label>
-                        <select v-model="formNuevo.cliente_id" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
-                            <option value="">Sin cliente registrado</option>
-                            <option v-for="c in clientes" :key="c.id" :value="c.id">{{ c.nombre }}</option>
-                        </select>
-                    </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Observaciones</label>
-                        <textarea v-model="formNuevo.observaciones" rows="2" placeholder="Notas adicionales..." style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
+
+                    <!-- Observaciones -->
+                    <div v-if="formNuevo.tipo_acto" style="border-top:1px solid #F1F5F9; padding-top:1rem;">
+                        <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Observaciones adicionales</label>
+                        <textarea v-model="formNuevo.observaciones" rows="2" placeholder="Notas opcionales..."
+                            style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
                     </div>
                 </div>
-                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:1.2rem;">
-                    <button @click="modalNuevo=false" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cancelar</button>
-                    <button @click="guardarNuevo" style="padding:9px 18px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Crear expediente</button>
+
+                <!-- Footer modal -->
+                <div style="padding:1rem 1.5rem; border-top:1px solid #E2E8F0; display:flex; gap:8px; justify-content:flex-end; position:sticky; bottom:0; background:white; border-radius:0 0 16px 16px;">
+                    <button @click="modalNuevo=false; formDatosNuevo={}" style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600;">Cancelar</button>
+                    <button @click="guardarNuevo" :disabled="!formNuevo.tipo_acto || !formNuevo.asunto || !formNuevo.monto_cobrar"
+                        :style="{padding:'10px 24px', background: formNuevo.tipo_acto && formNuevo.asunto && formNuevo.monto_cobrar ? 'linear-gradient(135deg,#6366F1,#4F46E5)' : '#E2E8F0',
+                            color: formNuevo.tipo_acto && formNuevo.asunto && formNuevo.monto_cobrar ? 'white' : '#94A3B8',
+                            border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'700', cursor:'pointer'}">
+                        ✅ Crear expediente
+                    </button>
                 </div>
             </div>
         </div>
@@ -229,11 +287,12 @@ function guardarNuevo() {
         alert('Completa los campos obligatorios')
         return
     }
-    router.post('/notaria/actos', formNuevo.value, {
+    router.post('/notaria/actos', { ...formNuevo.value, datos: formDatosNuevo.value }, {
         preserveScroll: true,
         onSuccess: () => {
             modalNuevo.value = false
             formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date().toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' }
+            formDatosNuevo.value = {}
         }
     })
 }

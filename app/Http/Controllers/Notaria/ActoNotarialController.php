@@ -91,6 +91,19 @@ class ActoNotarialController extends Controller
             'comentario'  => 'Expediente creado',
         ]);
 
+        // Guardar datos de plantilla si vienen
+        if ($request->has('datos') && is_array($request->datos)) {
+            foreach ($request->datos as $campo => $valor) {
+                if (!empty($valor)) {
+                    ActoDato::create([
+                        'acto_id' => $acto->id,
+                        'campo'   => $campo,
+                        'valor'   => $valor,
+                    ]);
+                }
+            }
+        }
+
         return back()->with('success', 'Expediente ' . $acto->numero_expediente . ' creado correctamente.');
     }
 
