@@ -16,12 +16,27 @@ class CajaNotariaController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
+        $buscar = request()->get('buscar', '');
+
         // Expedientes con saldo pendiente
-        $pendientes = ActoNotarial::with(['cliente', 'pagos'])
+        $query = ActoNotarial::with(['cliente', 'pagos'])
             ->where('empresa_id', $empresaId)
             ->whereIn('estado_pago', ['pendiente', 'parcial'])
-            ->where('estado', '!=', 'cancelado')
-            ->orderBy('fecha_ingreso', 'desc')
+            ->where('estado', '!=', 'cancelado');
+
+        if ($buscar) {
+            $query->where(function($q) use ($buscar) {
+                $q->where('numero_expediente', 'like', "%{$buscar}%")
+                  ->orWhere('asunto', 'like', "%{$buscar}%")
+                  ->orWhere('partes_intervinientes', 'like', "%{$buscar}%")
+                  ->orWhereHas('cliente', function($q2) use ($buscar) {
+                      $q2->where('razon_social', 'like', "%{$buscar}%")
+                         ->orWhere('numero_documento', 'like', "%{$buscar}%");
+                  });
+            });
+        }
+
+        $pendientes = $query->orderBy('fecha_ingreso', 'desc')
             ->get()
             ->map(fn($a) => [
                 'id'                 => $a->id,
@@ -43,6 +58,7 @@ class CajaNotariaController extends Controller
         return Inertia::render('Notaria/Caja/Index', [
             'pendientes'    => $pendientes,
             'sesionAbierta' => $sesionAbierta,
+            'filtros'       => ['buscar' => $buscar],
         ]);
     }
 

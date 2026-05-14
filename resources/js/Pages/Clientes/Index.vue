@@ -89,7 +89,7 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-const props = defineProps({ clientes: Object })
+const props = defineProps({ clientes: Object, filtros: { type: Object, default: () => ({}) } })
 const busqueda = ref(props.filtros?.buscar || '')
 
 function buscarServidor() {

@@ -14,7 +14,9 @@
             <input v-model="busqueda" @input="filtrar" type="text" placeholder="Buscar por N° expediente, nombre, DNI, asunto..."
                 style="width:100%; padding:12px 16px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; transition:border .2s;"
                 @focus="e => e.target.style.borderColor='#6366F1'"
-                @blur="e => e.target.style.borderColor='#E2E8F0'" />
+                @blur="e => e.target.style.borderColor='#E2E8F0'"
+                @keyup.enter="buscarServidor" />
+            <button @click="buscarServidor" style="margin-top:8px; padding:10px 20px; background:#6366F1; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; width:100%;">🔍 Buscar expediente</button>
         </div>
 
         <!-- RESULTADOS / LISTA PENDIENTES -->
@@ -174,9 +176,10 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
     pendientes:    { type: Array,   default: () => [] },
     sesionAbierta: { type: Boolean, default: false },
+    filtros:       { type: Object,  default: () => ({}) },
 })
 
-const busqueda              = ref('')
+const busqueda              = ref(props.filtros?.buscar || '')
 const expedienteSeleccionado = ref(null)
 const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_parcial', referencia: '' })
 
@@ -194,15 +197,7 @@ const metodos = [
     { value: 'transferencia',label: 'Transfer',     icon: '🏦' },
 ]
 
-const expedientesFiltrados = computed(() => {
-    if (!busqueda.value) return props.pendientes
-    const q = busqueda.value.toLowerCase()
-    return props.pendientes.filter(e =>
-        e.numero_expediente.toLowerCase().includes(q) ||
-        e.asunto.toLowerCase().includes(q) ||
-        (e.partes_intervinientes || '').toLowerCase().includes(q)
-    )
-})
+const expedientesFiltrados = computed(() => props.pendientes)
 
 const totalPorCobrar = computed(() => expedientesFiltrados.value.reduce((s, e) => s + Number(e.saldo), 0))
 
@@ -214,6 +209,12 @@ function seleccionar(e) {
         tipo:        e.monto_pagado > 0 ? 'pago_final' : 'pago_parcial',
         referencia:  ''
     }
+}
+
+function buscarServidor() {
+    const params = new URLSearchParams()
+    if (busqueda.value) params.set('buscar', busqueda.value)
+    router.visit('/notaria/caja?' + params.toString(), { preserveScroll: true })
 }
 
 function filtrar() {
