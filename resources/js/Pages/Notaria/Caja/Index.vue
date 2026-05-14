@@ -221,11 +221,16 @@ function filtrar() {
     expedienteSeleccionado.value = null
 }
 
+const ultimoPagoId = ref(null)
+
 function confirmarCobro() {
     if (!formCobro.value.monto || !expedienteSeleccionado.value) return
-    router.post('/notaria/caja/' + expedienteSeleccionado.value.id + '/cobrar', formCobro.value, {
+    const actoId = expedienteSeleccionado.value.id
+    router.post('/notaria/caja/' + actoId + '/cobrar', formCobro.value, {
         preserveScroll: true,
         onSuccess: () => {
+            // Abrir recibo automáticamente
+            window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
             expedienteSeleccionado.value = null
             formCobro.value = { monto: '', metodo_pago: 'efectivo', tipo: 'pago_parcial', referencia: '' }
         }

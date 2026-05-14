@@ -710,3 +710,9 @@ Route::middleware(['auth'])->group(function () {
 
 // Datos plantilla acto
 Route::middleware(['auth'])->post('/notaria/actos/{acto}/datos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'guardarDatos'])->name('notaria.actos.datos');
+
+// Recibos Notaría
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notaria/recibo/{acto}/ultimo', [App\Http\Controllers\Notaria\ReciboController::class, 'reciboUltimo'])->name('notaria.recibo.ultimo');
+    Route::get('/notaria/recibo/{acto}/{pago}', [App\Http\Controllers\Notaria\ReciboController::class, 'recibo'])->name('notaria.recibo');
+});
