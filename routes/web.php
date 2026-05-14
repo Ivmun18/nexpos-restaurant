@@ -725,3 +725,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notaria/caja/abrir', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'abrir'])->name('notaria.caja.abrir');
     Route::post('/notaria/caja/cerrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cerrar'])->name('notaria.caja.cerrar');
 });
+
+// Requisitos expediente
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notaria/actos/{acto}/requisitos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'agregarRequisito'])->name('notaria.actos.requisitos.store');
+    Route::patch('/notaria/requisitos/{requisito}/toggle', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'toggleRequisito'])->name('notaria.actos.requisitos.toggle');
+    Route::delete('/notaria/requisitos/{requisito}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'eliminarRequisito'])->name('notaria.actos.requisitos.destroy');
+});

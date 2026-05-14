@@ -28,6 +28,7 @@ class ActoNotarial extends Model
     public function seguimientos() { return $this->hasMany(ActoSeguimiento::class, 'acto_id'); }
     public function pagos() { return $this->hasMany(ActoPago::class, 'acto_id'); }
     public function datos() { return $this->hasMany(ActoDato::class, 'acto_id'); }
+    public function requisitos() { return $this->hasMany(ActoRequisito::class, 'acto_id'); }
 
     public static function generarNumero($empresaId)
     {

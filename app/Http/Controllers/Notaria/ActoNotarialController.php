@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActoNotarial;
 use App\Models\ActoSeguimiento;
 use App\Models\ActoDato;
+use App\Models\ActoRequisito;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -109,9 +110,37 @@ class ActoNotarialController extends Controller
 
     public function show(ActoNotarial $acto)
     {
-        $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos']);
+        $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos', 'requisitos.user']);
         $datosMapa = $acto->datos->pluck('valor', 'campo');
         return Inertia::render('Notaria/Actos/Show', ['acto' => $acto, 'datos' => $datosMapa]);
+    }
+
+    public function agregarRequisito(Request $request, ActoNotarial $acto)
+    {
+        $request->validate(['documento' => 'required|string|max:200']);
+        ActoRequisito::create([
+            'acto_id'   => $acto->id,
+            'documento' => $request->documento,
+            'entregado' => false,
+            'user_id'   => auth()->id(),
+        ]);
+        return back()->with('success', 'Requisito agregado.');
+    }
+
+    public function toggleRequisito(Request $request, ActoRequisito $requisito)
+    {
+        $requisito->update([
+            'entregado'   => !$requisito->entregado,
+            'observacion' => $request->observacion,
+            'user_id'     => auth()->id(),
+        ]);
+        return back()->with('success', 'Requisito actualizado.');
+    }
+
+    public function eliminarRequisito(ActoRequisito $requisito)
+    {
+        $requisito->delete();
+        return back()->with('success', 'Requisito eliminado.');
     }
 
     public function guardarDatos(Request $request, ActoNotarial $acto)

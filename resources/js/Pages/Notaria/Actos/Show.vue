@@ -54,6 +54,61 @@
                     </div>
                 </div>
 
+                <!-- REQUISITOS / CHECKLIST DOCUMENTOS -->
+                <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                        <div>
+                            <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Requisitos y documentos</p>
+                            <p style="font-size:11px; color:#94A3B8; margin:2px 0 0;">
+                                {{ acto.requisitos?.filter(r => r.entregado).length || 0 }} de {{ acto.requisitos?.length || 0 }} entregados
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button @click="mostrarAddReq=!mostrarAddReq" style="padding:5px 12px; background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;">
+                                + Agregar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Agregar requisito rápido -->
+                    <div v-if="mostrarAddReq" style="display:flex; gap:8px; margin-bottom:1rem;">
+                        <select v-model="nuevoRequisito" style="flex:1; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
+                            <option value="">Seleccionar documento...</option>
+                            <option v-for="r in requisitosComunes" :key="r" :value="r">{{ r }}</option>
+                            <option value="__otro__">Otro (escribir)</option>
+                        </select>
+                        <button @click="agregarRequisito" style="padding:8px 14px; background:#14B8A6; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">Agregar</button>
+                    </div>
+                    <div v-if="nuevoRequisito === '__otro__' && mostrarAddReq" style="margin-bottom:10px;">
+                        <input v-model="otroRequisito" type="text" placeholder="Escribe el nombre del documento..."
+                            style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    </div>
+
+                    <!-- Lista requisitos -->
+                    <div v-if="!acto.requisitos || acto.requisitos.length === 0" style="text-align:center; color:#94A3B8; padding:1rem; font-size:13px;">
+                        Sin requisitos registrados — agrega los documentos que necesita el cliente
+                    </div>
+                    <div v-for="r in acto.requisitos" :key="r.id"
+                        style="display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:4px;"
+                        :style="{background: r.entregado ? '#F0FDF4' : '#FEF2F2'}">
+                        <input type="checkbox" :checked="r.entregado" @change="toggleRequisito(r)"
+                            style="width:18px; height:18px; cursor:pointer; flex-shrink:0;" />
+                        <div style="flex:1;">
+                            <p :style="{fontSize:'13px', fontWeight:'600', margin:'0', color: r.entregado ? '#166534' : '#991B1B', textDecoration: r.entregado ? 'none' : 'none'}">
+                                {{ r.entregado ? '✅' : '❌' }} {{ r.documento }}
+                            </p>
+                            <p v-if="r.observacion" style="font-size:11px; color:#64748B; margin:2px 0 0;">{{ r.observacion }}</p>
+                        </div>
+                        <button @click="eliminarRequisito(r.id)" style="background:none; border:none; color:#94A3B8; cursor:pointer; font-size:14px; padding:2px;">✕</button>
+                    </div>
+
+                    <!-- Alerta si hay pendientes -->
+                    <div v-if="acto.requisitos?.length > 0 && acto.requisitos.some(r => !r.entregado)"
+                        style="margin-top:10px; background:#FEF3C7; border-radius:8px; padding:8px 12px; font-size:12px; color:#92400E; font-weight:600;">
+                        ⚠️ Faltan {{ acto.requisitos.filter(r => !r.entregado).length }} documento(s) por entregar
+                    </div>
+                </div>
+
                 <!-- PLANTILLA DATOS ESPECÍFICOS -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
@@ -395,6 +450,38 @@ function guardarDatos() {
         onSuccess: () => { guardandoDatos.value = false },
         onError: () => { guardandoDatos.value = false },
     })
+}
+
+// Requisitos
+const mostrarAddReq  = ref(false)
+const nuevoRequisito = ref('')
+const otroRequisito  = ref('')
+
+const requisitosComunes = [
+    'DNI del solicitante', 'DNI del cónyuge', 'DNI del vendedor', 'DNI del comprador',
+    'DNI del poderdante', 'DNI del apoderado', 'RUC de la empresa',
+    'Partida registral', 'Título de propiedad', 'Minuta notarial',
+    'Certificado de matrimonio', 'Certificado de defunción',
+    'Poder vigente', 'Declaración jurada', 'Contrato de compraventa',
+    'Letra de cambio', 'Cheque original', 'Factura negociable',
+]
+
+function agregarRequisito() {
+    const doc = nuevoRequisito.value === '__otro__' ? otroRequisito.value : nuevoRequisito.value
+    if (!doc) { alert('Selecciona o escribe el documento'); return }
+    router.post('/notaria/actos/' + props.acto.id + '/requisitos', { documento: doc }, {
+        preserveScroll: true,
+        onSuccess: () => { nuevoRequisito.value = ''; otroRequisito.value = ''; mostrarAddReq.value = false }
+    })
+}
+
+function toggleRequisito(r) {
+    router.patch('/notaria/requisitos/' + r.id + '/toggle', {}, { preserveScroll: true })
+}
+
+function eliminarRequisito(id) {
+    if (!confirm('¿Eliminar este requisito?')) return
+    router.delete('/notaria/requisitos/' + id, { preserveScroll: true })
 }
 
 const modalComprobante = ref(false)
