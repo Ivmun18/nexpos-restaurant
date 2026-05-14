@@ -716,3 +716,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notaria/recibo/{acto}/ultimo', [App\Http\Controllers\Notaria\ReciboController::class, 'reciboUltimo'])->name('notaria.recibo.ultimo');
     Route::get('/notaria/recibo/{acto}/{pago}', [App\Http\Controllers\Notaria\ReciboController::class, 'recibo'])->name('notaria.recibo');
 });
+
+// Comprobantes Notaría
+Route::middleware(['auth'])->post('/notaria/comprobantes/{acto}/emitir', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'emitir'])->name('notaria.comprobantes.emitir');

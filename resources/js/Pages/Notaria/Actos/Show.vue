@@ -133,7 +133,13 @@
                         style="width:100%; padding:10px; background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer;">
                         💵 Registrar pago
                     </button>
-                    <p v-else style="text-align:center; color:#10B981; font-weight:600; font-size:13px; margin:0;">✅ Cobro completado</p>
+                    <div v-else style="text-align:center;">
+                        <p style="color:#10B981; font-weight:600; font-size:13px; margin:0 0 8px;">✅ Cobro completado</p>
+                        <button @click="modalComprobante=true"
+                            style="width:100%; padding:10px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer;">
+                            🧾 Emitir Boleta / Factura
+                        </button>
+                    </div>
                 </div>
 
                 <!-- CAMBIAR ESTADO RÁPIDO -->
@@ -180,7 +186,92 @@
             </div>
         </div>
 
-        <!-- MODAL PAGO -->
+        <!-- MODAL COMPROBANTE ELECTRÓNICO -->
+    <div v-if="modalComprobante" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; padding:1.5rem; width:460px; max-width:95vw;">
+            <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 4px;">🧾 Emitir comprobante electrónico</p>
+            <p style="font-size:12px; color:#94A3B8; margin:0 0 1.2rem;">{{ acto.numero_expediente }} — {{ acto.asunto }}</p>
+
+            <!-- Tipo comprobante -->
+            <div style="margin-bottom:1rem;">
+                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Tipo de comprobante</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button @click="formComp.tipo_comprobante='03'; formComp.cliente_tipo_documento='1'"
+                        :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer',
+                            borderColor: formComp.tipo_comprobante==='03'?'#14B8A6':'#E2E8F0',
+                            background: formComp.tipo_comprobante==='03'?'#F0FDFA':'white',
+                            color: formComp.tipo_comprobante==='03'?'#0F766E':'#64748B'}">
+                        🧾 Boleta<br><span style="font-size:10px; font-weight:400;">Para personas naturales</span>
+                    </button>
+                    <button @click="formComp.tipo_comprobante='01'; formComp.cliente_tipo_documento='6'"
+                        :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer',
+                            borderColor: formComp.tipo_comprobante==='01'?'#6366F1':'#E2E8F0',
+                            background: formComp.tipo_comprobante==='01'?'#EEF2FF':'white',
+                            color: formComp.tipo_comprobante==='01'?'#4F46E5':'#64748B'}">
+                        📄 Factura<br><span style="font-size:10px; font-weight:400;">Para empresas con RUC</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Datos cliente -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
+                <div>
+                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'RUC' : 'DNI' }} *</label>
+                    <input v-model="formComp.cliente_numero_documento" type="text"
+                        :placeholder="formComp.tipo_comprobante==='01' ? '20xxxxxxxxx' : '12345678'"
+                        :maxlength="formComp.tipo_comprobante==='01' ? 11 : 8"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'Razón social' : 'Nombre completo' }} *</label>
+                    <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre o razón social"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                </div>
+                <div style="grid-column:1/-1;">
+                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Email (para envío)</label>
+                    <input v-model="formComp.cliente_email" type="email" placeholder="correo@ejemplo.com"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                </div>
+            </div>
+
+            <!-- Resumen monto -->
+            <div style="background:#F8FAFC; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                    <span style="font-size:12px; color:#64748B;">Subtotal</span>
+                    <span style="font-size:12px;">S/ {{ (Number(acto.monto_cobrar) / 1.18).toFixed(2) }}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                    <span style="font-size:12px; color:#64748B;">IGV (18%)</span>
+                    <span style="font-size:12px;">S/ {{ (Number(acto.monto_cobrar) - Number(acto.monto_cobrar) / 1.18).toFixed(2) }}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid #E2E8F0; padding-top:6px; margin-top:4px;">
+                    <span style="font-size:14px; font-weight:700;">Total</span>
+                    <span style="font-size:16px; font-weight:800; color:#0F766E;">S/ {{ Number(acto.monto_cobrar).toFixed(2) }}</span>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div v-if="errorComp" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#991B1B;">
+                ❌ {{ errorComp }}
+            </div>
+
+            <!-- Success -->
+            <div v-if="pdfComp" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#166534;">
+                ✅ Comprobante emitido correctamente.
+                <a :href="pdfComp" target="_blank" style="font-weight:700; color:#0F766E; margin-left:6px;">📥 Descargar PDF</a>
+            </div>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button @click="modalComprobante=false; errorComp=''; pdfComp=''" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cerrar</button>
+                <button @click="emitirComprobante" :disabled="emitiendo"
+                    style="padding:9px 20px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                    {{ emitiendo ? '⏳ Emitiendo...' : '🧾 Emitir a SUNAT' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PAGO -->
         <div v-if="modalPago" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
             <div style="background:white; border-radius:16px; padding:1.5rem; width:360px; max-width:95vw;">
                 <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 1.2rem;">💰 Registrar pago</p>
@@ -290,6 +381,47 @@ function guardarDatos() {
         onSuccess: () => { guardandoDatos.value = false },
         onError: () => { guardandoDatos.value = false },
     })
+}
+
+const modalComprobante = ref(false)
+const emitiendo        = ref(false)
+const errorComp        = ref('')
+const pdfComp          = ref('')
+const formComp = ref({
+    tipo_comprobante:         '03',
+    cliente_tipo_documento:   '1',
+    cliente_numero_documento: '',
+    cliente_nombre:           '',
+    cliente_email:            '',
+})
+
+async function emitirComprobante() {
+    if (!formComp.value.cliente_numero_documento || !formComp.value.cliente_nombre) {
+        errorComp.value = 'Completa el documento y nombre del cliente'
+        return
+    }
+    emitiendo.value = true
+    errorComp.value = ''
+    pdfComp.value   = ''
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/comprobantes/' + props.acto.id + '/emitir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(formComp.value)
+        })
+        const data = await res.json()
+        if (data.success) {
+            pdfComp.value = data.pdf
+            if (data.pdf) window.open(data.pdf, '_blank')
+        } else {
+            errorComp.value = data.mensaje || 'Error al emitir'
+        }
+    } catch(e) {
+        errorComp.value = 'Error de conexión: ' + e.message
+    } finally {
+        emitiendo.value = false
+    }
 }
 
 const modalEstado = ref(false)
