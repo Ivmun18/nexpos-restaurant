@@ -100,7 +100,10 @@
                             <svg v-else-if="item.icon === 'receipt'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            <svg v-else-if="item.icon === 'truck'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <svg v-else-if="item.icon === 'notaria'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <svg v-else-if="item.icon === 'truck'"  width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zm-14-4V7a1 1 0 011-1h9a1 1 0 011 1v6m0 0h3l2 3M3 13h14"/>
                             </svg>
                             <svg v-else-if="item.icon === 'box'" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -250,6 +253,7 @@ const allMenuItems = [
     
     // SISTEMA
     { path: '/admin/mozos',          icon: 'users',   label: 'Mozos',        module: 'mozos',       section: 'SISTEMA' },
+    { path: '/notaria/actos',         icon: 'notaria',  label: 'Expedientes',      module: 'actos',           section: 'NOTARIA' },
     { path: '/reportes-restaurante', icon: 'chart',   label: 'Reporte ventas',  module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/reportes/turnos',       icon: 'chart',   label: 'Reporte mozos',   module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/compras',               icon: 'receipt',  label: 'Compras',          module: 'pos_restaurante', section: 'RESTAURANTE' },
@@ -344,6 +348,11 @@ const menuItems = computed(() => {
             if (item.section === 'RESTAURANTE') return false
         }
 
+        // Ocultar módulos de notaría si no es notaría
+        if (industry !== 'notaria') {
+            if (item.section === 'NOTARIA') return false
+        }
+
         if (!item.module) return true
         if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
         return modulesEnabled.value.includes(item.module)
@@ -351,7 +360,7 @@ const menuItems = computed(() => {
 })
 
 const menuSections = computed(() => {
-    const orden = [null, 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
+    const orden = [null, 'NOTARIA', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {

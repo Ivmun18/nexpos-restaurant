@@ -692,3 +692,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/recetas', [App\Http\Controllers\RecetaController::class, 'store'])->name('recetas.store');
     Route::delete('/recetas/{receta}', [App\Http\Controllers\RecetaController::class, 'destroy'])->name('recetas.destroy');
 });
+
+// Notaría
+Route::middleware(['auth'])->prefix('notaria')->group(function () {
+    Route::get('/actos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'index'])->name('notaria.actos.index');
+    Route::post('/actos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'store'])->name('notaria.actos.store');
+    Route::get('/actos/{acto}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'show'])->name('notaria.actos.show');
+    Route::post('/actos/{acto}/estado', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'cambiarEstado'])->name('notaria.actos.estado');
+    Route::post('/actos/{acto}/pago', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'registrarPago'])->name('notaria.actos.pago');
+});
