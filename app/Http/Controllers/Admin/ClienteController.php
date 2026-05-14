@@ -10,13 +10,26 @@ use Inertia\Inertia;
 
 class ClienteController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        $clientes = Cliente::orderBy('razon_social')
-            ->paginate(20);
+        $buscar = $request->get('buscar', '');
+
+        $query = Cliente::orderBy('razon_social');
+
+        if ($buscar) {
+            $query->where(function($q) use ($buscar) {
+                $q->where('razon_social', 'like', "%{$buscar}%")
+                  ->orWhere('numero_documento', 'like', "%{$buscar}%")
+                  ->orWhere('email', 'like', "%{$buscar}%")
+                  ->orWhere('telefono', 'like', "%{$buscar}%");
+            });
+        }
+
+        $clientes = $query->paginate(20)->withQueryString();
 
         return Inertia::render('Clientes/Index', [
             'clientes' => $clientes,
+            'filtros'  => ['buscar' => $buscar],
         ]);
     }
 

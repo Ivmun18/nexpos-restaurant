@@ -1,8 +1,10 @@
 <template>
     <AppLayout title="Clientes" subtitle="Gestion de clientes">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
-            <input v-model="busqueda" type="text" placeholder="Buscar..."
-                style="padding:10px 16px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; width:300px;"/>
+            <input v-model="busqueda" type="text" placeholder="Buscar por nombre, DNI, RUC, email..."
+                @keyup.enter="buscarServidor"
+                style="padding:10px 16px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; width:320px;"/>
+            <button @click="buscarServidor" style="padding:10px 16px; background:#6366F1; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; margin-left:6px;">🔍 Buscar</button>
             <button type="button" @click="abrirModal(null)"
                 style="padding:10px 20px; background:#2563EB; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
                 + Nuevo cliente
@@ -88,7 +90,13 @@ import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({ clientes: Object })
-const busqueda = ref('')
+const busqueda = ref(props.filtros?.buscar || '')
+
+function buscarServidor() {
+    const params = new URLSearchParams()
+    if (busqueda.value) params.set('buscar', busqueda.value)
+    router.visit('/clientes?' + params.toString(), { preserveScroll: true })
+}
 const modal = ref(false)
 const error = ref('')
 const formVacio = () => ({ id: null, tipo_documento: '1', numero_documento: '', razon_social: '', telefono: '', email: '', direccion: '' })
@@ -97,7 +105,7 @@ const clientesFiltrados = computed(() => {
     const data = props.clientes?.data || []
     if (!busqueda.value) return data
     const q = busqueda.value.toLowerCase()
-    return data.filter(c => c.razon_social.toLowerCase().includes(q) || c.numero_documento.includes(q))
+    return data.filter(c => c.razon_social.toLowerCase().includes(q) || c.numero_documento.includes(q) || (c.email||'').toLowerCase().includes(q))
 })
 const abrirModal = (cliente) => {
     error.value = ''
