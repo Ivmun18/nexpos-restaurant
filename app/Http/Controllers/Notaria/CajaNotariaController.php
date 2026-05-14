@@ -103,6 +103,11 @@ class CajaNotariaController extends Controller
 
     public function cobrar(Request $request, ActoNotarial $acto)
     {
+        // Verificar que hay caja abierta
+        if (!SesionCaja::where('estado', 'abierta')->exists()) {
+            return back()->with('error', 'Debe abrir la caja antes de registrar cobros.');
+        }
+
         $request->validate([
             'monto'      => 'required|numeric|min:0.01',
             'metodo_pago'=> 'required|in:efectivo,yape,plin,tarjeta,transferencia',
