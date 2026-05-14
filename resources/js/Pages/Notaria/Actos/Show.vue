@@ -134,11 +134,7 @@
                         💵 Registrar pago
                     </button>
                     <div v-else-if="acto.estado_pago === 'pagado'" style="text-align:center;">
-                        <p style="color:#10B981; font-weight:600; font-size:13px; margin:0 0 8px;">✅ Cobro completado</p>
-                        <button @click="modalComprobante=true"
-                            style="width:100%; padding:10px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer;">
-                            🧾 Emitir Boleta / Factura
-                        </button>
+                        <p style="color:#10B981; font-weight:600; font-size:13px; margin:0;">✅ Cobro completado</p>
                     </div>
                 </div>
 
@@ -480,7 +476,10 @@ function estiloPago(p) {
 
 function formatFecha(f) {
     if (!f) return '—'
-    return new Date(f + 'T00:00:00').toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' })
+    // Manejar tanto fechas con y sin hora
+    const fecha = f.includes('T') || f.includes(' ') ? new Date(f) : new Date(f + 'T12:00:00')
+    if (isNaN(fecha)) return '—'
+    return fecha.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' })
 }
 
 function formatFechaHora(f) {
