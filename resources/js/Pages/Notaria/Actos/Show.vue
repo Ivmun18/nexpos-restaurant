@@ -144,7 +144,8 @@
                     <p style="font-size:12px; color:#64748B; margin:0 0 10px;">
                         {{ acto.estado_pago === 'pagado' ? 'Servicio cancelado — listo para emitir comprobante' : 'Podrá emitir el comprobante cuando el servicio esté cancelado completamente' }}
                     </p>
-                    <button @click="modalComprobante=true"
+                    <button v-if="$page.props.auth.user.rol === 'admin' || $page.props.auth.user.rol === 'cajero'"
+                        @click="modalComprobante=true"
                         :style="{
                             width:'100%', padding:'10px', border:'none', borderRadius:'9px',
                             fontSize:'13px', fontWeight:'600', cursor: 'pointer',
@@ -489,7 +490,7 @@ function formatFechaHora(f) {
 }
 
 function cambiarEstadoRapido(estado) {
-    if (acto.value?.estado === estado) return
+    if (props.acto.estado === estado) return
     router.post('/notaria/actos/' + props.acto.id + '/estado', { estado, comentario: '' }, { preserveScroll: true })
 }
 
