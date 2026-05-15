@@ -334,6 +334,7 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
     Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');
     Route::get('/compras/crear', [CompraController::class, 'create'])->name('compras.create');
     Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
+    Route::post('/compras/producto-rapido', [CompraController::class, 'crearProductoRapido'])->name('compras.producto.rapido');
     Route::get('/compras/{compra}', [CompraController::class, 'show'])->name('compras.show');
     Route::post('/compras/{compra}/anular', [CompraController::class, 'anular'])->name('compras.anular');
 
@@ -619,6 +620,17 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
 
     // Vencimientos
     Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->name('vencimientos');
+
+    // ====== INVENTARIO INICIAL (con scanner) ======
+    Route::get('/inventario-inicial',         [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'index'])->name('inventario.inicial');
+    Route::post('/inventario-inicial/buscar', [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'buscar'])->name('inventario.buscar');
+    Route::post('/inventario-inicial/actualizar', [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'actualizar'])->name('inventario.actualizar');
+
+    // ====== PLANTILLAS / DATOS DEMO ======
+    Route::get('/plantillas',           [\App\Http\Controllers\PlantillaController::class, 'index'])->name('plantillas.index');
+    Route::post('/plantillas/cargar',   [\App\Http\Controllers\PlantillaController::class, 'cargar'])->name('plantillas.cargar');
+    Route::post('/empresa/limpiar-datos',[\App\Http\Controllers\PlantillaController::class, 'limpiarDatos'])->name('empresa.limpiar');
+
 
     // Caja
     Route::get('/caja', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'index'])->name('caja');

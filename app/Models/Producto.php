@@ -56,11 +56,15 @@ class Producto extends Model
     ];
 
     protected $casts = [
-        'precio_venta'  => 'decimal:4',
-        'precio_compra' => 'decimal:4',
-        'afecto_igv'    => 'boolean',
-        'controla_stock'=> 'boolean',
-        'activo'        => 'boolean',
+        'precio_venta'      => 'float',
+        'precio_compra'     => 'float',
+        'stock_actual'      => 'float',
+        'stock_minimo'      => 'float',
+        'afecto_igv'        => 'boolean',
+        'controla_stock'    => 'boolean',
+        'activo'            => 'boolean',
+        'requiere_receta'   => 'boolean',
+        'fecha_vencimiento' => 'date',
     ];
 
     public function categoria()

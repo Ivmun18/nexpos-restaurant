@@ -122,10 +122,17 @@
                     </thead>
                     <tbody>
                         <tr v-for="d in venta.detalle" :key="d.id" style="border-bottom:1px dashed #E2E8F0;">
-                            <td style="padding:10px 0; font-size:13px; color:#1E293B; font-weight:500;">{{ d.descripcion }}</td>
-                            <td style="padding:10px 0; text-align:center; font-size:13px; color:#475569;">{{ d.cantidad }}</td>
-                            <td style="padding:10px 0; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(d.precio_unitario).toFixed(2) }}</td>
-                            <td style="padding:10px 0; text-align:right; font-size:13px; font-weight:700; color:#1E293B;">S/ {{ Number(d.total).toFixed(2) }}</td>
+                            <td style="padding:10px 0; font-size:13px; color:#1E293B; font-weight:500;">
+                                {{ d.descripcion }}
+                                <div v-if="d.lote || d.fecha_vencimiento" style="font-size:10px; color:#94A3B8; margin-top:3px; font-weight:400;">
+                                    <span v-if="d.lote">Lote: {{ d.lote }}</span>
+                                    <span v-if="d.lote && d.fecha_vencimiento"> · </span>
+                                    <span v-if="d.fecha_vencimiento">Vence: {{ new Date(d.fecha_vencimiento).toLocaleDateString('es-PE', {month:'2-digit', year:'numeric'}) }}</span>
+                                </div>
+                            </td>
+                            <td style="padding:10px 0; text-align:center; font-size:13px; color:#475569; vertical-align:top;">{{ d.cantidad }}</td>
+                            <td style="padding:10px 0; text-align:right; font-size:13px; color:#475569; vertical-align:top;">S/ {{ Number(d.precio_unitario).toFixed(2) }}</td>
+                            <td style="padding:10px 0; text-align:right; font-size:13px; font-weight:700; color:#1E293B; vertical-align:top;">S/ {{ Number(d.total).toFixed(2) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -165,6 +172,20 @@
                         <span style="font-size:16px; font-weight:700; color:white;">TOTAL</span>
                         <span style="font-size:24px; font-weight:900; color:white;">S/ {{ (Number(venta.total_gravado) + Number(venta.total_igv) + Number(venta.total_inafecto) + Number(venta.total_exonerado)).toFixed(2) }}</span>
                     </div>
+                </div>
+
+                <!-- Datos legales DIGEMID (farmacia) -->
+                <div v-if="empresa.qf_regente_nombre || empresa.numero_digemid" style="padding:12px 0; margin-top:8px; border-top:1px dashed #E2E8F0; text-align:center;">
+                    <p v-if="empresa.qf_regente_nombre" style="font-size:11px; color:#475569; margin:0;">
+                        <strong>Q.F. Regente:</strong> {{ empresa.qf_regente_nombre }}
+                        <span v-if="empresa.qf_regente_cqfp"> · CQFP {{ empresa.qf_regente_cqfp }}</span>
+                    </p>
+                    <p v-if="empresa.numero_digemid" style="font-size:11px; color:#475569; margin:3px 0 0;">
+                        <strong>DIGEMID:</strong> {{ empresa.numero_digemid }}
+                    </p>
+                    <p v-if="empresa.autorizacion_sanitaria" style="font-size:10px; color:#94A3B8; margin:3px 0 0;">
+                        Aut. Sanitaria: {{ empresa.autorizacion_sanitaria }}
+                    </p>
                 </div>
 
                 <!-- Pie -->
@@ -218,9 +239,21 @@ const imprimir = () => {
         const cant = String(d.cantidad).padStart(3)
         const precio = ('S/'+Number(d.precio_unitario).toFixed(2)).padStart(8)
         const subtotal = ('S/'+Number(d.total).toFixed(2)).padStart(8)
+        // Línea de lote/vencimiento si existe
+        let loteInfo = ''
+        if (d.lote || d.fecha_vencimiento) {
+            const partes = []
+            if (d.lote) partes.push('Lote:' + d.lote)
+            if (d.fecha_vencimiento) {
+                const v = new Date(d.fecha_vencimiento)
+                partes.push('Venc:' + String(v.getMonth()+1).padStart(2,'0') + '/' + v.getFullYear())
+            }
+            loteInfo = `<tr><td colspan="2" style="padding:0; font-size:9px; color:#555;">  ${partes.join(' ')}</td></tr>`
+        }
         return `<tr>
             <td colspan="2" style="padding:1px 0; font-size:11px;">${d.descripcion}</td>
         </tr>
+        ${loteInfo}
         <tr>
             <td style="padding:1px 0; font-size:11px;">${cant} x ${Number(d.precio_unitario).toFixed(2)}</td>
             <td style="text-align:right; padding:1px 0; font-size:11px;">S/ ${Number(d.total).toFixed(2)}</td>
@@ -277,6 +310,11 @@ const imprimir = () => {
                 <tr class="total-row"><td class="bold">TOTAL</td><td class="right bold">S/ ${total}</td></tr>
                 <tr><td>Método de pago</td><td class="right">${v.metodo_pago || ''}</td></tr>
             </table>
+            <div class="line"></div>
+            ${emp?.qf_regente_nombre ? `<div class="center" style="font-size:10px;"><b>Q.F. Regente:</b> ${emp.qf_regente_nombre}</div>` : ''}
+            ${emp?.qf_regente_cqfp ? `<div class="center" style="font-size:10px;">CQFP: ${emp.qf_regente_cqfp}</div>` : ''}
+            ${emp?.numero_digemid ? `<div class="center" style="font-size:10px;"><b>DIGEMID:</b> ${emp.numero_digemid}</div>` : ''}
+            ${emp?.autorizacion_sanitaria ? `<div class="center" style="font-size:9px;">Aut. Sanitaria: ${emp.autorizacion_sanitaria}</div>` : ''}
             <div class="line"></div>
             <div class="center" style="font-size:10px;">Gracias por su compra</div>
             <div class="center" style="font-size:10px;">Representación impresa de comprobante electrónico</div>

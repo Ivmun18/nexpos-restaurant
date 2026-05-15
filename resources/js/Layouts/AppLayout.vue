@@ -60,7 +60,7 @@
 
                 <!-- Secciones dinámicas -->
                 <template v-for="(items, sectionName) in menuSections" :key="sectionName">
-                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
+                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL' && sectionName !== '_default_'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
                         {{ sectionName }}
                     </p>
                     
@@ -294,6 +294,7 @@ const allMenuItems = [
     { path: '/ferreteria/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/farmacia/pos',          icon: 'receipt',  label: 'Punto de Venta',    module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/productos',    icon: 'menu',     label: 'Productos',          module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/inventario-inicial', icon: 'package',  label: '📦 Stock Inicial',  module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/vencimientos', icon: 'clock',    label: '⚠️ Vencimientos',     module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
@@ -349,6 +350,16 @@ const menuItems = computed(() => {
             if (item.section === 'FARMACIA') return false
         }
 
+        // En farmacia ocultar SISTEMA genérico (comprobantes, caja general)
+        if (industry === 'farmacia') {
+            if (item.section === 'SISTEMA') return false
+        }
+
+        // En ferreteria ocultar SISTEMA genérico
+        if (industry === 'ferreteria') {
+            if (item.section === 'SISTEMA') return false
+        }
+
         // Ocultar módulos de restaurante si no es restaurante
         if (industry !== 'restaurante') {
             if (item.section === 'RESTAURANTE') return false
@@ -372,16 +383,16 @@ const menuItems = computed(() => {
 })
 
 const menuSections = computed(() => {
-    const orden = [null, 'NOTARIA', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
+    const orden = ['_default_', 'NOTARIA', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {
-        const key = s || 'null'
+        const key = s
         sections[key] = []
     })
 
     menuItems.value.forEach(item => {
-        const section = item.section ?? 'null'
+        const section = item.section ?? '_default_'
         if (!sections[section]) sections[section] = []
         sections[section].push(item)
     })

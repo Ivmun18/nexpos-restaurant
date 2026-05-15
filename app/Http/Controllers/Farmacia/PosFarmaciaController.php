@@ -16,7 +16,28 @@ class PosFarmaciaController extends Controller
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
             ->orderBy('descripcion')
-            ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'stock_minimo', 'categoria_id', 'fecha_vencimiento', 'lote', 'laboratorio']);
+            ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'stock_minimo', 'categoria_id', 'fecha_vencimiento', 'lote', 'laboratorio', 'principio_activo', 'presentacion', 'concentracion', 'requiere_receta']);
+
+        // Calcular estado de vencimiento de cada producto
+        $productos = $productos->map(function($p) {
+            if ($p->fecha_vencimiento) {
+                $dias = (int) now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($p->fecha_vencimiento)->startOfDay(), false);
+                $p->dias_para_vencer = $dias;
+                if ($dias < 0) {
+                    $p->estado_vencimiento = 'vencido';
+                } elseif ($dias <= 30) {
+                    $p->estado_vencimiento = 'critico';
+                } elseif ($dias <= 90) {
+                    $p->estado_vencimiento = 'proximo';
+                } else {
+                    $p->estado_vencimiento = 'ok';
+                }
+            } else {
+                $p->dias_para_vencer = null;
+                $p->estado_vencimiento = 'sin_fecha';
+            }
+            return $p;
+        });
 
         // Verificar caja abierta
         $empresaId = auth()->user()->empresa_id;
@@ -87,9 +108,38 @@ class PosFarmaciaController extends Controller
     $modalidad = $empresa->modalidad_cobro ?? 'directo';
     $estadoVenta = $modalidad === 'cajero' ? 'pendiente' : 'emitido';
 
+    // Buscar caja abierta para vincular la venta
+    $cajaAbierta = \App\Models\CajaMinimarket::where('empresa_id', $empresa->id)
+        ->where('estado', 'abierta')
+        ->latest()->first();
+
+    if (!$cajaAbierta) {
+        return back()->withErrors(['caja' => '⚠️ Debes abrir la caja antes de vender.']);
+    }
+
+    // Validar que ningún producto esté vencido
+    $idsItems = collect($request->items)->pluck('id')->toArray();
+    $productosVencidos = \App\Models\Producto::whereIn('id', $idsItems)
+        ->whereNotNull('fecha_vencimiento')
+        ->where('fecha_vencimiento', '<', now()->toDateString())
+        ->pluck('descripcion');
+    if ($productosVencidos->isNotEmpty()) {
+        return back()->withErrors(['vencidos' => '❌ No se puede vender productos vencidos: ' . $productosVencidos->implode(', ')]);
+    }
+
+    // Productos que requieren receta — solo registro, no se bloquea la venta
+    // (Modo libre: el cajero/dueño decide si exige receta o no)
+    // Los datos de receta se guardarán si fueron provistos. Si no, queda registrado como venta sin receta.
+
     $venta = \App\Models\Venta::create([
         'empresa_id'          => $empresa->id,
         'usuario_id'          => auth()->id(),
+        'caja_id'             => $cajaAbierta->id,
+        'receta_medico_nombre'=> $request->receta_medico_nombre ?? null,
+        'receta_medico_cmp'   => $request->receta_medico_cmp ?? null,
+        'receta_numero'       => $request->receta_numero ?? null,
+        'receta_fecha'        => $request->receta_fecha ?? null,
+        'receta_observaciones'=> $request->receta_observaciones ?? null,
         'estado'              => $estadoVenta,
         'tipo_comprobante'    => $tipo,
         'serie'               => $serie,
@@ -112,12 +162,17 @@ class PosFarmaciaController extends Controller
     ]);
 
    foreach ($request->items as $index => $item) {
+    // Obtener lote y fecha de vencimiento actuales del producto (snapshot)
+    $productoSnapshot = \App\Models\Producto::find($item['id']);
+
     \App\Models\VentaDetalle::create([
         'venta_id'           => $venta->id,
         'producto_id'        => $item['id'],
         'linea'              => $index + 1,
         'codigo_producto'    => $item['codigo_barras'] ?? $item['codigo'] ?? 'S/C',
         'descripcion'        => $item['descripcion'],
+        'lote'               => $productoSnapshot->lote ?? null,
+        'fecha_vencimiento'  => $productoSnapshot->fecha_vencimiento ?? null,
         'unidad_medida'      => 'NIU',
         'cantidad'           => $item['cantidad'],
         'precio_unitario'    => $item['precio_venta'],

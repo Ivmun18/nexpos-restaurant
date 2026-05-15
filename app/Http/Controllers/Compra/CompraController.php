@@ -92,12 +92,31 @@ class CompraController extends Controller
                     'total_valor'         => $totalValor,
                     'total_igv'           => $igvItem,
                     'total'               => $totalItem,
+                    'lote'                => $item['lote'] ?? null,
+                    'fecha_vencimiento'   => $item['fecha_vencimiento'] ?? null,
                 ];
 
-                // Actualizar stock
+                // Actualizar stock + lote + vencimiento + precio compra del producto
                 if (!empty($item['producto_id'])) {
-                    Producto::find($item['producto_id'])
-                        ?->increment('stock_actual', $cantidad);
+                    $prod = Producto::find($item['producto_id']);
+                    if ($prod) {
+                        $prod->increment('stock_actual', $cantidad);
+                        // Actualizar con el lote/vencimiento mas reciente
+                        $cambios = [];
+                        if (!empty($item['lote'])) {
+                            $cambios['lote'] = $item['lote'];
+                        }
+                        if (!empty($item['fecha_vencimiento'])) {
+                            $cambios['fecha_vencimiento'] = $item['fecha_vencimiento'];
+                        }
+                        // Actualizar precio de compra si vino distinto
+                        if ($precio > 0 && $precio != $prod->precio_compra) {
+                            $cambios['precio_compra'] = $precio;
+                        }
+                        if (count($cambios) > 0) {
+                            $prod->update($cambios);
+                        }
+                    }
                 }
             }
 
@@ -146,6 +165,45 @@ class CompraController extends Controller
         }
 
         return redirect('/compras')->with('success', 'Compra registrada correctamente.');
+    }
+
+
+    public function crearProductoRapido(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'descripcion'   => 'required|string|max:200',
+            'codigo_barras' => 'nullable|string|max:50',
+            'precio_compra' => 'required|numeric|min:0',
+            'precio_venta'  => 'required|numeric|min:0',
+        ]);
+
+        $empresaId = auth()->user()->empresa_id;
+        $codigo = $request->codigo ?: ('PROD-' . time());
+
+        $producto = \App\Models\Producto::create([
+            'empresa_id'          => $empresaId,
+            'codigo'              => $codigo,
+            'codigo_barras'       => $request->codigo_barras,
+            'descripcion'         => $request->descripcion,
+            'descripcion_corta'   => mb_substr($request->descripcion, 0, 50),
+            'unidad_medida'       => $request->unidad_medida ?? 'NIU',
+            'tipo'                => 'producto',
+            'precio_venta'        => $request->precio_venta,
+            'precio_compra'       => $request->precio_compra,
+            'stock_actual'        => 0,
+            'stock_minimo'        => $request->stock_minimo ?? 5,
+            'tipo_afectacion_igv' => $request->tipo_afectacion_igv ?? '10',
+            'controla_stock'      => true,
+            'activo'              => true,
+            'lote'                => $request->lote,
+            'fecha_vencimiento'   => $request->fecha_vencimiento,
+            'laboratorio'         => $request->laboratorio,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'producto' => $producto,
+        ]);
     }
 
     public function show(Compra $compra)

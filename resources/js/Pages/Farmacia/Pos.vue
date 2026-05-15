@@ -30,11 +30,17 @@
                             v-for="p in productosFiltrados" :key="p.id"
                             @click="agregarAlCarrito(p)"
                             :style="{
-                                border: '2px solid ' + (p.stock_actual <= 0 ? '#FEE2E2' : '#E2E8F0'),
+                                border: '2px solid ' + (
+                                    p.estado_vencimiento === 'vencido' ? '#DC2626' :
+                                    p.estado_vencimiento === 'critico' ? '#F97316' :
+                                    p.estado_vencimiento === 'proximo' ? '#FBBF24' :
+                                    (p.stock_actual <= 0 ? '#FEE2E2' : '#E2E8F0')
+                                ),
+                                background: p.estado_vencimiento === 'vencido' ? '#FEF2F2' : 'white',
                                 borderRadius: '12px',
                                 padding: '14px',
-                                cursor: p.stock_actual <= 0 ? 'not-allowed' : 'pointer',
-                                opacity: p.stock_actual <= 0 ? '0.5' : '1',
+                                cursor: (p.stock_actual <= 0 || p.estado_vencimiento === 'vencido') ? 'not-allowed' : 'pointer',
+                                opacity: (p.stock_actual <= 0 || p.estado_vencimiento === 'vencido') ? '0.55' : '1',
                                 transition: 'all 0.15s',
                                 background: 'white',
                             }"
@@ -45,10 +51,27 @@
                                 {{ iconProducto(p.categoria) }}
                             </div>
                             <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0 0 4px; line-height:1.3;">{{ p.descripcion }}</p>
+                            <p v-if="p.principio_activo" style="font-size:10px; color:#0EA5E9; margin:0 0 4px; font-style:italic; font-weight:500;">
+                                💊 {{ p.principio_activo }}
+                            </p>
                             <p style="font-size:11px; color:#94A3B8; margin:0 0 6px;">{{ p.codigo_barras || 'Sin código' }}</p>
                             <p style="font-size:15px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ Number(p.precio_venta).toFixed(2) }}</p>
                             <p :style="{ fontSize:'11px', margin:'4px 0 0', color: p.stock_actual <= 5 ? '#EF4444' : '#94A3B8' }">
                                 Stock: {{ p.stock_actual }}
+                            </p>
+                            <div v-if="p.estado_vencimiento === 'vencido'" style="margin-top:6px; padding:3px 8px; background:#DC2626; color:white; font-size:10px; font-weight:700; border-radius:4px; text-align:center;">
+                                ⛔ VENCIDO
+                            </div>
+                            <div v-else-if="p.estado_vencimiento === 'critico'" style="margin-top:6px; padding:3px 8px; background:#F97316; color:white; font-size:10px; font-weight:700; border-radius:4px; text-align:center;">
+                                ⚠️ Vence en {{ p.dias_para_vencer }}d
+                            </div>
+                            <div v-else-if="p.estado_vencimiento === 'proximo'" style="margin-top:6px; padding:3px 8px; background:#FEF3C7; color:#92400E; font-size:10px; font-weight:600; border-radius:4px; text-align:center;">
+                                Vence en {{ p.dias_para_vencer }}d
+                            </div>
+                            <div v-if="p.requiere_receta" style="margin-top:4px; padding:3px 8px; background:#DBEAFE; color:#1E40AF; font-size:10px; font-weight:700; border-radius:4px; text-align:center;">
+                                📋 RECETA
+                            </div>
+                            <p v-if="false" style="display:none;">
                             </p>
                         </div>
                     </div>
@@ -256,6 +279,75 @@
             </div>
         </div>
 
+
+        <!-- Modal de Receta Médica -->
+        <div v-if="modalReceta" @click.self="modalReceta = false"
+            style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px;">
+            <div style="background:white; border-radius:20px; padding:32px; max-width:520px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                    <div style="width:48px; height:48px; background:#DBEAFE; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">📋</div>
+                    <div>
+                        <h2 style="margin:0; font-size:20px; font-weight:800; color:#1E293B;">Receta Médica</h2>
+                        <p style="margin:2px 0 0; font-size:13px; color:#64748B;">Requerida por DIGEMID</p>
+                    </div>
+                </div>
+
+                <div style="background:#FEF3C7; border-left:4px solid #F59E0B; padding:12px 16px; border-radius:8px; margin:16px 0; font-size:13px; color:#92400E;">
+                    ⚠️ El carrito contiene medicamentos que requieren receta médica.<br>
+                    <span style="font-size:11px; opacity:0.85;">Llena los datos si el cliente trae receta, o vende sin receta bajo responsabilidad del dueño.</span>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:14px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Nombre del médico *</label>
+                        <input v-model="recetaData.medico_nombre" type="text" placeholder="Dr. Juan Pérez"
+                            style="width:100%; padding:10px 14px; border:1px solid #CBD5E1; border-radius:10px; font-size:14px; outline:none;" />
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                        <div>
+                            <label style="font-size:12px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">N° Colegiatura CMP *</label>
+                            <input v-model="recetaData.medico_cmp" type="text" placeholder="CMP-12345"
+                                style="width:100%; padding:10px 14px; border:1px solid #CBD5E1; border-radius:10px; font-size:14px; outline:none;" />
+                        </div>
+                        <div>
+                            <label style="font-size:12px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">N° Receta *</label>
+                            <input v-model="recetaData.numero" type="text" placeholder="R-2026-0001"
+                                style="width:100%; padding:10px 14px; border:1px solid #CBD5E1; border-radius:10px; font-size:14px; outline:none;" />
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Fecha de la receta</label>
+                        <input v-model="recetaData.fecha" type="date"
+                            style="width:100%; padding:10px 14px; border:1px solid #CBD5E1; border-radius:10px; font-size:14px; outline:none;" />
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#475569; margin-bottom:4px; display:block;">Observaciones</label>
+                        <textarea v-model="recetaData.observaciones" rows="2" placeholder="Indicaciones, dosis especial, etc."
+                            style="width:100%; padding:10px 14px; border:1px solid #CBD5E1; border-radius:10px; font-size:14px; outline:none; resize:vertical;"></textarea>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-top:24px;">
+                    <button @click="modalReceta = false"
+                        style="flex:1; padding:12px; background:#F1F5F9; color:#475569; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+                        Cancelar
+                    </button>
+                    <button @click="confirmarReceta"
+                        :disabled="!recetaData.medico_nombre || !recetaData.medico_cmp || !recetaData.numero"
+                        :style="{ flex:1, padding:'12px', background: (!recetaData.medico_nombre || !recetaData.medico_cmp || !recetaData.numero) ? '#CBD5E1' : 'linear-gradient(135deg,#0EA5E9,#0369A1)', color:'white', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'700', cursor: (!recetaData.medico_nombre || !recetaData.medico_cmp || !recetaData.numero) ? 'not-allowed' : 'pointer' }">
+                        ✓ Con receta
+                    </button>
+                </div>
+
+                <div style="text-align:center; margin-top:16px; padding-top:16px; border-top:1px dashed #E2E8F0;">
+                    <button @click="venderSinReceta"
+                        style="background:transparent; color:#94A3B8; border:none; font-size:12px; cursor:pointer; text-decoration:underline;">
+                        ⚠️ Vender sin receta (bajo responsabilidad del dueño)
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -274,6 +366,14 @@ const carrito    = ref([])
 const metodoPago = ref('efectivo')
 const montoPagado = ref('')
 const procesando  = ref(false)
+const modalReceta = ref(false)
+const recetaData = ref({
+    medico_nombre: '',
+    medico_cmp: '',
+    numero: '',
+    fecha: new Date().toISOString().slice(0,10),
+    observaciones: ''
+})
 
 const metodos = [
     { valor: 'efectivo', label: 'Efectivo', icon: '💵' },
@@ -287,7 +387,11 @@ const productosFiltrados = computed(() => {
     const q = busqueda.value.toLowerCase()
     return props.productos.filter(p =>
         p.descripcion.toLowerCase().includes(q) ||
-        (p.codigo_barras && p.codigo_barras.toLowerCase().includes(q))
+        (p.codigo_barras && p.codigo_barras.toLowerCase().includes(q)) ||
+        (p.principio_activo && p.principio_activo.toLowerCase().includes(q)) ||
+        (p.laboratorio && p.laboratorio.toLowerCase().includes(q)) ||
+        (p.concentracion && p.concentracion.toLowerCase().includes(q)) ||
+        (p.presentacion && p.presentacion.toLowerCase().includes(q))
     )
 })
 
@@ -370,6 +474,10 @@ const alertasProducto = ref([])
 
 const agregarAlCarrito = (p) => {
     if (p.stock_actual <= 0) return
+    if (p.estado_vencimiento === 'vencido') {
+        alert('⛔ No se puede vender productos vencidos: ' + p.descripcion)
+        return
+    }
 
     const alertas = []
     if (p.fecha_vencimiento) {
@@ -417,8 +525,35 @@ const decrementar = (i) => {
     else carrito.value.splice(i, 1)
 }
 
+const confirmarReceta = () => {
+    if (!recetaData.value.medico_nombre || !recetaData.value.medico_cmp || !recetaData.value.numero) return
+    modalReceta.value = false
+    // Reintenta cobrar — esta vez no abrirá el modal porque medico_nombre ya está lleno
+    cobrar()
+}
+
+const venderSinReceta = () => {
+    if (!confirm('⚠️ ¿Estás seguro de vender SIN receta médica?\n\nEsto queda registrado en el sistema bajo responsabilidad del dueño.')) return
+    // Marcamos que el usuario ya decidió saltar el modal
+    recetaData.value.medico_nombre = 'SIN RECETA'
+    modalReceta.value = false
+    cobrar()
+}
+
 const cobrar = () => {
     if (!carrito.value.length || procesando.value) return
+
+    // Detectar si hay productos que requieren receta
+    const requiereReceta = carrito.value.some(item => {
+        const p = props.productos.find(pr => pr.id === item.id)
+        return p && p.requiere_receta
+    })
+
+    if (requiereReceta && !recetaData.value.medico_nombre) {
+        modalReceta.value = true
+        return
+    }
+
     procesando.value = true
 
     router.post('/farmacia/pos', {
@@ -430,6 +565,11 @@ const cobrar = () => {
         cliente_dni:        clienteDni.value,
         cliente_razon_social: clienteRazonSocial.value,
         cliente_email:      clienteEmail.value,
+        receta_medico_nombre: recetaData.value.medico_nombre || null,
+        receta_medico_cmp:    recetaData.value.medico_cmp || null,
+        receta_numero:        recetaData.value.numero || null,
+        receta_fecha:         recetaData.value.fecha || null,
+        receta_observaciones: recetaData.value.observaciones || null,
     }, {
         onSuccess: () => {
             carrito.value        = []
@@ -439,6 +579,8 @@ const cobrar = () => {
             clienteDni.value     = ''
             clienteRazonSocial.value = ''
             clienteEmail.value   = ''
+            recetaData.value = { medico_nombre:'', medico_cmp:'', numero:'', fecha: new Date().toISOString().slice(0,10), observaciones:'' }
+            modalReceta.value = false
         },
         onError: () => { procesando.value = false }
     })

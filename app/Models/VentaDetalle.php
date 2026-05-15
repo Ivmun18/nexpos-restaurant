@@ -14,6 +14,8 @@ class VentaDetalle extends Model
         'linea',
         'codigo_producto',
         'descripcion',
+        'lote',
+        'fecha_vencimiento',
         'unidad_medida',
         'cantidad',
         'precio_unitario',

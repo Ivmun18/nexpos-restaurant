@@ -242,6 +242,59 @@
             </div>
         </div>
 
+
+        <!-- Zona de Datos Demo / Plantillas -->
+        <div style="margin-top:2rem; background:white; border-radius:10px; border:2px dashed #F59E0B; padding:1.5rem;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+                <span style="font-size:24px;">⚠️</span>
+                <div>
+                    <p style="font-size:15px; font-weight:700; color:#92400E; margin:0;">Datos Demo / Plantillas</p>
+                    <p style="font-size:12px; color:#A16207; margin:2px 0 0;">Cargar productos de plantilla o limpiar todos los datos para empezar real</p>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem;">
+
+                <!-- Cargar plantilla -->
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:1rem;">
+                    <p style="font-size:13px; font-weight:600; color:#1E40AF; margin:0 0 4px;">📦 Cargar plantilla</p>
+                    <p v-if="plantillaCargada" style="font-size:11px; color:#16A34A; margin:0 0 8px;">
+                        ✅ {{ plantillaCargada.nombre }}<br>
+                        {{ plantillaCargada.total_productos }} productos · {{ plantillaCargada.total_categorias }} categorías
+                    </p>
+                    <p v-else-if="cargandoPlantillas" style="font-size:11px; color:#64748B; margin:0 0 8px;">
+                        Buscando plantillas disponibles...
+                    </p>
+                    <p v-else-if="!plantillaDisponible" style="font-size:11px; color:#64748B; margin:0 0 8px;">
+                        No hay plantilla disponible para esta industria
+                    </p>
+                    <p v-else style="font-size:11px; color:#64748B; margin:0 0 8px;">
+                        {{ plantillaDisponible.nombre }}<br>
+                        {{ plantillaDisponible.total_productos }} productos · {{ plantillaDisponible.total_categorias }} categorías
+                    </p>
+                    <button v-if="plantillaDisponible && !plantillaCargada"
+                        @click.prevent="cargarPlantilla"
+                        :disabled="cargandoPlantilla"
+                        style="width:100%; padding:8px; background:#2563EB; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                        {{ cargandoPlantilla ? '⏳ Cargando...' : '⬇️ Cargar productos demo' }}
+                    </button>
+                </div>
+
+                <!-- Limpiar datos demo -->
+                <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:1rem;">
+                    <p style="font-size:13px; font-weight:600; color:#991B1B; margin:0 0 4px;">🗑️ Limpiar datos demo</p>
+                    <p style="font-size:11px; color:#64748B; margin:0 0 8px;">
+                        Borra todos los productos, categorías, ventas y cajas. <strong>No se puede deshacer.</strong>
+                    </p>
+                    <button @click.prevent="limpiarDatos"
+                        :disabled="limpiando"
+                        style="width:100%; padding:8px; background:#DC2626; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                        {{ limpiando ? '⏳ Limpiando...' : '🗑️ Eliminar TODOS los datos' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -279,6 +332,127 @@ const form = ref({
     sol_clave:          '',
     cert_password:      '',
 })
+
+// ============================================================
+// PLANTILLAS / DATOS DEMO
+// ============================================================
+const plantillaDisponible = ref(null)
+const plantillaCargada    = ref(null)
+const cargandoPlantillas  = ref(true)
+const cargandoPlantilla   = ref(false)
+const limpiando           = ref(false)
+
+// Buscar plantilla disponible al cargar la página
+const buscarPlantilla = async () => {
+    if (!props.empresa?.industry_type) {
+        cargandoPlantillas.value = false
+        return
+    }
+    try {
+        const url = '/' + props.empresa.industry_type + '/plantillas?industry_type=' + props.empresa.industry_type
+        const res = await fetch(url, {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data) && data.length > 0) {
+                plantillaDisponible.value = data[0]
+            }
+        } else {
+            console.error('Error plantillas:', res.status)
+        }
+    } catch(e) {
+        console.error('Error fetch plantillas:', e)
+    }
+    cargandoPlantillas.value = false
+}
+buscarPlantilla()
+
+// Helper para obtener CSRF token
+const getCsrf = () => {
+    const meta = document.querySelector('meta[name="csrf-token"]')
+    if (meta) return meta.getAttribute('content')
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : ''
+}
+
+const cargarPlantilla = async () => {
+    if (!plantillaDisponible.value) {
+        alert('No hay plantilla disponible')
+        return
+    }
+    if (!confirm('¿Cargar ' + plantillaDisponible.value.total_productos + ' productos demo?\n\nEsto agregará productos a tu inventario actual.')) return
+
+    cargandoPlantilla.value = true
+    try {
+        const url = '/' + props.empresa.industry_type + '/plantillas/cargar'
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrf(),
+                'X-XSRF-TOKEN': getCsrf()
+            },
+            body: JSON.stringify({ plantilla_id: plantillaDisponible.value.id })
+        })
+        const data = await res.json()
+        if (res.ok) {
+            plantillaCargada.value = plantillaDisponible.value
+            alert(data.message || '✅ Plantilla cargada')
+        } else {
+            alert('❌ Error: ' + (data.error || data.message || 'Desconocido'))
+        }
+    } catch(e) {
+        alert('❌ Error: ' + e.message)
+        console.error(e)
+    }
+    cargandoPlantilla.value = false
+}
+
+const limpiarDatos = async () => {
+    if (!confirm('⚠️ ¿BORRAR TODOS los datos demo?\n\nProductos, categorías, ventas y cajas serán eliminados. No se puede deshacer.')) return
+    const conf = prompt('Para confirmar, escribe: BORRAR TODO')
+    if (conf !== 'BORRAR TODO') {
+        alert('Cancelado')
+        return
+    }
+
+    limpiando.value = true
+    try {
+        const url = '/' + props.empresa.industry_type + '/empresa/limpiar-datos'
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrf(),
+                'X-XSRF-TOKEN': getCsrf()
+            },
+            body: JSON.stringify({ confirmacion: 'SI_BORRAR_TODO' })
+        })
+        const data = await res.json()
+        if (res.ok) {
+            alert('✅ Eliminado:\n• Ventas: ' + data.detalles.ventas_borradas + '\n• Productos: ' + data.detalles.productos_borrados + '\n• Categorías: ' + data.detalles.categorias_borradas)
+            plantillaCargada.value = null
+            location.reload()
+        } else {
+            alert('❌ Error: ' + (data.error || data.message))
+        }
+    } catch(e) {
+        alert('❌ Error: ' + e.message)
+        console.error(e)
+    }
+    limpiando.value = false
+}
 
 const btnActivo     = { padding:'8px 16px', background:'#2563EB', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }
 const btnProduccion = { padding:'8px 16px', background:'#166534', color:'white', border:'none', borderRadius:'8px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }

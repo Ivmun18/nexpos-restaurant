@@ -39,6 +39,12 @@ class Venta extends Model
         'estado',
         'observaciones',
         'metodo_pago',
+        'caja_id',
+        'receta_medico_nombre',
+        'receta_medico_cmp',
+        'receta_numero',
+        'receta_fecha',
+        'receta_observaciones',
         'nubefact_id',
         'nubefact_estado',
     ];

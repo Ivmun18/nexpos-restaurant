@@ -23,7 +23,7 @@
 
         <!-- Buscador -->
         <div style="margin-bottom:16px;">
-            <input v-model="busqueda" placeholder="🔍 Buscar producto..."
+            <input v-model="busqueda" id="buscador-productos" ref="inputBusqueda" placeholder="🔍 Buscar por nombre, código, código de barras, principio activo o laboratorio..."
                 style="width:100%; max-width:400px; padding:10px 16px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;"
                 @focus="$event.target.style.borderColor='#14B8A6'"
                 @blur="$event.target.style.borderColor='#E2E8F0'" />
@@ -288,7 +288,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -298,6 +298,15 @@ const props = defineProps({
 })
 
 const busqueda    = ref('')
+const inputBusqueda = ref(null)
+
+onMounted(() => {
+    nextTick(() => {
+        if (inputBusqueda.value) {
+            inputBusqueda.value.focus()
+        }
+    })
+})
 const modalNuevo  = ref(false)
 const modalEditar = ref(false)
 const modalStock  = ref(false)
@@ -335,9 +344,13 @@ const onCodigoBarrasEnter = () => {
 const productosFiltrados = computed(() => {
     if (!busqueda.value) return props.productos
     const q = busqueda.value.toLowerCase()
+    const qRaw = busqueda.value.trim()
     return props.productos.filter(p =>
         p.descripcion.toLowerCase().includes(q) ||
-        (p.codigo && p.codigo.toLowerCase().includes(q))
+        (p.codigo && p.codigo.toLowerCase().includes(q)) ||
+        (p.codigo_barras && p.codigo_barras.includes(qRaw)) ||
+        (p.principio_activo && p.principio_activo.toLowerCase().includes(q)) ||
+        (p.laboratorio && p.laboratorio.toLowerCase().includes(q))
     )
 })
 
