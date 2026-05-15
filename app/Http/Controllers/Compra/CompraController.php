@@ -8,6 +8,7 @@ use App\Models\Compra;
 use App\Models\CompraDetalle;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use App\Models\CajaMovimiento;
 use App\Models\SesionCaja;
@@ -57,7 +58,8 @@ class CompraController extends Controller
             'items'             => 'required|array|min:1',
         ]);
 
-        DB::transaction(function () use ($request) {
+        $compra = null;
+        DB::transaction(function () use ($request, &$compra) {
             $totalGravado   = 0;
             $totalExonerado = 0;
             $totalIgv       = 0;
@@ -139,10 +141,15 @@ class CompraController extends Controller
                     'tipo'         => 'egreso',
                     'concepto'     => 'Compra ' . strtoupper($request->serie_proveedor) . '-' . str_pad($request->correlativo_proveedor, 8, '0', STR_PAD_LEFT),
                     'referencia_id'=> null,
-                    'monto'        => round($total, 2),
+                    'monto'        => round($compra->total, 2),
                     'observaciones'=> $request->observaciones ?? null,
                 ]);
             }
+        }
+
+        // 🔐 AUDITORÍA: Registrar creación de compra
+        if ($compra) {
+            AuditService::registrarCompra($compra, 'create');
         }
 
         return redirect('/compras')->with('success', 'Compra registrada correctamente.');
@@ -150,6 +157,17 @@ class CompraController extends Controller
 
     public function show(Compra $compra)
     {
+        // 🔐 AUDITORÍA: Registrar visualización
+        AuditService::registrar(
+            'view',
+            'Compras',
+            'Compra',
+            $compra->id,
+            null,
+            null,
+            "Visto: {$compra->numero_comprobante}"
+        );
+
         $compra->load('detalle', 'proveedor');
         return Inertia::render('Compras/Show', [
             'compra' => $compra,
@@ -158,6 +176,8 @@ class CompraController extends Controller
 
     public function anular(Compra $compra)
     {
+        $compraAnterior = $compra->toArray();
+
         DB::transaction(function () use ($compra) {
             foreach ($compra->detalle as $item) {
                 if ($item->producto_id) {
@@ -167,6 +187,17 @@ class CompraController extends Controller
             }
             $compra->update(['estado' => 'anulado']);
         });
+
+        // 🔐 AUDITORÍA: Registrar anulación
+        AuditService::registrar(
+            'update',
+            'Compras',
+            'Compra',
+            $compra->id,
+            $compraAnterior,
+            ['estado' => 'anulado'],
+            "Compra anulada: {$compra->numero_comprobante}"
+        );
 
         return back()->with('success', 'Compra anulada correctamente.');
     }
