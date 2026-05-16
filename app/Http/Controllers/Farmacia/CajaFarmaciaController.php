@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CajaMinimarket;
 use App\Models\Venta;
 use Illuminate\Http\Request;
+use App\Models\AuditoriaLog;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
@@ -108,6 +109,17 @@ class CajaFarmaciaController extends Controller
             'estado'        => 'abierta',
             'apertura_at'   => now(),
         ]);
+        
+        \App\Models\AuditoriaLog::registrar(
+            'caja',
+            'abierta',
+            'caja',
+            null,
+            'Caja farmacia',
+            null,
+            ['monto_inicial' => $request->monto_inicial ?? 0],
+            'Caja abierta con S/ ' . ($request->monto_inicial ?? 0) . ' por ' . auth()->user()->name
+        );
 
         return redirect()->route('minimarket.caja')->with('success', 'Caja abierta correctamente');
     }
@@ -147,6 +159,21 @@ class CajaFarmaciaController extends Controller
             'estado'          => 'cerrada',
             'cierre_at'       => now(),
         ]);
+        
+        $diferencia = ($caja->monto_final_real ?? 0) - ($caja->monto_final_sistema ?? 0);
+        $severidad = abs($diferencia) > 10 ? 'warning' : 'info';
+        
+        \App\Models\AuditoriaLog::registrar(
+            'caja',
+            'cerrada',
+            'caja',
+            $caja->id,
+            'Cierre de caja',
+            null,
+            ['monto_sistema' => $caja->monto_final_sistema, 'monto_real' => $caja->monto_final_real, 'diferencia' => $diferencia],
+            'Caja cerrada por ' . auth()->user()->name . ($diferencia != 0 ? ' · Descuadre: S/ ' . number_format($diferencia, 2) : ''),
+            $severidad
+        );
 
         return redirect()->route('minimarket.caja')->with('success', 'Caja cerrada correctamente');
     }

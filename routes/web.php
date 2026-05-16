@@ -613,18 +613,24 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
 
     // Productos
     Route::get('/productos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'index'])->name('productos');
-    Route::post('/productos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'store'])->name('productos.store');
-    Route::put('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'update'])->name('productos.update');
-    Route::delete('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroy'])->name('productos.destroy');
+    Route::post('/productos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'store'])->middleware('only.admin')->name('productos.store');
+    Route::put('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'update'])->middleware('only.admin')->name('productos.update');
+    Route::delete('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroy'])->middleware('only.admin')->name('productos.destroy');
     Route::post('/productos/{producto}/stock', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'actualizarStock'])->name('productos.stock');
 
     // Vencimientos
-    Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->name('vencimientos');
+    Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->middleware('only.admin')->name('vencimientos');
 
     // ====== INVENTARIO INICIAL (con scanner) ======
     Route::get('/inventario-inicial',         [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'index'])->name('inventario.inicial');
     Route::post('/inventario-inicial/buscar', [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'buscar'])->name('inventario.buscar');
     Route::post('/inventario-inicial/actualizar', [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'actualizar'])->name('inventario.actualizar');
+
+    // ====== AUDITORÍA ======
+    Route::get('/auditoria',                [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'index'])->middleware('only.admin')->name('auditoria.index');
+    Route::get('/auditoria/{id}',           [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'show'])->middleware('only.admin')->name('auditoria.show');
+    Route::get('/auditoria-exportar/csv',   [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'exportarCsv'])->middleware('only.admin')->name('auditoria.export');
+
 
     // ====== PLANTILLAS / DATOS DEMO ======
     Route::get('/plantillas',           [\App\Http\Controllers\PlantillaController::class, 'index'])->name('plantillas.index');

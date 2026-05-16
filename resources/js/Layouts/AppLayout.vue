@@ -292,18 +292,19 @@ const allMenuItems = [
     { path: '/ferreteria/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/cajero',       icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/ferreteria/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
-    { path: '/farmacia/pos',          icon: 'receipt',  label: 'Punto de Venta',    module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/productos',    icon: 'menu',     label: 'Productos',          module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/inventario-inicial', icon: 'package',  label: '📦 Stock Inicial',  module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/vencimientos', icon: 'clock',    label: '⚠️ Vencimientos',     module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/caja',         icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/ventas',       icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/cajero',       icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/compras',               icon: 'receipt',  label: 'Compras',            module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/proveedores',           icon: 'users',    label: 'Proveedores',        module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/categorias',   icon: 'menu',     label: 'Categorías',         module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/clientes',              icon: 'users',    label: 'Clientes',           module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/pos',                icon: 'receipt',  label: 'Punto de Venta',     module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/ventas',             icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/caja',               icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/cajero',             icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/productos',          icon: 'menu',     label: 'Productos',          module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/inventario-inicial', icon: 'package',  label: '📦 Stock Inicial',   module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/vencimientos',       icon: 'clock',    label: '⚠️ Vencimientos',     module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/compras',                     icon: 'receipt',  label: 'Compras',            module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/proveedores',                 icon: 'users',    label: 'Proveedores',        module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/clientes',                    icon: 'users',    label: 'Clientes',           module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/categorias',         icon: 'menu',     label: 'Categorías',         module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/auditoria',          icon: 'chart',    label: '🔍 Auditoría',       module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/reportes',           icon: 'chart',    label: 'Reportes',           module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/usuarios',     icon: 'users',    label: 'Usuarios',      module: 'admin', section: 'AJUSTES' },
     { path: '/configuracion',icon: 'settings', label: 'Configuración', module: 'admin', section: 'AJUSTES' },
 ]
@@ -312,7 +313,14 @@ const menuItems = computed(() => {
     const industry = empresa.value.industry_type
     const rol = page.props.auth?.user?.rol
 
-    const modulosCajero   = ['/dashboard', '/mesas', '/caja', '/reportes-restaurante']
+    // Módulos permitidos para CAJERO según industria
+    const modulosCajeroPorIndustria = {
+        restaurante: ['/dashboard', '/mesas', '/caja', '/reportes-restaurante'],
+        farmacia:    ['/dashboard', '/farmacia/pos', '/farmacia/ventas', '/farmacia/caja', '/farmacia/cajero', '/farmacia/inventario-inicial', '/clientes'],
+        minimarket:  ['/dashboard', '/minimarket/pos', '/minimarket/ventas', '/minimarket/caja', '/minimarket/cajero', '/clientes'],
+        ferreteria:  ['/dashboard', '/ferreteria/pos', '/ferreteria/ventas', '/ferreteria/caja', '/ferreteria/cajero', '/clientes'],
+    }
+    const modulosCajero = modulosCajeroPorIndustria[industry] || modulosCajeroPorIndustria.restaurante
     const modulosVentanilla = ['/dashboard', '/notaria/actos', '/clientes']
     const modulosCajeroNotaria = ['/dashboard', '/notaria/caja', '/caja']
     const modulosMozo     = ['/dashboard', '/mesas']
@@ -327,6 +335,20 @@ const menuItems = computed(() => {
 
         // Ocultar admin para no-admins
         if (item.module === 'admin' && rol !== 'admin' && rol !== 'superadmin') return false
+
+        // CAJERO en FARMACIA: solo ver módulos permitidos
+        if (rol === 'cajero' && industry === 'farmacia') {
+            const pathsPermitidosFarmaciaCajero = [
+                '/dashboard',
+                '/farmacia/pos',
+                '/farmacia/ventas',
+                '/farmacia/caja',
+                '/farmacia/cajero',
+                '/farmacia/inventario-inicial',
+                '/clientes',
+            ]
+            if (!pathsPermitidosFarmaciaCajero.includes(item.path)) return false
+        }
 
         // Ocultar módulos de restaurante si es minimarket
         if (industry === 'minimarket') {

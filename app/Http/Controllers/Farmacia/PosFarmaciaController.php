@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\Venta;
 use App\Models\VentaDetalle;
 use Illuminate\Http\Request;
+use App\Models\AuditoriaLog;
 use Inertia\Inertia;
 
 class PosFarmaciaController extends Controller
@@ -192,6 +193,43 @@ class PosFarmaciaController extends Controller
         $this->emitirNubefact($venta, $empresa);
     }
 
+    // ============ AUDITORÍA ============
+    $descripcionVenta = ($venta->tipo_comprobante ?? 'comprobante') . ' ' . $venta->numero_completo . ' · S/ ' . number_format($venta->total, 2);
+    $severidad = 'info';
+    $accion = 'creada';
+    
+    // Detectar si vendió producto vencido o sin receta
+    $alertasVenta = [];
+    foreach ($request->items as $item) {
+        $prod = \App\Models\Producto::find($item['id']);
+        if ($prod && $prod->fecha_vencimiento) {
+            $diasVence = now()->diffInDays($prod->fecha_vencimiento, false);
+            if ($diasVence < 0) $alertasVenta[] = "Vendió producto VENCIDO: {$prod->descripcion}";
+            elseif ($diasVence < 30) $alertasVenta[] = "Vendió producto próximo a vencer ({$diasVence}d): {$prod->descripcion}";
+        }
+        if ($prod && $prod->requiere_receta && ($request->receta_medico_nombre ?? '') === 'SIN RECETA') {
+            $alertasVenta[] = "Vendió SIN RECETA: {$prod->descripcion}";
+        }
+    }
+    
+    if (count($alertasVenta) > 0) {
+        $severidad = 'warning';
+        $accion = 'creada_con_alertas';
+        $descripcionVenta .= ' · ⚠️ ' . implode(' | ', $alertasVenta);
+    }
+    
+    \App\Models\AuditoriaLog::registrar(
+        'venta',
+        $accion,
+        'venta',
+        $venta->id,
+        $descripcionVenta,
+        null,
+        ['total' => $venta->total, 'items' => count($request->items), 'metodo_pago' => $request->metodo_pago],
+        'Venta registrada por ' . auth()->user()->name,
+        $severidad
+    );
+    
     return redirect()->route('farmacia.ventas.show', $venta->id)
         ->with('success', 'Venta registrada correctamente')
         ->with('imprimir', true);
