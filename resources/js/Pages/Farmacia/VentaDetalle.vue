@@ -343,27 +343,14 @@ const enviarWhatsApp = async () => {
         `💰 *Total: S/ ${(Number(props.venta.total_gravado) + Number(props.venta.total_igv) + Number(props.venta.total_inafecto) + Number(props.venta.total_exonerado)).toFixed(2)}*\n\n` +
         `Gracias por su compra 🙏`
 
-    try {
-        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
-        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
-        const res = await fetch('/api/whatsapp/enviar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({ telefono: numero, mensaje })
-        })
-        const data = await res.json()
-        if (data.ok) {
-            alert('✅ Mensaje enviado correctamente')
-        } else {
-            alert('❌ Error: ' + (data.error || 'No se pudo enviar'))
-        }
-    } catch(e) {
-        alert('❌ Error de conexión')
+    // Abrir WhatsApp Web del navegador con mensaje pre-cargado
+    // Limpiar el numero: quitar espacios, guiones, parentesis y agregar 51 (Peru) si no lo tiene
+    let telefonoLimpio = String(numero).replace(/[^0-9]/g, '')
+    if (telefonoLimpio.length === 9 && telefonoLimpio.startsWith('9')) {
+        telefonoLimpio = '51' + telefonoLimpio
     }
+    const url = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`
+    window.open(url, '_blank')
 }
 
 const imprimirA4 = () => {

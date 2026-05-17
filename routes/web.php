@@ -666,20 +666,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/farmacia/categorias/{categoria}', [\App\Http\Controllers\Farmacia\CategoriasFarmaciaController::class, 'destroy'])->name('farmacia.categorias.destroy');
 });
 
-// WhatsApp API interna
-Route::middleware('auth')->post('/api/whatsapp/enviar', function (\Illuminate\Http\Request $request) {
-    try {
-        $response = \Illuminate\Support\Facades\Http::timeout(10)
-            ->post('http://127.0.0.1:3001/send', [
-                'telefono' => $request->telefono,
-                'mensaje'  => $request->mensaje,
-            ]);
-        return response()->json($response->json());
-    } catch (\Exception $e) {
-        return response()->json(['ok' => false, 'error' => $e->getMessage()]);
-    }
-});
-
 // Proveedores y Clientes Minimarket
 Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/proveedores',                [\App\Http\Controllers\Minimarket\ProveedoresMinimarketController::class, 'index'])->name('minimarket.proveedores');
