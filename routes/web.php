@@ -666,17 +666,28 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/farmacia/categorias/{categoria}', [\App\Http\Controllers\Farmacia\CategoriasFarmaciaController::class, 'destroy'])->name('farmacia.categorias.destroy');
 });
 
-// WhatsApp API interna
+// WhatsApp API interna - falla silenciosa si el servicio no esta corriendo
 Route::middleware('auth')->post('/api/whatsapp/enviar', function (\Illuminate\Http\Request $request) {
     try {
-        $response = \Illuminate\Support\Facades\Http::timeout(10)
+        $response = \Illuminate\Support\Facades\Http::timeout(2)
+            ->connectTimeout(1)
             ->post('http://127.0.0.1:3001/send', [
                 'telefono' => $request->telefono,
                 'mensaje'  => $request->mensaje,
             ]);
-        return response()->json($response->json());
+        return response()->json([
+            'ok' => true,
+            'enviado' => true,
+            'data' => $response->json(),
+        ]);
     } catch (\Exception $e) {
-        return response()->json(['ok' => false, 'error' => $e->getMessage()]);
+        // Servicio WhatsApp no disponible - registrar pero NO romper el flujo
+        \Illuminate\Support\Facades\Log::info('WhatsApp service no disponible: ' . $e->getMessage());
+        return response()->json([
+            'ok' => true,
+            'enviado' => false,
+            'mensaje' => 'Boleta emitida. WhatsApp no disponible en este momento.',
+        ], 200);
     }
 });
 

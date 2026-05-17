@@ -155,7 +155,46 @@ class CompraController extends Controller
         return redirect('/compras')->with('success', 'Compra registrada correctamente.');
     }
 
-    public function show(Compra $compra)
+
+    public function crearProductoRapido(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'descripcion'   => 'required|string|max:200',
+            'codigo_barras' => 'nullable|string|max:50',
+            'precio_compra' => 'required|numeric|min:0',
+            'precio_venta'  => 'required|numeric|min:0',
+        ]);
+
+        $empresaId = auth()->user()->empresa_id;
+        $codigo = $request->codigo ?: ('PROD-' . time());
+
+        $producto = \App\Models\Producto::create([
+            'empresa_id'          => $empresaId,
+            'codigo'              => $codigo,
+            'codigo_barras'       => $request->codigo_barras,
+            'descripcion'         => $request->descripcion,
+            'descripcion_corta'   => mb_substr($request->descripcion, 0, 50),
+            'unidad_medida'       => $request->unidad_medida ?? 'NIU',
+            'tipo'                => 'producto',
+            'precio_venta'        => $request->precio_venta,
+            'precio_compra'       => $request->precio_compra,
+            'stock_actual'        => 0,
+            'stock_minimo'        => $request->stock_minimo ?? 5,
+            'tipo_afectacion_igv' => $request->tipo_afectacion_igv ?? '10',
+            'controla_stock'      => true,
+            'activo'              => true,
+            'lote'                => $request->lote,
+            'fecha_vencimiento'   => $request->fecha_vencimiento,
+            'laboratorio'         => $request->laboratorio,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'producto' => $producto,
+        ]);
+    }
+
+        public function show(Compra $compra)
     {
         // 🔐 AUDITORÍA: Registrar visualización
         AuditService::registrar(
