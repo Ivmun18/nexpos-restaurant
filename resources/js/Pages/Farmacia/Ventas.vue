@@ -166,19 +166,13 @@ const enviarWhatsApp = async (venta) => {
     const total = (Number(venta.total_gravado) + Number(venta.total_igv) + Number(venta.total_inafecto) + Number(venta.total_exonerado)).toFixed(2)
     const mensaje = `🧾 *Comprobante NEXPOS*\n\n📋 *${venta.numero_completo}*\n📅 Fecha: ${venta.fecha_emision}\n\n💰 *Total: S/ ${total}*\n\nGracias por su compra 🙏`
 
-    try {
-        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
-        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
-        const res = await fetch('/api/whatsapp/enviar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ telefono: numero, mensaje })
-        })
-        const data = await res.json()
-        alert(data.ok ? '✅ Mensaje enviado' : '❌ Error: ' + data.error)
-    } catch(e) {
-        alert('❌ Error de conexión')
+    // Abrir WhatsApp Web del navegador con mensaje pre-cargado
+    let telefonoLimpio = String(numero).replace(/[^0-9]/g, '')
+    if (telefonoLimpio.length === 9 && telefonoLimpio.startsWith('9')) {
+        telefonoLimpio = '51' + telefonoLimpio
     }
+    const url = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`
+    window.open(url, '_blank')
 }
 
 const anular = (id) => {

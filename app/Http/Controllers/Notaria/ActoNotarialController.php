@@ -119,7 +119,7 @@ class ActoNotarialController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
-        $actos = ActoNotarial::with(['cliente', 'usuario', 'requisitos', 'seguimientos.user'])
+        $actos = ActoNotarial::with(['cliente', 'usuario', 'requisitos', 'seguimientos.usuario'])
             ->where('empresa_id', $empresaId)
             ->whereIn('estado', ['pendiente', 'en_proceso', 'finalizado'])
             ->orderBy('created_at', 'desc')
