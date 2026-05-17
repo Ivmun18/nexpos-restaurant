@@ -234,6 +234,8 @@ const today = computed(() => {
 })
 
 const empresa = computed(() => page.props.empresa || { industry_type: 'restaurante', modules_enabled: [] })
+const modalidadCobro = computed(() => page.props.modalidad_cobro ?? 'directo')
+
 const modulesEnabled = computed(() => {
     const m = empresa.value.modules_enabled
     if (!m) return []
@@ -294,8 +296,8 @@ const allMenuItems = [
     { path: '/ferreteria/reportes',     icon: 'chart',    label: 'Reportes',           module: 'pos_ferreteria',    section: 'FERRETERIA' },
     { path: '/farmacia/pos',                icon: 'receipt',  label: 'Punto de Venta',     module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/ventas',             icon: 'chart',    label: 'Ventas',             module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/caja',               icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA' },
-    { path: '/farmacia/cajero',             icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/caja',               icon: 'receipt',  label: 'Caja',               module: 'pos_farmacia', section: 'FARMACIA', hide_if: 'centralizado' },
+    { path: '/farmacia/cajero',             icon: 'receipt',  label: 'Panel Cajero',       module: 'pos_farmacia', section: 'FARMACIA', hide_if: 'directo' },
     { path: '/farmacia/productos',          icon: 'menu',     label: 'Productos',          module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/inventario-inicial', icon: 'package',  label: '📦 Stock Inicial',   module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/vencimientos',       icon: 'clock',    label: '⚠️ Vencimientos',     module: 'pos_farmacia', section: 'FARMACIA' },
@@ -375,6 +377,11 @@ const menuItems = computed(() => {
         // En farmacia ocultar SISTEMA genérico (comprobantes, caja general)
         if (industry === 'farmacia') {
             if (item.section === 'SISTEMA') return false
+            // Modalidad de cobro:
+            //   'directo'  = vendedor cobra        -> mostrar Caja, ocultar Panel Cajero
+            //   'cajero'   = cajero centralizado   -> mostrar Panel Cajero, ocultar Caja
+            if (modalidadCobro.value === 'directo' && item.path === '/farmacia/cajero') return false
+            if (modalidadCobro.value === 'cajero' && item.path === '/farmacia/caja') return false
         }
 
         // En ferreteria ocultar SISTEMA genérico
@@ -396,6 +403,11 @@ const menuItems = computed(() => {
         if (industry === 'notaria') {
             const ocultarEnNotaria = ['/caja', '/reportes-restaurante', '/reportes/turnos', '/mesas', '/compras', '/proveedores', '/insumos', '/recetas']
             if (ocultarEnNotaria.includes(item.path)) return false
+        }
+
+        // Ocultar Caja/Panel Cajero según modalidad de cobro (solo farmacia)
+        if (item.hide_if && industry === 'farmacia') {
+            if (item.hide_if === modalidadCobro.value) return false
         }
 
         if (!item.module) return true

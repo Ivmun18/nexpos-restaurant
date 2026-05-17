@@ -70,6 +70,7 @@ class CajaFarmaciaController extends Controller
             });
 
         return Inertia::render('Farmacia/Caja', [
+            'user_rol' => auth()->user()->rol,
             'caja_abierta' => $cajaAbierta,
             'resumen' => [
                 'total_dia'      => round($totalDia, 2),
@@ -177,4 +178,76 @@ class CajaFarmaciaController extends Controller
 
         return redirect()->route('minimarket.caja')->with('success', 'Caja cerrada correctamente');
     }
+
+    /**
+     * Corregir montos de caja (solo admin).
+     * Guarda el valor original antes de sobrescribir.
+     */
+    public function corregir(\Illuminate\Http\Request $request, \App\Models\CajaMinimarket $caja)
+    {
+        // Solo admin puede corregir
+        if (auth()->user()->rol !== 'admin') {
+            return back()->withErrors(['error' => 'Solo el administrador puede corregir cajas']);
+        }
+
+        // Validar que la caja pertenezca a la empresa del usuario
+        if ($caja->empresa_id !== auth()->user()->empresa_id) {
+            abort(403, 'No tienes acceso a esta caja');
+        }
+
+        $data = $request->validate([
+            'monto_inicial_nuevo' => 'required|numeric|min:0',
+            'monto_final_nuevo'   => 'nullable|numeric|min:0',
+            'motivo'              => 'required|string|min:10|max:1000',
+        ]);
+
+        // Guardar valores originales (solo la primera vez que se corrige)
+        $updates = [
+            'monto_inicial'      => $data['monto_inicial_nuevo'],
+            'motivo_correccion'  => $data['motivo'],
+            'corregido_por_id'   => auth()->id(),
+            'corregido_at'       => now(),
+        ];
+
+        if (is_null($caja->monto_inicial_original)) {
+            $updates['monto_inicial_original'] = $caja->monto_inicial;
+        }
+
+        // Si se corrige el monto final también
+        if (!is_null($data['monto_final_nuevo'])) {
+            $updates['monto_final'] = $data['monto_final_nuevo'];
+            if (is_null($caja->monto_final_original) && !is_null($caja->monto_final)) {
+                $updates['monto_final_original'] = $caja->monto_final;
+            }
+            // Recalcular diferencia si la caja está cerrada
+            if ($caja->estado === 'cerrada') {
+                $efectivoEsperado = $data['monto_inicial_nuevo'] + ($caja->total_efectivo ?? 0);
+                $updates['diferencia'] = $data['monto_final_nuevo'] - $efectivoEsperado;
+            }
+        }
+
+        $caja->update($updates);
+
+        // Registrar en auditoría
+        \App\Models\AuditoriaLog::registrar(
+            'caja',
+            'corregida',
+            'caja',
+            $caja->id,
+            'Corrección de caja',
+            null,
+            [
+                'monto_inicial_anterior' => $caja->monto_inicial_original,
+                'monto_inicial_nuevo'    => $data['monto_inicial_nuevo'],
+                'monto_final_anterior'   => $caja->monto_final_original,
+                'monto_final_nuevo'      => $data['monto_final_nuevo'] ?? null,
+                'motivo'                 => $data['motivo'],
+            ],
+            'Caja #' . $caja->id . ' corregida por ' . auth()->user()->name . ' · Motivo: ' . $data['motivo'],
+            'warning'
+        );
+
+        return back()->with('success', 'Caja corregida correctamente. Registrado en auditoría.');
+    }
+
 }

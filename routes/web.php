@@ -642,6 +642,7 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::get('/caja', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'index'])->name('caja');
     Route::post('/caja/abrir', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'abrir'])->name('caja.abrir');
     Route::post('/caja/{caja}/cerrar', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'cerrar'])->name('caja.cerrar');
+    Route::post('/caja/{caja}/corregir-montos', [\App\Http\Controllers\Farmacia\CajaFarmaciaController::class, 'corregir'])->name('farmacia.caja.corregir')->middleware('only.admin');
 
     // Ventas
     Route::get('/cajero', [\App\Http\Controllers\Farmacia\CajeroFarmaciaController::class, 'index'])->name('cajero');
