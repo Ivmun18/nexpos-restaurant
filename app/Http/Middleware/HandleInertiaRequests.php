@@ -19,6 +19,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error'   => $request->session()->get('error'),
             ],
+            'modalidad_cobro' => $request->user()?->empresa?->modalidad_cobro ?? 'directo',
         ]);
     }
 }
