@@ -42,6 +42,8 @@ Route::get('/dashboard', function () {
         if ($rol === 'cocina') return redirect('/cocina');
         if ($rol === 'cajero') return redirect('/mesas');
         if ($rol === 'mozo')   return redirect('/mesas');
+        // Admin/superadmin: usar dashboard generico
+        return app(\App\Http\Controllers\Dashboard\DashboardController::class)->index();
     }
 
 
