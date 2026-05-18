@@ -327,39 +327,27 @@ const imprimir = () => {
     setTimeout(() => ventana.print(), 500)
 }
 
-const enviarWhatsApp = async () => {
-    const raw = prompt('📱 Ingresa el número de WhatsApp del cliente (ej: 987654321):')
+const enviarWhatsApp = () => {
+    const raw = prompt('Numero WhatsApp del cliente (ej: 987654321):')
     if (!raw) return
-    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
+    const numero = raw.replace(/[^0-9]/g, '').replace(/^0+/, '')
     const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
 
     const items = props.venta.detalle?.map(d =>
-        `• ${d.descripcion} x${d.cantidad} = S/ ${Number(d.total).toFixed(2)}`
+        '- ' + d.descripcion + ' x' + d.cantidad + ' = S/ ' + Number(d.total).toFixed(2)
     ).join('\n') || ''
 
     const totalCalc = (Number(props.venta.total_gravado || 0) + Number(props.venta.total_igv || 0) + Number(props.venta.total_inafecto || 0) + Number(props.venta.total_exonerado || 0)).toFixed(2)
 
-    const mensaje = `🧾 *Comprobante NEXPOS*\n\n` +
-        `📋 *${props.venta.numero_completo}*\n` +
-        `📅 Fecha: ${props.venta.created_at?.slice(0,10)}\n\n` +
-        `${items}\n\n` +
-        `💰 *Total: S/ ${totalCalc}*\n\n` +
-        `Gracias por su compra 🙏`
+    const mensaje = '*Comprobante NEXPOS*\n\n' +
+        '*' + props.venta.numero_completo + '*\n' +
+        'Fecha: ' + (props.venta.created_at?.slice(0,10) || '') + '\n\n' +
+        items + '\n\n' +
+        '*Total: S/ ' + totalCalc + '*\n\n' +
+        'Gracias por su compra'
 
-    try {
-        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
-        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
-        const res = await fetch('/api/whatsapp/enviar', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ telefono: numeroFinal, mensaje })
-        })
-        const data = await res.json()
-        alert(data.ok ? '✅ Mensaje enviado por WhatsApp' : '❌ Error: ' + (data.error || 'No se pudo enviar'))
-    } catch(e) {
-        alert('❌ Error de conexión al servicio de WhatsApp')
-    }
+    const url = 'https://wa.me/' + numeroFinal + '?text=' + encodeURIComponent(mensaje)
+    window.open(url, '_blank')
 }
 
 const imprimirA4 = () => {

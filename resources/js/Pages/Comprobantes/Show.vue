@@ -218,27 +218,15 @@ const imprimir = () => {
     setTimeout(() => ventana.print(), 500)
 }
 
-const enviarWhatsApp = async () => {
-    const raw = prompt('Número WhatsApp (9 dígitos):')
+const enviarWhatsApp = () => {
+    const raw = prompt('Numero WhatsApp (9 digitos):')
     if (!raw) return
-    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
+    const numero = raw.replace(/[^0-9]/g, '').replace(/^0+/, '')
     const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
     const c = props.comprobante
-    const mensaje = '🧾 *Comprobante NEXPOS*\n\n📋 *' + (c.numero_completo || c.serie + '-' + c.numero) + '*\n📅 Fecha: ' + c.fecha_emision + '\n👤 Cliente: ' + c.cliente_nombre + '\n\n💰 *TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita 🙏'
-    try {
-        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
-        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
-        const res = await fetch('/api/whatsapp/enviar', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ telefono: numeroFinal, mensaje })
-        })
-        const data = await res.json()
-        alert(data.ok ? 'Mensaje enviado' : 'Error: ' + data.error)
-    } catch(e) {
-        alert('Error de conexión')
-    }
+    const mensaje = '*Comprobante NEXPOS*\n\n*' + (c.numero_completo || c.serie + '-' + c.numero) + '*\nFecha: ' + c.fecha_emision + '\nCliente: ' + c.cliente_nombre + '\n\n*TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita'
+    const url = 'https://wa.me/' + numeroFinal + '?text=' + encodeURIComponent(mensaje)
+    window.open(url, '_blank')
 }
 
 const formatFecha = (fecha) => {
