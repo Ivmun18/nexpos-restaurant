@@ -171,6 +171,7 @@ const enviarWhatsApp = async (venta) => {
         const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
         const res = await fetch('/api/whatsapp/enviar', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
             body: JSON.stringify({ telefono: numero, mensaje })
         })

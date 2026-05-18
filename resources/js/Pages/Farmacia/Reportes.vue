@@ -36,6 +36,18 @@
                         Hoy
                     </button>
                 </div>
+                <div style="margin-top:20px;">
+                    <a :href="urlExcel" target="_blank"
+                        style="display:inline-block; padding:10px 16px; background:linear-gradient(135deg,#10B981,#059669); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer;">
+                        📊 Excel
+                    </a>
+                </div>
+                <div style="margin-top:20px;">
+                    <a :href="urlPle" target="_blank"
+                        style="display:inline-block; padding:10px 16px; background:linear-gradient(135deg,#7C3AED,#6D28D9); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer;">
+                        📄 PLE SUNAT
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -219,6 +231,16 @@ const filtros = ref({
     desde: props.desde,
     hasta: props.hasta,
 })
+
+const urlExcel = computed(() => 
+    `/reportes/exportar-excel?desde=${filtros.value.desde}&hasta=${filtros.value.hasta}`
+)
+
+const urlPle = computed(() => {
+    const fecha = new Date(filtros.value.desde)
+    return `/reportes/exportar-ple?mes=${fecha.getMonth()+1}&anio=${fecha.getFullYear()}`
+})
+
 
 const maxDia = computed(() => {
     if (!props.ventas_por_dia.length) return 1

@@ -25,7 +25,9 @@ class VentasExport implements FromCollection, WithHeadings, WithStyles, WithTitl
 
     public function collection()
     {
+        $empresaId = auth()->user()->empresa_id;
         $query = Venta::query()
+            ->where('empresa_id', $empresaId)
             ->whereDate('fecha_emision', '>=', $this->desde)
             ->whereDate('fecha_emision', '<=', $this->hasta)
             ->where('estado', '!=', 'anulado');

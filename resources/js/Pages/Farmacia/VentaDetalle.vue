@@ -328,29 +328,38 @@ const imprimir = () => {
 }
 
 const enviarWhatsApp = async () => {
-    const tel = prompt('📱 Ingresa el número de WhatsApp del cliente (ej: 987654321):')
-    if (!tel) return
-    const numero = '51' + tel.replace(/[^0-9]/g, '').slice(-9)
-    
-    const items = props.venta.detalle?.map(d => 
+    const raw = prompt('📱 Ingresa el número de WhatsApp del cliente (ej: 987654321):')
+    if (!raw) return
+    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
+    const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
+
+    const items = props.venta.detalle?.map(d =>
         `• ${d.descripcion} x${d.cantidad} = S/ ${Number(d.total).toFixed(2)}`
     ).join('\n') || ''
+
+    const totalCalc = (Number(props.venta.total_gravado || 0) + Number(props.venta.total_igv || 0) + Number(props.venta.total_inafecto || 0) + Number(props.venta.total_exonerado || 0)).toFixed(2)
 
     const mensaje = `🧾 *Comprobante NEXPOS*\n\n` +
         `📋 *${props.venta.numero_completo}*\n` +
         `📅 Fecha: ${props.venta.created_at?.slice(0,10)}\n\n` +
         `${items}\n\n` +
-        `💰 *Total: S/ ${(Number(props.venta.total_gravado) + Number(props.venta.total_igv) + Number(props.venta.total_inafecto) + Number(props.venta.total_exonerado)).toFixed(2)}*\n\n` +
+        `💰 *Total: S/ ${totalCalc}*\n\n` +
         `Gracias por su compra 🙏`
 
-    // Abrir WhatsApp Web del navegador con mensaje pre-cargado
-    // Limpiar el numero: quitar espacios, guiones, parentesis y agregar 51 (Peru) si no lo tiene
-    let telefonoLimpio = String(numero).replace(/[^0-9]/g, '')
-    if (telefonoLimpio.length === 9 && telefonoLimpio.startsWith('9')) {
-        telefonoLimpio = '51' + telefonoLimpio
+    try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
+        const res = await fetch('/api/whatsapp/enviar', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ telefono: numeroFinal, mensaje })
+        })
+        const data = await res.json()
+        alert(data.ok ? '✅ Mensaje enviado por WhatsApp' : '❌ Error: ' + (data.error || 'No se pudo enviar'))
+    } catch(e) {
+        alert('❌ Error de conexión al servicio de WhatsApp')
     }
-    const url = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`
-    window.open(url, '_blank')
 }
 
 const imprimirA4 = () => {

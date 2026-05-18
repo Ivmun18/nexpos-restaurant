@@ -5,7 +5,7 @@
 
             <!-- Botones -->
             <div style="display:flex; gap:12px; margin-bottom:24px;">
-                <a href="/ferreteria/ventas" style="padding:10px 20px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #E2E8F0;">
+                <a href="/farmacia/ventas" style="padding:10px 20px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; border:1px solid #E2E8F0;">
                     ← Volver
                 </a>
                 <button @click="imprimir"
@@ -122,10 +122,17 @@
                     </thead>
                     <tbody>
                         <tr v-for="d in venta.detalle" :key="d.id" style="border-bottom:1px dashed #E2E8F0;">
-                            <td style="padding:10px 0; font-size:13px; color:#1E293B; font-weight:500;">{{ d.descripcion }}</td>
-                            <td style="padding:10px 0; text-align:center; font-size:13px; color:#475569;">{{ d.cantidad }}</td>
-                            <td style="padding:10px 0; text-align:right; font-size:13px; color:#475569;">S/ {{ Number(d.precio_unitario).toFixed(2) }}</td>
-                            <td style="padding:10px 0; text-align:right; font-size:13px; font-weight:700; color:#1E293B;">S/ {{ Number(d.total).toFixed(2) }}</td>
+                            <td style="padding:10px 0; font-size:13px; color:#1E293B; font-weight:500;">
+                                {{ d.descripcion }}
+                                <div v-if="d.lote || d.fecha_vencimiento" style="font-size:10px; color:#94A3B8; margin-top:3px; font-weight:400;">
+                                    <span v-if="d.lote">Lote: {{ d.lote }}</span>
+                                    <span v-if="d.lote && d.fecha_vencimiento"> · </span>
+                                    <span v-if="d.fecha_vencimiento">Vence: {{ new Date(d.fecha_vencimiento).toLocaleDateString('es-PE', {month:'2-digit', year:'numeric'}) }}</span>
+                                </div>
+                            </td>
+                            <td style="padding:10px 0; text-align:center; font-size:13px; color:#475569; vertical-align:top;">{{ d.cantidad }}</td>
+                            <td style="padding:10px 0; text-align:right; font-size:13px; color:#475569; vertical-align:top;">S/ {{ Number(d.precio_unitario).toFixed(2) }}</td>
+                            <td style="padding:10px 0; text-align:right; font-size:13px; font-weight:700; color:#1E293B; vertical-align:top;">S/ {{ Number(d.total).toFixed(2) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -167,6 +174,20 @@
                     </div>
                 </div>
 
+                <!-- Datos legales DIGEMID (farmacia) -->
+                <div v-if="empresa.qf_regente_nombre || empresa.numero_digemid" style="padding:12px 0; margin-top:8px; border-top:1px dashed #E2E8F0; text-align:center;">
+                    <p v-if="empresa.qf_regente_nombre" style="font-size:11px; color:#475569; margin:0;">
+                        <strong>Q.F. Regente:</strong> {{ empresa.qf_regente_nombre }}
+                        <span v-if="empresa.qf_regente_cqfp"> · CQFP {{ empresa.qf_regente_cqfp }}</span>
+                    </p>
+                    <p v-if="empresa.numero_digemid" style="font-size:11px; color:#475569; margin:3px 0 0;">
+                        <strong>DIGEMID:</strong> {{ empresa.numero_digemid }}
+                    </p>
+                    <p v-if="empresa.autorizacion_sanitaria" style="font-size:10px; color:#94A3B8; margin:3px 0 0;">
+                        Aut. Sanitaria: {{ empresa.autorizacion_sanitaria }}
+                    </p>
+                </div>
+
                 <!-- Pie -->
                 <div style="text-align:center; padding-top:16px; border-top:2px dashed #E2E8F0;">
                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">¡Gracias por su compra!</p>
@@ -186,13 +207,13 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 
 const reintentar = () => {
     if (confirm('¿Reintentar envío a SUNAT?')) {
-        router.post(`/ferreteria/ventas/${props.venta.id}/reintentar`)
+        router.post(`/farmacia/ventas/${props.venta.id}/reintentar`)
     }
 }
 
 const anular = () => {
     if (confirm('¿Anular este comprobante?')) {
-        router.post(`/ferreteria/ventas/${props.venta.id}/anular`)
+        router.post(`/farmacia/ventas/${props.venta.id}/anular`)
     }
 }
 
@@ -218,9 +239,21 @@ const imprimir = () => {
         const cant = String(d.cantidad).padStart(3)
         const precio = ('S/'+Number(d.precio_unitario).toFixed(2)).padStart(8)
         const subtotal = ('S/'+Number(d.total).toFixed(2)).padStart(8)
+        // Línea de lote/vencimiento si existe
+        let loteInfo = ''
+        if (d.lote || d.fecha_vencimiento) {
+            const partes = []
+            if (d.lote) partes.push('Lote:' + d.lote)
+            if (d.fecha_vencimiento) {
+                const v = new Date(d.fecha_vencimiento)
+                partes.push('Venc:' + String(v.getMonth()+1).padStart(2,'0') + '/' + v.getFullYear())
+            }
+            loteInfo = `<tr><td colspan="2" style="padding:0; font-size:9px; color:#555;">  ${partes.join(' ')}</td></tr>`
+        }
         return `<tr>
             <td colspan="2" style="padding:1px 0; font-size:11px;">${d.descripcion}</td>
         </tr>
+        ${loteInfo}
         <tr>
             <td style="padding:1px 0; font-size:11px;">${cant} x ${Number(d.precio_unitario).toFixed(2)}</td>
             <td style="text-align:right; padding:1px 0; font-size:11px;">S/ ${Number(d.total).toFixed(2)}</td>
@@ -278,6 +311,11 @@ const imprimir = () => {
                 <tr><td>Método de pago</td><td class="right">${v.metodo_pago || ''}</td></tr>
             </table>
             <div class="line"></div>
+            ${emp?.qf_regente_nombre ? `<div class="center" style="font-size:10px;"><b>Q.F. Regente:</b> ${emp.qf_regente_nombre}</div>` : ''}
+            ${emp?.qf_regente_cqfp ? `<div class="center" style="font-size:10px;">CQFP: ${emp.qf_regente_cqfp}</div>` : ''}
+            ${emp?.numero_digemid ? `<div class="center" style="font-size:10px;"><b>DIGEMID:</b> ${emp.numero_digemid}</div>` : ''}
+            ${emp?.autorizacion_sanitaria ? `<div class="center" style="font-size:9px;">Aut. Sanitaria: ${emp.autorizacion_sanitaria}</div>` : ''}
+            <div class="line"></div>
             <div class="center" style="font-size:10px;">Gracias por su compra</div>
             <div class="center" style="font-size:10px;">Representación impresa de comprobante electrónico</div>
             <div class="line"></div>
@@ -305,28 +343,14 @@ const enviarWhatsApp = async () => {
         `💰 *Total: S/ ${(Number(props.venta.total_gravado) + Number(props.venta.total_igv) + Number(props.venta.total_inafecto) + Number(props.venta.total_exonerado)).toFixed(2)}*\n\n` +
         `Gracias por su compra 🙏`
 
-    try {
-        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
-        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
-        const res = await fetch('/api/whatsapp/enviar', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({ telefono: numero, mensaje })
-        })
-        const data = await res.json()
-        if (data.ok) {
-            alert('✅ Mensaje enviado correctamente')
-        } else {
-            alert('❌ Error: ' + (data.error || 'No se pudo enviar'))
-        }
-    } catch(e) {
-        alert('❌ Error de conexión')
+    // Abrir WhatsApp Web del navegador con mensaje pre-cargado
+    // Limpiar el numero: quitar espacios, guiones, parentesis y agregar 51 (Peru) si no lo tiene
+    let telefonoLimpio = String(numero).replace(/[^0-9]/g, '')
+    if (telefonoLimpio.length === 9 && telefonoLimpio.startsWith('9')) {
+        telefonoLimpio = '51' + telefonoLimpio
     }
+    const url = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`
+    window.open(url, '_blank')
 }
 
 const imprimirA4 = () => {
