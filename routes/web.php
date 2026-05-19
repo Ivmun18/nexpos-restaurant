@@ -18,6 +18,7 @@ use App\Http\Controllers\Venta\CotizacionController;
 use App\Http\Controllers\Mesa\MesaController;
 use App\Http\Controllers\MenuCategoriaController;
 use App\Http\Controllers\MenuProductoController;
+use \App\Http\Controllers\Farmacia\ProductoImportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\ReporteRestauranteController;
@@ -619,6 +620,7 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::put('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'update'])->middleware('only.admin')->name('productos.update');
     Route::delete('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroy'])->middleware('only.admin')->name('productos.destroy');
     Route::post('/productos/{producto}/stock', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'actualizarStock'])->name('productos.stock');
+    Route::post('/productos/importar', [\App\Http\Controllers\Farmacia\ProductoImportController::class, 'importar'])->middleware('only.admin')->name('productos.importar');
 
     // Vencimientos
     Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->middleware('only.admin')->name('vencimientos');
