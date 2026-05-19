@@ -7,10 +7,16 @@
                 <p style="font-size:24px; font-weight:800; color:#1E293B; margin:0;">📦 Productos</p>
                 <p style="font-size:14px; color:#94A3B8; margin:4px 0 0;">{{ productos.length }} productos registrados</p>
             </div>
-            <button @click="modalNuevo = true"
-                style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
-                + Nuevo Producto
-            </button>
+            <div style="display:flex; gap:12px;">
+                <button @click="modalImportar = true"
+                    style="padding:10px 20px; background:linear-gradient(135deg,#8B5CF6,#7C3AED); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                    📤 Importar Excel
+                </button>
+                <button @click="modalNuevo = true"
+                    style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                    + Nuevo Producto
+                </button>
+            </div>
         </div>
 
         <!-- Alertas stock bajo -->
@@ -285,6 +291,88 @@
 </Teleport>
 
     </AppLayout>
+        <!-- Modal Importar Excel -->
+        <div v-if="modalImportar" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:999;" @click.self="cerrarModalImportar">
+            <div style="background:white; padding:32px; border-radius:20px; max-width:600px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+                    <div>
+                        <h3 style="margin:0; font-size:22px; font-weight:800; color:#1E293B;">📤 Importar Productos desde Excel</h3>
+                        <p style="margin:4px 0 0; font-size:14px; color:#94A3B8;">Carga masiva de inventario</p>
+                    </div>
+                    <button @click="cerrarModalImportar" style="background:transparent; border:none; font-size:24px; cursor:pointer; color:#94A3B8;">×</button>
+                </div>
+
+                <!-- Instrucciones -->
+                <div style="background:#F0F9FF; border:1px solid #BFDBFE; border-radius:12px; padding:16px; margin-bottom:20px;">
+                    <p style="margin:0 0 8px; font-size:13px; font-weight:600; color:#1E40AF;">📋 Instrucciones:</p>
+                    <ol style="margin:0; padding-left:20px; font-size:13px; color:#475569; line-height:1.6;">
+                        <li>Descarga la plantilla Excel (si no la tienes)</li>
+                        <li>Llena el archivo con tus productos</li>
+                        <li>Columnas obligatorias: código, descripción, precio_compra, precio_venta, stock</li>
+                        <li>Sube el archivo aquí para importar</li>
+                    </ol>
+                </div>
+
+                <!-- Selector de archivo -->
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:8px;">
+                        Selecciona tu archivo Excel:
+                    </label>
+                    <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" @change="archivoSeleccionado"
+                        style="width:100%; padding:12px; border:2px dashed #CBD5E1; border-radius:10px; font-size:14px; cursor:pointer; box-sizing:border-box;">
+                    <p v-if="archivo" style="margin:8px 0 0; font-size:12px; color:#14B8A6; font-weight:600;">
+                        ✓ Archivo seleccionado: {{ archivo.name }}
+                    </p>
+                </div>
+
+                <!-- Resultados (si hay) -->
+                <div v-if="resultadoImportacion" :style="{
+                    background: resultadoImportacion.tipo === 'success' ? '#F0FDF4' : '#FEF2F2',
+                    border: '1px solid ' + (resultadoImportacion.tipo === 'success' ? '#BBF7D0' : '#FECACA'),
+                    borderRadius: '12px',
+                    padding: '16px',
+                    marginBottom: '20px'
+                }">
+                    <p :style="{
+                        margin: '0',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: resultadoImportacion.tipo === 'success' ? '#166534' : '#991B1B'
+                    }">
+                        {{ resultadoImportacion.mensaje }}
+                    </p>
+                    <div v-if="resultadoImportacion.errores && resultadoImportacion.errores.length" style="margin-top:12px;">
+                        <p style="margin:0 0 8px; font-size:13px; font-weight:600; color:#991B1B;">Errores encontrados:</p>
+                        <ul style="margin:0; padding-left:20px; font-size:12px; color:#DC2626;">
+                            <li v-for="(error, idx) in resultadoImportacion.errores.slice(0, 5)" :key="idx">{{ error }}</li>
+                            <li v-if="resultadoImportacion.errores.length > 5">... y {{ resultadoImportacion.errores.length - 5 }} errores más</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div style="display:flex; gap:12px; justify-content:flex-end;">
+                    <button @click="cerrarModalImportar"
+                        style="padding:10px 20px; background:#F1F5F9; color:#475569; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                        Cancelar
+                    </button>
+                    <button @click="procesarImportacion" :disabled="!archivo || procesando"
+                        :style="{
+                            padding: '10px 20px',
+                            background: (!archivo || procesando) ? '#CBD5E1' : 'linear-gradient(135deg,#8B5CF6,#7C3AED)',
+                            color: 'white',
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            border: 'none',
+                            cursor: (!archivo || procesando) ? 'not-allowed' : 'pointer'
+                        }">
+                        {{ procesando ? '⏳ Procesando...' : '📤 Importar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
 </template>
 
 <script setup>
@@ -436,7 +524,85 @@ const guardarStock = () => {
     })
 }
 
+// ─────────────────────────────────────────────────────────
+// IMPORTAR DESDE EXCEL
+// ─────────────────────────────────────────────────────────
 
+const archivoSeleccionado = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+        archivo.value = file
+        resultadoImportacion.value = null
+    }
+}
 
+const cerrarModalImportar = () => {
+    modalImportar.value = false
+    archivo.value = null
+    procesando.value = false
+    resultadoImportacion.value = null
+    if (document.querySelector('input[type="file"]')) {
+        document.querySelector('input[type="file"]').value = ''
+    }
+}
+
+const procesarImportacion = async () => {
+    if (!archivo.value) {
+        alert('Selecciona un archivo primero')
+        return
+    }
+
+    procesando.value = true
+    resultadoImportacion.value = null
+
+    const formData = new FormData()
+    formData.append('archivo', archivo.value)
+
+    try {
+        await router.post(route('farmacia.productos.importar'), formData, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const flash = page.props.flash
+                if (flash.success) {
+                    resultadoImportacion.value = {
+                        tipo: 'success',
+                        mensaje: flash.success,
+                        errores: flash.estadisticas?.errores || []
+                    }
+                    // Cerrar modal después de 3 segundos si fue exitoso y sin errores
+                    if (!flash.estadisticas?.errores?.length) {
+                        setTimeout(() => {
+                            cerrarModalImportar()
+                            location.reload() // Recargar para ver los productos nuevos
+                        }, 2000)
+                    }
+                } else if (flash.error) {
+                    resultadoImportacion.value = {
+                        tipo: 'error',
+                        mensaje: flash.error,
+                        errores: flash.errores || []
+                    }
+                }
+            },
+            onError: (errors) => {
+                resultadoImportacion.value = {
+                    tipo: 'error',
+                    mensaje: 'Error al procesar el archivo',
+                    errores: Object.values(errors)
+                }
+            },
+            onFinish: () => {
+                procesando.value = false
+            }
+        })
+    } catch (error) {
+        procesando.value = false
+        resultadoImportacion.value = {
+            tipo: 'error',
+            mensaje: 'Error al subir el archivo: ' + error.message,
+            errores: []
+        }
+    }
+}
 
 </script>
