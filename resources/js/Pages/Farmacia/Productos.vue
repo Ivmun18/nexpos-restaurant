@@ -386,6 +386,11 @@ const props = defineProps({
 })
 
 const busqueda    = ref('')
+const modalImportar = ref(false)
+const archivo = ref(null)
+const procesando = ref(false)
+const resultadoImportacion = ref(null)
+
 const inputBusqueda = ref(null)
 
 onMounted(() => {
@@ -559,7 +564,7 @@ const procesarImportacion = async () => {
     formData.append('archivo', archivo.value)
 
     try {
-        await router.post(route('farmacia.productos.importar'), formData, {
+        await router.post('/farmacia/productos/importar', formData, {
             preserveScroll: true,
             onSuccess: (page) => {
                 const flash = page.props.flash
@@ -604,5 +609,10 @@ const procesarImportacion = async () => {
         }
     }
 }
+
+
+// ─────────────────────────────────────────────────────────
+// IMPORTAR DESDE EXCEL
+
 
 </script>
