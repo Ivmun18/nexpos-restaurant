@@ -14,7 +14,7 @@ class ClienteController extends Controller
     {
         $buscar = $request->get('buscar', '');
 
-        $query = Cliente::orderBy('razon_social');
+        $query = Cliente::where('empresa_id', EmpresaHelper::id())->orderBy('razon_social');
 
         if ($buscar) {
             $query->where(function($q) use ($buscar) {
