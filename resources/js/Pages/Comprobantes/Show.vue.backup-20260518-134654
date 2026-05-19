@@ -145,20 +145,10 @@
                     style="flex:1; padding:14px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                     🖨️ Imprimir Ticket
                 </button>
-                <button @click="enviarWhatsApp" style="padding:8px 16px; background:#10B981; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+                <button @click="enviarWhatsApp"
+                    style="flex:1; padding:14px; background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                     📱 WhatsApp
                 </button>
-                <div v-if="mostrarInputWhatsApp" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:999;" @click.self="mostrarInputWhatsApp=false">
-                    <div style="background:white; padding:24px; border-radius:12px; max-width:400px; width:90%;">
-                        <h3 style="margin:0 0 16px; font-size:18px; font-weight:700;">📱 Enviar por WhatsApp</h3>
-                        <p style="margin:0 0 12px; color:#64748B; font-size:14px;">Número del cliente (9 dígitos):</p>
-                        <input v-model="numeroWhatsApp" type="tel" placeholder="987654321" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:8px; font-size:16px; margin-bottom:16px; box-sizing:border-box;" />
-                        <div style="display:flex; gap:8px; justify-content:flex-end;">
-                            <button @click="mostrarInputWhatsApp=false" style="padding:10px 16px; background:#E2E8F0; border:none; border-radius:8px; cursor:pointer;">Cancelar</button>
-                            <a :href="whatsappUrl" target="_blank" rel="noopener" @click="mostrarInputWhatsApp=false" :style="{padding:'10px 16px', background: numeroWhatsApp ? '#25D366' : '#94A3B8', color:'white', borderRadius:'8px', textDecoration:'none', fontWeight:'600', pointerEvents: numeroWhatsApp ? 'auto' : 'none'}">Abrir WhatsApp</a>
-                        </div>
-                    </div>
-                </div>
                 <button v-if="comprobante.caja" @click="$inertia.visit('/mesas')"
                     style="flex:1; padding:14px; background:#1E293B; color:white; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                     🪑 Ver Mesas
@@ -173,7 +163,7 @@
 <script setup>
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 
 const props = defineProps({
     comprobante: Object,
@@ -228,20 +218,27 @@ const imprimir = () => {
     setTimeout(() => ventana.print(), 500)
 }
 
-const numeroWhatsApp = ref('')
-const mostrarInputWhatsApp = ref(false)
-
-const whatsappUrl = computed(() => {
-    if (!numeroWhatsApp.value) return '#'
-    const numero = numeroWhatsApp.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
+const enviarWhatsApp = async () => {
+    const raw = prompt('Número WhatsApp (9 dígitos):')
+    if (!raw) return
+    const numero = raw.replace(/\D/g, '').replace(/^0+/, '')
     const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
     const c = props.comprobante
-    const mensaje = '*Comprobante NEXPOS*\n\n*' + (c.numero_completo || c.serie + '-' + c.numero) + '*\nFecha: ' + c.fecha_emision + '\nCliente: ' + c.cliente_nombre + '\n\n*TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita'
-    return 'https://wa.me/' + numeroFinal + '?text=' + encodeURIComponent(mensaje)
-})
-
-const enviarWhatsApp = () => {
-    mostrarInputWhatsApp.value = true
+    const mensaje = '🧾 *Comprobante NEXPOS*\n\n📋 *' + (c.numero_completo || c.serie + '-' + c.numero) + '*\n📅 Fecha: ' + c.fecha_emision + '\n👤 Cliente: ' + c.cliente_nombre + '\n\n💰 *TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita 🙏'
+    try {
+        const token = document.cookie.split(';').find(c => c.trim().startsWith('XSRF-TOKEN='))
+        const csrfToken = token ? decodeURIComponent(token.split('=')[1]) : ''
+        const res = await fetch('/api/whatsapp/enviar', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ telefono: numeroFinal, mensaje })
+        })
+        const data = await res.json()
+        alert(data.ok ? 'Mensaje enviado' : 'Error: ' + data.error)
+    } catch(e) {
+        alert('Error de conexión')
+    }
 }
 
 const formatFecha = (fecha) => {
