@@ -562,6 +562,7 @@ const procesarImportacion = async () => {
 
     const formData = new FormData()
     formData.append('archivo', archivo.value)
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content)
 
     try {
         await router.post('/farmacia/productos/importar', formData, {
