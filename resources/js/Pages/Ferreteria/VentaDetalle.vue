@@ -199,6 +199,10 @@ import { computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
+
+const mostrarInputWhatsApp = ref(false)
+const numeroWhatsApp = ref('')
+
 const reintentar = () => {
     if (confirm('¿Reintentar envío a SUNAT?')) {
         router.post(`/ferreteria/ventas/${props.venta.id}/reintentar`)
