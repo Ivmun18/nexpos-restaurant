@@ -20,8 +20,6 @@ use App\Http\Controllers\MenuCategoriaController;
 use App\Http\Controllers\MenuProductoController;
 use \App\Http\Controllers\Farmacia\ProductoImportController;
 use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
-use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
-use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\ReporteRestauranteController;
