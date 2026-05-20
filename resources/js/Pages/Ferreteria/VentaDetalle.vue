@@ -177,6 +177,20 @@
         </div>
 
     </AppLayout>
+
+                <!-- Modal WhatsApp -->
+                <div v-if="mostrarInputWhatsApp" style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999;" @click.self="mostrarInputWhatsApp=false">
+                    <div style="background:white; padding:24px; border-radius:16px; width:90%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                        <p style="font-size:18px; font-weight:700; margin:0 0 8px; color:#1E293B;">📱 Enviar por WhatsApp</p>
+                        <p style="font-size:14px; color:#64748B; margin:0 0 16px;">Ingresa el número del cliente</p>
+                        <input v-model="numeroWhatsApp" type="tel" placeholder="987654321" style="width:100%; padding:12px; border:1px solid #E2E8F0; border-radius:8px; font-size:16px; margin-bottom:16px; box-sizing:border-box;" />
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                            <button @click="mostrarInputWhatsApp=false" style="padding:10px 16px; background:#E2E8F0; border:none; border-radius:8px; cursor:pointer;">Cancelar</button>
+                            <a :href="whatsappUrl" target="_blank" rel="noopener" @click="mostrarInputWhatsApp=false" :style="{padding:'10px 16px', background: numeroWhatsApp ? '#25D366' : '#94A3B8', color:'white', borderRadius:'8px', textDecoration:'none', fontWeight:'600', pointerEvents: numeroWhatsApp ? 'auto' : 'none'}">Abrir WhatsApp</a>
+                        </div>
+                    </div>
+                </div>
+
 </template>
 
 <script setup>
@@ -289,28 +303,28 @@ const imprimir = () => {
     setTimeout(() => ventana.print(), 500)
 }
 
-const enviarWhatsApp = () => {
-    const raw = prompt('Numero WhatsApp del cliente (ej: 987654321):')
-    if (!raw) return
-    const numero = raw.replace(/[^0-9]/g, '').replace(/^0+/, '')
-    const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
 
+const whatsappUrl = computed(() => {
+    if (!numeroWhatsApp.value) return '#'
+    const numero = numeroWhatsApp.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
+    const numeroFinal = numero.startsWith('51') ? numero : '51' + numero
     const items = props.venta.detalle?.map(d =>
         '- ' + d.descripcion + ' x' + d.cantidad + ' = S/ ' + Number(d.total).toFixed(2)
     ).join('\n') || ''
-
     const totalCalc = (Number(props.venta.total_gravado || 0) + Number(props.venta.total_igv || 0) + Number(props.venta.total_inafecto || 0) + Number(props.venta.total_exonerado || 0)).toFixed(2)
+    const mensaje = '*Comprobante NEXPOS*\n\n' +
+        '*' + props.venta.numero_completo + '*\n' +
+        'Fecha: ' + (props.venta.created_at?.slice(0,10) || '') + '\n\n' +
+        items + '\n\n' +
+        '*Total: S/ ' + totalCalc + '*\n\n' +
+        'Gracias por su compra'
+    return 'https://wa.me/' + numeroFinal + '?text=' + encodeURIComponent(mensaje)
+})
 
-    const mensaje = `Hola! Aquí está tu comprobante:\n\n` +
-        `${props.venta.tipo_comprobante === '01' ? 'FACTURA' : 'BOLETA'} ${props.venta.serie}-${props.venta.numero}\n` +
-        `Fecha: ${props.venta.fecha_emision}\n\n` +
-        `DETALLE:\n${items}\n\n` +
-        `TOTAL: S/ ${totalCalc}\n\n` +
-        `Gracias por su compra!`
-
-    const url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`
-    window.open(url, '_blank')
+const enviarWhatsApp = () => {
+    mostrarInputWhatsApp.value = true
 }
+
 
 
 const imprimirA4 = () => {
