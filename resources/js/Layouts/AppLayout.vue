@@ -454,17 +454,17 @@ const allMenuItems = [
 
     // FERRETERIA
     { path: '/ferreteria/pos',          icon: 'pos',           label: 'Punto de Venta',    module: 'pos_ferreteria', section: 'FERRETERIA' },
+    { path: '/ferreteria/ventas',       icon: 'ventas',        label: 'Ventas',            module: 'pos_ferreteria', section: 'FERRETERIA' },
+    { path: '/ferreteria/caja',         icon: 'caja',          label: 'Caja',              module: 'pos_ferreteria', section: 'FERRETERIA' },
+    { path: '/ferreteria/cajero',       icon: 'cajero',        label: 'Panel Cajero',      module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/productos',    icon: 'herramienta',   label: 'Productos',         module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/categorias',   icon: 'categoria',     label: 'Categorías',        module: 'pos_ferreteria', section: 'FERRETERIA' },
-    { path: '/ferreteria/proveedores',  icon: 'proveedor',     label: 'Proveedores',       module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/clientes',     icon: 'cliente',       label: 'Clientes',          module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/cotizaciones', icon: 'cotizacion',    label: 'Cotizaciones',      module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/ordenes',      icon: 'orden',         label: 'Órdenes de Trabajo',module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/garantias',    icon: 'garantia',      label: 'Garantías',         module: 'pos_ferreteria', section: 'FERRETERIA' },
-    { path: '/ferreteria/caja',         icon: 'caja',          label: 'Caja',              module: 'pos_ferreteria', section: 'FERRETERIA' },
-    { path: '/ferreteria/ventas',       icon: 'ventas',        label: 'Ventas',            module: 'pos_ferreteria', section: 'FERRETERIA' },
-    { path: '/ferreteria/cajero',       icon: 'cajero',        label: 'Panel Cajero',      module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/reportes',     icon: 'reporte',       label: 'Reportes',          module: 'pos_ferreteria', section: 'FERRETERIA' },
+    { path: '/ferreteria/proveedores',  icon: 'proveedor',     label: 'Proveedores',       module: 'pos_ferreteria', section: 'FERRETERIA' },
 
     // FARMACIA
     { path: '/farmacia/pos',                icon: 'pos',         label: 'Punto de Venta',  module: 'pos_farmacia', section: 'FARMACIA' },
