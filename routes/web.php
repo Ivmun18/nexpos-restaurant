@@ -594,6 +594,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ferreteria/cajero', [\App\Http\Controllers\Ferreteria\CajeroFerretoriaController::class, 'index'])->name('ferreteria.cajero');
     Route::post('/ferreteria/cajero/{venta}/cobrar', [\App\Http\Controllers\Ferreteria\CajeroFerretoriaController::class, 'cobrar'])->name('ferreteria.cajero.cobrar');
     Route::get('/ferreteria/ventas', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'ventas'])->name('ferreteria.ventas');
+    Route::get('/ferreteria/ventas/exportar', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'exportarVentas'])->name('ferreteria.ventas.exportar');
     Route::get('/ferreteria/ventas/{venta}', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'show'])->name('ferreteria.ventas.show');
     Route::post('/ferreteria/ventas/{venta}/anular', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'anular'])->name('ferreteria.ventas.anular');
     Route::post('/ferreteria/ventas/{venta}/reintentar', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'reintentar'])->name('ferreteria.ventas.reintentar');

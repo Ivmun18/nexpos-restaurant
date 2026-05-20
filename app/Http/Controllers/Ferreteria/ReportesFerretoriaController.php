@@ -10,6 +10,8 @@ use App\Models\Garantia;
 use App\Models\CajaMinimarket as Caja;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Exports\VentasExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportesFerretoriaController extends Controller
 {
@@ -133,6 +135,14 @@ class ReportesFerretoriaController extends Controller
             'venta'   => $venta,
             'empresa' => $empresa,
         ]);
+    }
+
+    public function exportarVentas(Request $request)
+    {
+        $desde = $request->desde ?? now()->startOfMonth()->toDateString();
+        $hasta = $request->hasta ?? now()->toDateString();
+        $nombre = 'ventas-ferreteria-' . $desde . '-al-' . $hasta . '.xlsx';
+        return Excel::download(new VentasExport($desde, $hasta), $nombre);
     }
 
     public function anular(\App\Models\Venta $venta)

@@ -40,6 +40,10 @@
                 style="padding:10px 16px; background:#F0FDFA; color:#0F766E; border:1px solid #CCFBF1; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
                 Este mes
             </button>
+            <a :href="`/ferreteria/ventas/exportar?desde=${filtros.desde}&hasta=${filtros.hasta}`"
+                style="margin-left:auto; padding:10px 20px; background:linear-gradient(135deg,#16A34A,#15803D); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer;">
+                📊 Exportar Excel
+            </a>
         </div>
 
         <!-- Tabla -->
