@@ -562,6 +562,11 @@ const menuItems = computed(() => {
         // En ferreteria ocultar SISTEMA genérico
         if (industry === 'ferreteria') {
             if (item.section === 'SISTEMA') return false
+            // Modalidad de cobro:
+            //   'directo'  = vendedor cobra        -> mostrar Caja, ocultar Panel Cajero
+            //   'cajero'   = cajero centralizado   -> mostrar Panel Cajero, ocultar Caja
+            if (modalidadCobro.value === 'directo' && item.path === '/ferreteria/cajero') return false
+            if (modalidadCobro.value === 'cajero' && item.path === '/ferreteria/caja') return false
         }
 
         // Ocultar módulos de restaurante si no es restaurante
