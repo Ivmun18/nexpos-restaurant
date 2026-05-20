@@ -19,6 +19,9 @@ use App\Http\Controllers\Mesa\MesaController;
 use App\Http\Controllers\MenuCategoriaController;
 use App\Http\Controllers\MenuProductoController;
 use \App\Http\Controllers\Farmacia\ProductoImportController;
+use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
+use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
+use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\ReporteRestauranteController;
@@ -554,6 +557,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ferreteria/productos',              [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'index'])->name('ferreteria.productos');
     Route::post('/ferreteria/productos',             [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'store'])->name('ferreteria.productos.store');
     Route::put('/ferreteria/productos/{producto}',   [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'update'])->name('ferreteria.productos.update');
+    Route::post('/ferreteria/productos/importar', [FerreteriaProductoImportController::class, 'importar'])->middleware('only.admin')->name('ferreteria.productos.importar');
     Route::post('/ferreteria/productos/{producto}/stock', [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'ajustarStock'])->name('ferreteria.productos.stock');
     Route::delete('/ferreteria/productos/{producto}',[\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'destroy'])->name('ferreteria.productos.destroy');
 });
