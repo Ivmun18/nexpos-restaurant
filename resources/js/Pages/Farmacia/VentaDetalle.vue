@@ -349,7 +349,7 @@ const whatsappUrl = computed(() => {
         '- ' + d.descripcion + ' x' + d.cantidad + ' = S/ ' + Number(d.total).toFixed(2)
     ).join('\n') || ''
     const totalCalc = (Number(props.venta.total_gravado || 0) + Number(props.venta.total_igv || 0) + Number(props.venta.total_inafecto || 0) + Number(props.venta.total_exonerado || 0)).toFixed(2)
-    const mensaje = '*Comprobante NEXPOS*\n\n' +
+    const mensaje = '*' + (props.empresa.nombre_comercial || props.empresa.razon_social) + '*\n\n' +
         '*' + props.venta.numero_completo + '*\n' +
         'Fecha: ' + (props.venta.created_at?.slice(0,10) || '') + '\n\n' +
         items + '\n\n' +
