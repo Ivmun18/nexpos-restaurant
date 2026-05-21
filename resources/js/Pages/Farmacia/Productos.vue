@@ -70,9 +70,10 @@
                         <td style="padding:14px 20px; text-align:center;">
                             <span :style="{
                                 padding: '4px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '700',
-                                background: p.stock_actual <= (p.stock_minimo || 0) ? '#FEF2F2' : '#F0FDF4',
-                                color: p.stock_actual <= (p.stock_minimo || 0) ? '#991B1B' : '#166534',
+                                background: p.stock_actual <= (p.stock_minimo || 3) ? '#FEF2F2' : '#F0FDF4',
+                                color: p.stock_actual <= (p.stock_minimo || 3) ? '#991B1B' : '#166534',
                             }">{{ p.stock_actual }}</span>
+                            <div v-if="p.stock_actual <= (p.stock_minimo || 3)" style="margin-top:4px; font-size:11px; font-weight:700; color:#991B1B;">⚠️ Stock bajo</div>
                         </td>
                         <td style="padding:14px 20px; text-align:center;">
                             <div style="display:flex; gap:8px; justify-content:center;">
@@ -94,7 +95,7 @@
        <!-- Modal Nuevo/Editar Producto -->
 <Teleport to="body">
     <div v-if="modalNuevo || modalEditar" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
-        <div style="background:white; border-radius:20px; padding:32px; width:100%; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="background:white; border-radius:20px; padding:32px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
             <p style="font-size:20px; font-weight:800; color:#1E293B; margin:0 0 24px;">
                 {{ modalEditar ? '✏️ Editar Producto' : '+ Nuevo Producto' }}
             </p>
@@ -448,7 +449,7 @@ const productosFiltrados = computed(() => {
 })
 
 const stockBajo = computed(() =>
-    props.productos.filter(p => p.stock_actual <= (p.stock_minimo || 0))
+    props.productos.filter(p => p.stock_actual <= (p.stock_minimo || 3))
 )
 
 const cerrarModales = () => {
