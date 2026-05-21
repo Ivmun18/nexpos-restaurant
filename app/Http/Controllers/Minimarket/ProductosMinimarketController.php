@@ -49,7 +49,7 @@ class ProductosMinimarketController extends Controller
             'empresa_id'    => $empresa_id,
             'categoria_id'  => $request->categoria_id,
             'descripcion'   => $request->descripcion,
-            'codigo'        => $request->codigo ?? 'P' . str_pad(Producto::where('empresa_id', $empresa_id)->count() + 1, 3, '0', STR_PAD_LEFT),
+            'codigo'        => $request->filled('codigo') ? $request->codigo : 'P' . str_pad(Producto::where('empresa_id', $empresa_id)->count() + 1, 3, '0', STR_PAD_LEFT),
             'precio_venta'  => $request->precio_venta,
             'precio_compra' => $request->precio_compra ?? 0,
             'stock_actual'  => $request->stock_actual ?? 0,
@@ -66,7 +66,7 @@ class ProductosMinimarketController extends Controller
     {
         $request->validate([
             'descripcion'  => 'required|string|max:255',
-            'codigo'       => 'required|string|max:50',
+            'codigo'       => 'nullable|string|max:50',
             'precio_venta' => 'required|numeric|min:0',
             'precio_compra'=> 'nullable|numeric|min:0',
             'stock_minimo' => 'nullable|numeric|min:0',
@@ -77,7 +77,7 @@ class ProductosMinimarketController extends Controller
         $producto->update([
             'categoria_id'  => $request->categoria_id,
             'descripcion'   => $request->descripcion,
-            'codigo'        => $request->codigo,
+            'codigo'        => $request->filled('codigo') ? $request->codigo : ($producto->codigo ?: 'P' . str_pad($producto->id, 3, '0', STR_PAD_LEFT)),
             'precio_venta'  => $request->precio_venta,
             'precio_compra' => $request->precio_compra ?? 0,
             'stock_minimo'  => $request->stock_minimo ?? 0,

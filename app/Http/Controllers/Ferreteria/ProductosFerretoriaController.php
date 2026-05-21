@@ -24,7 +24,7 @@ class ProductosFerretoriaController extends Controller
         Producto::create([
             'empresa_id'    => auth()->user()->empresa_id,
             'descripcion'   => $request->descripcion,
-            'codigo'        => $request->codigo,
+            'codigo'        => $request->filled('codigo') ? $request->codigo : 'F' . date('ymdHis'),
             'codigo_barras' => $request->codigo_barras,
             'unidad_medida' => $request->unidad_medida ?? 'UND',
             'categoria_id'  => $request->categoria_id ?: null,
@@ -41,7 +41,7 @@ class ProductosFerretoriaController extends Controller
     {
         $producto->update([
             'descripcion'   => $request->descripcion,
-            'codigo'        => $request->codigo,
+            'codigo'        => $request->filled('codigo') ? $request->codigo : ($producto->codigo ?: 'F' . str_pad($producto->id, 3, '0', STR_PAD_LEFT)),
             'codigo_barras' => $request->codigo_barras,
             'unidad_medida' => $request->unidad_medida ?? 'UND',
             'categoria_id'  => $request->categoria_id ?: null,

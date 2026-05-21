@@ -85,8 +85,8 @@
                         <td style="padding:14px 20px; text-align:center;">
                             <span :style="{
                                 padding: '4px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '700',
-                                background: p.stock_actual <= (p.stock_minimo || 0) ? '#FEF2F2' : '#F0FDF4',
-                                color: p.stock_actual <= (p.stock_minimo || 0) ? '#991B1B' : '#166534',
+                                background: p.stock_actual <= (p.stock_minimo || 3) ? '#FEF2F2' : '#F0FDF4',
+                                color: p.stock_actual <= (p.stock_minimo || 3) ? '#991B1B' : '#166534',
                             }">{{ p.stock_actual }} {{ p.unidad_medida || 'UND' }}</span>
                         </td>
                         <td style="padding:14px 20px; text-align:center;">
@@ -103,7 +103,7 @@
 
         <!-- Modal Producto -->
         <div v-if="modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
-            <div style="background:white; border-radius:16px; padding:28px; width:100%; max-width:580px; margin:auto;">
+            <div style="background:white; border-radius:16px; padding:28px; width:100%; max-width:580px; margin:auto; max-height:90vh; overflow-y:auto;">
                 <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 20px;">{{ editando ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -274,14 +274,14 @@ const productosFiltrados = computed(() => {
             p.codigo_barras?.includes(busqueda.value)
         const matchCategoria = !filtroCategoria.value || p.categoria_id == filtroCategoria.value
         const matchStock = !filtroStock.value ||
-            (filtroStock.value === 'bajo' && p.stock_actual <= (p.stock_minimo || 0)) ||
-            (filtroStock.value === 'normal' && p.stock_actual > (p.stock_minimo || 0))
+            (filtroStock.value === 'bajo' && p.stock_actual <= (p.stock_minimo || 3)) ||
+            (filtroStock.value === 'normal' && p.stock_actual > (p.stock_minimo || 3))
         return matchBusqueda && matchCategoria && matchStock
     })
 })
 
 const productosStockBajo = computed(() =>
-    props.productos.filter(p => p.stock_actual <= (p.stock_minimo || 0)).length
+    props.productos.filter(p => p.stock_actual <= (p.stock_minimo || 3)).length
 )
 
 const valorInventario = computed(() => {
