@@ -34,8 +34,12 @@ class ProductosFarmaciaController extends Controller
             'fecha_vencimiento'=> 'nullable|date',
         ]);
 
+        $datos = $request->all();
+        if (empty($datos['codigo'])) {
+            $datos['codigo'] = 'FAR-' . date('ymdHis');
+        }
         $producto = Producto::create([
-            ...$request->all(),
+            ...$datos,
             'empresa_id' => auth()->user()->empresa_id,
             'activo'     => true,
         ]);
@@ -57,7 +61,11 @@ class ProductosFarmaciaController extends Controller
     public function update(Request $request, Producto $producto)
     {
         $datosAntes = $producto->only(['descripcion', 'precio_venta', 'precio_compra', 'stock_actual', 'lote', 'fecha_vencimiento', 'codigo_barras']);
-        $producto->update($request->all());
+        $datos = $request->all();
+        if (empty($datos['codigo'])) {
+            $datos['codigo'] = $producto->codigo ?: 'FAR-' . str_pad($producto->id, 5, '0', STR_PAD_LEFT);
+        }
+        $producto->update($datos);
         
         // Detectar cambio importante de precio
         $severidad = 'info';
