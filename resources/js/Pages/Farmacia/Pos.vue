@@ -1,7 +1,7 @@
 <template>
     <AppLayout title="POS Farmacia" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
 
-        <div style="display:grid; grid-template-columns:1fr min(380px, 40vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1fr 320px; gap:16px; height:calc(100vh - 140px); overflow:hidden;">
 
             <!-- ══ PANEL IZQUIERDO: Búsqueda + Catálogo ══ -->
             <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden; min-height:0;">
@@ -83,10 +83,10 @@
             </div>
 
             <!-- ══ PANEL DERECHO: Carrito + Cobro ══ -->
-            <div style="display:flex; flex-direction:column; gap:16px; overflow-y:auto; min-height:0;">
+            <div style="display:flex; flex-direction:column; gap:16px; min-height:0; overflow-y:auto;">
 
                 <!-- Carrito -->
-                <div style="flex:1; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow-y:auto;">
+                <div style="flex-shrink:0; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
                         <p style="font-size:16px; font-weight:800; color:#1E293B; margin:0;">🛒 Carrito</p>
                         <button v-if="carrito.length" @click="carrito = []"
@@ -101,38 +101,38 @@
                     </div>
 
                     <div v-for="(item, i) in carrito" :key="item.id"
-                        style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #F1F5F9;">
-                        <div style="flex:1; min-width:0;">
-                            <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.descripcion }}</p>
-                            <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ Number(item.precio_venta).toFixed(2) }} c/u</p>
+                        style="padding:5px 0; border-bottom:1px solid #F1F5F9;">
+                        <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:4px;">
+                            <p style="flex:1; min-width:0; font-size:13px; font-weight:600; color:#1E293B; margin:0; line-height:1.3;">{{ item.descripcion }}</p>
+                            <button @click="carrito.splice(i, 1)"
+                                style="color:#CBD5E1; background:none; border:none; cursor:pointer; font-size:18px; line-height:1; flex-shrink:0;">✕</button>
                         </div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <button @click="decrementar(i)"
-                                style="width:26px; height:26px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; font-size:14px; font-weight:700; color:#64748B;">−</button>
-                            <span style="font-size:14px; font-weight:700; color:#1E293B; min-width:20px; text-align:center;">{{ item.cantidad }}</span>
-                            <button @click="incrementar(i)"
-                                style="width:26px; height:26px; border-radius:8px; border:1px solid #14B8A6; background:#F0FDFA; cursor:pointer; font-size:14px; font-weight:700; color:#14B8A6;">+</button>
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <button @click="decrementar(i)"
+                                    style="width:28px; height:28px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; font-size:16px; font-weight:700; color:#64748B;">−</button>
+                                <span style="font-size:16px; font-weight:800; color:#1E293B; min-width:28px; text-align:center;">{{ item.cantidad }}</span>
+                                <button @click="incrementar(i)"
+                                    style="width:28px; height:28px; border-radius:8px; border:1px solid #14B8A6; background:#F0FDFA; cursor:pointer; font-size:16px; font-weight:700; color:#14B8A6;">+</button>
+                                <span style="font-size:12px; color:#94A3B8;">× S/ {{ Number(item.precio_venta).toFixed(2) }}</span>
+                            </div>
+                            <p style="font-size:16px; font-weight:800; color:#14B8A6; margin:0; white-space:nowrap;">S/ {{ (item.precio_venta * item.cantidad).toFixed(2) }}</p>
                         </div>
-                        <div style="text-align:right; min-width:60px;">
-                            <p style="font-size:14px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ (item.precio_venta * item.cantidad).toFixed(2) }}</p>
-                        </div>
-                        <button @click="carrito.splice(i, 1)"
-                            style="color:#CBD5E1; background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
                     </div>
                 </div>
 
                 <!-- Cobro -->
-                <div style="background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                <div style="background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); flex-shrink:0;" data-cobro>
 
                     <!-- Total -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 16px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:10px 14px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:10px;">
                         <p style="font-size:15px; font-weight:700; color:white; margin:0;">TOTAL</p>
-                        <p style="font-size:28px; font-weight:900; color:white; margin:0;">S/ {{ total.toFixed(2) }}</p>
+                        <p style="font-size:22px; font-weight:900; color:white; margin:0;">S/ {{ total.toFixed(2) }}</p>
                     </div>
 
                     <!-- Método de pago -->
                     <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 10px;">Método de pago</p>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;">
                         <button v-for="m in metodos" :key="m.valor" @click="metodoPago = m.valor"
                             :style="{
                                 padding: '10px',
