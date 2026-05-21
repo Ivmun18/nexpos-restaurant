@@ -104,40 +104,40 @@
             </div>
 
             <!-- KPIs -->
-            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px;">
                 <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06); grid-column:span 2;">
                     <p style="font-size:13px; font-weight:600; color:#94A3B8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">💰 Total del día</p>
-                    <p style="font-size:48px; font-weight:900; color:#1E293B; margin:0; line-height:1;">S/ {{ Number(resumen.total_dia).toFixed(2) }}</p>
+                    <p style="font-size:32px; font-weight:900; color:#1E293B; margin:0; line-height:1;">S/ {{ Number(resumen.total_dia).toFixed(2) }}</p>
                     <p style="font-size:13px; color:#94A3B8; margin:10px 0 0;">{{ resumen.total_ventas }} transacciones</p>
                 </div>
                 <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                     <p style="font-size:13px; font-weight:600; color:#94A3B8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">💵 Efectivo</p>
-                    <p style="font-size:28px; font-weight:800; color:#1E293B; margin:0;">S/ {{ Number(resumen.total_efectivo).toFixed(2) }}</p>
+                    <p style="font-size:22px; font-weight:800; color:#1E293B; margin:0;">S/ {{ Number(resumen.total_efectivo).toFixed(2) }}</p>
                 </div>
                 <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                     <p style="font-size:13px; font-weight:600; color:#94A3B8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">📱 Digital</p>
-                    <p style="font-size:28px; font-weight:800; color:#1E293B; margin:0;">S/ {{ (Number(resumen.total_yape) + Number(resumen.total_plin) + Number(resumen.total_tarjeta)).toFixed(2) }}</p>
+                    <p style="font-size:22px; font-weight:800; color:#1E293B; margin:0;">S/ {{ (Number(resumen.total_yape) + Number(resumen.total_plin) + Number(resumen.total_tarjeta)).toFixed(2) }}</p>
                 </div>
             </div>
 
             <!-- Métodos de pago -->
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px;">
                 <div style="background:white; border-radius:16px; padding:20px; border:1px solid #E2E8F0; display:flex; align-items:center; gap:16px;">
-                    <div style="width:48px; height:48px; background:#EFF6FF; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">📱</div>
+                    <div style="width:38px; height:38px; background:#EFF6FF; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;">📱</div>
                     <div>
                         <p style="font-size:13px; color:#94A3B8; margin:0; font-weight:600;">Yape</p>
                         <p style="font-size:20px; font-weight:800; color:#1E293B; margin:4px 0 0;">S/ {{ Number(resumen.total_yape).toFixed(2) }}</p>
                     </div>
                 </div>
                 <div style="background:white; border-radius:16px; padding:20px; border:1px solid #E2E8F0; display:flex; align-items:center; gap:16px;">
-                    <div style="width:48px; height:48px; background:#F5F3FF; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">📲</div>
+                    <div style="width:38px; height:38px; background:#F5F3FF; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;">📲</div>
                     <div>
                         <p style="font-size:13px; color:#94A3B8; margin:0; font-weight:600;">Plin</p>
                         <p style="font-size:20px; font-weight:800; color:#1E293B; margin:4px 0 0;">S/ {{ Number(resumen.total_plin).toFixed(2) }}</p>
                     </div>
                 </div>
                 <div style="background:white; border-radius:16px; padding:20px; border:1px solid #E2E8F0; display:flex; align-items:center; gap:16px;">
-                    <div style="width:48px; height:48px; background:#FFF7ED; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">💳</div>
+                    <div style="width:38px; height:38px; background:#FFF7ED; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;">💳</div>
                     <div>
                         <p style="font-size:13px; color:#94A3B8; margin:0; font-weight:600;">Tarjeta</p>
                         <p style="font-size:20px; font-weight:800; color:#1E293B; margin:4px 0 0;">S/ {{ Number(resumen.total_tarjeta).toFixed(2) }}</p>
@@ -194,7 +194,7 @@
         <!-- Modal Cierre de Caja -->
         <Teleport to="body">
             <div v-if="modalCierre" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
-                <div style="background:white; border-radius:20px; padding:32px; width:100%; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+                <div style="background:white; border-radius:20px; padding:28px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
                     <p style="font-size:20px; font-weight:800; color:#1E293B; margin:0 0 8px;">🔒 Cerrar Caja</p>
                     <p style="font-size:14px; color:#94A3B8; margin:0 0 24px;">Ingresa el monto contado en caja</p>
 
