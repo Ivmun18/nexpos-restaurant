@@ -15,26 +15,11 @@ use Inertia\Response;
 
 class CajaRestauranteController extends Controller
 {
-    // Devuelve los IDs de todas las mesas del grupo (principal + unidas)
-    private function idsGrupoMesa(Mesa $mesa): array
-    {
-        // Si esta mesa es secundaria, la principal es su mesa_principal_id
-        $principalId = $mesa->mesa_principal_id ?: $mesa->id;
-        // El grupo = la principal + todas las que apuntan a ella
-        $ids = Mesa::where('id', $principalId)
-            ->orWhere('mesa_principal_id', $principalId)
-            ->pluck('id')
-            ->toArray();
-        return $ids;
-    }
-
     // Vista de cobro de una mesa
     public function show(Mesa $mesa): Response
     {
-        $mesaIds = $this->idsGrupoMesa($mesa);
-
         $pedidos = Pedido::with('detalles')
-            ->whereIn('mesa_id', $mesaIds)
+            ->where('mesa_id', $mesa->id)
             ->whereIn('estado', ['enviado', 'listo'])
             ->orderBy('numero_ronda')
             ->get();
@@ -82,7 +67,7 @@ class CajaRestauranteController extends Controller
             'parte_numero'      => 'nullable|integer|min:1',
         ]);
 
-        $pedidos = Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
+        $pedidos = Pedido::where('mesa_id', $mesa->id)
             ->whereIn('estado', ['enviado', 'listo'])
             ->get();
 
@@ -145,7 +130,7 @@ class CajaRestauranteController extends Controller
         }
 
         $pedidosItems = \App\Models\PedidoDetalle::whereIn('pedido_id',
-            Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
+            Pedido::where('mesa_id', $mesa->id)
                 ->whereIn('estado', ['enviado', 'listo'])
                 ->pluck('id')
         )->where('anulado', false)->get();
@@ -176,11 +161,11 @@ class CajaRestauranteController extends Controller
             }
         }
 
-        Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
+        Pedido::where('mesa_id', $mesa->id)
             ->whereIn('estado', ['enviado', 'listo'])
             ->update(['estado' => 'cerrado', 'caja_restaurante_id' => $caja->id]);
 
-        Mesa::whereIn('id', $this->idsGrupoMesa($mesa))->update(['estado' => 'libre', 'mesa_principal_id' => null]);
+        $mesa->update(['estado' => 'libre']);
 
         $tipo = $request->tipo_comprobante ?? 'boleta';
 
@@ -206,7 +191,7 @@ class CajaRestauranteController extends Controller
             'tipo_comprobante' => 'nullable|in:boleta,factura,ninguno',
         ]);
 
-        $pedidoIds = Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
+        $pedidoIds = Pedido::where('mesa_id', $mesa->id)
             ->whereIn('estado', ['enviado', 'listo'])
             ->pluck('id');
 
@@ -291,11 +276,11 @@ class CajaRestauranteController extends Controller
                 ->with('success', "Platos cobrados (S/ " . number_format($subtotal, 2) . "). Faltan {$platosPendientes} plato(s) por pagar.");
         }
 
-        Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
+        Pedido::where('mesa_id', $mesa->id)
             ->whereIn('estado', ['enviado', 'listo'])
             ->update(['estado' => 'cerrado', 'caja_restaurante_id' => $caja->id]);
 
-        Mesa::whereIn('id', $this->idsGrupoMesa($mesa))->update(['estado' => 'libre', 'mesa_principal_id' => null]);
+        $mesa->update(['estado' => 'libre']);
 
         $tipo = $request->tipo_comprobante ?? 'boleta';
 

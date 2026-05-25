@@ -395,6 +395,9 @@ Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middlewa
     Route::put('/mesas/{mesa}', [MesaController::class, 'update'])->name('mesas.update');
     Route::delete('/mesas/{mesa}', [MesaController::class, 'destroy'])->name('mesas.destroy');
     Route::post('/mesas/{mesa}/estado', [MesaController::class, 'cambiarEstado'])->name('mesas.estado');
+    Route::post('/mesas/{mesa}/transferir', [MesaController::class, 'transferir'])->name('mesas.transferir');
+    Route::post('/mesas/{mesa}/unir', [MesaController::class, 'unir'])->name('mesas.unir');
+    Route::post('/mesas/{mesa}/separar', [MesaController::class, 'separar'])->name('mesas.separar');
 
     // Menú / Carta
 

@@ -117,41 +117,6 @@
         </button>
     </div>
 
-    <!-- Acciones de mesa: transferir / unir / separar -->
-    <div v-if="mesaSeleccionada.estado === 'ocupada'" style="margin-bottom:16px;">
-        <p style="font-size:14px; font-weight:600; color:#64748B; margin:0 0 12px; text-transform:uppercase; letter-spacing:0.5px;">Acciones</p>
-
-        <!-- Transferir -->
-        <div style="margin-bottom:10px;">
-            <select v-model="destinoTransferir" style="width:100%; padding:12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; margin-bottom:8px;">
-                <option :value="null">Transferir a mesa libre...</option>
-                <option v-for="m in mesasLibres" :key="m.id" :value="m.id">Mesa {{ m.numero }}</option>
-            </select>
-            <button type="button" @click="transferirMesa()" :disabled="!destinoTransferir"
-                :style="{width:'100%', padding:'12px', background: destinoTransferir ? '#3B82F6' : '#E2E8F0', color: destinoTransferir ? 'white' : '#94A3B8', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'700', cursor: destinoTransferir ? 'pointer' : 'not-allowed'}">
-                ↗️ Transferir pedidos
-            </button>
-        </div>
-
-        <!-- Unir -->
-        <div style="margin-bottom:10px;">
-            <select v-model="secundariaUnir" style="width:100%; padding:12px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; margin-bottom:8px;">
-                <option :value="null">Unir con otra mesa...</option>
-                <option v-for="m in mesasOcupadasOtras" :key="m.id" :value="m.id">Mesa {{ m.numero }}</option>
-            </select>
-            <button type="button" @click="unirMesa()" :disabled="!secundariaUnir"
-                :style="{width:'100%', padding:'12px', background: secundariaUnir ? '#8B5CF6' : '#E2E8F0', color: secundariaUnir ? 'white' : '#94A3B8', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'700', cursor: secundariaUnir ? 'pointer' : 'not-allowed'}">
-                🔗 Unir mesas
-            </button>
-        </div>
-
-        <!-- Separar (si esta unida) -->
-        <button v-if="mesaSeleccionada.mesa_principal_id" type="button" @click="separarMesa()"
-            style="width:100%; padding:12px; background:#FEF3C7; color:#92400E; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; margin-bottom:10px;">
-            ✂️ Separar de su mesa principal
-        </button>
-    </div>
-
     <button type="button" @click="modalMesa=false"
         style="width:100%; padding:14px; background:#F1F5F9; color:#64748B; border:none; border-radius:12px; font-size:16px; cursor:pointer;">
         Cancelar
@@ -236,41 +201,6 @@ const zonaActiva      = ref('todas')
 const modalMesa       = ref(false)
 const modalNueva      = ref(false)
 const mesaSeleccionada= ref(null)
-
-// Transferencia y union de mesas
-const destinoTransferir = ref(null)
-const secundariaUnir    = ref(null)
-
-// Mesas libres (para transferir)
-const mesasLibres = computed(() =>
-    (props.mesas || []).filter(m => m.estado === 'libre' && m.id !== mesaSeleccionada.value?.id)
-)
-// Otras mesas ocupadas (para unir)
-const mesasOcupadasOtras = computed(() =>
-    (props.mesas || []).filter(m => m.estado === 'ocupada' && m.id !== mesaSeleccionada.value?.id && !m.mesa_principal_id)
-)
-
-function transferirMesa() {
-    if (!destinoTransferir.value) return
-    router.post('/mesas/' + mesaSeleccionada.value.id + '/transferir',
-        { destino_id: destinoTransferir.value },
-        { onSuccess: () => { modalMesa.value = false; destinoTransferir.value = null; router.visit('/mesas') } }
-    )
-}
-
-function unirMesa() {
-    if (!secundariaUnir.value) return
-    router.post('/mesas/' + mesaSeleccionada.value.id + '/unir',
-        { secundaria_id: secundariaUnir.value },
-        { onSuccess: () => { modalMesa.value = false; secundariaUnir.value = null; router.visit('/mesas') } }
-    )
-}
-
-function separarMesa() {
-    router.post('/mesas/' + mesaSeleccionada.value.id + '/separar', {},
-        { onSuccess: () => { modalMesa.value = false; router.visit('/mesas') } }
-    )
-}
 
 const formMesa = ref({ numero: '', nombre: '', capacidad: 4, zona: 'salon' })
 

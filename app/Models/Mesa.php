@@ -18,6 +18,7 @@ class Mesa extends Model
         'mozo_id',
         'orden',
         'activo',
+        'mesa_principal_id',
     ];
 
     protected $casts = [
