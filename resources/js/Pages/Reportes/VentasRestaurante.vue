@@ -254,18 +254,26 @@
                 </button>
             </div>
 
+            <!-- Campo de margen estimado -->
+            <div style="background:#F0FDFA; border:1px solid #99F6E4; border-radius:12px; padding:14px 18px; margin-bottom:1.25rem; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span style="font-size:14px; font-weight:600; color:#0F766E;">📊 Margen de ganancia estimado:</span>
+                <input type="number" v-model.number="margen" min="0" max="100" style="width:80px; padding:8px 10px; border:2px solid #14B8A6; border-radius:8px; font-size:15px; font-weight:700; text-align:center; color:#0F766E;" />
+                <span style="font-size:14px; font-weight:600; color:#0F766E;">%</span>
+                <span style="font-size:12px; color:#64748B; font-style:italic;">Ganancia estimada = ventas × {{ margen }}%. Ajusta segun tu negocio.</span>
+            </div>
+
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
                 <div style="background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:14px; padding:1.2rem 1.4rem; color:white;">
                     <div style="font-size:12px; opacity:.85; text-transform:uppercase;">Ventas</div>
                     <div style="font-size:24px; font-weight:700; margin-top:6px;">S/ {{ fmtG(ganancias.resumen.ventas) }}</div>
                 </div>
-                <div style="background:white; border:1px solid #FEE2E2; border-radius:14px; padding:1.2rem 1.4rem;">
-                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Gastos</div>
-                    <div style="font-size:24px; font-weight:700; margin-top:6px; color:#DC2626;">S/ {{ fmtG(ganancias.resumen.gastos) }}</div>
+                <div style="background:white; border:1px solid #D1FAE5; border-radius:14px; padding:1.2rem 1.4rem;">
+                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Ganancia estimada</div>
+                    <div style="font-size:24px; font-weight:700; margin-top:6px; color:#059669;">S/ {{ fmtG(ganancias.resumen.ventas * margen / 100) }}</div>
                 </div>
-                <div style="background:white; border:1px solid #E2E8F0; border-radius:14px; padding:1.2rem 1.4rem;">
-                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Ganancia</div>
-                    <div :style="{fontSize:'24px', fontWeight:700, marginTop:'6px', color: ganancias.resumen.ganancia >= 0 ? '#059669' : '#DC2626'}">S/ {{ fmtG(ganancias.resumen.ganancia) }}</div>
+                <div style="background:white; border:1px solid #FEE2E2; border-radius:14px; padding:1.2rem 1.4rem;">
+                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Compras del período</div>
+                    <div style="font-size:24px; font-weight:700; margin-top:6px; color:#DC2626;">S/ {{ fmtG(ganancias.resumen.gastos) }}</div>
                 </div>
             </div>
 
@@ -275,19 +283,17 @@
                         <tr style="border-bottom:2px solid #F1F5F9; text-align:left; color:#94A3B8; text-transform:uppercase; font-size:11px;">
                             <th style="padding:10px 8px;">Período</th>
                             <th style="padding:10px 8px; text-align:right;">Ventas</th>
-                            <th style="padding:10px 8px; text-align:right;">Gastos</th>
-                            <th style="padding:10px 8px; text-align:right;">Ganancia</th>
+                            <th style="padding:10px 8px; text-align:right;">Ganancia estimada ({{ margen }}%)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="r in ganancias.filas" :key="r.periodo" style="border-bottom:1px solid #F1F5F9;">
                             <td style="padding:11px 8px; font-weight:600; color:#1E293B;">{{ r.periodo }}</td>
                             <td style="padding:11px 8px; text-align:right; color:#0F766E;">S/ {{ fmtG(r.ventas) }}</td>
-                            <td style="padding:11px 8px; text-align:right; color:#DC2626;">S/ {{ fmtG(r.gastos) }}</td>
-                            <td :style="{padding:'11px 8px', textAlign:'right', fontWeight:600, color: r.ganancia >= 0 ? '#059669' : '#DC2626'}">S/ {{ fmtG(r.ganancia) }}</td>
+                            <td style="padding:11px 8px; text-align:right; font-weight:600; color:#059669;">S/ {{ fmtG(r.ventas * margen / 100) }}</td>
                         </tr>
                         <tr v-if="ganancias.filas.length === 0">
-                            <td colspan="4" style="padding:20px; text-align:center; color:#94A3B8;">Sin datos</td>
+                            <td colspan="3" style="padding:20px; text-align:center; color:#94A3B8;">Sin datos</td>
                         </tr>
                     </tbody>
                 </table>
@@ -319,6 +325,7 @@ const filtros = ref({ ...props.filtros })
 
 // Pestañas Ventas / Ganancias
 const tab = ref('ventas')
+const margen = ref(65)  // margen de ganancia estimado (%), editable
 
 const fmtG = (n) => Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
