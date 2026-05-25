@@ -1,3 +1,5 @@
+*.bak-*
+*.bak-divcuenta
 *.log
 .DS_Store
 .env
@@ -20,7 +22,7 @@
 /storage/*.key
 /storage/pail
 /vendor
-_ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+_ide_helper.php
