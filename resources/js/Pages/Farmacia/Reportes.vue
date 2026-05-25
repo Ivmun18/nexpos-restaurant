@@ -1,6 +1,13 @@
 <template>
     <AppLayout title="Reportes" subtitle="Análisis de ventas">
 
+        <div style="display:flex; gap:8px; margin-bottom:20px;">
+            <button @click="tab='ventas'" :style="{padding:'10px 24px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', background: tab==='ventas' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: tab==='ventas' ? 'white' : '#475569'}">📊 Ventas</button>
+            <button @click="tab='ganancias'" :style="{padding:'10px 24px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', background: tab==='ganancias' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: tab==='ganancias' ? 'white' : '#475569'}">💰 Ganancias</button>
+        </div>
+
+        <div v-show="tab==='ventas'">
+
         <!-- Filtros de fecha -->
         <div style="background:white; border-radius:16px; padding:20px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:24px;">
             <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
@@ -209,6 +216,49 @@
             </table>
         </div>
 
+        </div>
+
+        <div v-show="tab==='ganancias'" v-if="ganancias">
+            <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+                <button v-for="v in ['dia','semana','mes']" :key="v" @click="cambiarVistaGanancia(v)" :style="{padding:'9px 18px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'700', background: ganancias.vista===v ? '#0F766E' : '#F1F5F9', color: ganancias.vista===v ? 'white' : '#475569'}">{{ v === 'dia' ? 'Por día' : v === 'semana' ? 'Por semana' : 'Por mes' }}</button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px; margin-bottom:24px;">
+                <div style="background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:14px; padding:1.2rem 1.4rem; color:white;">
+                    <div style="font-size:12px; opacity:.85; text-transform:uppercase;">Ventas</div>
+                    <div style="font-size:24px; font-weight:700; margin-top:6px;">S/ {{ fmtG(ganancias.resumen.ventas) }}</div>
+                </div>
+                <div style="background:white; border:1px solid #FEF3C7; border-radius:14px; padding:1.2rem 1.4rem;">
+                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Costo</div>
+                    <div style="font-size:24px; font-weight:700; margin-top:6px; color:#D97706;">S/ {{ fmtG(ganancias.resumen.costo) }}</div>
+                </div>
+                <div style="background:white; border:1px solid #E2E8F0; border-radius:14px; padding:1.2rem 1.4rem;">
+                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Ganancia</div>
+                    <div :style="{fontSize:'24px', fontWeight:700, marginTop:'6px', color: ganancias.resumen.ganancia >= 0 ? '#059669' : '#DC2626'}">S/ {{ fmtG(ganancias.resumen.ganancia) }}</div>
+                </div>
+            </div>
+            <div style="background:white; border:1px solid #E2E8F0; border-radius:14px; padding:1.2rem; overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #F1F5F9; text-align:left; color:#94A3B8; text-transform:uppercase; font-size:11px;">
+                            <th style="padding:10px 8px;">Período</th>
+                            <th style="padding:10px 8px; text-align:right;">Ventas</th>
+                            <th style="padding:10px 8px; text-align:right;">Costo</th>
+                            <th style="padding:10px 8px; text-align:right;">Ganancia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="r in ganancias.filas" :key="r.periodo" style="border-bottom:1px solid #F1F5F9;">
+                            <td style="padding:11px 8px; font-weight:600; color:#1E293B;">{{ r.periodo }}</td>
+                            <td style="padding:11px 8px; text-align:right; color:#0F766E;">S/ {{ fmtG(r.ventas) }}</td>
+                            <td style="padding:11px 8px; text-align:right; color:#D97706;">S/ {{ fmtG(r.costo) }}</td>
+                            <td :style="{padding:'11px 8px', textAlign:'right', fontWeight:600, color: r.ganancia >= 0 ? '#059669' : '#DC2626'}">S/ {{ fmtG(r.ganancia) }}</td>
+                        </tr>
+                        <tr v-if="ganancias.filas.length === 0"><td colspan="4" style="padding:20px; text-align:center; color:#94A3B8;">Sin datos</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -225,6 +275,7 @@ const props = defineProps({
     desde:           { type: String, default: '' },
     ventas_por_vendedor: { type: Array, default: () => [] },
     hasta:           { type: String, default: '' },
+    ganancias:       { type: Object, default: null },
 })
 
 const filtros = ref({
@@ -270,5 +321,12 @@ const setMesActual = () => {
     const hasta = now.toISOString().split('T')[0]
     filtros.value = { desde, hasta }
     filtrar()
+}
+
+// ===== Pestañas Ventas / Ganancias =====
+const tab = ref('ventas')
+const fmtG = (n) => Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const cambiarVistaGanancia = (v) => {
+    router.get('/farmacia/reportes', { desde: filtros.value.desde, hasta: filtros.value.hasta, vista_ganancia: v }, { preserveState: true, preserveScroll: true, onSuccess: () => { tab.value = 'ganancias' } })
 }
 </script>
