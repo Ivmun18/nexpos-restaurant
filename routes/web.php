@@ -414,6 +414,7 @@ Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, '
 // Caja Restaurante
 Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');
 Route::post('/caja-restaurante/{mesa}',  [CajaRestauranteController::class, 'cobrar'])->name('caja-restaurante.cobrar');
+Route::post('/caja-restaurante/{mesa}/platos', [CajaRestauranteController::class, 'cobrarPlatos'])->name('caja-restaurante.cobrar-platos');
 
 // Turnos
 Route::get('/turnos',           [TurnoController::class, 'index'])->name('turnos.index');

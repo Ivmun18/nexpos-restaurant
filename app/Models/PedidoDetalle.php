@@ -10,12 +10,14 @@ class PedidoDetalle extends Model
     protected $fillable = [
         'pedido_id', 'menu_producto_id', 'nombre_producto',
         'cantidad', 'precio_unitario', 'subtotal', 'notas', 'estado',
+        'pagado', 'caja_detalle_id',
     ];
 
     protected $casts = [
         'precio_unitario' => 'decimal:2',
         'subtotal'        => 'decimal:2',
         'cantidad'        => 'integer',
+        'pagado'          => 'boolean',
     ];
 
     public function pedido(): BelongsTo

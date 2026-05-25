@@ -21,9 +21,6 @@ const props = defineProps({
     total:   Number,
     pagado_acumulado: { type: Number, default: 0 },
     saldo_pendiente:  { type: Number, default: null },
-    total_pendiente:   { type: Number, default: null },
-    platos_pendientes: { type: Number, default: 0 },
-    platos_pagados:    { type: Number, default: 0 },
 })
 
 const form = useForm({
@@ -84,63 +81,6 @@ const parteActual = computed(() => {
         : 0
     return Math.min(pagadas + 1, n)
 })
-
-// === MODO DE COBRO: 'todo' | 'partes' | 'platos' ===
-const modoCobro = ref('todo')
-
-// Lista plana de todos los platos de la mesa (de todos los pedidos)
-const platos = computed(() => {
-    const out = []
-    for (const ped of (props.pedidos || [])) {
-        for (const d of (ped.detalles || [])) {
-            out.push({
-                id: d.id,
-                nombre: d.nombre_producto,
-                cantidad: d.cantidad,
-                subtotal: Number(d.subtotal),
-                pagado: !!d.pagado,
-            })
-        }
-    }
-    return out
-})
-
-// IDs de platos seleccionados para cobrar ahora
-const seleccionados = ref([])
-
-function togglePlato(id) {
-    const i = seleccionados.value.indexOf(id)
-    if (i === -1) seleccionados.value.push(id)
-    else seleccionados.value.splice(i, 1)
-    // Autocompletar el monto con el total de lo seleccionado
-    form.monto_pagado = totalSeleccionado.value.toFixed(2)
-}
-
-// Suma de los platos seleccionados
-const totalSeleccionado = computed(() => {
-    return platos.value
-        .filter(p => seleccionados.value.includes(p.id))
-        .reduce((s, p) => s + p.subtotal, 0)
-})
-
-// Platos que aun faltan pagar (calculado local, respaldado por backend)
-const platosPendientesLista = computed(() => platos.value.filter(p => !p.pagado))
-const platosFaltan = computed(() => Number(props.platos_pendientes) || platosPendientesLista.value.length)
-
-function cobrarPlatos() {
-    if (seleccionados.value.length === 0) {
-        alert('Selecciona al menos un plato para cobrar.')
-        return
-    }
-    // El monto se cobra exacto por los platos seleccionados
-    form.monto_pagado = totalSeleccionado.value.toFixed(2)
-    form.transform(data => ({
-        ...data,
-        detalle_ids: seleccionados.value,
-    })).post(`/caja-restaurante/${props.mesa.id}/platos`, {
-        onSuccess: () => { seleccionados.value = [] },
-    })
-}
 
 function cobrar() {
     const n = parseInt(form.partes_total) || 1
@@ -211,25 +151,6 @@ function cobrar() {
                 <!-- ══ COBRO ══ -->
                 <div style="display:flex; flex-direction:column; gap:16px;">
 
-                    <!-- Modo de cobro -->
-                    <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-                        <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">🧾 ¿Cómo se cobra?</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-                            <button @click="modoCobro='todo'; form.partes_total=1; seleccionados=[]; form.monto_pagado=''"
-                                :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='todo' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='todo' ? 'white' : '#475569'}">
-                                💳 Pagar todo
-                            </button>
-                            <button @click="modoCobro='partes'; seleccionados=[]; form.partes_total=2; form.monto_pagado=montoPorParte.toFixed(2)"
-                                :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='partes' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='partes' ? 'white' : '#475569'}">
-                                🧮 Partes iguales
-                            </button>
-                            <button @click="modoCobro='platos'; form.partes_total=1; form.monto_pagado=''"
-                                :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='platos' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='platos' ? 'white' : '#475569'}">
-                                🍽️ Por platos
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Método de pago -->
                     <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💳 Método de pago</p>
@@ -258,7 +179,7 @@ function cobrar() {
                     </div>
 
                     <!-- Dividir cuenta -->
-                    <div v-if="$page.props.auth.user.rol !== 'mozo' && modoCobro==='partes'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+                    <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">🧮 Dividir cuenta</p>
                         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                             <button
@@ -286,41 +207,6 @@ function cobrar() {
                                 Ya pagado: S/ {{ Number(pagado_acumulado).toFixed(2) }} · Falta: S/ {{ Number(saldo_pendiente).toFixed(2) }}
                             </p>
                         </div>
-                    </div>
-
-                    <!-- Lista de platos (modo por platos) -->
-                    <div v-if="$page.props.auth.user.rol !== 'mozo' && modoCobro==='platos'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-                        <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">🍽️ Selecciona los platos a cobrar</p>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <div v-for="p in platos.filter(x => !x.pagado)" :key="p.id"
-                                @click="!p.pagado && togglePlato(p.id)"
-                                :style="{
-                                    display:'flex', alignItems:'center', justifyContent:'space-between',
-                                    padding:'14px', borderRadius:'12px',
-                                    border: p.pagado ? '2px solid #DCFCE7' : (seleccionados.includes(p.id) ? '2px solid #14B8A6' : '2px solid #E2E8F0'),
-                                    background: p.pagado ? '#F0FDF4' : (seleccionados.includes(p.id) ? '#F0FDFA' : 'white'),
-                                    cursor: p.pagado ? 'default' : 'pointer',
-                                    opacity: p.pagado ? 0.6 : 1,
-                                }">
-                                <div style="display:flex; align-items:center; gap:12px;">
-                                    <span style="font-size:20px;">{{ p.pagado ? '✅' : (seleccionados.includes(p.id) ? '☑️' : '⬜') }}</span>
-                                    <div>
-                                        <p style="margin:0; font-size:15px; font-weight:700; color:#1E293B;">{{ p.cantidad }}x {{ p.nombre }}</p>
-                                        <p v-if="p.pagado" style="margin:2px 0 0; font-size:12px; color:#166534; font-weight:600;">Ya pagado</p>
-                                    </div>
-                                </div>
-                                <span style="font-size:15px; font-weight:800; color:#0F766E;">S/ {{ p.subtotal.toFixed(2) }}</span>
-                            </div>
-                        </div>
-                        <div v-if="seleccionados.length > 0" style="margin-top:16px; background:#F0FDFA; border:2px solid #CCFBF1; border-radius:12px; padding:16px; text-align:center;">
-                            <p style="margin:0; font-size:14px; color:#0F766E; font-weight:600;">Total seleccionado</p>
-                            <p style="margin:4px 0 0; font-size:30px; font-weight:800; color:#0F766E;">S/ {{ totalSeleccionado.toFixed(2) }}</p>
-                        </div>
-                        <div v-if="platosFaltan > 0 && platos_pagados > 0" style="margin-top:14px; background:#FFFBEB; border:2px solid #FEF3C7; border-radius:12px; padding:14px; text-align:center;">
-                            <p style="margin:0; font-size:14px; color:#92400E; font-weight:700;">Faltan {{ platosFaltan }} plato(s) por cobrar</p>
-                            <p style="margin:4px 0 0; font-size:13px; color:#92400E;">Pendiente: S/ {{ Number(total_pendiente).toFixed(2) }}</p>
-                        </div>
-                        <p v-if="platosFaltan === 0" style="margin-top:14px; text-align:center; color:#166534; font-weight:700;">Todos los platos estan pagados 🎉</p>
                     </div>
 
                     <!-- Monto y vuelto -->
@@ -369,26 +255,23 @@ function cobrar() {
 
                     <!-- Botón cobrar -->
                     <button
-                        @click="modoCobro==='platos' ? cobrarPlatos() : cobrar()"
+                        @click="cobrar"
                         v-if="$page.props.auth.user.rol !== 'mozo'"
-                        :disabled="form.processing || (modoCobro==='platos' ? seleccionados.length===0 : !form.monto_pagado)"
+                        :disabled="form.processing || !form.monto_pagado"
                         :style="{
                             width: '100%',
                             padding: '22px',
-                            background: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#E2E8F0',
-                            color: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? 'white' : '#94A3B8',
+                            background: form.monto_pagado ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#E2E8F0',
+                            color: form.monto_pagado ? 'white' : '#94A3B8',
                             border: 'none',
                             borderRadius: '16px',
                             fontSize: '22px',
                             fontWeight: '800',
-                            cursor: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? 'pointer' : 'not-allowed',
-                            boxShadow: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? '0 6px 20px rgba(20,184,166,0.4)' : 'none',
+                            cursor: form.monto_pagado ? 'pointer' : 'not-allowed',
+                            boxShadow: form.monto_pagado ? '0 6px 20px rgba(20,184,166,0.4)' : 'none',
                         }"
                     >
-                        <template v-if="form.processing">⏳ Procesando...</template>
-                        <template v-else-if="modoCobro==='platos'">✅ Cobrar platos S/ {{ totalSeleccionado.toFixed(2) }}</template>
-                        <template v-else-if="modoCobro==='partes'">✅ Cobrar parte S/ {{ montoPorParte.toFixed(2) }}</template>
-                        <template v-else>✅ Cobrar S/ {{ Number(total).toFixed(2) }}</template>
+                        {{ form.processing ? '⏳ Procesando...' : `✅ Cobrar S/ ${Number(total).toFixed(2)}` }}
                     </button>
 
                     <!-- Tipo comprobante -->
