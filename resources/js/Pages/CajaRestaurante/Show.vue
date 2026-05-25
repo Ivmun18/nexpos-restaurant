@@ -179,7 +179,7 @@ function cobrar() {
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
 
                 <!-- ══ DETALLE PEDIDOS ══ -->
                 <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
@@ -214,7 +214,7 @@ function cobrar() {
                     <!-- Modo de cobro -->
                     <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">🧾 ¿Cómo se cobra?</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px;">
                             <button @click="modoCobro='todo'; form.partes_total=1; seleccionados=[]; form.monto_pagado=''"
                                 :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='todo' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='todo' ? 'white' : '#475569'}">
                                 💳 Pagar todo
@@ -233,7 +233,7 @@ function cobrar() {
                     <!-- Método de pago -->
                     <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💳 Método de pago</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
                             <button
                                 v-for="m in metodos"
                                 :key="m.key"
@@ -394,7 +394,7 @@ function cobrar() {
                     <!-- Tipo comprobante -->
                     <div style="margin-top:16px;">
                         <p style="font-size:14px; font-weight:600; color:#64748B; margin:0 0 10px;">📄 Tipo de comprobante</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px;">
                             <button @click="form.tipo_comprobante='boleta'"
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='boleta' ? '2px solid #14B8A6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='boleta' ? '#F0FDFA' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='boleta' ? '#0F766E' : '#64748B'}">
                                 🧾 Boleta

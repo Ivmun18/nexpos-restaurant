@@ -2,7 +2,7 @@
     <AppLayout title="Mapa de mesas" subtitle="Estado en tiempo real">
 
         <!-- KPIs -->
-        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:1.5rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:14px; margin-bottom:1.5rem;">
             <div style="background:white; border-radius:12px; padding:18px; border:1px solid #E2E8F0; text-align:center;">
                 <p style="font-size:13px; color:#94A3B8; margin:0 0 8px; text-transform:uppercase; letter-spacing:0.5px;">Total mesas</p>
                 <p style="font-size:32px; font-weight:700; color:#1E293B; margin:0;">{{ resumen.total }}</p>
