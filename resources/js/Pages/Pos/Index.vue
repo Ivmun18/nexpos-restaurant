@@ -15,6 +15,18 @@ const props = defineProps({
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
 
+// Hora actual para la comanda
+const horaActual = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+
+// Imprimir comanda de cocina
+function imprimirComanda() {
+    if (!props.pedidosAbiertos || props.pedidosAbiertos.length === 0) {
+        alert('No hay pedidos enviados para imprimir.')
+        return
+    }
+    window.print()
+}
+
 // Anular un plato de un pedido ya enviado
 function anularPlato(det) {
     if (det.anulado) return
@@ -223,7 +235,10 @@ function cerrarMesa() {
 
                 <!-- Pedidos anteriores -->
                 <div v-if="pedidosAbiertos.length" style="background:white; border-radius:16px; border:1px solid #E2E8F0; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                    <p style="font-size:13px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; margin:0 0 12px;">Rondas anteriores</p>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin:0 0 12px;">
+                        <p style="font-size:13px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; margin:0;">Rondas anteriores</p>
+                        <button @click="imprimirComanda" style="background:#F1F5F9; color:#0F766E; border:1px solid #14B8A6; border-radius:8px; padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer;">🖨️ Comanda</button>
+                    </div>
                     <div v-for="pedido in pedidosAbiertos" :key="pedido.id" style="margin-bottom:10px;">
                         <p style="font-size:15px; font-weight:700; color:#475569; margin:0 0 6px;">Ronda {{ pedido.numero_ronda }}</p>
                         <div v-for="det in pedido.detalles" :key="det.id" style="display:flex; align-items:center; justify-content:space-between; font-size:15px; padding:4px 0; gap:8px;">
@@ -353,6 +368,25 @@ function cerrarMesa() {
             </button>
         </div>
 
+        <!-- COMANDA IMPRIMIBLE (oculta en pantalla, visible al imprimir) -->
+        <div id="comanda-print" class="comanda-print">
+            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
+                <div style="font-size:18px; font-weight:bold;">COMANDA</div>
+                <div style="font-size:14px;">Mesa {{ mesa.numero }}</div>
+                <div style="font-size:11px;">{{ horaActual }}</div>
+            </div>
+            <div v-for="pedido in pedidosAbiertos" :key="'pc'+pedido.id">
+                <div style="font-size:11px; font-weight:bold; margin:6px 0 2px;">Ronda {{ pedido.numero_ronda }}</div>
+                <div v-for="det in pedido.detalles.filter(d => !d.anulado)" :key="'dc'+det.id" style="font-size:13px; margin:3px 0;">
+                    <span style="font-weight:bold;">{{ det.cantidad }}x</span> {{ det.nombre_producto }}
+                    <div v-if="det.notas" style="font-size:11px; padding-left:14px; font-style:italic;">▸ {{ det.notas }}</div>
+                </div>
+            </div>
+            <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; text-align:center; font-size:10px;">
+                - - - cocina - - -
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -362,5 +396,24 @@ function cerrarMesa() {
     .pos-container { flex-direction: column !important; height: calc(100vh - 160px) !important; }
     .pos-container > div { width: 100% !important; }
 
+}
+
+/* La comanda esta oculta en pantalla normal */
+.comanda-print { display: none; }
+
+/* Al imprimir: ocultar todo y mostrar solo la comanda */
+@media print {
+    body * { visibility: hidden !important; }
+    .comanda-print, .comanda-print * { visibility: visible !important; }
+    .comanda-print {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0;
+        width: 280px;
+        padding: 8px;
+        font-family: 'Courier New', monospace;
+        color: #000;
+    }
+    @page { margin: 4mm; }
 }
 </style>

@@ -63,7 +63,7 @@ class ComandaController extends Controller
         }
 
         return $query->get()->map(function ($pedido) {
-            $minutosTranscurridos = now()->diffInMinutes($pedido->created_at);
+            $minutosTranscurridos = (int) round(abs($pedido->created_at->diffInMinutes(now())));
             
             return [
                 'id' => $pedido->id,
