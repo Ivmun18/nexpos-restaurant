@@ -88,6 +88,16 @@ const parteActual = computed(() => {
 // === MODO DE COBRO: 'todo' | 'partes' | 'platos' ===
 const modoCobro = ref('todo')
 
+// Hora para impresion
+const horaImpresion = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+
+// Modo de impresion: 'precuenta' (controla que ticket se ve al imprimir)
+function imprimirPrecuenta() {
+    document.body.classList.add('modo-precuenta')
+    window.print()
+    setTimeout(() => document.body.classList.remove('modo-precuenta'), 500)
+}
+
 // Lista plana de todos los platos de la mesa (de todos los pedidos)
 const platos = computed(() => {
     const out = []
@@ -207,6 +217,7 @@ function cobrar() {
                         <span style="font-size:22px; font-weight:800; color:#1E293B;">TOTAL</span>
                         <span style="font-size:32px; font-weight:800; color:#14B8A6;">S/ {{ Number(total).toFixed(2) }}</span>
                     </div>
+                    <button @click="imprimirPrecuenta" style="width:100%; padding:12px; background:#F1F5F9; color:#0F766E; border:1px solid #14B8A6; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px;">🖨️ Imprimir pre-cuenta</button>
                 </div>
 
                 <!-- ══ COBRO ══ -->
@@ -415,5 +426,43 @@ function cobrar() {
                 </div>
             </div>
         </div>
+        <!-- PRE-CUENTA IMPRIMIBLE -->
+        <div id="precuenta-print" class="precuenta-print">
+            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
+                <div style="font-size:16px; font-weight:bold;">PRE-CUENTA</div>
+                <div style="font-size:13px;">Mesa {{ mesa.numero }}</div>
+                <div style="font-size:10px;">{{ horaImpresion }}</div>
+                <div style="font-size:10px; font-style:italic;">No es comprobante de pago</div>
+            </div>
+            <div v-for="p in platos" :key="'pp'+p.id" style="font-size:12px; display:flex; justify-content:space-between; margin:3px 0;">
+                <span>{{ p.cantidad }}x {{ p.nombre }}</span>
+                <span>S/ {{ p.subtotal.toFixed(2) }}</span>
+            </div>
+            <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; display:flex; justify-content:space-between; font-size:15px; font-weight:bold;">
+                <span>TOTAL</span>
+                <span>S/ {{ Number(total).toFixed(2) }}</span>
+            </div>
+            <div style="text-align:center; font-size:10px; margin-top:10px;">¡Gracias por su visita!</div>
+        </div>
+
     </AppLayout>
 </template>
+
+<style>
+.precuenta-print { display: none; }
+
+@media print {
+    body * { visibility: hidden !important; }
+    .precuenta-print, .precuenta-print * { visibility: visible !important; }
+    .precuenta-print {
+        display: block !important;
+        position: absolute;
+        left: 0; top: 0;
+        width: 280px;
+        padding: 8px;
+        font-family: 'Courier New', monospace;
+        color: #000;
+    }
+    @page { margin: 4mm; }
+}
+</style>
