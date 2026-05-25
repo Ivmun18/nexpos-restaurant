@@ -1,6 +1,21 @@
 <template>
     <AppLayout title="Reporte de ventas" subtitle="Historial y métricas de ventas del restaurante">
 
+        <!-- PESTAÑAS -->
+        <div style="display:flex; gap:8px; margin-bottom:1.5rem;">
+            <button @click="tab='ventas'"
+                :style="{padding:'10px 24px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', background: tab==='ventas' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: tab==='ventas' ? 'white' : '#475569'}">
+                📊 Ventas
+            </button>
+            <button v-if="es_admin" @click="tab='ganancias'"
+                :style="{padding:'10px 24px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'14px', fontWeight:'700', background: tab==='ganancias' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: tab==='ganancias' ? 'white' : '#475569'}">
+                💰 Ganancias
+            </button>
+        </div>
+
+        <!-- ===== TAB VENTAS ===== -->
+        <div v-show="tab==='ventas'">
+
         <!-- FILTROS -->
         <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.2rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
             <div>
@@ -227,6 +242,58 @@
             </div>
         </div>
 
+        </div>
+        <!-- ===== FIN TAB VENTAS ===== -->
+
+        <!-- ===== TAB GANANCIAS (solo admin) ===== -->
+        <div v-if="es_admin && ganancias" v-show="tab==='ganancias'">
+            <div style="display:flex; gap:8px; margin-bottom:1.25rem; flex-wrap:wrap;">
+                <button v-for="v in ['dia','semana','mes']" :key="v" @click="cambiarVistaGanancia(v)"
+                    :style="{padding:'9px 18px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'700', background: ganancias.vista===v ? '#0F766E' : '#F1F5F9', color: ganancias.vista===v ? 'white' : '#475569'}">
+                    {{ v === 'dia' ? 'Por día' : v === 'semana' ? 'Por semana' : 'Por mes' }}
+                </button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                <div style="background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:14px; padding:1.2rem 1.4rem; color:white;">
+                    <div style="font-size:12px; opacity:.85; text-transform:uppercase;">Ventas</div>
+                    <div style="font-size:24px; font-weight:700; margin-top:6px;">S/ {{ fmtG(ganancias.resumen.ventas) }}</div>
+                </div>
+                <div style="background:white; border:1px solid #FEE2E2; border-radius:14px; padding:1.2rem 1.4rem;">
+                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Gastos</div>
+                    <div style="font-size:24px; font-weight:700; margin-top:6px; color:#DC2626;">S/ {{ fmtG(ganancias.resumen.gastos) }}</div>
+                </div>
+                <div style="background:white; border:1px solid #E2E8F0; border-radius:14px; padding:1.2rem 1.4rem;">
+                    <div style="font-size:12px; color:#94A3B8; text-transform:uppercase;">Ganancia</div>
+                    <div :style="{fontSize:'24px', fontWeight:700, marginTop:'6px', color: ganancias.resumen.ganancia >= 0 ? '#059669' : '#DC2626'}">S/ {{ fmtG(ganancias.resumen.ganancia) }}</div>
+                </div>
+            </div>
+
+            <div style="background:white; border:1px solid #E2E8F0; border-radius:14px; padding:1.2rem; overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #F1F5F9; text-align:left; color:#94A3B8; text-transform:uppercase; font-size:11px;">
+                            <th style="padding:10px 8px;">Período</th>
+                            <th style="padding:10px 8px; text-align:right;">Ventas</th>
+                            <th style="padding:10px 8px; text-align:right;">Gastos</th>
+                            <th style="padding:10px 8px; text-align:right;">Ganancia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="r in ganancias.filas" :key="r.periodo" style="border-bottom:1px solid #F1F5F9;">
+                            <td style="padding:11px 8px; font-weight:600; color:#1E293B;">{{ r.periodo }}</td>
+                            <td style="padding:11px 8px; text-align:right; color:#0F766E;">S/ {{ fmtG(r.ventas) }}</td>
+                            <td style="padding:11px 8px; text-align:right; color:#DC2626;">S/ {{ fmtG(r.gastos) }}</td>
+                            <td :style="{padding:'11px 8px', textAlign:'right', fontWeight:600, color: r.ganancia >= 0 ? '#059669' : '#DC2626'}">S/ {{ fmtG(r.ganancia) }}</td>
+                        </tr>
+                        <tr v-if="ganancias.filas.length === 0">
+                            <td colspan="4" style="padding:20px; text-align:center; color:#94A3B8;">Sin datos</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -244,9 +311,23 @@ const props = defineProps({
     top_mozos:  { type: Array,  default: () => [] },
     mozos:      { type: Array,  default: () => [] },
     filtros:    { type: Object, default: () => ({}) },
+    es_admin:   { type: Boolean, default: false },
+    ganancias:  { type: Object, default: null },
 })
 
 const filtros = ref({ ...props.filtros })
+
+// Pestañas Ventas / Ganancias
+const tab = ref('ventas')
+
+const fmtG = (n) => Number(n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+const cambiarVistaGanancia = (v) => {
+    router.get('/reportes-restaurante', {
+        ...props.filtros,
+        vista_ganancia: v,
+    }, { preserveState: true, preserveScroll: true, onSuccess: () => { tab.value = 'ganancias' } })
+}
 const busqueda = ref('')
 
 const tarjetas = computed(() => [
