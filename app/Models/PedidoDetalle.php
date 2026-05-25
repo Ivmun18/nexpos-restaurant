@@ -11,6 +11,7 @@ class PedidoDetalle extends Model
         'pedido_id', 'menu_producto_id', 'nombre_producto',
         'cantidad', 'precio_unitario', 'subtotal', 'notas', 'estado',
         'pagado', 'caja_detalle_id',
+        'anulado', 'motivo_anulacion', 'anulado_por', 'anulado_at',
     ];
 
     protected $casts = [
@@ -18,6 +19,8 @@ class PedidoDetalle extends Model
         'subtotal'        => 'decimal:2',
         'cantidad'        => 'integer',
         'pagado'          => 'boolean',
+        'anulado'         => 'boolean',
+        'anulado_at'      => 'datetime',
     ];
 
     public function pedido(): BelongsTo

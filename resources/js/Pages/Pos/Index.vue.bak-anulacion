@@ -14,17 +14,6 @@ const props = defineProps({
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
-
-// Anular un plato de un pedido ya enviado
-function anularPlato(det) {
-    if (det.anulado) return
-    const motivo = window.prompt(`Anular "${det.nombre_producto}". Escribe el motivo:`)
-    if (motivo === null) return  // cancelo
-    if (!motivo.trim()) { alert('Debes escribir un motivo para anular.'); return }
-    router.post(`/pos/detalle/${det.id}/anular`, { motivo: motivo.trim() }, {
-        preserveScroll: true,
-    })
-}
 const notasPedido     = ref('')
 const busqueda        = ref('')
 const tabMovil        = ref('carta')
@@ -226,15 +215,9 @@ function cerrarMesa() {
                     <p style="font-size:13px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; margin:0 0 12px;">Rondas anteriores</p>
                     <div v-for="pedido in pedidosAbiertos" :key="pedido.id" style="margin-bottom:10px;">
                         <p style="font-size:15px; font-weight:700; color:#475569; margin:0 0 6px;">Ronda {{ pedido.numero_ronda }}</p>
-                        <div v-for="det in pedido.detalles" :key="det.id" style="display:flex; align-items:center; justify-content:space-between; font-size:15px; padding:4px 0; gap:8px;">
-                            <span :style="{flex:1, color: det.anulado ? '#CBD5E1' : '#64748B', textDecoration: det.anulado ? 'line-through' : 'none'}">
-                                {{ det.cantidad }}× {{ det.nombre_producto }}
-                                <span v-if="det.anulado" style="font-size:12px; color:#EF4444; font-style:italic;"> (anulado: {{ det.motivo_anulacion }})</span>
-                            </span>
-                            <span :style="{fontWeight:600, color: det.anulado ? '#CBD5E1' : '#64748B', textDecoration: det.anulado ? 'line-through' : 'none'}">S/ {{ Number(det.subtotal).toFixed(2) }}</span>
-                            <button v-if="!det.anulado && !det.pagado" @click="anularPlato(det)"
-                                title="Anular plato"
-                                style="width:26px; height:26px; flex-shrink:0; background:#FEF2F2; color:#EF4444; border:1px solid #FECACA; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center;">✕</button>
+                        <div v-for="det in pedido.detalles" :key="det.id" style="display:flex; justify-content:space-between; font-size:15px; color:#64748B; padding:3px 0;">
+                            <span>{{ det.cantidad }}× {{ det.nombre_producto }}</span>
+                            <span style="font-weight:600;">S/ {{ Number(det.subtotal).toFixed(2) }}</span>
                         </div>
                     </div>
                 </div>

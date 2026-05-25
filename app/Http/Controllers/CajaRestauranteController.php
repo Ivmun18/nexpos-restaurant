@@ -28,7 +28,7 @@ class CajaRestauranteController extends Controller
         $total = $pedidos->sum('total');
 
         // Separar platos pagados de pendientes (para modo por platos)
-        $todosDetalles   = $pedidos->flatMap->detalles;
+        $todosDetalles   = $pedidos->flatMap->detalles->where('anulado', false);
         $totalPagadoPlatos = (float) $todosDetalles->where('pagado', true)->sum('subtotal');
         $totalPendiente    = (float) $todosDetalles->where('pagado', false)->sum('subtotal');
         $platosPendientes  = $todosDetalles->where('pagado', false)->count();
@@ -133,7 +133,7 @@ class CajaRestauranteController extends Controller
             Pedido::where('mesa_id', $mesa->id)
                 ->whereIn('estado', ['enviado', 'listo'])
                 ->pluck('id')
-        )->get();
+        )->where('anulado', false)->get();
 
         foreach ($pedidosItems as $item) {
             $recetas = Receta::with('insumo')
@@ -198,6 +198,7 @@ class CajaRestauranteController extends Controller
         $detalles = \App\Models\PedidoDetalle::whereIn('id', $request->detalle_ids)
             ->whereIn('pedido_id', $pedidoIds)
             ->where('pagado', false)
+            ->where('anulado', false)
             ->get();
 
         if ($detalles->isEmpty()) {
@@ -267,6 +268,7 @@ class CajaRestauranteController extends Controller
 
         $platosPendientes = \App\Models\PedidoDetalle::whereIn('pedido_id', $pedidoIds)
             ->where('pagado', false)
+            ->where('anulado', false)
             ->count();
 
         if ($platosPendientes > 0) {

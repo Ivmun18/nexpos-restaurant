@@ -28,7 +28,7 @@ const props = defineProps({
 
 const form = useForm({
     metodo_pago:       'efectivo',
-    monto_pagado:      '',
+    monto_pagado:      props.total ? Number(props.total).toFixed(2) : '',
     tipo_comprobante:  'boleta',
     notas:        '',
     partes_total:      1,
@@ -93,6 +93,7 @@ const platos = computed(() => {
     const out = []
     for (const ped of (props.pedidos || [])) {
         for (const d of (ped.detalles || [])) {
+            if (d.anulado) continue  // los anulados no se cobran
             out.push({
                 id: d.id,
                 nombre: d.nombre_producto,
@@ -215,7 +216,7 @@ function cobrar() {
                     <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">🧾 ¿Cómo se cobra?</p>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px;">
-                            <button @click="modoCobro='todo'; form.partes_total=1; seleccionados=[]; form.monto_pagado=''"
+                            <button @click="modoCobro='todo'; form.partes_total=1; seleccionados=[]; form.monto_pagado=saldoReal.toFixed(2)"
                                 :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='todo' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='todo' ? 'white' : '#475569'}">
                                 💳 Pagar todo
                             </button>

@@ -404,6 +404,7 @@ Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middlewa
     Route::get('/pos/{mesa}',   [PosController::class, 'index'])->name('pos.index');
     Route::post('/pos/{mesa}',  [PosController::class, 'store'])->name('pos.store');
     Route::post('/pos/{mesa}/cerrar', [PosController::class, 'cerrar'])->name('pos.cerrar');
+    Route::post('/pos/detalle/{detalle}/anular', [PosController::class, 'anularPlato'])->name('pos.anular-plato');
 
 
 // Cocina
