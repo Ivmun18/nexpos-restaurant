@@ -17,6 +17,7 @@ class TurnoController extends Controller
             ->first();
 
         $turnos = Turno::with('user')
+            ->where('empresa_id', auth()->user()->empresa_id)
             ->orderBy('created_at', 'desc')
             ->take(20)
             ->get();
@@ -45,6 +46,7 @@ class TurnoController extends Controller
         }
 
         Turno::create([
+            'empresa_id' => auth()->user()->empresa_id,
             'user_id'  => auth()->id(),
             'tipo'     => $request->tipo,
             'nombre'   => $request->nombre,

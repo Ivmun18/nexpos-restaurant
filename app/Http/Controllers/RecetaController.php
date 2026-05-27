@@ -13,6 +13,7 @@ class RecetaController extends Controller
     public function index()
     {
         $productos = MenuProducto::with(['recetas.insumo'])
+            ->where('empresa_id', auth()->user()->empresa_id)
             ->orderBy('nombre')
             ->get()
             ->map(fn($p) => [

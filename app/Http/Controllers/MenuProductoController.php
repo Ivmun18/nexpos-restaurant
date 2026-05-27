@@ -20,6 +20,7 @@ class MenuProductoController extends Controller
             'tiempo_preparacion' => 'integer|min:0',
         ]);
 
+        $validated['empresa_id'] = auth()->user()->empresa_id;
         MenuProducto::create($validated);
 
         return redirect()->back()->with('success', 'Producto agregado.');

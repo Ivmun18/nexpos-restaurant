@@ -17,7 +17,9 @@ class ReporteRestauranteController extends Controller
         $metodo  = $request->get('metodo', '');
         $mozo_id = $request->get('mozo_id', '');
 
+        $empresaId = auth()->user()->empresa_id;
         $query = CajaRestaurante::with(['mesa:id,numero,nombre,zona', 'user:id,name,rol'])
+            ->where('empresa_id', $empresaId)
             ->whereBetween('created_at', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
             ->orderBy('created_at', 'desc');
 
@@ -77,7 +79,7 @@ class ReporteRestauranteController extends Controller
                 $fmtG = "DATE(fecha_emision)";
             }
 
-            $gv = CajaRestaurante::whereBetween('created_at', [$ini, $fin])
+            $gv = CajaRestaurante::where('empresa_id', $empresaId)->whereBetween('created_at', [$ini, $fin])
                 ->select(DB::raw("$fmtV as periodo"), DB::raw("SUM(total) as total"))
                 ->groupBy('periodo')->pluck('total', 'periodo');
 
@@ -93,7 +95,7 @@ class ReporteRestauranteController extends Controller
                     return ['periodo' => $p, 'ventas' => round($vv, 2), 'gastos' => round($gg2, 2), 'ganancia' => round($vv - $gg2, 2)];
                 });
 
-            $totV = (float) CajaRestaurante::whereBetween('created_at', [$ini, $fin])->sum('total');
+            $totV = (float) CajaRestaurante::where('empresa_id', $empresaId)->whereBetween('created_at', [$ini, $fin])->sum('total');
             $totG = (float) Compra::whereBetween('fecha_emision', [$ini, $fin])->where('estado', '!=', 'anulado')->sum('total');
 
             $ganancias = [

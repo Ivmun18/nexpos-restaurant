@@ -108,6 +108,7 @@ class CajaRestauranteController extends Controller
         $vuelto = $cuentaSaldada ? round(max(0, $pagadoAcumulado - $total), 2) : 0;
 
         $caja = CajaRestaurante::create([
+            'empresa_id'       => auth()->user()->empresa_id,
             'mesa_id'          => $mesa->id,
             'user_id'          => auth()->id(),
             'total'            => $total,
@@ -225,6 +226,7 @@ class CajaRestauranteController extends Controller
         $vuelto   = max(0, $request->monto_pagado - $subtotal);
 
         $caja = CajaRestaurante::create([
+            'empresa_id'       => auth()->user()->empresa_id,
             'mesa_id'          => $mesa->id,
             'user_id'          => auth()->id(),
             'total'            => $subtotal,

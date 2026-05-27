@@ -29,7 +29,9 @@ class PosController extends Controller
         }
 
         // Cargar carta completa
+       $empresaId = auth()->user()->empresa_id;
        $categorias = MenuCategoria::with('productosActivos')
+    ->where('empresa_id', $empresaId)
     ->where('activo', true)
     ->orderBy('orden')
     ->get();
@@ -75,6 +77,7 @@ class PosController extends Controller
         ->max('numero_ronda') ?? 0;
 
     $pedido = Pedido::create([
+        'empresa_id'   => auth()->user()->empresa_id,
         'mesa_id'      => $mesa->id,
         'user_id'      => auth()->id(),
         'estado'       => 'enviado',

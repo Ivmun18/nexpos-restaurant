@@ -50,7 +50,9 @@ class ComandaController extends Controller
      */
     private function getComandas(string $estado, $filtroMesa = null, $filtroMozo = null)
     {
+        $empresaId = auth()->user()->empresa_id;
         $query = Pedido::with(['mesa', 'user', 'detalles'])
+            ->where('empresa_id', $empresaId)
             ->where('estado', $estado)
             ->orderBy('created_at', 'asc');
 

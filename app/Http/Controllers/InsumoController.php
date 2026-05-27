@@ -15,7 +15,7 @@ class InsumoController extends Controller
         $categoria = $request->get('categoria', '');
         $alerta    = $request->get('alerta', '');
 
-        $query = Insumo::where('empresa_id', 1)->where('activo', true);
+        $query = Insumo::where('empresa_id', auth()->user()->empresa_id)->where('activo', true);
 
         if ($buscar)    $query->where('nombre', 'like', "%{$buscar}%");
         if ($categoria) $query->where('categoria', $categoria);
@@ -23,10 +23,10 @@ class InsumoController extends Controller
 
         $insumos = $query->orderBy('nombre')->get();
 
-        $categorias = Insumo::where('empresa_id', 1)
+        $categorias = Insumo::where('empresa_id', auth()->user()->empresa_id)
             ->distinct()->pluck('categoria')->filter()->values();
 
-        $alertas = Insumo::where('empresa_id', 1)
+        $alertas = Insumo::where('empresa_id', auth()->user()->empresa_id)
             ->whereColumn('stock_actual', '<=', 'stock_minimo')
             ->count();
 
@@ -49,7 +49,7 @@ class InsumoController extends Controller
         ]);
 
         $insumo = Insumo::create([
-            'empresa_id'    => 1,
+            'empresa_id'    => auth()->user()->empresa_id,
             'nombre'        => $request->nombre,
             'categoria'     => $request->categoria,
             'unidad_medida' => $request->unidad_medida,

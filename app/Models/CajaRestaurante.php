@@ -11,7 +11,7 @@ class CajaRestaurante extends Model
     protected $table = 'caja_restaurante';
 
     protected $fillable = [
-        'mesa_id', 'user_id', 'total',
+        'empresa_id', 'mesa_id', 'user_id', 'total',
         'monto_pagado', 'vuelto', 'metodo_pago', 'tipo_comprobante', 'notas',
         'partes_total', 'parte_numero', 'cuenta_total', 'pagado_acumulado',
     ];

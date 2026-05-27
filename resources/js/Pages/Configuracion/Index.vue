@@ -243,57 +243,6 @@
         </div>
 
 
-        <!-- Zona de Datos Demo / Plantillas -->
-        <div v-if="['minimarket', 'ferreteria', 'farmacia', 'restaurante'].includes(props.empresa?.industry_type)" style="margin-top:2rem; background:white; border-radius:10px; border:2px dashed #F59E0B; padding:1.5rem;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
-                <span style="font-size:24px;">⚠️</span>
-                <div>
-                    <p style="font-size:15px; font-weight:700; color:#92400E; margin:0;">Datos Demo / Plantillas</p>
-                    <p style="font-size:12px; color:#A16207; margin:2px 0 0;">Cargar productos de plantilla o limpiar todos los datos para empezar real</p>
-                </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem;">
-
-                <!-- Cargar plantilla -->
-                <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:1rem;">
-                    <p style="font-size:13px; font-weight:600; color:#1E40AF; margin:0 0 4px;">📦 Cargar plantilla</p>
-                    <p v-if="plantillaCargada" style="font-size:11px; color:#16A34A; margin:0 0 8px;">
-                        ✅ {{ plantillaCargada.nombre }}<br>
-                        {{ plantillaCargada.total_productos }} productos · {{ plantillaCargada.total_categorias }} categorías
-                    </p>
-                    <p v-else-if="cargandoPlantillas" style="font-size:11px; color:#64748B; margin:0 0 8px;">
-                        Buscando plantillas disponibles...
-                    </p>
-                    <p v-else-if="!plantillaDisponible" style="font-size:11px; color:#64748B; margin:0 0 8px;">
-                        No hay plantilla disponible para esta industria
-                    </p>
-                    <p v-else style="font-size:11px; color:#64748B; margin:0 0 8px;">
-                        {{ plantillaDisponible.nombre }}<br>
-                        {{ plantillaDisponible.total_productos }} productos · {{ plantillaDisponible.total_categorias }} categorías
-                    </p>
-                    <button v-if="plantillaDisponible && !plantillaCargada"
-                        @click.prevent="cargarPlantilla"
-                        :disabled="cargandoPlantilla"
-                        style="width:100%; padding:8px; background:#2563EB; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
-                        {{ cargandoPlantilla ? '⏳ Cargando...' : '⬇️ Cargar productos demo' }}
-                    </button>
-                </div>
-
-                <!-- Limpiar datos demo -->
-                <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:1rem;">
-                    <p style="font-size:13px; font-weight:600; color:#991B1B; margin:0 0 4px;">🗑️ Limpiar datos demo</p>
-                    <p style="font-size:11px; color:#64748B; margin:0 0 8px;">
-                        Borra todos los productos, categorías, ventas y cajas. <strong>No se puede deshacer.</strong>
-                    </p>
-                    <button @click.prevent="limpiarDatos"
-                        :disabled="limpiando"
-                        style="width:100%; padding:8px; background:#DC2626; color:white; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
-                        {{ limpiando ? '⏳ Limpiando...' : '🗑️ Eliminar TODOS los datos' }}
-                    </button>
-                </div>
-            </div>
-        </div>
 
     </AppLayout>
 </template>

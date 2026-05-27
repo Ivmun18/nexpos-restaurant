@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Pedido extends Model
 {
     protected $fillable = [
-        'mesa_id', 'user_id', 'estado',
+        'empresa_id', 'mesa_id', 'user_id', 'estado',
         'numero_ronda', 'notas', 'total',
     ];
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Turno extends Model
 {
     protected $fillable = [
-        'user_id', 'tipo', 'nombre', 'estado',
+        'empresa_id', 'user_id', 'tipo', 'nombre', 'estado',
         'apertura', 'cierre', 'total_ventas', 'total_mesas', 'notas',
     ];
 

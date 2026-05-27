@@ -17,7 +17,9 @@ class ReporteTurnoController extends Controller
         $user_id = $request->get('user_id', '');
         $tipo    = $request->get('tipo', '');
 
+        $empresaId = auth()->user()->empresa_id;
         $query = Turno::with('user:id,name,rol')
+            ->where('empresa_id', $empresaId)
             ->whereBetween('apertura', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
             ->orderBy('apertura', 'desc');
 
