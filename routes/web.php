@@ -933,4 +933,13 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::post('/instructores',                    [\App\Http\Controllers\Gimnasio\InstructorController::class, 'store'])->name('instructores.store');
     Route::put('/instructores/{instructor}',        [\App\Http\Controllers\Gimnasio\InstructorController::class, 'update'])->name('instructores.update');
     Route::delete('/instructores/{instructor}',     [\App\Http\Controllers\Gimnasio\InstructorController::class, 'destroy'])->name('instructores.destroy');
+
+    // Clases y Horarios
+    Route::get('/clases',                          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'index'])->name('clases.index');
+    Route::post('/clases',                         [\App\Http\Controllers\Gimnasio\ClaseController::class, 'store'])->name('clases.store');
+    Route::put('/clases/{clase}',                 [\App\Http\Controllers\Gimnasio\ClaseController::class, 'update'])->name('clases.update');
+    Route::delete('/clases/{clase}',              [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroy'])->name('clases.destroy');
+    Route::post('/horarios',                       [\App\Http\Controllers\Gimnasio\ClaseController::class, 'storeHorario'])->name('horarios.store');
+    Route::put('/horarios/{horario}',             [\App\Http\Controllers\Gimnasio\ClaseController::class, 'updateHorario'])->name('horarios.update');
+    Route::delete('/horarios/{horario}',          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroyHorario'])->name('horarios.destroy');
 });
