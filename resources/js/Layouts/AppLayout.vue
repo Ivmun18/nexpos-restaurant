@@ -27,7 +27,7 @@
             <div style="padding:14px 16px; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
-                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : '🔧' }}
+                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : empresa.industry_type === 'notaria' ? '⚖️' : empresa.industry_type === 'gimnasio' ? '💪' : '🔧' }}
                     </div>
                     <div v-if="!collapsed">
                         <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0;">NEXPOS</p>
@@ -436,9 +436,14 @@ const allMenuItems = [
 
     // NOTARIA
     { path: '/notaria/actos',       icon: 'notaria',      label: 'Expedientes',      module: 'actos',    section: 'NOTARIA' },
+    { path: '/notaria/indice',      icon: 'book',         label: 'Índice Notarial',  module: 'indice',   section: 'NOTARIA' },
     { path: '/notaria/seguimiento', icon: 'seguimiento',  label: 'Seguimiento',      module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/caja',        icon: 'caja',         label: 'Caja notarial',    module: 'caja',     section: 'NOTARIA' },
     { path: '/clientes',            icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
+    { path: '/gimnasio/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/miembros',    icon: 'users',      label: 'Miembros',      module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/planes',      icon: 'card',       label: 'Planes',        module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/instructores',icon: 'barbell',    label: 'Instructores',  module: 'gimnasio', section: 'GIMNASIO' },
 
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
@@ -579,6 +584,11 @@ const menuItems = computed(() => {
             if (item.section === 'NOTARIA') return false
         }
 
+        // Ocultar módulos de gimnasio si no es gimnasio
+        if (industry !== 'gimnasio') {
+            if (item.section === 'GIMNASIO') return false
+        }
+
         // En notaría ocultar caja general y reportes de otros módulos
         if (industry === 'notaria') {
             const ocultarEnNotaria = ['/caja', '/reportes-restaurante', '/reportes/turnos', '/mesas', '/compras', '/proveedores', '/insumos', '/recetas']
@@ -591,13 +601,14 @@ const menuItems = computed(() => {
         }
 
         if (!item.module) return true
+        if (item.module === 'gimnasio') return industry === 'gimnasio'
         if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
         return modulesEnabled.value.includes(item.module)
     })
 })
 
 const menuSections = computed(() => {
-    const orden = ['_default_', 'NOTARIA', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
+    const orden = ['_default_', 'NOTARIA', 'GIMNASIO', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {

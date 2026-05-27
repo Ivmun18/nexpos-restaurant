@@ -7,7 +7,6 @@ use App\Models\CajaRestaurante;
 use App\Services\NubefactService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Services\Facturacion\FacturacionFactory;
 use Inertia\Response;
 
 class ComprobanteSunatController extends Controller
@@ -127,12 +126,7 @@ class ComprobanteSunatController extends Controller
                 ->with('imprimir', true);
         }
 
-        // Crear servicio de facturación según configuración (Nubefact o APISunat)
-        try {
-            $facturacion = FacturacionFactory::crear($empresa);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Error de configuración: ' . $e->getMessage()]);
-        }
+        $nubefact = new NubefactService($empresa);
 
         // Preparar items
         $items = [[
@@ -149,7 +143,7 @@ class ComprobanteSunatController extends Controller
         ]];
 
         // Emitir a Nubefact
-        $resultado = $facturacion->emitirBoleta([
+        $resultado = $nubefact->emitirBoleta([
             'cliente_tipo_documento' => $request->cliente_tipo_documento,
             'cliente_documento' => $request->cliente_documento,
             'cliente_nombre' => $request->cliente_nombre,
@@ -203,12 +197,7 @@ class ComprobanteSunatController extends Controller
         ]);
 
         $empresa = auth()->user()->empresa;
-        // Crear servicio de facturación según configuración (Nubefact o APISunat)
-        try {
-            $facturacion = FacturacionFactory::crear($empresa);
-        } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Error de configuración: ' . $e->getMessage()]);
-        }
+        $nubefact = new NubefactService($empresa);
 
         // Calcular montos
         $total = $caja->total;
@@ -230,7 +219,7 @@ class ComprobanteSunatController extends Controller
         ]];
 
         // Emitir a Nubefact
-        $resultado = $facturacion->emitirFactura([
+        $resultado = $nubefact->emitirFactura([
             'cliente_ruc' => $request->cliente_ruc,
             'cliente_razon_social' => $request->cliente_razon_social,
             'cliente_direccion' => $request->cliente_direccion,

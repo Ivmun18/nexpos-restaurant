@@ -1,360 +1,305 @@
 <template>
-    <AppLayout title="Caja notarial" subtitle="Cobro de expedientes y adelantos">
+    <AppLayout title="Caja notarial" subtitle="Cobro de expedientes">
 
-        <!-- PANEL CAJA -->
-        <div v-if="!sesionAbierta" style="background:white; border-radius:12px; border:2px solid #FDE68A; padding:1.5rem; margin-bottom:1.5rem; text-align:center;">
-            <p style="font-size:32px; margin:0 0 8px;">🔒</p>
-            <p style="font-size:16px; font-weight:700; color:#92400E; margin:0 0 4px;">Caja cerrada</p>
-            <p style="font-size:13px; color:#B45309; margin:0 0 1.2rem;">Ingresa el fondo inicial para comenzar a operar</p>
-            <div style="display:flex; gap:10px; justify-content:center; align-items:center; max-width:300px; margin:0 auto;">
-                <div style="flex:1;">
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:4px; font-weight:600;">Fondo inicial (S/)</label>
-                    <input v-model="fondoApertura" type="number" step="0.01" min="0" placeholder="0.00"
-                        style="width:100%; padding:10px 12px; border:2px solid #FDE68A; border-radius:8px; font-size:16px; font-weight:700; outline:none; box-sizing:border-box; text-align:right;" />
-                </div>
-                <button @click="abrirCaja" style="margin-top:20px; padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">
-                    🔓 Abrir caja
-                </button>
-            </div>
-        </div>
-
-        <!-- RESUMEN CAJA ABIERTA -->
-        <div v-if="sesionAbierta && resumenCaja" style="background:white; border-radius:12px; border:1px solid #BBF7D0; padding:1rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size:20px;">🟢</span>
-                <div>
-                    <p style="font-size:12px; color:#166534; font-weight:600; margin:0;">Caja abierta</p>
-                    <p style="font-size:11px; color:#94A3B8; margin:0;">Desde {{ formatFecha(resumenCaja.apertura) }}</p>
-                </div>
-            </div>
-            <div style="display:flex; gap:20px; flex:1; flex-wrap:wrap;">
-                <div style="text-align:center;">
-                    <p style="font-size:11px; color:#94A3B8; margin:0;">Fondo inicial</p>
-                    <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">S/ {{ Number(resumenCaja.fondo_inicial).toFixed(2) }}</p>
-                </div>
-                <div style="text-align:center;">
-                    <p style="font-size:11px; color:#94A3B8; margin:0;">Ingresos</p>
-                    <p style="font-size:14px; font-weight:700; color:#10B981; margin:0;">S/ {{ Number(resumenCaja.ingresos).toFixed(2) }}</p>
-                </div>
-                <div style="text-align:center;">
-                    <p style="font-size:11px; color:#94A3B8; margin:0;">Egresos</p>
-                    <p style="font-size:14px; font-weight:700; color:#EF4444; margin:0;">S/ {{ Number(resumenCaja.egresos).toFixed(2) }}</p>
-                </div>
-                <div style="text-align:center;">
-                    <p style="font-size:11px; color:#94A3B8; margin:0;">Saldo sistema</p>
-                    <p style="font-size:16px; font-weight:800; color:#0F766E; margin:0;">S/ {{ Number(resumenCaja.saldo_sistema).toFixed(2) }}</p>
-                </div>
-            </div>
-            <button @click="modalCerrar=true" style="padding:8px 16px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                🔒 Cerrar caja
+        <!-- CAJA CERRADA -->
+        <div v-if="!sesionAbierta" style="max-width:400px; margin:3rem auto; background:white; border-radius:16px; border:2px solid #FDE68A; padding:2rem; text-align:center;">
+            <p style="font-size:40px; margin:0 0 8px;">🔒</p>
+            <p style="font-size:18px; font-weight:800; color:#92400E; margin:0 0 4px;">Caja cerrada</p>
+            <p style="font-size:13px; color:#B45309; margin:0 0 1.5rem;">Ingresa el fondo inicial para comenzar</p>
+            <label style="font-size:12px; color:#64748B; display:block; margin-bottom:6px; font-weight:600; text-align:left;">Fondo inicial (S/)</label>
+            <input v-model="fondoApertura" type="number" step="0.01" min="0" placeholder="0.00"
+                style="width:100%; padding:14px; border:2px solid #FDE68A; border-radius:10px; font-size:22px; font-weight:800; outline:none; box-sizing:border-box; text-align:center; margin-bottom:1rem;" />
+            <button @click="abrirCaja" style="width:100%; padding:14px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer;">
+                🔓 Abrir caja
             </button>
         </div>
 
+        <template v-if="sesionAbierta">
+
+            <!-- BARRA ESTADO CAJA -->
+            <div style="background:white; border-radius:12px; border:1px solid #BBF7D0; padding:.9rem 1.25rem; margin-bottom:1.25rem; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                    <span style="font-size:18px;">🟢</span>
+                    <div>
+                        <p style="font-size:13px; font-weight:700; color:#166534; margin:0;">Caja abierta</p>
+                        <p style="font-size:11px; color:#94A3B8; margin:0;">Desde {{ formatFecha(resumenCaja?.apertura) }}</p>
+                    </div>
+                </div>
+                <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                    <div style="text-align:center;">
+                        <p style="font-size:10px; color:#94A3B8; margin:0; text-transform:uppercase; font-weight:600;">Fondo</p>
+                        <p style="font-size:15px; font-weight:800; color:#1E293B; margin:0;">S/ {{ Number(resumenCaja?.fondo_inicial||0).toFixed(2) }}</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <p style="font-size:10px; color:#94A3B8; margin:0; text-transform:uppercase; font-weight:600;">Ingresos</p>
+                        <p style="font-size:15px; font-weight:800; color:#10B981; margin:0;">S/ {{ Number(resumenCaja?.ingresos||0).toFixed(2) }}</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <p style="font-size:10px; color:#94A3B8; margin:0; text-transform:uppercase; font-weight:600;">Saldo</p>
+                        <p style="font-size:15px; font-weight:800; color:#0F766E; margin:0;">S/ {{ Number(resumenCaja?.saldo_sistema||0).toFixed(2) }}</p>
+                    </div>
+                </div>
+                <button @click="modalCerrar=true" style="padding:8px 16px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                    🔒 Cerrar caja
+                </button>
+            </div>
+
+            <!-- LAYOUT PRINCIPAL -->
+            <div style="display:grid; grid-template-columns:1fr 420px; gap:16px; align-items:start;">
+
+                <!-- COLUMNA IZQUIERDA -->
+                <div style="display:flex; flex-direction:column; gap:12px;">
+
+                    <!-- BUSCADOR -->
+                    <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1rem 1.25rem;">
+                        <div style="display:flex; gap:8px;">
+                            <input v-model="busqueda" type="text"
+                                placeholder="🔍  N° expediente, nombre, DNI, asunto..."
+                                @keyup.enter="buscarServidor"
+                                style="flex:1; padding:12px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; transition:border .2s;"
+                                @focus="e => e.target.style.borderColor='#6366F1'"
+                                @blur="e => e.target.style.borderColor='#E2E8F0'" />
+                            <button @click="buscarServidor"
+                                style="padding:12px 20px; background:#6366F1; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- LISTA PENDIENTES -->
+                    <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
+                        <div style="padding:.9rem 1.25rem; border-bottom:1px solid #F1F5F9; display:flex; justify-content:space-between; align-items:center;">
+                            <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">
+                                Pendientes de cobro
+                                <span style="background:#EEF2FF; color:#4F46E5; padding:2px 8px; border-radius:20px; font-size:12px; margin-left:6px;">{{ props.pendientes.length }}</span>
+                            </p>
+                            <span style="font-size:12px; color:#EF4444; font-weight:700;">S/ {{ totalPorCobrar.toFixed(2) }} por cobrar</span>
+                        </div>
+                        <div v-if="props.pendientes.length === 0" style="padding:2.5rem; text-align:center; color:#94A3B8;">
+                            <p style="font-size:28px; margin:0 0 6px;">✅</p>
+                            <p style="font-size:13px; margin:0;">No hay expedientes pendientes</p>
+                        </div>
+                        <div v-for="e in props.pendientes" :key="e.id" @click="seleccionar(e)"
+                            :style="{
+                                padding:'13px 16px', borderTop:'1px solid #F8FAFC', cursor:'pointer',
+                                background: expedienteSeleccionado?.id === e.id ? '#EEF2FF' : 'white',
+                                borderLeft: expedienteSeleccionado?.id === e.id ? '4px solid #6366F1' : '4px solid transparent',
+                            }">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                <span style="font-family:monospace; font-size:13px; font-weight:800; color:#4F46E5;">{{ e.numero_expediente }}</span>
+                                <span :style="estiloPago(e.estado_pago)">{{ labelPago(e.estado_pago) }}</span>
+                            </div>
+                            <p style="font-size:13px; color:#1E293B; font-weight:600; margin:0 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ e.asunto }}</p>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:11px; color:#94A3B8;">{{ e.partes_intervinientes || '—' }}</span>
+                                <span style="font-size:14px; font-weight:800; color:#EF4444;">S/ {{ Number(e.saldo).toFixed(2) }}</span>
+                            </div>
+                            <div style="background:#E2E8F0; border-radius:20px; height:3px; margin-top:6px;">
+                                <div :style="{width:Math.min(100,(e.monto_pagado/e.monto_cobrar)*100)+'%', background:'#6366F1', borderRadius:'20px', height:'100%'}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PAGADOS HOY -->
+                    <div v-if="props.pagadosHoy?.length > 0" style="background:white; border-radius:12px; border:1px solid #BBF7D0; overflow:hidden;">
+                        <div style="padding:.9rem 1.25rem; border-bottom:1px solid #F0FDF4; background:#F0FDF4;">
+                            <p style="font-size:13px; font-weight:700; color:#166534; margin:0;">✅ Cobrados hoy — pendientes de comprobante ({{ props.pagadosHoy.length }})</p>
+                        </div>
+                        <div v-for="e in props.pagadosHoy" :key="'p'+e.id" @click="seleccionar(e)"
+                            :style="{
+                                padding:'12px 16px', borderTop:'1px solid #F0FDF4', cursor:'pointer',
+                                background: expedienteSeleccionado?.id === e.id ? '#ECFDF5' : 'white',
+                                borderLeft: expedienteSeleccionado?.id === e.id ? '4px solid #10B981' : '4px solid transparent',
+                            }">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-family:monospace; font-size:13px; font-weight:800; color:#059669;">{{ e.numero_expediente }}</span>
+                                <span style="font-size:13px; font-weight:800; color:#059669;">S/ {{ Number(e.monto_cobrar).toFixed(2) }}</span>
+                            </div>
+                            <p style="font-size:13px; color:#1E293B; margin:2px 0 0; font-weight:500;">{{ e.asunto }}</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLUMNA DERECHA: PANEL DE COBRO -->
+                <div style="position:sticky; top:80px;">
+
+                    <div v-if="!expedienteSeleccionado" style="background:white; border-radius:12px; border:2px dashed #E2E8F0; padding:3rem 2rem; text-align:center;">
+                        <p style="font-size:48px; margin:0 0 10px;">👈</p>
+                        <p style="font-size:14px; font-weight:600; margin:0 0 4px; color:#94A3B8;">Selecciona un expediente</p>
+                        <p style="font-size:12px; margin:0; color:#CBD5E1;">para registrar el cobro</p>
+                    </div>
+
+                    <div v-else style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
+
+                        <!-- Cabecera -->
+                        <div style="padding:1rem 1.25rem; background:linear-gradient(135deg,#EEF2FF,#E0E7FF); border-bottom:1px solid #C7D2FE;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div style="flex:1; min-width:0;">
+                                    <p style="font-size:11px; color:#4F46E5; font-weight:700; margin:0 0 2px; text-transform:uppercase;">{{ labelTipo(expedienteSeleccionado.tipo_acto) }}</p>
+                                    <p style="font-size:15px; font-weight:800; color:#1E293B; margin:0 0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ expedienteSeleccionado.asunto }}</p>
+                                    <p style="font-size:12px; color:#6366F1; margin:0;">{{ expedienteSeleccionado.partes_intervinientes || '—' }}</p>
+                                </div>
+                                <span style="font-family:monospace; font-size:12px; font-weight:800; color:#4F46E5; background:white; padding:4px 10px; border-radius:20px; border:1px solid #C7D2FE; margin-left:8px; white-space:nowrap;">{{ expedienteSeleccionado.numero_expediente }}</span>
+                            </div>
+                        </div>
+
+                        <div style="padding:1.25rem;">
+
+                            <!-- Resumen financiero -->
+                            <div style="background:#F8FAFC; border-radius:10px; padding:12px 14px; margin-bottom:1.25rem;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span style="font-size:12px; color:#64748B;">Total servicio</span>
+                                    <span style="font-size:13px; font-weight:700;">S/ {{ Number(expedienteSeleccionado.monto_cobrar).toFixed(2) }}</span>
+                                </div>
+                                <div v-if="expedienteSeleccionado.monto_pagado > 0" style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span style="font-size:12px; color:#64748B;">Ya pagado</span>
+                                    <span style="font-size:13px; font-weight:700; color:#10B981;">− S/ {{ Number(expedienteSeleccionado.monto_pagado).toFixed(2) }}</span>
+                                </div>
+                                <div style="border-top:1px solid #E2E8F0; padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:14px; font-weight:700; color:#1E293B;">Saldo a cobrar</span>
+                                    <span style="font-size:22px; font-weight:900; color:#EF4444;">S/ {{ Number(expedienteSeleccionado.saldo ?? (expedienteSeleccionado.monto_cobrar - expedienteSeleccionado.monto_pagado)).toFixed(2) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Monto -->
+                            <div style="margin-bottom:1rem;">
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Monto a cobrar (S/)</label>
+                                <input v-model="formCobro.monto" type="number" step="0.01" min="0"
+                                    style="width:100%; padding:14px; border:2px solid #6366F1; border-radius:10px; font-size:28px; font-weight:900; outline:none; box-sizing:border-box; text-align:center; color:#1E293B;" />
+                            </div>
+
+                            <!-- Método de pago -->
+                            <div style="margin-bottom:1rem;">
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Método de pago</label>
+                                <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;">
+                                    <button v-for="m in metodos" :key="m.value" @click="formCobro.metodo_pago = m.value"
+                                        :style="{
+                                            padding:'10px 4px', border:'2px solid', borderRadius:'10px', cursor:'pointer', textAlign:'center',
+                                            borderColor: formCobro.metodo_pago === m.value ? '#6366F1' : '#E2E8F0',
+                                            background: formCobro.metodo_pago === m.value ? '#EEF2FF' : 'white',
+                                            color: formCobro.metodo_pago === m.value ? '#4F46E5' : '#64748B',
+                                            fontWeight:'700', fontSize:'11px',
+                                        }">
+                                        <div style="font-size:18px; margin-bottom:3px;">{{ m.icon }}</div>
+                                        {{ m.label }}
+                                    </button>
+                                </div>
+                                <input v-if="formCobro.metodo_pago !== 'efectivo'" v-model="formCobro.referencia"
+                                    type="text" :placeholder="formCobro.metodo_pago === 'tarjeta' ? 'Últimos 4 dígitos' : 'N° operación / referencia'"
+                                    style="width:100%; margin-top:8px; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                            </div>
+
+                            <!-- Comprobante inline -->
+                            <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:1.25rem;">
+                                <div style="padding:10px 14px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; gap:8px;">
+                                    <span style="font-size:14px;">🧾</span>
+                                    <p style="font-size:12px; font-weight:700; color:#1E293B; margin:0;">Comprobante de pago</p>
+                                </div>
+                                <div style="padding:12px 14px; display:flex; flex-direction:column; gap:10px;">
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                        <button v-for="t in tiposComp" :key="t.value" @click="formComp.tipo_comprobante = t.value"
+                                            :style="{
+                                                padding:'10px', border:'2px solid', borderRadius:'8px', cursor:'pointer', textAlign:'center',
+                                                borderColor: formComp.tipo_comprobante === t.value ? '#0F766E' : '#E2E8F0',
+                                                background: formComp.tipo_comprobante === t.value ? '#F0FDFA' : 'white',
+                                                color: formComp.tipo_comprobante === t.value ? '#0F766E' : '#64748B',
+                                                fontWeight:'700', fontSize:'13px',
+                                            }">
+                                            {{ t.icon }} {{ t.label }}
+                                        </button>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns:100px 1fr; gap:8px;">
+                                        <select v-model="formComp.cliente_tipo_documento"
+                                            style="padding:9px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; font-weight:600;">
+                                            <option value="1">DNI</option>
+                                            <option value="6">RUC</option>
+                                            <option value="0">Sin doc.</option>
+                                        </select>
+                                        <input v-model="formComp.cliente_numero_documento" type="text"
+                                            :placeholder="formComp.cliente_tipo_documento==='6' ? '20xxxxxxxxx' : '12345678'"
+                                            style="padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+                                    </div>
+                                    <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre completo del cliente *"
+                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                    <input v-model="formComp.cliente_email" type="email" placeholder="Email (opcional)"
+                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                    <div v-if="errorComp" style="background:#FEF2F2; border-radius:8px; padding:8px 12px; font-size:12px; color:#991B1B;">❌ {{ errorComp }}</div>
+                                    <div v-if="pdfComp" style="background:#F0FDF4; border-radius:8px; padding:8px 12px; font-size:12px; color:#166534;">
+                                        ✅ Comprobante emitido.
+                                        <a :href="pdfComp" target="_blank" style="font-weight:700; color:#0F766E; margin-left:4px;">📥 Descargar PDF</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN COBRAR -->
+                            <button @click="confirmarCobro" :disabled="!formCobro.monto || procesando"
+                                :style="{
+                                    width:'100%', padding:'16px', border:'none', borderRadius:'12px',
+                                    fontSize:'17px', fontWeight:'800', transition:'all .2s',
+                                    background: !formCobro.monto || procesando ? '#E2E8F0' : 'linear-gradient(135deg,#6366F1,#4F46E5)',
+                                    color: !formCobro.monto || procesando ? '#94A3B8' : 'white',
+                                    cursor: !formCobro.monto || procesando ? 'not-allowed' : 'pointer',
+                                }">
+                                {{ procesando ? '⏳ Procesando...' : '💰 Cobrar S/ ' + (Number(formCobro.monto)||0).toFixed(2) }}
+                            </button>
+                            <button @click="expedienteSeleccionado=null"
+                                style="width:100%; margin-top:8px; padding:10px; background:transparent; border:none; color:#94A3B8; font-size:12px; cursor:pointer;">
+                                Cancelar
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </template>
+
         <!-- MODAL CIERRE DE CAJA -->
         <div v-if="modalCerrar" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center;">
-            <div style="background:white; border-radius:16px; padding:1.5rem; width:420px; max-width:95vw;">
-                <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 1.2rem;">🔒 Cerrar caja</p>
-                <div style="background:#F8FAFC; border-radius:10px; padding:12px 16px; margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <div style="background:white; border-radius:16px; padding:1.5rem; width:400px; max-width:95vw;">
+                <p style="font-size:16px; font-weight:800; color:#1E293B; margin:0 0 1.2rem;">🔒 Cerrar caja</p>
+                <div style="background:#F8FAFC; border-radius:10px; padding:14px; margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Fondo inicial</span>
-                        <span style="font-size:13px; font-weight:700;">S/ {{ Number(resumenCaja?.fondo_inicial).toFixed(2) }}</span>
+                        <span style="font-size:13px; font-weight:700;">S/ {{ Number(resumenCaja?.fondo_inicial||0).toFixed(2) }}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">+ Ingresos</span>
-                        <span style="font-size:13px; font-weight:700; color:#10B981;">S/ {{ Number(resumenCaja?.ingresos).toFixed(2) }}</span>
+                        <span style="font-size:13px; font-weight:700; color:#10B981;">S/ {{ Number(resumenCaja?.ingresos||0).toFixed(2) }}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span style="font-size:13px; color:#64748B;">- Egresos</span>
-                        <span style="font-size:13px; font-weight:700; color:#EF4444;">S/ {{ Number(resumenCaja?.egresos).toFixed(2) }}</span>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:13px; color:#64748B;">− Egresos</span>
+                        <span style="font-size:13px; font-weight:700; color:#EF4444;">S/ {{ Number(resumenCaja?.egresos||0).toFixed(2) }}</span>
                     </div>
-                    <div style="border-top:1px solid #E2E8F0; padding-top:6px; display:flex; justify-content:space-between;">
+                    <div style="border-top:1px solid #E2E8F0; padding-top:8px; display:flex; justify-content:space-between;">
                         <span style="font-size:14px; font-weight:700;">Saldo sistema</span>
-                        <span style="font-size:16px; font-weight:800; color:#0F766E;">S/ {{ Number(resumenCaja?.saldo_sistema).toFixed(2) }}</span>
+                        <span style="font-size:18px; font-weight:900; color:#0F766E;">S/ {{ Number(resumenCaja?.saldo_sistema||0).toFixed(2) }}</span>
                     </div>
                 </div>
                 <div style="margin-bottom:1rem;">
-                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px; font-weight:600;">Monto contado físicamente (S/)</label>
+                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:6px; font-weight:600;">Monto contado físicamente (S/)</label>
                     <input v-model="formCierre.monto_real" type="number" step="0.01" min="0"
-                        style="width:100%; padding:10px; border:2px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:700; outline:none; box-sizing:border-box; text-align:right;" />
-                    <p v-if="formCierre.monto_real" style="font-size:12px; margin:4px 0 0;"
-                        :style="(Number(formCierre.monto_real) - Number(resumenCaja?.saldo_sistema)) >= 0 ? {color:'#166534'} : {color:'#991B1B'}">
-                        Diferencia: {{ (Number(formCierre.monto_real) - Number(resumenCaja?.saldo_sistema)) >= 0 ? '+' : '' }}S/ {{ (Number(formCierre.monto_real) - Number(resumenCaja?.saldo_sistema)).toFixed(2) }}
+                        style="width:100%; padding:12px; border:2px solid #E2E8F0; border-radius:8px; font-size:20px; font-weight:800; outline:none; box-sizing:border-box; text-align:center;" />
+                    <p v-if="formCierre.monto_real" style="font-size:12px; margin:4px 0 0; font-weight:600;"
+                        :style="(Number(formCierre.monto_real)-Number(resumenCaja?.saldo_sistema||0))>=0?{color:'#166534'}:{color:'#991B1B'}">
+                        Diferencia: {{ (Number(formCierre.monto_real)-Number(resumenCaja?.saldo_sistema||0))>=0?'+':'' }}S/ {{ (Number(formCierre.monto_real)-Number(resumenCaja?.saldo_sistema||0)).toFixed(2) }}
                     </p>
                 </div>
                 <div style="margin-bottom:1.2rem;">
-                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px; font-weight:600;">Observaciones</label>
+                    <label style="font-size:12px; color:#64748B; display:block; margin-bottom:6px; font-weight:600;">Observaciones</label>
                     <input v-model="formCierre.observaciones" type="text" placeholder="Notas del cierre..."
                         style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                 </div>
                 <div style="display:flex; gap:8px; justify-content:flex-end;">
-                    <button @click="modalCerrar=false" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cancelar</button>
-                    <button @click="cerrarCaja" style="padding:9px 18px; background:#EF4444; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">🔒 Confirmar cierre</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- BUSCADOR -->
-        <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.2rem 1.5rem; margin-bottom:1.5rem;">
-            <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0 0 10px;">🔍 Buscar expediente para cobrar</p>
-            <input v-model="busqueda" @input="filtrar" type="text" placeholder="Buscar por N° expediente, nombre, DNI, asunto..."
-                style="width:100%; padding:12px 16px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; transition:border .2s;"
-                @focus="e => e.target.style.borderColor='#6366F1'"
-                @blur="e => e.target.style.borderColor='#E2E8F0'"
-                @keyup.enter="buscarServidor" />
-            <button @click="buscarServidor" style="margin-top:8px; padding:10px 20px; background:#6366F1; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; width:100%;">🔍 Buscar expediente</button>
-        </div>
-
-        <!-- RESULTADOS / LISTA PENDIENTES -->
-        <div style="display:grid; grid-template-columns:1fr 380px; gap:16px;">
-
-            <!-- LISTA -->
-            <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
-                <div style="padding:1rem 1.25rem; border-bottom:1px solid #F1F5F9; display:flex; align-items:center; justify-content:space-between;">
-                    <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">Expedientes con saldo pendiente ({{ expedientesFiltrados.length }})</p>
-                    <span style="font-size:12px; color:#94A3B8;">Total por cobrar: <strong style="color:#EF4444;">S/ {{ totalPorCobrar.toFixed(2) }}</strong></span>
-                </div>
-                <div v-if="expedientesFiltrados.length === 0" style="padding:3rem; text-align:center; color:#94A3B8;">
-                    <p style="font-size:32px; margin:0 0 8px;">🔍</p>
-                    <p style="font-size:13px; margin:0;">No hay expedientes con saldo pendiente</p>
-                </div>
-                <div v-for="e in expedientesFiltrados" :key="e.id"
-                    @click="seleccionar(e)"
-                    :style="{
-                        padding:'14px 16px',
-                        borderTop:'1px solid #F1F5F9',
-                        cursor:'pointer',
-                        background: expedienteSeleccionado?.id === e.id ? '#EEF2FF' : 'white',
-                        borderLeft: expedienteSeleccionado?.id === e.id ? '4px solid #6366F1' : '4px solid transparent',
-                        transition:'all .15s'
-                    }">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-                        <span style="font-family:monospace; font-size:13px; font-weight:700; color:#4F46E5;">{{ e.numero_expediente }}</span>
-                        <span :style="estiloPago(e.estado_pago)">{{ labelPago(e.estado_pago) }}</span>
-                    </div>
-                    <p style="font-size:13px; color:#1E293B; font-weight:500; margin:0 0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ e.asunto }}</p>
-                    <p style="font-size:12px; color:#94A3B8; margin:0 0 6px;">{{ e.partes_intervinientes || '—' }}</p>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:11px; color:#94A3B8;">{{ labelTipo(e.tipo_acto) }}</span>
-                        <div style="text-align:right;">
-                            <span style="font-size:11px; color:#94A3B8;">Pagado S/ {{ Number(e.monto_pagado).toFixed(2) }} / S/ {{ Number(e.monto_cobrar).toFixed(2) }} — </span>
-                            <span style="font-size:13px; font-weight:800; color:#EF4444;">Saldo S/ {{ Number(e.saldo).toFixed(2) }}</span>
-                        </div>
-                    </div>
-                    <!-- Barra progreso -->
-                    <div style="background:#E2E8F0; border-radius:20px; height:4px; margin-top:8px;">
-                        <div :style="{width: Math.min(100,(e.monto_pagado/e.monto_cobrar)*100)+'%', background:'#6366F1', borderRadius:'20px', height:'100%'}"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PAGADOS HOY -->
-            <div v-if="pagadosHoy.length > 0" style="margin-top:16px; background:white; border-radius:12px; border:1px solid #BBF7D0; overflow:hidden;">
-                <div style="padding:1rem 1.25rem; border-bottom:1px solid #F0FDF4; background:#F0FDF4; display:flex; align-items:center; justify-content:space-between;">
-                    <p style="font-size:13px; font-weight:700; color:#166534; margin:0;">✅ Pagados hoy — pendientes de comprobante ({{ pagadosHoy.length }})</p>
-                </div>
-                <div v-for="e in pagadosHoy" :key="'p'+e.id"
-                    @click="seleccionarPagado(e)"
-                    :style="{
-                        padding:'12px 16px', borderTop:'1px solid #F0FDF4', cursor:'pointer',
-                        background: expedienteSeleccionado?.id === e.id ? '#ECFDF5' : 'white',
-                        borderLeft: expedienteSeleccionado?.id === e.id ? '4px solid #10B981' : '4px solid transparent',
-                    }">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-                        <span style="font-family:monospace; font-size:13px; font-weight:700; color:#059669;">{{ e.numero_expediente }}</span>
-                        <span style="background:#F0FDF4; color:#166534; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600;">✅ Pagado</span>
-                    </div>
-                    <p style="font-size:13px; color:#1E293B; margin:0 0 2px; font-weight:500;">{{ e.asunto }}</p>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="font-size:11px; color:#94A3B8;">{{ e.partes_intervinientes || '—' }}</span>
-                        <span style="font-size:13px; font-weight:800; color:#059669;">S/ {{ Number(e.monto_cobrar).toFixed(2) }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PANEL COBRO -->
-            <div>
-                <div v-if="!expedienteSeleccionado" style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:3rem; text-align:center; color:#94A3B8;">
-                    <p style="font-size:32px; margin:0 0 8px;">👈</p>
-                    <p style="font-size:13px; margin:0;">Selecciona un expediente para registrar el cobro</p>
-                </div>
-
-                <div v-else style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
-                    <div style="padding:1rem 1.25rem; background:#EEF2FF; border-bottom:1px solid #C7D2FE;">
-                        <p style="font-size:12px; color:#4F46E5; font-weight:600; margin:0 0 2px;">{{ expedienteSeleccionado.numero_expediente }}</p>
-                        <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ expedienteSeleccionado.asunto }}</p>
-                        <p style="font-size:12px; color:#6366F1; margin:2px 0 0;">{{ expedienteSeleccionado.partes_intervinientes || '—' }}</p>
-                    </div>
-
-                    <div style="padding:1rem 1.25rem;">
-                        <!-- Resumen financiero -->
-                        <div style="background:#F8FAFC; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                <span style="font-size:13px; color:#64748B;">Total servicio</span>
-                                <span style="font-size:13px; font-weight:700;">S/ {{ Number(expedienteSeleccionado.monto_cobrar).toFixed(2) }}</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                <span style="font-size:13px; color:#64748B;">Adelantos pagados</span>
-                                <span style="font-size:13px; font-weight:700; color:#10B981;">S/ {{ Number(expedienteSeleccionado.monto_pagado).toFixed(2) }}</span>
-                            </div>
-                            <div style="border-top:1px solid #E2E8F0; padding-top:6px; display:flex; justify-content:space-between;">
-                                <span style="font-size:14px; font-weight:700; color:#1E293B;">Saldo a cobrar</span>
-                                <span style="font-size:18px; font-weight:800; color:#EF4444;">S/ {{ Number(expedienteSeleccionado.saldo).toFixed(2) }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Tipo de cobro -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Tipo de cobro</label>
-                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
-                                <button v-for="t in tiposCobro" :key="t.value" @click="formCobro.tipo = t.value"
-                                    :style="{padding:'7px 4px', borderRadius:'8px', border:'1.5px solid', fontSize:'11px', fontWeight:'600', cursor:'pointer', textAlign:'center',
-                                        borderColor: formCobro.tipo===t.value ? '#6366F1' : '#E2E8F0',
-                                        background: formCobro.tipo===t.value ? '#EEF2FF' : 'white',
-                                        color: formCobro.tipo===t.value ? '#4F46E5' : '#64748B'}">
-                                    {{ t.icon }}<br>{{ t.label }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Método de pago -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Método de pago</label>
-                            <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:5px;">
-                                <button v-for="m in metodos" :key="m.value" @click="formCobro.metodo_pago = m.value"
-                                    :style="{padding:'6px 2px', borderRadius:'7px', border:'1.5px solid', fontSize:'10px', fontWeight:'600', cursor:'pointer', textAlign:'center',
-                                        borderColor: formCobro.metodo_pago===m.value ? '#10B981' : '#E2E8F0',
-                                        background: formCobro.metodo_pago===m.value ? '#ECFDF5' : 'white',
-                                        color: formCobro.metodo_pago===m.value ? '#065F46' : '#64748B'}">
-                                    {{ m.icon }}<br>{{ m.label }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Monto -->
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:11px; color:#64748B; display:block; margin-bottom:4px; font-weight:600; text-transform:uppercase;">Monto a cobrar (S/)</label>
-                            <input v-model="formCobro.monto" type="number" step="0.01" min="0.01"
-                                style="width:100%; padding:12px; border:2px solid #E2E8F0; border-radius:10px; font-size:22px; font-weight:800; outline:none; box-sizing:border-box; text-align:right; color:#1E293B;" />
-                            <div style="display:flex; gap:6px; margin-top:6px;">
-                                <button @click="formCobro.monto = expedienteSeleccionado.saldo" style="flex:1; padding:5px; background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
-                                    Cobrar todo S/ {{ Number(expedienteSeleccionado.saldo).toFixed(2) }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Referencia opcional -->
-                        <div style="margin-bottom:16px;">
-                            <label style="font-size:11px; color:#64748B; display:block; margin-bottom:4px; font-weight:600; text-transform:uppercase;">Referencia (opcional)</label>
-                            <input v-model="formCobro.referencia" type="text" placeholder="N° operación, voucher..."
-                                style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                        </div>
-
-                        <button @click="confirmarCobro" :disabled="!sesionAbierta || !formCobro.monto"
-                            :style="{width:'100%', padding:'14px', background: sesionAbierta && formCobro.monto ? 'linear-gradient(135deg,#6366F1,#4F46E5)' : '#E2E8F0',
-                                color: sesionAbierta && formCobro.monto ? 'white' : '#94A3B8',
-                                border:'none', borderRadius:'10px', fontSize:'15px', fontWeight:'700', cursor: sesionAbierta && formCobro.monto ? 'pointer' : 'not-allowed'}">
-                            ✅ Registrar cobro S/ {{ Number(formCobro.monto || 0).toFixed(2) }}
-                        </button>
-
-                        <!-- Emitir comprobante si está pagado -->
-                        <div v-if="expedienteSeleccionado?.estado_pago === 'pagado'" style="margin-top:8px;">
-                            <div style="border-top:1px solid #F1F5F9; padding-top:10px;">
-                                <p style="font-size:11px; color:#64748B; text-align:center; margin:0 0 8px; font-weight:600; text-transform:uppercase;">✅ Servicio cancelado</p>
-                                <button @click="modalComprobante=true"
-                                    style="width:100%; padding:12px; background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
-                                    🧾 Emitir Boleta / Factura
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Historial pagos -->
-                        <div v-if="expedienteSeleccionado.pagos?.length > 0" style="margin-top:1rem; border-top:1px solid #F1F5F9; padding-top:1rem;">
-                            <p style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">Historial de cobros</p>
-                            <div v-for="p in expedienteSeleccionado.pagos" :key="p.id"
-                                style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #F8FAFC; font-size:12px;">
-                                <div>
-                                    <span style="color:#64748B;">{{ formatFecha(p.created_at) }}</span>
-                                    <span style="margin-left:6px; background:#F1F5F9; color:#475569; padding:1px 6px; border-radius:10px; font-size:10px; text-transform:capitalize;">{{ p.tipo?.replace('_',' ') }}</span>
-                                    <span style="margin-left:4px; background:#F0FDF4; color:#166534; padding:1px 6px; border-radius:10px; font-size:10px;">{{ p.metodo_pago }}</span>
-                                </div>
-                                <span style="font-weight:700; color:#0F766E;">S/ {{ Number(p.monto).toFixed(2) }}</span>
-                            </div>
-                        </div>
-                    </div>
+                    <button @click="modalCerrar=false" style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cancelar</button>
+                    <button @click="cerrarCaja" style="padding:10px 20px; background:#EF4444; color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">🔒 Confirmar cierre</button>
                 </div>
             </div>
         </div>
 
     </AppLayout>
-
-    <!-- MODAL COMPROBANTE -->
-    <div v-if="modalComprobante" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center;">
-        <div style="background:white; border-radius:16px; padding:1.5rem; width:460px; max-width:95vw;">
-            <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 4px;">🧾 Emitir comprobante</p>
-            <p style="font-size:12px; color:#94A3B8; margin:0 0 1.2rem;">{{ expedienteSeleccionado?.numero_expediente }} — {{ expedienteSeleccionado?.asunto }}</p>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1rem;">
-                <button @click="formComp.tipo_comprobante='03'; formComp.cliente_tipo_documento='1'"
-                    :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer', textAlign:'center',
-                        borderColor: formComp.tipo_comprobante==='03'?'#14B8A6':'#E2E8F0',
-                        background: formComp.tipo_comprobante==='03'?'#F0FDFA':'white',
-                        color: formComp.tipo_comprobante==='03'?'#0F766E':'#64748B'}">
-                    🧾 Boleta<br><span style="font-size:10px; font-weight:400;">Persona natural</span>
-                </button>
-                <button @click="formComp.tipo_comprobante='01'; formComp.cliente_tipo_documento='6'"
-                    :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer', textAlign:'center',
-                        borderColor: formComp.tipo_comprobante==='01'?'#6366F1':'#E2E8F0',
-                        background: formComp.tipo_comprobante==='01'?'#EEF2FF':'white',
-                        color: formComp.tipo_comprobante==='01'?'#4F46E5':'#64748B'}">
-                    📄 Factura<br><span style="font-size:10px; font-weight:400;">Empresa con RUC</span>
-                </button>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
-                <div>
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'RUC' : 'DNI' }} *</label>
-                    <input v-model="formComp.cliente_numero_documento" type="text"
-                        :maxlength="formComp.tipo_comprobante==='01' ? 11 : 8"
-                        :placeholder="formComp.tipo_comprobante==='01' ? '20xxxxxxxxx' : '12345678'"
-                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                </div>
-                <div>
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Nombre / Razón social *</label>
-                    <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre completo"
-                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                </div>
-                <div style="grid-column:1/-1;">
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Email (opcional)</label>
-                    <input v-model="formComp.cliente_email" type="email" placeholder="correo@ejemplo.com"
-                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                </div>
-            </div>
-
-            <div style="background:#F8FAFC; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-                    <span style="font-size:12px; color:#64748B;">Total del servicio</span>
-                    <span style="font-size:14px; font-weight:800; color:#0F766E;">S/ {{ Number(expedienteSeleccionado?.monto_cobrar || 0).toFixed(2) }}</span>
-                </div>
-            </div>
-
-            <div v-if="errorComp" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#991B1B;">
-                ❌ {{ errorComp }}
-            </div>
-            <div v-if="pdfComp" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#166534;">
-                ✅ Comprobante emitido.
-                <a :href="pdfComp" target="_blank" style="font-weight:700; color:#0F766E; margin-left:6px;">📥 Descargar PDF</a>
-            </div>
-
-            <div style="display:flex; gap:8px; justify-content:flex-end;">
-                <button @click="modalComprobante=false; errorComp=''; pdfComp=''" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cerrar</button>
-                <button @click="emitirComprobante" :disabled="emitiendo"
-                    style="padding:9px 20px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
-                    {{ emitiendo ? '⏳ Emitiendo...' : '🧾 Emitir a SUNAT' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
 </template>
 
 <script setup>
@@ -367,49 +312,53 @@ const props = defineProps({
     pagadosHoy:    { type: Array,   default: () => [] },
     sesionAbierta: { type: Boolean, default: false },
     resumenCaja:   { type: Object,  default: null },
-    filtros:       { type: Object,  default: () => ({}) },
 })
 
-const busqueda              = ref(props.filtros?.buscar || '')
+const busqueda               = ref('')
 const expedienteSeleccionado = ref(null)
-const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_parcial', referencia: '' })
+const procesando             = ref(false)
+const modalCerrar            = ref(false)
+const fondoApertura          = ref(0)
+const formCierre             = ref({ monto_real: '', observaciones: '' })
+const errorComp              = ref('')
+const pdfComp                = ref('')
 
-const tiposCobro = [
-    { value: 'adelanto',    label: 'Adelanto',    icon: '💰' },
-    { value: 'pago_parcial',label: 'Parcial',     icon: '◑' },
-    { value: 'pago_final',  label: 'Pago final',  icon: '✅' },
+const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' })
+const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
+
+const tiposComp = [
+    { value: '03', label: 'Boleta',  icon: '🧾' },
+    { value: '01', label: 'Factura', icon: '📄' },
 ]
 
 const metodos = [
-    { value: 'efectivo',     label: 'Efectivo',     icon: '💵' },
-    { value: 'yape',         label: 'Yape',         icon: '📱' },
-    { value: 'plin',         label: 'Plin',         icon: '📲' },
-    { value: 'tarjeta',      label: 'Tarjeta',      icon: '💳' },
-    { value: 'transferencia',label: 'Transfer',     icon: '🏦' },
+    { value: 'efectivo',      label: 'Efectivo', icon: '💵' },
+    { value: 'yape',          label: 'Yape',     icon: '📱' },
+    { value: 'plin',          label: 'Plin',     icon: '📲' },
+    { value: 'tarjeta',       label: 'Tarjeta',  icon: '💳' },
+    { value: 'transferencia', label: 'Transfer', icon: '🏦' },
 ]
 
-const expedientesFiltrados = computed(() => props.pendientes)
-
-const totalPorCobrar = computed(() => expedientesFiltrados.value.reduce((s, e) => s + Number(e.saldo), 0))
-
-function seleccionarPagado(e) {
-    expedienteSeleccionado.value = e
-    formCobro.value = { monto: 0, metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' }
-}
+const totalPorCobrar = computed(() => props.pendientes.reduce((s, e) => s + Number(e.saldo), 0))
 
 function seleccionar(e) {
     expedienteSeleccionado.value = e
+    errorComp.value = ''
+    pdfComp.value   = ''
     formCobro.value = {
-        monto:       e.saldo,
+        monto:       Number(e.saldo ?? (e.monto_cobrar - e.monto_pagado)).toFixed(2),
         metodo_pago: 'efectivo',
-        tipo:        e.monto_pagado > 0 ? 'pago_final' : 'pago_parcial',
+        tipo:        e.monto_pagado > 0 ? 'pago_final' : 'adelanto',
         referencia:  ''
     }
+    formComp.value = {
+        tipo_comprobante:         '03',
+        cliente_tipo_documento:   e.cliente?.tipo_documento || '1',
+        cliente_numero_documento: e.cliente?.numero_documento || '',
+        cliente_nombre:           e.cliente?.nombre || '',
+        cliente_email:            e.cliente?.email || '',
+    }
 }
-
-const fondoApertura = ref(0)
-const modalCerrar   = ref(false)
-const formCierre    = ref({ monto_real: '', observaciones: '' })
 
 function abrirCaja() {
     router.post('/notaria/caja/abrir', { monto_apertura: fondoApertura.value }, { preserveScroll: true })
@@ -422,45 +371,45 @@ function cerrarCaja() {
     })
 }
 
-const modalComprobante = ref(false)
-const emitiendo        = ref(false)
-const errorComp        = ref('')
-const pdfComp          = ref('')
-const formComp = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
+async function confirmarCobro() {
+    if (!formCobro.value.monto || !expedienteSeleccionado.value || procesando.value) return
+    procesando.value = true
+    errorComp.value  = ''
+    const actoId = expedienteSeleccionado.value.id
 
-async function emitirComprobante() {
-    const doc    = formComp.value.cliente_numero_documento?.trim()
-    const nombre = formComp.value.cliente_nombre?.trim()
-    if (!doc || doc.length < 8) {
-        errorComp.value = 'Ingresa el DNI (8 dígitos) o RUC (11 dígitos)'
-        return
-    }
-    if (!nombre || nombre.length < 3) {
-        errorComp.value = 'Ingresa el nombre completo del cliente'
-        return
-    }
-    emitiendo.value = true
-    errorComp.value = ''
-    pdfComp.value   = ''
-    try {
-        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-        const res  = await fetch('/notaria/comprobantes/' + expedienteSeleccionado.value.id + '/emitir', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify(formComp.value)
+    await new Promise((resolve) => {
+        router.post('/notaria/caja/' + actoId + '/cobrar', formCobro.value, {
+            preserveScroll: true,
+            onSuccess: resolve,
+            onError:   resolve,
         })
-        const data = await res.json()
-        if (data.success) {
-            pdfComp.value = data.pdf
-            if (data.pdf) window.open(data.pdf, '_blank')
-        } else {
-            errorComp.value = data.mensaje || 'Error al emitir'
+    })
+
+    if (formComp.value.cliente_nombre?.trim()) {
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+            const res  = await fetch('/notaria/comprobantes/' + actoId + '/emitir', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify(formComp.value)
+            })
+            const data = await res.json()
+            if (data.success && data.pdf) {
+                pdfComp.value = data.pdf
+                window.open(data.pdf, '_blank')
+            } else {
+                window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
+            }
+        } catch {
+            window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
         }
-    } catch(e) {
-        errorComp.value = 'Error: ' + e.message
-    } finally {
-        emitiendo.value = false
+    } else {
+        window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
     }
+
+    procesando.value             = false
+    expedienteSeleccionado.value = null
+    formCobro.value = { monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' }
 }
 
 function buscarServidor() {
@@ -469,28 +418,8 @@ function buscarServidor() {
     router.visit('/notaria/caja?' + params.toString(), { preserveScroll: true })
 }
 
-function filtrar() {
-    expedienteSeleccionado.value = null
-}
-
-const ultimoPagoId = ref(null)
-
-function confirmarCobro() {
-    if (!formCobro.value.monto || !expedienteSeleccionado.value) return
-    const actoId = expedienteSeleccionado.value.id
-    router.post('/notaria/caja/' + actoId + '/cobrar', formCobro.value, {
-        preserveScroll: true,
-        onSuccess: () => {
-            // Abrir recibo automáticamente
-            window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
-            expedienteSeleccionado.value = null
-            formCobro.value = { monto: '', metodo_pago: 'efectivo', tipo: 'pago_parcial', referencia: '' }
-        }
-    })
-}
-
 function labelTipo(t) {
-    const map = { escritura_publica:'📜 Escritura', poder:'✍️ Poder', testamento:'📋 Testamento', legalizacion:'🔏 Legalización', carta_notarial:'✉️ Carta notarial', protesto:'⚖️ Protesto', acta_notarial:'📝 Acta', otro:'📁 Otro' }
+    const map = { escritura_publica:'📜 Escritura', poder:'✍️ Poder', testamento:'📋 Testamento', legalizacion:'🔏 Legalización', carta_notarial:'✉️ Carta', protesto:'⚖️ Protesto', acta_notarial:'📝 Acta', otro:'📁 Otro' }
     return map[t] ?? t
 }
 
@@ -499,13 +428,16 @@ function labelPago(p) {
 }
 
 function estiloPago(p) {
-    const map = { pendiente:{background:'#FEF2F2',color:'#991B1B'}, parcial:{background:'#FEF3C7',color:'#92400E'}, pagado:{background:'#F0FDF4',color:'#166534'} }
-    return { ...(map[p]||{}), fontSize:'11px', padding:'3px 9px', borderRadius:'20px', fontWeight:'600', whiteSpace:'nowrap' }
+    const map = {
+        pendiente: { background:'#FEF2F2', color:'#991B1B' },
+        parcial:   { background:'#FEF3C7', color:'#92400E' },
+        pagado:    { background:'#F0FDF4', color:'#166534' },
+    }
+    return { ...(map[p]||{}), fontSize:'11px', padding:'3px 9px', borderRadius:'20px', fontWeight:'600' }
 }
 
 function formatFecha(f) {
     if (!f) return '—'
-    const d = new Date(f)
-    return d.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit' }) + ' ' + d.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' })
+    return new Date(f).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
 }
 </script>

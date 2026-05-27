@@ -148,12 +148,8 @@
                                 <select v-model="formNuevo.cliente_id"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
                                     <option value="">Sin cliente registrado</option>
-                                    <option v-for="c in clientes" :key="c.id" :value="c.id">{{ c.razon_social }}</option>
+                                    <option v-for="c in clientes" :key="c.id" :value="c.id">{{ c.nombre }}</option>
                                 </select>
-                                <button @click="modalCliente=true" type="button"
-                                    style="margin-top:8px; padding:8px 14px; background:#14B8A6; color:#fff; border:none; border-radius:8px; font-size:12px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">
-                                    <span style="font-size:16px;">+</span> Nuevo Cliente
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -251,15 +247,6 @@ const props = defineProps({
 
 const filtros         = ref({ ...props.filtros })
 const modalNuevo      = ref(false)
-const modalCliente    = ref(false)
-const formCliente     = ref({
-    tipo_documento: '',
-    numero_documento: '',
-    razon_social: '',
-    telefono: '',
-    email: '',
-    direccion: '',
-})
 const modalPago       = ref(false)
 const actoSeleccionado = ref(null)
 const formNuevo = ref({ tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' })

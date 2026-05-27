@@ -244,7 +244,7 @@
 
 
         <!-- Zona de Datos Demo / Plantillas -->
-        <div v-if="['minimarket', 'ferreteria', 'farmacia', 'restaurante'].includes(props.empresa?.industry_type)" style="margin-top:2rem; background:white; border-radius:10px; border:2px dashed #F59E0B; padding:1.5rem;">
+        <div style="margin-top:2rem; background:white; border-radius:10px; border:2px dashed #F59E0B; padding:1.5rem;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
                 <span style="font-size:24px;">⚠️</span>
                 <div>

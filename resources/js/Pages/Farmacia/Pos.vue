@@ -490,7 +490,7 @@ const agregarAlCarrito = (p) => {
             alertas.push({ tipo: 'proximo', msg: `Vence en ${dias} día(s)`, color: '#F59E0B', icon: '⚠️' })
         }
     }
-    if (p.stock_minimo && p.stock_actual <= p.stock_minimo) {
+    if (p.stock_actual <= (p.stock_minimo || 3)) {
         alertas.push({ tipo: 'stock', msg: `Stock bajo: ${p.stock_actual} unid. (mín: ${p.stock_minimo})`, color: '#F59E0B', icon: '📦' })
     }
 

@@ -4,6 +4,14 @@
         <!-- HEADER -->
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
             <a href="/notaria/actos" style="background:#F1F5F9; border:none; border-radius:10px; padding:9px 14px; font-size:14px; cursor:pointer; text-decoration:none; color:#475569; font-weight:600;">← Volver</a>
+            <a :href="`/notaria/actos/${acto.id}/imprimir`" target="_blank"
+                style="background:#14B8A6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                🖨️ Imprimir Acto
+            </a>
+            <a :href="`/notaria/actos/${acto.id}/descargar`"
+                style="background:#3B82F6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                📥 Descargar PDF
+            </a>
             <div>
                 <h2 style="font-size:20px; font-weight:800; color:#1E293B; margin:0;">{{ acto.numero_expediente }}</h2>
                 <p style="font-size:13px; color:#94A3B8; margin:2px 0 0;">{{ labelTipo(acto.tipo_acto) }} · Ingresado {{ formatFecha(acto.fecha_ingreso) }}</p>
@@ -128,12 +136,19 @@
                                     <option value="">Seleccionar...</option>
                                     <option v-for="op in campo.opciones" :key="op" :value="op">{{ op }}</option>
                                 </select>
+
+            <!-- Partes Intervinientes -->
+
                                 <input v-else v-model="formDatos[campo.key]" :type="campo.tipo || 'text'"
                                     style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                             </div>
                         </template>
                     </div>
                 </div>
+
+
+            <!-- Partes Intervinientes -->
+            <PartesIntervinientes :acto="acto" :partes="acto.partes || []" />
 
                 <!-- SEGUIMIENTO -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
@@ -363,6 +378,7 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import PartesIntervinientes from '@/Components/Notaria/PartesIntervinientes.vue'
 
 const props = defineProps({
     acto:  { type: Object, default: () => ({}) },

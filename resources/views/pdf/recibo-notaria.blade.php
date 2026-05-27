@@ -1,131 +1,142 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; font-size: 11px; color: #1a1a1a; width: 100%; }
-    .center { text-align: center; }
-    .bold { font-weight: bold; }
-    .divider { border-top: 1px dashed #999; margin: 6px 0; }
-    .divider-solid { border-top: 2px solid #1a1a1a; margin: 6px 0; }
-    .header { text-align: center; margin-bottom: 8px; }
-    .titulo-notaria { font-size: 13px; font-weight: bold; text-transform: uppercase; }
-    .subtitulo { font-size: 10px; color: #444; }
-    .recibo-titulo { background: #1a1a1a; color: white; text-align: center; padding: 5px; font-size: 12px; font-weight: bold; margin: 8px 0; }
-    .tipo-pago { background: #f0f0f0; text-align: center; padding: 4px; font-size: 11px; font-weight: bold; margin: 4px 0; }
-    .row { display: flex; justify-content: space-between; margin: 3px 0; }
-    .label { color: #555; }
-    .value { font-weight: bold; text-align: right; }
-    .monto-box { border: 2px solid #1a1a1a; padding: 8px; text-align: center; margin: 8px 0; }
-    .monto-label { font-size: 10px; color: #555; }
-    .monto-valor { font-size: 20px; font-weight: bold; }
-    .saldo-box { border: 1px dashed #999; padding: 6px; text-align: center; margin: 6px 0; background: #f9f9f9; }
-    .saldo-label { font-size: 10px; color: #555; }
-    .saldo-valor { font-size: 14px; font-weight: bold; color: #cc0000; }
-    .footer { text-align: center; font-size: 9px; color: #777; margin-top: 10px; }
-    .num-recibo { font-size: 10px; color: #555; }
-    .expediente { font-size: 13px; font-weight: bold; color: #1a1a1a; }
-    .metodo { display: inline-block; background: #e8f5e9; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo de Pago - {{ $acto->numero_expediente }}</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding:20px; background:#f5f5f5; }
+        .container { max-width:600px; margin:0 auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+        .header { background:#14B8A6; color:#fff; padding:20px; text-align:center; }
+        .header h1 { font-size:24px; margin:0 0 5px; }
+        .header p { font-size:14px; margin:0; opacity:0.95; }
+        .content { padding:25px; }
+        .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; }
+        .row .label { font-weight:600; color:#666; font-size:13px; }
+        .row .value { color:#333; font-size:13px; text-align:right; }
+        .expediente { background:#f8f9fa; padding:15px; border-radius:6px; margin-bottom:20px; text-align:center; }
+        .expediente-numero { font-size:20px; font-weight:800; color:#14B8A6; margin-bottom:5px; }
+        .expediente-tipo { font-size:12px; color:#666; }
+        .divider { height:1px; background:#e0e0e0; margin:15px 0; }
+        .total-box { background:#f1f5f9; padding:15px; border-radius:6px; margin:15px 0; text-align:center; }
+        .total-label { font-size:12px; color:#666; margin-bottom:5px; font-weight:600; }
+        .total-valor { font-size:28px; font-weight:800; color:#14B8A6; }
+        .saldo-box { background:#fff3cd; padding:12px; border-radius:6px; margin:15px 0; text-align:center; border:2px dashed #ffc107; }
+        .saldo-label { font-size:11px; color:#856404; margin-bottom:5px; font-weight:700; }
+        .saldo-valor { font-size:24px; font-weight:800; color:#856404; }
+        .footer { text-align:center; font-size:11px; color:#888; line-height:1.6; margin-top:20px; }
+        .qr-section { background:#f8f9fa; padding:20px; border-radius:8px; margin:20px 0; text-align:center; border:2px solid #14B8A6; }
+        .qr-title { font-size:14px; font-weight:700; color:#14B8A6; margin-bottom:10px; }
+        .qr-code { margin:15px 0; }
+        .qr-code img { width:150px; height:150px; margin:0 auto; }
+        .qr-instructions { font-size:11px; color:#666; margin-top:10px; line-height:1.5; }
+        .qr-url { font-size:9px; color:#14B8A6; font-weight:600; margin-top:8px; word-break:break-all; }
+    </style>
 </head>
 <body>
 
-<!-- HEADER NOTARÍA -->
-<div class="header">
-    <div class="titulo-notaria">{{ $empresa->razon_social ?? 'Notaría' }}</div>
-    @if($empresa->direccion)
-    <div class="subtitulo">{{ $empresa->direccion }}</div>
-    @endif
-    @if($empresa->telefono)
-    <div class="subtitulo">Tel: {{ $empresa->telefono }}</div>
-    @endif
-    @if($empresa->ruc)
-    <div class="subtitulo">RUC: {{ $empresa->ruc }}</div>
-    @endif
-</div>
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>RECIBO DE PAGO</h1>
+        <p>{{ $empresa->razon_social }}</p>
+        <p>RUC {{ $empresa->ruc }}</p>
+    </div>
 
-<div class="divider-solid"></div>
+    <div class="content">
+        <!-- EXPEDIENTE -->
+        <div class="expediente">
+            <div class="expediente-numero">{{ $acto->numero_expediente }}</div>
+            <div class="expediente-tipo">{{ $tiposActo[$acto->tipo_acto] ?? strtoupper($acto->tipo_acto) }}</div>
+        </div>
 
-<!-- TÍTULO RECIBO -->
-<div class="recibo-titulo">RECIBO DE PAGO PROVISIONAL</div>
-<div class="tipo-pago">{{ $tipo_pago }}</div>
+        <!-- DATOS DEL CLIENTE -->
+        <div class="row">
+            <span class="label">Cliente:</span>
+            <span class="value">{{ $acto->cliente->razon_social ?? '—' }}</span>
+        </div>
+        <div class="row">
+            <span class="label">{{ $acto->cliente->tipo_documento == '6' ? 'RUC' : 'DNI' }}:</span>
+            <span class="value">{{ $acto->cliente->numero_documento ?? '—' }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Fecha de pago:</span>
+            <span class="value">{{ $pago->created_at->format('d/m/Y H:i') }}</span>
+        </div>
 
-<!-- DATOS RECIBO -->
-<div class="num-recibo center">N° Recibo: {{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}</div>
-<div class="num-recibo center">Fecha: {{ $pago->created_at->format('d/m/Y H:i') }}</div>
+        <!-- DETALLES DEL PAGO -->
+        <div class="divider"></div>
+        <div class="row">
+            <span class="label">Monto a cobrar:</span>
+            <span class="value">S/ {{ number_format($acto->monto_cobrar, 2) }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Monto de este pago:</span>
+            <span class="value">S/ {{ number_format($pago->monto, 2) }}</span>
+        </div>
+        <div class="row">
+            <span class="label">Método de pago:</span>
+            <span class="value">{{ strtoupper($pago->metodo_pago) }}</span>
+        </div>
+        @if($pago->referencia)
+        <div class="row">
+            <span class="label">Referencia:</span>
+            <span class="value">{{ $pago->referencia }}</span>
+        </div>
+        @endif
 
-<div class="divider"></div>
+        <!-- TOTAL PAGADO -->
+        <div class="total-box">
+            <div class="total-label">MONTO PAGADO</div>
+            <div class="total-valor">S/ {{ number_format($pago->monto, 2) }}</div>
+        </div>
 
-<!-- EXPEDIENTE -->
-<div class="row">
-    <span class="label">Expediente:</span>
-    <span class="expediente">{{ $acto->numero_expediente }}</span>
-</div>
-<div class="row">
-    <span class="label">Tipo:</span>
-    <span class="value">{{ $tipo_acto }}</span>
-</div>
-<div style="margin: 3px 0;">
-    <span class="label">Asunto: </span>
-    <span>{{ $acto->asunto }}</span>
-</div>
-@if($acto->partes_intervinientes)
-<div style="margin: 3px 0;">
-    <span class="label">Partes: </span>
-    <span>{{ $acto->partes_intervinientes }}</span>
-</div>
-@endif
+        <!-- SALDO -->
+        @if($saldo > 0)
+        <div class="saldo-box">
+            <div class="saldo-label">SALDO PENDIENTE</div>
+            <div class="saldo-valor">S/ {{ number_format($saldo, 2) }}</div>
+        </div>
+        @else
+        <div class="saldo-box" style="background:#e8f5e9; border-color:#4caf50;">
+            <div class="saldo-label" style="color:#2e7d32;">SERVICIO CANCELADO COMPLETAMENTE</div>
+        </div>
+        @endif
 
-<div class="divider"></div>
+        <!-- CÓDIGO QR PARA CONSULTA -->
+        <div class="qr-section">
+            <div class="qr-title">📱 CONSULTA TU TRÁMITE EN LÍNEA</div>
+            <div class="qr-code">
+                <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
+            </div>
+            <div class="qr-instructions">
+                <strong>Escanea este código QR</strong> con la cámara de tu celular<br>
+                para consultar el estado de tu trámite en cualquier momento
+            </div>
+            <div class="qr-url">
+                O ingresa a: {{ $portalUrl }}
+            </div>
+        </div>
 
-<!-- MONTO PAGADO -->
-<div class="monto-box">
-    <div class="monto-label">MONTO RECIBIDO</div>
-    <div class="monto-valor">S/ {{ number_format($pago->monto, 2) }}</div>
-    <div class="metodo">{{ strtoupper($pago->metodo_pago) }}</div>
-</div>
+        <!-- ATENDIDO POR -->
+        <div class="divider"></div>
+        <div class="row">
+            <span class="label">Atendido por:</span>
+            <span class="value">{{ $acto->usuario->name ?? '—' }}</span>
+        </div>
 
-<!-- RESUMEN FINANCIERO -->
-<div class="row">
-    <span class="label">Total del servicio:</span>
-    <span class="value">S/ {{ number_format($acto->monto_cobrar, 2) }}</span>
-</div>
-<div class="row">
-    <span class="label">Total pagado:</span>
-    <span class="value">S/ {{ number_format($acto->monto_pagado, 2) }}</span>
-</div>
-
-<div class="divider"></div>
-
-<!-- SALDO PENDIENTE -->
-@if($saldo > 0)
-<div class="saldo-box">
-    <div class="saldo-label">SALDO PENDIENTE</div>
-    <div class="saldo-valor">S/ {{ number_format($saldo, 2) }}</div>
-</div>
-@else
-<div class="saldo-box" style="background:#e8f5e9;">
-    <div class="saldo-label" style="color:#2e7d32;">SERVICIO CANCELADO COMPLETAMENTE</div>
-</div>
-@endif
-
-<!-- ATENDIDO POR -->
-<div class="divider"></div>
-<div class="row">
-    <span class="label">Atendido por:</span>
-    <span class="value">{{ $acto->usuario->name ?? '—' }}</span>
-</div>
-
-<!-- NOTA -->
-<div class="divider"></div>
-<div class="footer">
-    <p>* Este recibo es un comprobante provisional.</p>
-    <p>El comprobante de pago oficial (Boleta/Factura)</p>
-    <p>será emitido al completar el servicio.</p>
-    <br>
-    <p>Conserve este recibo para cualquier consulta.</p>
-    <p>Gracias por su preferencia.</p>
+        <!-- NOTA -->
+        <div class="divider"></div>
+        <div class="footer">
+            <p>* Este recibo es un comprobante provisional.</p>
+            <p>El comprobante de pago oficial (Boleta/Factura)</p>
+            <p>será emitido al completar el servicio.</p>
+            <br>
+            <p>Conserve este recibo para cualquier consulta.</p>
+            <p>Gracias por su preferencia.</p>
+        </div>
+    </div>
 </div>
 
 </body>

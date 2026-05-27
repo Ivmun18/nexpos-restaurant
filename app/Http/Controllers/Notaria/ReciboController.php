@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActoNotarial;
 use App\Models\ActoPago;
 use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReciboController extends Controller
 {
@@ -18,10 +19,10 @@ class ReciboController extends Controller
             'escritura_publica' => 'Escritura Pública',
             'poder'             => 'Poder Notarial',
             'testamento'        => 'Testamento',
-            'legalizacion'      => 'Legalización',
-            'carta_notarial'    => 'Carta Notarial',
+            'acta'              => 'Acta Notarial',
             'protesto'          => 'Protesto',
-            'acta_notarial'     => 'Acta Notarial',
+            'compraventa'       => 'Compraventa',
+            'minuta'            => 'Minuta',
             'otro'              => 'Acto Notarial',
         ];
 
@@ -31,17 +32,31 @@ class ReciboController extends Controller
             'pago_final'  => 'PAGO FINAL',
         ];
 
+        // Construir URL del portal con parámetros pre-llenados
+        $numeroDocumento = $acto->cliente->numero_documento ?? '';
+        $numeroExpediente = $acto->numero_expediente;
+        
+        // URL base
+        $baseUrl = config('app.url');
+        $portalUrl = $baseUrl . '/portal-cliente?doc=' . urlencode($numeroDocumento) . '&exp=' . urlencode($numeroExpediente);
+
+        // Generar QR en formato PNG y convertir a base64
+        $qrCode = QrCode::format('png')->size(300)->margin(1)->generate($portalUrl);
+        $qrCodeBase64 = base64_encode($qrCode);
+
         $data = [
-            'empresa'     => $empresa,
-            'acto'        => $acto,
-            'pago'        => $pago,
-            'tipo_acto'   => $tiposActo[$acto->tipo_acto] ?? 'Acto Notarial',
-            'tipo_pago'   => $tiposPago[$pago->tipo] ?? 'PAGO',
-            'saldo'       => round($acto->monto_cobrar - $acto->monto_pagado, 2),
+            'empresa'        => $empresa,
+            'acto'           => $acto,
+            'pago'           => $pago,
+            'tiposActo'      => $tiposActo,
+            'tipo_pago'      => $tiposPago[$pago->tipo] ?? 'PAGO',
+            'saldo'          => round($acto->monto_cobrar - $acto->monto_pagado, 2),
+            'portalUrl'      => $portalUrl,
+            'qrCodeBase64'   => $qrCodeBase64,
         ];
 
         $pdf = Pdf::loadView('pdf.recibo-notaria', $data)
-            ->setPaper([0, 0, 226.77, 400], 'portrait'); // 80mm ticket
+            ->setPaper([0, 0, 226.77, 600], 'portrait');
 
         return $pdf->stream('recibo-' . $acto->numero_expediente . '.pdf');
     }

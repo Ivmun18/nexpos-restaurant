@@ -30,6 +30,11 @@ class Empresa extends Model
         'regimen_tributario',
         'modalidad_cobro',
         'proveedor_facturacion',
+        'apisunat_token',
+        'apisunat_ruc',
+        'apisunat_usuario_sol',
+        'apisunat_clave_sol',
+        'apisunat_demo',
         'serie_boleta',
         'serie_factura',
         'serie_nota_credito',
@@ -41,6 +46,7 @@ class Empresa extends Model
     protected $casts = [
         'modules_enabled' => 'array',
         'nubefact_demo' => 'boolean',
+        'apisunat_demo' => 'boolean',
         'zona_exonerada' => 'boolean',
     ];
 

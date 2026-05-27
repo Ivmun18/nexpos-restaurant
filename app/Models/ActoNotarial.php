@@ -29,10 +29,17 @@ class ActoNotarial extends Model
     public function pagos() { return $this->hasMany(ActoPago::class, 'acto_id'); }
     public function datos() { return $this->hasMany(ActoDato::class, 'acto_id'); }
     public function requisitos() { return $this->hasMany(ActoRequisito::class, 'acto_id'); }
-
+    public function partes() { return $this->hasMany(ActoParte::class, 'acto_id')->orderBy('orden'); }
+    public function empresa() { return $this->belongsTo(Empresa::class, 'empresa_id'); }
     public static function generarNumero($empresaId)
     {
         $ultimo = static::where('empresa_id', $empresaId)->max('id') ?? 0;
         return 'EXP-' . now()->year . '-' . str_pad($ultimo + 1, 5, '0', STR_PAD_LEFT);
+    }
+
+    // Relación con índice notarial
+    public function indiceNotarial()
+    {
+        return $this->hasOne(IndiceNotarial::class, 'acto_id');
     }
 }
