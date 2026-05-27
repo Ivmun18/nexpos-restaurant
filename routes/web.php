@@ -862,6 +862,7 @@ Route::middleware(['auth'])->post('/notaria/comprobantes/{acto}/emitir', [App\Ht
 Route::middleware(['auth'])->group(function () {
     Route::post('/notaria/caja/abrir', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'abrir'])->name('notaria.caja.abrir');
     Route::post('/notaria/caja/cerrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cerrar'])->name('notaria.caja.cerrar');
+    Route::post('/notaria/caja/venta-directa', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'ventaDirecta'])->name('notaria.caja.venta-directa');
 });
 
 // Requisitos expediente
@@ -942,4 +943,10 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::post('/horarios',                       [\App\Http\Controllers\Gimnasio\ClaseController::class, 'storeHorario'])->name('horarios.store');
     Route::put('/horarios/{horario}',             [\App\Http\Controllers\Gimnasio\ClaseController::class, 'updateHorario'])->name('horarios.update');
     Route::delete('/horarios/{horario}',          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroyHorario'])->name('horarios.destroy');
+    // Accesos
+    Route::get('/accesos',                   [\App\Http\Controllers\Gimnasio\AccesoController::class, 'index'])->name('accesos.index');
+    Route::post('/accesos/entrada',          [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarEntrada'])->name('accesos.entrada');
+    Route::post('/accesos/{acceso}/salida',  [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarSalida'])->name('accesos.salida');
+    Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
+
 });

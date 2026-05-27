@@ -169,4 +169,256 @@ class ComprobantesNotariaController extends Controller
             return response()->json(['success' => false, 'mensaje' => $e->getMessage()], 500);
         }
     }
+
+    public function ventaDirecta(Request $request)
+    {
+        \Log::info('ventaDirecta llamado', $request->all());
+        $request->validate([
+            'tipo_comprobante'         => 'required|in:01,03',
+            'cliente_tipo_documento'   => 'required',
+            'cliente_numero_documento' => 'required',
+            'cliente_nombre'           => 'required|string',
+            'cliente_email'            => 'nullable|email',
+            'items'                    => 'required|array|min:1',
+            'items.*.descripcion'      => 'required|string',
+            'items.*.precio'           => 'required|numeric|min:0.01',
+            'metodo_pago'              => 'required|in:efectivo,yape,plin,transferencia,tarjeta',
+        ]);
+
+        $empresa = auth()->user()->empresa;
+
+        // Correlativo
+        if ($request->tipo_comprobante === '01') {
+            $serie      = $empresa->serie_factura ?? 'F001';
+            $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
+            $empresa->increment('ultimo_num_factura');
+        } else {
+            $serie      = $empresa->serie_boleta ?? 'B001';
+            $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
+            $empresa->increment('ultimo_num_boleta');
+        }
+
+        // Calcular totales
+        $total   = round(collect($request->items)->sum('precio'), 2);
+        $gravada = round($total / 1.18, 2);
+        $igv     = round($total - $gravada, 2);
+
+        // Items para SUNAT
+        $itemsSunat = collect($request->items)->map(function($item) {
+            $precio   = round($item['precio'], 2);
+            $gravada  = round($precio / 1.18, 2);
+            $igv      = round($precio - $gravada, 2);
+            return [
+                'unidad_de_medida'           => 'ZZ',
+                'descripcion'                => $item['descripcion'],
+                'cantidad'                   => 1,
+                'valor_unitario'             => $gravada,
+                'porcentaje_igv'             => 18,
+                'codigo_tipo_afectacion_igv' => '10',
+                'nombre_tributo'             => 'IGV',
+            ];
+        })->toArray();
+
+        $payload = [
+            'documento'                   => $request->tipo_comprobante === '01' ? 'factura' : 'boleta',
+            'serie'                       => $serie,
+            'numero'                      => $correlativo,
+            'fecha_de_emision'            => now()->format('Y-m-d'),
+            'moneda'                      => 'PEN',
+            'tipo_operacion'              => '0101',
+            'cliente_tipo_de_documento'   => $request->cliente_tipo_documento,
+            'cliente_numero_de_documento' => $request->cliente_numero_documento,
+            'cliente_denominacion'        => strtoupper($request->cliente_nombre),
+            'cliente_direccion'           => $request->cliente_direccion ?? '',
+            'cliente_correo'              => $request->cliente_email ?? '',
+            'total_gravada'               => $gravada,
+            'total_exonerada'             => 0,
+            'total_inafecta'              => 0,
+            'total_igv'                   => $igv,
+            'total'                       => $total,
+            'items'                       => $itemsSunat,
+        ];
+
+        try {
+            $url = 'https://api.nubefact.com/api/v1/';
+            $nubefactPayload = [
+                'operacion'              => 'generar_comprobante',
+                'tipo_de_comprobante'    => $request->tipo_comprobante === '01' ? 1 : 2,
+                'serie'                  => $serie,
+                'numero'                 => $correlativo,
+                'fecha_de_emision'       => now()->format('Y-m-d'),
+                'moneda'                 => 'PEN',
+                'tipo_de_operacion'      => 1,
+                'porcentaje_de_igv'      => 18,
+                'total_gravada'          => $gravada,
+                'total_igv'              => $igv,
+                'total'                  => $total,
+                'cliente_tipo_de_documento'   => $request->cliente_tipo_documento,
+                'cliente_numero_de_documento' => $request->cliente_numero_documento,
+                'cliente_denominacion'        => strtoupper($request->cliente_nombre),
+                'cliente_direccion'           => $request->cliente_direccion ?? '',
+                'cliente_email'               => $request->cliente_email ?? '',
+                'items'                       => collect($itemsSunat)->map(fn($i) => array_merge($i, ['codigo' => '001', 'descuento' => false]))->toArray(),
+            ];
+
+            // Usar Nubefact
+            $url = 'https://api.nubefact.com/api/v1/';
+            $apiPayload = [
+                'token'    => $empresa->apisunat_token,
+                'document' => [
+                    'tipoOperacion'      => '0101',
+                    'tipoDoc'            => $request->tipo_comprobante,
+                    'serie'              => $serie,
+                    'correlativo'        => $correlativo,
+                    'fechaEmision'       => now()->format('Y-m-d') . 'T00:00:00-05:00',
+                    'formaPago'          => ['moneda'=>'PEN','tipo'=>'Contado'],
+                    'tipoMoneda'         => 'PEN',
+                    'client'             => [
+                        'tipoDoc'   => $request->cliente_tipo_documento,
+                        'numDoc'    => $request->cliente_numero_documento,
+                        'rznSocial' => strtoupper($request->cliente_nombre),
+                        'address'   => ['direccion' => ''],
+                        'email'     => $request->cliente_email ?? '',
+                    ],
+                    'company'            => [
+                        'ruc'      => $empresa->ruc,
+                        'razonSocial' => $empresa->razon_social,
+                        'address'  => ['direccion' => $empresa->direccion ?? ''],
+                    ],
+                    'details'            => collect($request->items)->map(function($item) {
+                        $precio  = round(floatval($item['precio']), 2);
+                        $valUnit = round($precio / 1.18, 4);
+                        $igv     = round($precio - $valUnit, 2);
+                        return [
+                            'codProducto' => 'S/C',
+                            'unidad'      => 'ZZ',
+                            'cantidad'    => 1,
+                            'mtoValorUnitario' => $valUnit,
+                            'descripcion' => $item['descripcion'],
+                            'mtoBaseIgv'  => $valUnit,
+                            'porcentajeIgv' => 18,
+                            'igv'         => $igv,
+                            'tipAfeIgv'   => 10,
+                            'mtoPrecioUnitario' => $precio,
+                            'mtoValorVenta' => $valUnit,
+                            'mtoValorGratuidad' => 0,
+                        ];
+                    })->toArray(),
+                    'mtoOperGravadas'    => $gravada,
+                    'mtoIGV'             => $igv,
+                    'valorVenta'         => $gravada,
+                    'subTotal'           => $total,
+                    'mtoImpVenta'        => $total,
+                ],
+            ];
+
+            $nubefactPayload = [
+                'operacion'              => 'generar_comprobante',
+                'tipo_de_comprobante'    => $request->tipo_comprobante === '01' ? 1 : 2,
+                'serie'                  => $serie,
+                'numero'                 => $correlativo,
+                'sunat_transaction'      => 1,
+                'cliente_tipo_de_documento'   => $request->tipo_comprobante === '01' ? 6 : 1,
+                'cliente_numero_de_documento' => $request->cliente_numero_documento,
+                'cliente_denominacion'        => strtoupper($request->cliente_nombre),
+                'cliente_direccion'           => $request->cliente_direccion ?? '',
+                'cliente_email'               => $request->cliente_email ?? '',
+                'cliente_email_1'             => '',
+                'fecha_de_emision'            => now()->format('d-m-Y'),
+                'fecha_de_vencimiento'        => '',
+                'moneda'                      => 1,
+                'tipo_de_cambio'              => '',
+                'porcentaje_de_igv'           => 18,
+                'total_gravada'               => $gravada,
+                'total_exonerada'             => '',
+                'total_inafecta'              => '',
+                'total_igv'                   => $igv,
+                'total'                       => $total,
+                'detraccion'                  => false,
+                'items'                       => collect($request->items)->map(function($item) {
+                    $precio  = round(floatval($item['precio']), 2);
+                    $valUnit = round($precio / 1.18, 4);
+                    $igv     = round($precio - $valUnit, 2);
+                    return [
+                        'unidad_de_medida'   => 'ZZ',
+                        'codigo'             => 'S/C',
+                        'descripcion'        => $item['descripcion'],
+                        'cantidad'           => 1,
+                        'valor_unitario'     => $valUnit,
+                        'precio_unitario'    => $precio,
+                        'descuento'          => '',
+                        'subtotal'           => $valUnit,
+                        'tipo_de_igv'        => 1,
+                        'igv'                => $igv,
+                        'total'              => $precio,
+                        'anticipo_regularizacion' => false,
+                    ];
+                })->toArray(),
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Token token=' . $empresa->nubefact_token,
+                'Content-Type'  => 'application/json',
+            ])->post($url, $nubefactPayload);
+            $data     = $response->json();
+            \Log::info('Nubefact ventaDirecta response: ' . json_encode($data));
+            $aceptada = $response->successful() && isset($data['enlace_del_pdf']);
+
+            // Guardar comprobante
+            \DB::table('comprobantes_sunat')->insert([
+                'empresa_id'               => $empresa->id,
+                'tipo_comprobante'         => $request->tipo_comprobante,
+                'serie'                    => $serie,
+                'numero'                   => $correlativo,
+                'fecha_emision'            => now()->toDateString(),
+                'cliente_tipo_documento'   => $request->cliente_tipo_documento,
+                'cliente_numero_documento' => $request->cliente_numero_documento,
+                'cliente_nombre'           => strtoupper($request->cliente_nombre),
+                'cliente_email'            => $request->cliente_email ?? '',
+                'total_gravada'            => $gravada,
+                'total_igv'                => $igv,
+                'total'                    => $total,
+                'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                'sunat_descripcion'        => $aceptada ? 'Aceptada' : json_encode($data),
+                'enlace_pdf'               => $data['enlace_del_pdf'] ?? null,
+                'enlace_xml'               => $data['enlace_del_xml'] ?? null,
+                'estado'                   => $aceptada ? 'aceptado' : 'rechazado',
+                'created_at'               => now(),
+                'updated_at'               => now(),
+            ]);
+
+            // Registrar en caja si hay sesión abierta
+            $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
+            if ($sesion) {
+                \DB::table('caja_movimientos')->insert([
+                    'sesion_id'  => $sesion->id,
+                    'usuario_id' => auth()->id(),
+                    'tipo'       => 'ingreso',
+                    'concepto'   => 'Venta directa ' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT),
+                    'monto'      => $total,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            if ($aceptada) {
+                return response()->json([
+                    'success' => true,
+                    'mensaje' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT) . ' emitida correctamente',
+                    'pdf'     => $data['enlace_del_pdf'] ?? null,
+                ]);
+            }
+
+            $mensaje = $data['errors'] ?? $data['error'] ?? $data['mensaje'] ?? 'Error al emitir comprobante';
+            return response()->json([
+                'success' => false,
+                'mensaje' => is_array($mensaje) ? implode(', ', $mensaje) : $mensaje,
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Error venta directa notaría: ' . $e->getMessage());
+            return response()->json(['success' => false, 'mensaje' => $e->getMessage()], 500);
+        }
+    }
+
 }

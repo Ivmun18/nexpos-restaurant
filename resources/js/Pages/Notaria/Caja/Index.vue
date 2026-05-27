@@ -39,6 +39,9 @@
                         <p style="font-size:15px; font-weight:800; color:#0F766E; margin:0;">S/ {{ Number(resumenCaja?.saldo_sistema||0).toFixed(2) }}</p>
                     </div>
                 </div>
+                <button @click="showVentaDirecta=true" style="padding:8px 16px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-right:8px;">
+                    🧾 Nueva venta directa
+                </button>
                 <button @click="modalCerrar=true" style="padding:8px 16px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
                     🔒 Cerrar caja
                 </button>
@@ -257,6 +260,94 @@
         </template>
 
         <!-- MODAL CIERRE DE CAJA -->
+
+        <!-- MODAL VENTA DIRECTA -->
+        <div v-if="showVentaDirecta" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:999;">
+            <div style="background:white; border-radius:16px; padding:28px; width:580px; max-width:95vw; max-height:90vh; overflow-y:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0; font-size:18px; font-weight:700;">🧾 Nueva venta directa</h2>
+                    <button @click="cerrarVentaDirecta" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✕</button>
+                </div>
+                <div style="background:#F8FAFC; border-radius:10px; padding:16px; margin-bottom:16px;">
+                    <p style="font-weight:700; color:#374151; margin:0 0 12px; font-size:13px;">Datos del cliente</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:12px; font-weight:600; color:#64748B;">Tipo documento</label>
+                            <select v-model="formVD.cliente_tipo_documento" style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;">
+                                <option value="1">DNI</option>
+                                <option value="6">RUC</option>
+                                <option value="4">Carnet extranjería</option>
+                                <option value="7">Pasaporte</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px; font-weight:600; color:#64748B;">N° documento *</label>
+                            <input v-model="formVD.cliente_numero_documento" type="text"
+                                :placeholder="formVD.cliente_tipo_documento==='6' ? '20xxxxxxxxx' : '12345678'"
+                                style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;" />
+                        </div>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:12px; font-weight:600; color:#64748B;">Nombre / Razón social *</label>
+                        <input v-model="formVD.cliente_nombre" type="text" placeholder="Nombre completo"
+                            style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;" />
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:600; color:#64748B;">Email (opcional)</label>
+                        <input v-model="formVD.cliente_email" type="email" placeholder="correo@ejemplo.com"
+                            style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;" />
+                    </div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <p style="font-weight:700; color:#374151; margin:0; font-size:13px;">Servicios</p>
+                        <button @click="agregarItem" style="background:#6366F1; color:white; border:none; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">+ Agregar</button>
+                    </div>
+                    <div v-for="(item, i) in formVD.items" :key="i" style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
+                        <input v-model="item.descripcion" type="text" placeholder="Descripción del servicio"
+                            style="flex:1; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; box-sizing:border-box;" />
+                        <input v-model="item.precio" type="number" min="0" step="0.01" placeholder="0.00"
+                            style="width:110px; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; box-sizing:border-box;" />
+                        <button @click="formVD.items.splice(i,1)" style="background:#FEE2E2; color:#991B1B; border:none; padding:8px 10px; border-radius:8px; cursor:pointer;">✕</button>
+                    </div>
+                    <div v-if="formVD.items.length" style="text-align:right; margin-top:8px;">
+                        <span style="font-size:15px; font-weight:800; color:#1E293B;">Total: S/ {{ totalVD.toFixed(2) }}</span>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                    <div>
+                        <p style="font-weight:700; color:#374151; margin:0 0 8px; font-size:13px;">Método de pago</p>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button v-for="m in metodosVD" :key="m.v" @click="formVD.metodo_pago=m.v"
+                                :style="{ background: formVD.metodo_pago===m.v ? '#6366F1' : '#F1F5F9', color: formVD.metodo_pago===m.v ? 'white' : '#374151', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }">
+                                {{ m.l }}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="font-weight:700; color:#374151; margin:0 0 8px; font-size:13px;">Tipo comprobante</p>
+                        <div style="display:flex; gap:6px;">
+                            <button @click="formVD.tipo_comprobante='03'"
+                                :style="{ background: formVD.tipo_comprobante==='03' ? '#6366F1' : '#F1F5F9', color: formVD.tipo_comprobante==='03' ? 'white' : '#374151', border:'none', padding:'6px 16px', borderRadius:'8px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }">
+                                Boleta
+                            </button>
+                            <button @click="formVD.tipo_comprobante='01'"
+                                :style="{ background: formVD.tipo_comprobante==='01' ? '#6366F1' : '#F1F5F9', color: formVD.tipo_comprobante==='01' ? 'white' : '#374151', border:'none', padding:'6px 16px', borderRadius:'8px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }">
+                                Factura
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button @click="emitirVentaDirecta" :disabled="procesandoVD || !formVD.items.length || !formVD.cliente_nombre"
+                    style="width:100%; padding:14px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer;">
+                    {{ procesandoVD ? 'Emitiendo...' : '🧾 Emitir comprobante' }}
+                </button>
+                <div v-if="mensajeVD" :style="{ background: mensajeVD.ok ? '#F0FDF4' : '#FEF2F2', color: mensajeVD.ok ? '#166534' : '#991B1B', padding:'12px', borderRadius:'10px', marginTop:'12px', fontWeight:'600', fontSize:'13px' }">
+                    {{ mensajeVD.texto }}
+                </div>
+            </div>
+        </div>
+
         <div v-if="modalCerrar" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center;">
             <div style="background:white; border-radius:16px; padding:1.5rem; width:400px; max-width:95vw;">
                 <p style="font-size:16px; font-weight:800; color:#1E293B; margin:0 0 1.2rem;">🔒 Cerrar caja</p>
@@ -318,6 +409,63 @@ const busqueda               = ref('')
 const expedienteSeleccionado = ref(null)
 const procesando             = ref(false)
 const modalCerrar            = ref(false)
+
+const showVentaDirecta = ref(false)
+const procesandoVD     = ref(false)
+const mensajeVD        = ref(null)
+const metodosVD        = [
+    { v: 'efectivo', l: 'Efectivo' },
+    { v: 'yape',     l: 'Yape' },
+    { v: 'plin',     l: 'Plin' },
+    { v: 'transferencia', l: 'Transferencia' },
+    { v: 'tarjeta',  l: 'Tarjeta' },
+]
+const formVD = ref({
+    tipo_comprobante:         '03',
+    cliente_tipo_documento:   '1',
+    cliente_numero_documento: '',
+    cliente_nombre:           '',
+    cliente_email:            '',
+    metodo_pago:              'efectivo',
+    items:                    [],
+})
+const totalVD = computed(() => formVD.value.items.reduce((s, i) => s + Number(i.precio || 0), 0))
+
+function agregarItem() {
+    formVD.value.items.push({ descripcion: '', precio: '' })
+}
+
+function cerrarVentaDirecta() {
+    showVentaDirecta.value = false
+    mensajeVD.value        = null
+    formVD.value = { tipo_comprobante:'03', cliente_tipo_documento:'1', cliente_numero_documento:'', cliente_nombre:'', cliente_email:'', metodo_pago:'efectivo', items:[] }
+}
+
+async function emitirVentaDirecta() {
+    if (procesandoVD.value) return
+    procesandoVD.value = true
+    mensajeVD.value    = null
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/caja/venta-directa', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body:    JSON.stringify(formVD.value),
+        })
+        const data = await res.json()
+        if (data.success) {
+            mensajeVD.value = { ok: true, texto: '✅ ' + data.mensaje }
+            if (data.pdf) window.open(data.pdf, '_blank')
+            setTimeout(cerrarVentaDirecta, 2000)
+        } else {
+            mensajeVD.value = { ok: false, texto: '❌ ' + data.mensaje }
+        }
+    } catch(e) {
+        mensajeVD.value = { ok: false, texto: '❌ Error de conexión' }
+    }
+    procesandoVD.value = false
+}
+
 const fondoApertura          = ref(0)
 const formCierre             = ref({ monto_real: '', observaciones: '' })
 const errorComp              = ref('')
