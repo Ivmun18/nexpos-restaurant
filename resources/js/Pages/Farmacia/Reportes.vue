@@ -30,6 +30,10 @@
                         style="padding:10px 24px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
                         🔍 Filtrar
                     </button>
+                    <a :href="'/reportes/reporte-contador-pdf?desde=' + filtros.desde + '&hasta=' + filtros.hasta" target="_blank"
+                        style="padding:10px 24px; background:#991B1B; color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer; text-decoration:none; display:inline-block;">
+                        📄 PDF
+                    </a>
                 </div>
                 <div style="margin-top:20px;">
                     <button @click="setMesActual"

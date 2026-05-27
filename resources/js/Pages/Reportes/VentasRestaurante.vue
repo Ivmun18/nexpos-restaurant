@@ -45,6 +45,10 @@
                 </select>
             </div>
             <div style="display:flex; gap:8px;">
+                <a :href="'/reportes/reporte-contador-pdf?desde=' + filtros.desde + '&hasta=' + filtros.hasta" target="_blank"
+                    style="padding:8px 20px; background:#991B1B; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none;">
+                    📄 PDF
+                </a>
                 <button @click="buscar" style="padding:8px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
                     Buscar
                 </button>

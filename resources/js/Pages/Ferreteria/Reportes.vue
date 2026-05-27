@@ -14,6 +14,10 @@
             <button @click="filtrar" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
                 🔍 Filtrar
             </button>
+            <a :href="'/reportes/reporte-contador-pdf?desde=' + desde + '&hasta=' + hasta" target="_blank"
+                style="padding:10px 20px; background:#991B1B; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">
+                📄 PDF
+            </a>
         </div>
 
         <!-- Resumen Caja -->
