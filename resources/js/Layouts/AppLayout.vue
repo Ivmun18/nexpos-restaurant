@@ -440,6 +440,7 @@ const allMenuItems = [
     { path: '/notaria/seguimiento', icon: 'seguimiento',  label: 'Seguimiento',      module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/caja',        icon: 'caja',         label: 'Caja notarial',    module: 'caja',     section: 'NOTARIA' },
     { path: '/clientes',            icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
+    { path: '/notaria/reportes',    icon: 'reporte',      label: 'Reportes',         module: 'actos',    section: 'NOTARIA' },
     { path: '/gimnasio/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/miembros',    icon: 'users',      label: 'Miembros',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/planes',      icon: 'card',       label: 'Planes',        module: 'gimnasio', section: 'GIMNASIO' },

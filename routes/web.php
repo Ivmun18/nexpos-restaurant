@@ -875,6 +875,10 @@ Route::middleware(['auth'])->group(function () {
 // Seguimiento trámites notaría
 
 Route::middleware(['auth'])->get('/reportes/reporte-contador-pdf', [App\Http\Controllers\ReporteContadorController::class, 'exportarPdf'])->name('reportes.contador.pdf');
+
+
+Route::middleware(['auth'])->post('/notaria/comprobantes/{id}/reenviar', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reenviar'])->name('notaria.comprobantes.reenviar');
+Route::middleware(['auth'])->get('/notaria/reportes', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'index'])->name('notaria.reportes.index');
 Route::middleware(['auth'])->get('/notaria/seguimiento', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'seguimiento'])->name('notaria.seguimiento');
 
 // Portal del Cliente - Notaría (público, sin autenticación)

@@ -39,6 +39,10 @@
                         <p style="font-size:15px; font-weight:800; color:#0F766E; margin:0;">S/ {{ Number(resumenCaja?.saldo_sistema||0).toFixed(2) }}</p>
                     </div>
                 </div>
+                <a :href="'/reportes/reporte-contador-pdf?desde=' + new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] + '&hasta=' + new Date().toISOString().split('T')[0]" target="_blank"
+                    style="padding:8px 16px; background:#991B1B; color:white; border:1px solid #991B1B; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-right:8px; text-decoration:none;">
+                    📄 PDF
+                </a>
                 <button @click="showVentaDirecta=true" style="padding:8px 16px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-right:8px;">
                     🧾 Nueva venta directa
                 </button>

@@ -20,7 +20,24 @@ class ReporteContadorController extends Controller
         $tiposComp = ['01' => 'Factura', '03' => 'Boleta', '00' => 'S/C', 'ninguno' => 'S/C', '' => 'S/C'];
 
         // VENTAS según industria
-        if ($industria === 'restaurante') {
+        if ($industria === 'notaria') {
+            $ventas = DB::table('comprobantes_sunat')
+                ->where('empresa_id', $empresaId)
+                ->whereBetween('fecha_emision', [$desde, $hasta])
+                ->orderBy('fecha_emision')
+                ->get()
+                ->map(function($v) {
+                    return (object)[
+                        'fecha'            => \Carbon\Carbon::parse($v->fecha_emision)->format('d/m/Y'),
+                        'comprobante'      => $v->tipo_comprobante,
+                        'serie_numero'     => $v->serie . '-' . str_pad($v->numero, 8, '0', STR_PAD_LEFT),
+                        'cliente'          => $v->cliente_nombre ?? '-',
+                        'subtotal_sin_igv' => (float) $v->total_gravada,
+                        'igv'              => (float) $v->total_igv,
+                        'total'            => (float) $v->total,
+                    ];
+                });
+        } elseif ($industria === 'restaurante') {
             $ventas = CajaRestaurante::with(['mesa:id,numero,nombre', 'user:id,name'])
                 ->whereBetween('created_at', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
                 ->orderBy('created_at')
