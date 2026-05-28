@@ -530,7 +530,8 @@ async function confirmarCobro() {
     const actoId = expedienteSeleccionado.value.id
 
     await new Promise((resolve) => {
-        router.post('/notaria/caja/' + actoId + '/cobrar', formCobro.value, {
+        const dataCobro = { ...formCobro.value, ...formComp.value }
+        router.post('/notaria/caja/' + actoId + '/cobrar', dataCobro, {
             preserveScroll: true,
             onSuccess: resolve,
             onError:   resolve,

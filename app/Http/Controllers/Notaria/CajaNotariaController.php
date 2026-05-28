@@ -153,6 +153,142 @@ class CajaNotariaController extends Controller
             ]);
         }
 
+        // Emitir comprobante electrónico si se llenaron los datos
+        if ($request->tipo_comprobante && $request->cliente_nombre) {
+            try {
+                $empresa = auth()->user()->empresa;
+                $tipoComp = $request->tipo_comprobante; // '01' o '03'
+
+                if ($tipoComp === '01') {
+                    $serie       = $empresa->serie_factura ?? 'F001';
+                    $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
+                    $empresa->increment('ultimo_num_factura');
+                } else {
+                    $serie       = $empresa->serie_boleta ?? 'B001';
+                    $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
+                    $empresa->increment('ultimo_num_boleta');
+                }
+
+                $montoComp     = (float) $request->monto;
+                $exonerada     = $empresa->zona_exonerada;
+                $baseImponible = $exonerada ? $montoComp : round($montoComp / 1.18, 2);
+                $igv           = $exonerada ? 0 : round($montoComp - $baseImponible, 2);
+                $fileName      = $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
+
+                $valUnit = $exonerada ? $montoComp : round($montoComp / 1.18, 4);
+                $igvItem = $exonerada ? 0 : round($montoComp - $valUnit, 2);
+
+                $lineas = [[
+                    'cbc:ID'                  => ['_text' => '1'],
+                    'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+                    'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                    'cac:TaxTotal' => [
+                        'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                        'cac:TaxSubtotal' => [[
+                            'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                            'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                            'cac:TaxCategory'   => [
+                                'cbc:ID'       => ['_attributes' => ['schemeID'=>'UN/ECE 5305','schemeName'=>'Tax Category Identifier','schemeAgencyName'=>'United Nations Economic Commission for Europe'], '_text' => $exonerada ? 'E' : 'S'],
+                                'cbc:Percent'  => ['_text' => $exonerada ? '0' : '18'],
+                                'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                            ],
+                        ]],
+                    ],
+                    'cac:Item' => [
+                        'cbc:Description' => ['_text' => $acto->asunto ?? 'Servicio notarial'],
+                        'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => $acto->numero_expediente ?? 'S/C']],
+                    ],
+                    'cac:Price' => [
+                        'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                    ],
+                ]];
+
+                $documentBody = [
+                    'cbc:UBLVersionID'         => ['_text' => '2.1'],
+                    'cbc:CustomizationID'      => ['_text' => '2.0'],
+                    'cbc:ID'                   => ['_text' => $fileName],
+                    'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
+                    'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoComp],
+                    'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+                    'cac:AccountingSupplierParty' => [
+                        'cac:Party' => [
+                            'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
+                            'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                            'cac:PartyLegalEntity'    => [
+                                'cbc:RegistrationName' => ['_text' => $empresa->razon_social],
+                                'cac:RegistrationAddress' => [
+                                    'cbc:AddressTypeCode' => ['_text' => '0000'],
+                                    'cac:AddressLine'     => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'cac:AccountingCustomerParty' => [
+                        'cac:Party' => [
+                            'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $request->cliente_tipo_documento ?? '1'], '_text' => $request->cliente_numero_documento]],
+                            'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($request->cliente_nombre)]],
+                        ],
+                    ],
+                    'cac:TaxTotal' => [
+                        'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                        'cac:TaxSubtotal' => [[
+                            'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                            'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                            'cac:TaxCategory'   => ['cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
+                        ]],
+                    ],
+                    'cac:LegalMonetaryTotal' => [
+                        'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                        'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $montoComp],
+                        'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $montoComp],
+                    ],
+                    'cac:InvoiceLine' => $lineas,
+                ];
+
+                $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->timeout(30)
+                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                        'personaId'    => $empresa->apisunat_ruc,
+                        'personaToken' => $empresa->apisunat_token,
+                        'fileName'     => $fileName,
+                        'documentBody' => $documentBody,
+                    ]);
+
+                $data     = $response->json();
+                $aceptada = $response->successful() && isset($data['sunatResponse']);
+
+                \DB::table('comprobantes_sunat')->insert([
+                    'empresa_id'               => $empresa->id,
+                    'tipo_comprobante'         => $tipoComp,
+                    'serie'                    => $serie,
+                    'numero'                   => $correlativo,
+                    'fecha_emision'            => now()->toDateString(),
+                    'cliente_tipo_documento'   => $request->cliente_tipo_documento ?? '1',
+                    'cliente_numero_documento' => $request->cliente_numero_documento,
+                    'cliente_nombre'           => strtoupper($request->cliente_nombre),
+                    'cliente_email'            => $request->cliente_email ?? '',
+                    'total_gravada'            => $baseImponible,
+                    'total_igv'                => $igv,
+                    'total'                    => $montoComp,
+                    'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                    'sunat_descripcion'        => $aceptada ? 'Aceptada' : json_encode($data),
+                    'estado'                   => $aceptada ? 'aceptado' : 'emitido',
+                    'created_at'               => now(),
+                    'updated_at'               => now(),
+                ]);
+
+                $compMsg = $aceptada
+                    ? ' | Comprobante ' . $fileName . ' emitido ✅'
+                    : ' | Comprobante guardado (pendiente SUNAT)';
+
+                return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado.' . $compMsg);
+
+            } catch (\Exception $e) {
+                \Log::error('Error emitir comprobante en cobro: ' . $e->getMessage());
+                return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado. (Error al emitir comprobante: ' . $e->getMessage() . ')');
+            }
+        }
+
         return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado correctamente.');
     }
 
