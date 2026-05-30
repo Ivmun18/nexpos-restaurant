@@ -47,12 +47,26 @@ class NotariaRolMiddleware
             return redirect('/dashboard')->with('error', 'La cajera solo tiene acceso a Caja.');
         }
 
-        // Notario: todo EXCEPTO caja
+        // Notario y asistente: todo EXCEPTO caja
         if ($rol === 'notario' || $rol === 'asistente') {
             if (in_array($rutaActual, self::RUTAS_CAJA)) {
                 return redirect('/dashboard')->with('error', 'No tienes acceso a Caja.');
             }
             return $next($request);
+        }
+
+        // Secretaria: expedientes, clientes, seguimiento — sin caja ni configuración
+        if ($rol === 'secretaria') {
+            $rutasSecretaria = [
+                'notaria.actos.index', 'notaria.actos.show', 'notaria.actos.store',
+                'notaria.actos.update', 'notaria.seguimiento.index',
+                'notaria.clientes.index', 'notaria.clientes.show',
+                'notaria.clientes.store', 'dashboard',
+            ];
+            if (in_array($rutaActual, $rutasSecretaria)) {
+                return $next($request);
+            }
+            return redirect('/dashboard')->with('error', 'No tienes acceso a esa sección.');
         }
 
         return redirect('/dashboard')->with('error', 'No tienes permisos para acceder a esa sección.');
