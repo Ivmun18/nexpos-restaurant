@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use App\Models\CategoriaMinimarket;
 
 class Producto extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Productos';
     protected $table = 'productos';
 
     protected static function boot()

@@ -301,6 +301,10 @@ function guardarParte() {
         onSuccess: () => {
             cerrarModal()
         },
+        onError: (errors) => {
+            console.error('Errores:', errors)
+            alert('Error al guardar: ' + Object.values(errors).flat().join(', '))
+        },
         onFinish: () => {
             guardando.value = false
         }

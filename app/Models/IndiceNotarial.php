@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class IndiceNotarial extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Notaria';
     protected $table = 'indice_notarial';
     
     protected $fillable = [

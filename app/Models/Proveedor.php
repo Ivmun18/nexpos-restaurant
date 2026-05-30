@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class Proveedor extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Proveedores';
     protected $table = 'proveedores';
 
     protected $fillable = [

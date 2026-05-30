@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class NotaCredito extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Ventas';
     protected $table = 'notas_credito';
 
     protected $fillable = [

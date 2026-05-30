@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class Insumo extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Inventario';
     protected $fillable = [
         'empresa_id', 'nombre', 'categoria', 'unidad_medida',
         'stock_actual', 'stock_minimo', 'precio_promedio', 'activo', 'observaciones',

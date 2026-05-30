@@ -57,6 +57,35 @@ class ClienteController extends Controller
         return back()->with('success', 'Cliente registrado correctamente.');
     }
 
+    public function storeJson(Request $request)
+    {
+        $request->validate([
+            'tipo_documento'   => 'required|max:1',
+            'numero_documento' => 'required|max:15',
+            'razon_social'     => 'required|max:200',
+            'email'            => 'nullable|email|max:150',
+            'telefono'         => 'nullable|max:20',
+            'direccion'        => 'nullable|max:300',
+        ]);
+
+        try {
+            $cliente = \App\Models\Cliente::create([
+                'empresa_id'       => auth()->user()->empresa_id,
+                'tipo_documento'   => $request->tipo_documento,
+                'numero_documento' => $request->numero_documento,
+                'razon_social'     => strtoupper($request->razon_social),
+                'email'            => $request->email,
+                'telefono'         => $request->telefono,
+                'direccion'        => $request->direccion,
+            ]);
+            return response()->json(['success' => true, 'id' => $cliente->id, 'razon_social' => $cliente->razon_social]);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            $existente = \App\Models\Cliente::where('empresa_id', auth()->user()->empresa_id)
+                ->where('numero_documento', $request->numero_documento)->first();
+            return response()->json(['success' => true, 'id' => $existente->id, 'razon_social' => $existente->razon_social, 'mensaje' => 'Cliente ya registrado']);
+        }
+    }
+
     public function update(Request $request, Cliente $cliente)
     {
         $request->validate([

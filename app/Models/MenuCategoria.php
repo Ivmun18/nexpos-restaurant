@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MenuCategoria extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Restaurante';
     protected $table = 'menu_categorias';
 
     protected $fillable = [

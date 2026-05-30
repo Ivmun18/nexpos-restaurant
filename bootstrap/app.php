@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'only.admin' => \App\Http\Middleware\OnlyAdmin::class,
             'solo_admin' => \App\Http\Middleware\SoloAdmin::class,
             'rol' => \App\Http\Middleware\RolMiddleware::class,
+            'notaria.rol' => \App\Http\Middleware\NotariaRolMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -43,9 +43,6 @@
                     style="padding:8px 16px; background:#991B1B; color:white; border:1px solid #991B1B; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-right:8px; text-decoration:none;">
                     📄 PDF
                 </a>
-                <button @click="showVentaDirecta=true" style="padding:8px 16px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; margin-right:8px;">
-                    🧾 Nueva venta directa
-                </button>
                 <button @click="modalCerrar=true" style="padding:8px 16px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
                     🔒 Cerrar caja
                 </button>
@@ -69,6 +66,10 @@
                             <button @click="buscarServidor"
                                 style="padding:12px 20px; background:#6366F1; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
                                 Buscar
+                            </button>
+                            <button @click="modalServicioRapido=!modalServicioRapido; expedienteSeleccionado=null"
+                                style="padding:12px 20px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                                ⚡ Servicio Rápido
                             </button>
                         </div>
                     </div>
@@ -137,7 +138,67 @@
                         <p style="font-size:12px; margin:0; color:#CBD5E1;">para registrar el cobro</p>
                     </div>
 
-                    <div v-else style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
+                    <!-- SERVICIO RÁPIDO -->
+                    <div v-if="modalServicioRapido" style="background:white; border-radius:12px; border:2px solid #10B981; overflow:hidden;">
+                        <div style="padding:1rem 1.25rem; background:linear-gradient(135deg,#ECFDF5,#D1FAE5); border-bottom:1px solid #A7F3D0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <p style="font-size:14px; font-weight:800; color:#065F46; margin:0;">⚡ Servicio Rápido</p>
+                                <button @click="modalServicioRapido=false" style="background:none; border:none; color:#6B7280; cursor:pointer; font-size:16px;">✕</button>
+                            </div>
+                        </div>
+                        <div style="padding:1.25rem;">
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">TIPO DE SERVICIO</label>
+                                <select v-model="formRapido.tipo_servicio" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Legalización de Firma">Legalización de Firma</option>
+                                    <option value="Legalización de DNI">Legalización de DNI</option>
+                                    <option value="Copia Certificada">Copia Certificada</option>
+                                    <option value="Certificación de Documento">Certificación de Documento</option>
+                                    <option value="Carta Notarial">Carta Notarial</option>
+                                    <option value="Protesto">Protesto</option>
+                                    <option value="Constatación Domiciliaria">Constatación Domiciliaria</option>
+                                    <option value="__otro__">Otro (escribir)...</option>
+                                </select>
+                            </div>
+                            <div v-if="formRapido.tipo_servicio === '__otro__'" style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DESCRIPCIÓN DEL SERVICIO</label>
+                                <input v-model="formRapido.tipo_servicio_custom" type="text" placeholder="Ej: Certificación de poder..."
+                                    style="width:100%; padding:9px 12px; border:1px solid #10B981; border-radius:8px; font-size:13px; box-sizing:border-box;" />
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CLIENTE (opcional)</label>
+                                <input v-model="formRapido.cliente_nombre" type="text" placeholder="Nombre del cliente"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI / RUC (opcional)</label>
+                                <input v-model="formRapido.cliente_documento" type="text" placeholder="00000000"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">MONTO (S/)</label>
+                                <input v-model="formRapido.monto" type="number" step="0.01" min="0" placeholder="0.00"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:800; text-align:center; box-sizing:border-box;" />
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">MÉTODO DE PAGO</label>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                    <button v-for="m in ['efectivo','yape','plin','transferencia']" :key="m"
+                                        @click="formRapido.metodo_pago=m"
+                                        :style="{ padding:'8px', border:'1px solid', borderRadius:'8px', cursor:'pointer', fontWeight:'600', fontSize:'12px', textTransform:'capitalize', background: formRapido.metodo_pago===m ? '#10B981' : 'white', color: formRapido.metodo_pago===m ? 'white' : '#374151', borderColor: formRapido.metodo_pago===m ? '#10B981' : '#E2E8F0' }">
+                                        {{ m }}
+                                    </button>
+                                </div>
+                            </div>
+                            <button @click="cobrarServicioRapido" :disabled="!formRapido.tipo_servicio || !formRapido.monto || procesandoRapido"
+                                style="width:100%; padding:12px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                                {{ procesandoRapido ? '⏳ Procesando...' : '💰 Cobrar S/ ' + (Number(formRapido.monto)||0).toFixed(2) }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-else-if="expedienteSeleccionado" style="background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
 
                         <!-- Cabecera -->
                         <div style="padding:1rem 1.25rem; background:linear-gradient(135deg,#EEF2FF,#E0E7FF); border-bottom:1px solid #C7D2FE;">
@@ -162,6 +223,14 @@
                                 <div v-if="expedienteSeleccionado.monto_pagado > 0" style="display:flex; justify-content:space-between; margin-bottom:5px;">
                                     <span style="font-size:12px; color:#64748B;">Ya pagado</span>
                                     <span style="font-size:13px; font-weight:700; color:#10B981;">− S/ {{ Number(expedienteSeleccionado.monto_pagado).toFixed(2) }}</span>
+                                </div>
+                                <!-- Historial de pagos -->
+                                <div v-if="expedienteSeleccionado.pagos?.length" style="margin-bottom:8px;">
+                                    <span style="font-size:12px; font-weight:600; color:#64748B;">Pagos registrados:</span>
+                                    <div v-for="p in expedienteSeleccionado.pagos" :key="p.id" style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; border-bottom:1px dashed #F1F5F9;">
+                                        <span style="color:#64748B;">{{ p.tipo === 'adelanto' ? '📝 Adelanto' : '💰 Pago' }} ({{ p.metodo_pago }})</span>
+                                        <span style="font-weight:600; color:#10B981;">S/ {{ Number(p.monto).toFixed(2) }}</span>
+                                    </div>
                                 </div>
                                 <div style="border-top:1px solid #E2E8F0; padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
                                     <span style="font-size:14px; font-weight:700; color:#1E293B;">Saldo a cobrar</span>
@@ -250,6 +319,10 @@
                                 }">
                                 {{ procesando ? '⏳ Procesando...' : '💰 Cobrar S/ ' + (Number(formCobro.monto)||0).toFixed(2) }}
                             </button>
+                            <button @click="confirmarCobro(true)" :disabled="!formCobro.monto || procesando"
+                                style="width:100%; margin-top:8px; padding:12px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:10px; font-size:13px; font-weight:600; color:#0F766E; cursor:pointer;">
+                                🧾 Boleta simple (sin datos)
+                            </button>
                             <button @click="expedienteSeleccionado=null"
                                 style="width:100%; margin-top:8px; padding:10px; background:transparent; border:none; color:#94A3B8; font-size:12px; cursor:pointer;">
                                 Cancelar
@@ -266,95 +339,38 @@
         <!-- MODAL CIERRE DE CAJA -->
 
         <!-- MODAL VENTA DIRECTA -->
-        <div v-if="showVentaDirecta" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:999;">
-            <div style="background:white; border-radius:16px; padding:28px; width:580px; max-width:95vw; max-height:90vh; overflow-y:auto;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2 style="margin:0; font-size:18px; font-weight:700;">🧾 Nueva venta directa</h2>
-                    <button @click="cerrarVentaDirecta" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✕</button>
-                </div>
-                <div style="background:#F8FAFC; border-radius:10px; padding:16px; margin-bottom:16px;">
-                    <p style="font-weight:700; color:#374151; margin:0 0 12px; font-size:13px;">Datos del cliente</p>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div>
-                            <label style="font-size:12px; font-weight:600; color:#64748B;">Tipo documento</label>
-                            <select v-model="formVD.cliente_tipo_documento" style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;">
-                                <option value="1">DNI</option>
-                                <option value="6">RUC</option>
-                                <option value="4">Carnet extranjería</option>
-                                <option value="7">Pasaporte</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:600; color:#64748B;">N° documento *</label>
-                            <input v-model="formVD.cliente_numero_documento" type="text"
-                                :placeholder="formVD.cliente_tipo_documento==='6' ? '20xxxxxxxxx' : '12345678'"
-                                style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;" />
-                        </div>
-                    </div>
-                    <div style="margin-bottom:10px;">
-                        <label style="font-size:12px; font-weight:600; color:#64748B;">Nombre / Razón social *</label>
-                        <input v-model="formVD.cliente_nombre" type="text" placeholder="Nombre completo"
-                            style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;" />
-                    </div>
-                    <div>
-                        <label style="font-size:12px; font-weight:600; color:#64748B;">Email (opcional)</label>
-                        <input v-model="formVD.cliente_email" type="email" placeholder="correo@ejemplo.com"
-                            style="width:100%; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; margin-top:4px; box-sizing:border-box;" />
-                    </div>
-                </div>
-                <div style="margin-bottom:16px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <p style="font-weight:700; color:#374151; margin:0; font-size:13px;">Servicios</p>
-                        <button @click="agregarItem" style="background:#6366F1; color:white; border:none; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">+ Agregar</button>
-                    </div>
-                    <div v-for="(item, i) in formVD.items" :key="i" style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                        <input v-model="item.descripcion" type="text" placeholder="Descripción del servicio"
-                            style="flex:1; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; box-sizing:border-box;" />
-                        <input v-model="item.precio" type="number" min="0" step="0.01" placeholder="0.00"
-                            style="width:110px; padding:9px; border:1.5px solid #E2E8F0; border-radius:8px; box-sizing:border-box;" />
-                        <button @click="formVD.items.splice(i,1)" style="background:#FEE2E2; color:#991B1B; border:none; padding:8px 10px; border-radius:8px; cursor:pointer;">✕</button>
-                    </div>
-                    <div v-if="formVD.items.length" style="text-align:right; margin-top:8px;">
-                        <span style="font-size:15px; font-weight:800; color:#1E293B;">Total: S/ {{ totalVD.toFixed(2) }}</span>
-                    </div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-                    <div>
-                        <p style="font-weight:700; color:#374151; margin:0 0 8px; font-size:13px;">Método de pago</p>
-                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                            <button v-for="m in metodosVD" :key="m.v" @click="formVD.metodo_pago=m.v"
-                                :style="{ background: formVD.metodo_pago===m.v ? '#6366F1' : '#F1F5F9', color: formVD.metodo_pago===m.v ? 'white' : '#374151', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }">
-                                {{ m.l }}
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <p style="font-weight:700; color:#374151; margin:0 0 8px; font-size:13px;">Tipo comprobante</p>
-                        <div style="display:flex; gap:6px;">
-                            <button @click="formVD.tipo_comprobante='03'"
-                                :style="{ background: formVD.tipo_comprobante==='03' ? '#6366F1' : '#F1F5F9', color: formVD.tipo_comprobante==='03' ? 'white' : '#374151', border:'none', padding:'6px 16px', borderRadius:'8px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }">
-                                Boleta
-                            </button>
-                            <button @click="formVD.tipo_comprobante='01'"
-                                :style="{ background: formVD.tipo_comprobante==='01' ? '#6366F1' : '#F1F5F9', color: formVD.tipo_comprobante==='01' ? 'white' : '#374151', border:'none', padding:'6px 16px', borderRadius:'8px', cursor:'pointer', fontSize:'12px', fontWeight:'600' }">
-                                Factura
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <button @click="emitirVentaDirecta" :disabled="procesandoVD || !formVD.items.length || !formVD.cliente_nombre"
-                    style="width:100%; padding:14px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer;">
-                    {{ procesandoVD ? 'Emitiendo...' : '🧾 Emitir comprobante' }}
-                </button>
-                <div v-if="mensajeVD" :style="{ background: mensajeVD.ok ? '#F0FDF4' : '#FEF2F2', color: mensajeVD.ok ? '#166534' : '#991B1B', padding:'12px', borderRadius:'10px', marginTop:'12px', fontWeight:'600', fontSize:'13px' }">
-                    {{ mensajeVD.texto }}
-                </div>
-            </div>
-        </div>
-
         <div v-if="modalCerrar" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center;">
             <div style="background:white; border-radius:16px; padding:1.5rem; width:400px; max-width:95vw;">
                 <p style="font-size:16px; font-weight:800; color:#1E293B; margin:0 0 1.2rem;">🔒 Cerrar caja</p>
+                <!-- DESGLOSE POR TIPO -->
+                <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px; margin-bottom:10px;">
+                    <p style="font-size:11px; font-weight:700; color:#166534; margin:0 0 8px; text-transform:uppercase;">Desglose por tipo de cobro</p>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:12px; color:#374151;">Cobros expedientes</span>
+                        <span style="font-size:12px; font-weight:700; color:#166534;">S/ {{ Number(resumenCaja?.cobros_expediente||0).toFixed(2) }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:12px; color:#374151;">Ventas directas</span>
+                        <span style="font-size:12px; font-weight:700; color:#166534;">S/ {{ Number(resumenCaja?.ventas_directas||0).toFixed(2) }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="font-size:12px; color:#374151;">Servicios rápidos</span>
+                        <span style="font-size:12px; font-weight:700; color:#166534;">S/ {{ Number(resumenCaja?.servicios_rapidos||0).toFixed(2) }}</span>
+                    </div>
+                </div>
+
+                <!-- DESGLOSE POR MÉTODO DE PAGO -->
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:12px; margin-bottom:10px;">
+                    <p style="font-size:11px; font-weight:700; color:#1D4ED8; margin:0 0 8px; text-transform:uppercase;">Desglose por método de pago</p>
+                    <div v-for="(monto, metodo) in resumenCaja?.por_metodo" :key="metodo"
+                        style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:12px; color:#374151; text-transform:capitalize;">{{ metodo }}</span>
+                        <span style="font-size:12px; font-weight:700; color:#1D4ED8;">S/ {{ Number(monto).toFixed(2) }}</span>
+                    </div>
+                    <div v-if="!resumenCaja?.por_metodo || Object.keys(resumenCaja.por_metodo).length === 0"
+                        style="font-size:12px; color:#94A3B8;">Sin movimientos</div>
+                </div>
+
                 <div style="background:#F8FAFC; border-radius:10px; padding:14px; margin-bottom:1rem;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                         <span style="font-size:13px; color:#64748B;">Fondo inicial</span>
@@ -398,8 +414,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
@@ -413,61 +429,45 @@ const busqueda               = ref('')
 const expedienteSeleccionado = ref(null)
 const procesando             = ref(false)
 const modalCerrar            = ref(false)
-
-const showVentaDirecta = ref(false)
-const procesandoVD     = ref(false)
-const mensajeVD        = ref(null)
-const metodosVD        = [
-    { v: 'efectivo', l: 'Efectivo' },
-    { v: 'yape',     l: 'Yape' },
-    { v: 'plin',     l: 'Plin' },
-    { v: 'transferencia', l: 'Transferencia' },
-    { v: 'tarjeta',  l: 'Tarjeta' },
-]
-const formVD = ref({
-    tipo_comprobante:         '03',
-    cliente_tipo_documento:   '1',
-    cliente_numero_documento: '',
-    cliente_nombre:           '',
-    cliente_email:            '',
-    metodo_pago:              'efectivo',
-    items:                    [],
+const modalServicioRapido    = ref(false)
+const procesandoRapido       = ref(false)
+const formRapido = ref({
+    tipo_servicio: '',
+    tipo_servicio_custom: '',
+    cliente_nombre: 'CLIENTES VARIOS',
+    cliente_documento: '00000000',
+    metodo_pago: 'efectivo',
+    monto: '',
 })
-const totalVD = computed(() => formVD.value.items.reduce((s, i) => s + Number(i.precio || 0), 0))
 
-function agregarItem() {
-    formVD.value.items.push({ descripcion: '', precio: '' })
-}
-
-function cerrarVentaDirecta() {
-    showVentaDirecta.value = false
-    mensajeVD.value        = null
-    formVD.value = { tipo_comprobante:'03', cliente_tipo_documento:'1', cliente_numero_documento:'', cliente_nombre:'', cliente_email:'', metodo_pago:'efectivo', items:[] }
-}
-
-async function emitirVentaDirecta() {
-    if (procesandoVD.value) return
-    procesandoVD.value = true
-    mensajeVD.value    = null
+async function cobrarServicioRapido() {
+    if (!formRapido.value.tipo_servicio || !formRapido.value.monto) return
+    procesandoRapido.value = true
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-        const res = await fetch('/notaria/caja/venta-directa', {
-            method:  'POST',
+        const payload = { ...formRapido.value }
+        if (payload.tipo_servicio === '__otro__') {
+            payload.tipo_servicio = payload.tipo_servicio_custom || 'Servicio notarial'
+        }
+        const res = await fetch('/notaria/caja/servicio-rapido', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body:    JSON.stringify(formVD.value),
+            body: JSON.stringify(payload)
         })
         const data = await res.json()
         if (data.success) {
-            mensajeVD.value = { ok: true, texto: '✅ ' + data.mensaje }
+            alert('✅ ' + data.mensaje)
             if (data.pdf) window.open(data.pdf, '_blank')
-            setTimeout(cerrarVentaDirecta, 2000)
+            modalServicioRapido.value = false
+            formRapido.value = { tipo_servicio: '', tipo_servicio_custom: '', cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', monto: '' }
+            router.reload({ only: ['resumenCaja'] })
         } else {
-            mensajeVD.value = { ok: false, texto: '❌ ' + data.mensaje }
+            alert('❌ ' + data.mensaje)
         }
     } catch(e) {
-        mensajeVD.value = { ok: false, texto: '❌ Error de conexión' }
+        alert('❌ Error de conexión')
     }
-    procesandoVD.value = false
+    procesandoRapido.value = false
 }
 
 const fondoApertura          = ref(0)
@@ -523,46 +523,67 @@ function cerrarCaja() {
     })
 }
 
-async function confirmarCobro() {
+async function confirmarCobro(boletaSimple = false) {
     if (!formCobro.value.monto || !expedienteSeleccionado.value || procesando.value) return
+
+    // Validación: si NO es boleta simple, validar datos del cliente
+    if (!boletaSimple) {
+        if (formComp.value.tipo_comprobante === '01') {
+            if (!formComp.value.cliente_numero_documento || !formComp.value.cliente_nombre) {
+                errorComp.value = 'Para Factura debe ingresar RUC y Razón Social'
+                return
+            }
+        } else {
+            if (formComp.value.cliente_numero_documento && !formComp.value.cliente_nombre) {
+                errorComp.value = 'Ingrese el nombre del cliente'
+                return
+            }
+            if (formComp.value.cliente_nombre && !formComp.value.cliente_numero_documento) {
+                errorComp.value = 'Ingrese el DNI del cliente'
+                return
+            }
+        }
+    }
+
     procesando.value = true
     errorComp.value  = ''
     const actoId = expedienteSeleccionado.value.id
 
-    await new Promise((resolve) => {
-        const dataCobro = { ...formCobro.value, ...formComp.value }
-        router.post('/notaria/caja/' + actoId + '/cobrar', dataCobro, {
-            preserveScroll: true,
-            onSuccess: resolve,
-            onError:   resolve,
-        })
-    })
+    // Si es boleta simple, enviar datos mínimos
+    const compData = boletaSimple
+        ? {
+            tipo_comprobante: '03',
+            cliente_tipo_documento: formComp.value.cliente_tipo_documento || '0',
+            cliente_numero_documento: formComp.value.cliente_numero_documento || '00000000',
+            cliente_nombre: formComp.value.cliente_nombre || 'CLIENTES VARIOS'
+          }
+        : { ...formComp.value }
 
-    if (formComp.value.cliente_nombre?.trim()) {
-        try {
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-            const res  = await fetch('/notaria/comprobantes/' + actoId + '/emitir', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-                body: JSON.stringify(formComp.value)
-            })
-            const data = await res.json()
-            if (data.success && data.pdf) {
-                pdfComp.value = data.pdf
-                window.open(data.pdf, '_blank')
-            } else {
-                window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
-            }
-        } catch {
-            window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res  = await fetch('/notaria/caja/' + actoId + '/cobrar', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body:    JSON.stringify({ ...formCobro.value, ...compData })
+        })
+        const data = await res.json()
+        if (data.pdf) {
+            pdfComp.value = data.pdf
+            window.open(data.pdf, '_blank')
         }
-    } else {
-        window.open('/notaria/recibo/' + actoId + '/ultimo', '_blank')
+        if (data.mensaje) {
+            errorComp.value = ''
+            pdfComp.value = data.pdf || ''
+            alert(data.mensaje)
+        }
+    } catch(e) {
+        console.error('Error cobro:', e)
     }
 
     procesando.value             = false
     expedienteSeleccionado.value = null
     formCobro.value = { monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' }
+    router.reload({ preserveScroll: true })
 }
 
 function buscarServidor() {

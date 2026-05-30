@@ -148,7 +148,7 @@
                                 <select v-model="formNuevo.cliente_id"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
                                     <option value="">Sin cliente registrado</option>
-                                    <option v-for="c in clientes" :key="c.id" :value="c.id">{{ c.razon_social }}</option>
+                                    <option v-for="c in listaClientes" :key="c.id" :value="c.id">{{ c.razon_social }}</option>
                                 </select>
                                 <button @click="modalCliente=true" type="button"
                                     style="margin-top:8px; padding:8px 14px; background:#14B8A6; color:#fff; border:none; border-radius:8px; font-size:12px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;">
@@ -234,6 +234,39 @@
             </div>
         </div>
 
+        <!-- Modal Nuevo Cliente -->
+        <div v-if="modalCliente" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:999;">
+            <div style="background:white; border-radius:16px; padding:24px; width:420px; max-width:90vw;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0; font-size:16px; font-weight:700;">👤 Nuevo Cliente</h3>
+                    <button @click="modalCliente=false" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer;">✕</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; gap:8px;">
+                        <select v-model="formCliente.tipo_documento" style="padding:9px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;">
+                            <option value="1">DNI</option>
+                            <option value="6">RUC</option>
+                        </select>
+                        <input v-model="formCliente.numero_documento" type="text" :placeholder="formCliente.tipo_documento==='6' ? 'RUC 20xxxxxxxxx' : 'DNI 12345678'"
+                            style="flex:1; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+                    </div>
+                    <input v-model="formCliente.razon_social" type="text" placeholder="Nombre o Razón Social *"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    <input v-model="formCliente.direccion" type="text" placeholder="Dirección (opcional)"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    <input v-model="formCliente.email" type="email" placeholder="Email (opcional)"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    <input v-model="formCliente.telefono" type="text" placeholder="Teléfono (opcional)"
+                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    <div v-if="errorCliente" style="background:#FEF2F2; padding:8px; border-radius:8px; font-size:12px; color:#991B1B;">{{ errorCliente }}</div>
+                    <button @click="guardarCliente" :disabled="guardandoCliente"
+                        style="width:100%; padding:12px; background:linear-gradient(135deg,#14B8A6,#0D9488); color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+                        {{ guardandoCliente ? 'Guardando...' : '💾 Guardar cliente' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -251,15 +284,41 @@ const props = defineProps({
 
 const filtros         = ref({ ...props.filtros })
 const modalNuevo      = ref(false)
+const listaClientes   = ref([...props.clientes])
 const modalCliente    = ref(false)
-const formCliente     = ref({
-    tipo_documento: '',
-    numero_documento: '',
-    razon_social: '',
-    telefono: '',
-    email: '',
-    direccion: '',
-})
+const formCliente     = ref({ tipo_documento: '1', numero_documento: '', razon_social: '', direccion: '', email: '', telefono: '' })
+const errorCliente    = ref('')
+const guardandoCliente = ref(false)
+
+async function guardarCliente() {
+    if (!formCliente.value.razon_social || !formCliente.value.numero_documento) {
+        errorCliente.value = 'Ingrese documento y nombre del cliente'
+        return
+    }
+    guardandoCliente.value = true
+    errorCliente.value = ''
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/clientes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify(formCliente.value)
+        })
+        const data = await res.json()
+        if (data.id || data.success) {
+            // Agregar cliente a la lista sin recargar
+            listaClientes.value.push({ id: data.id, razon_social: data.razon_social, numero_documento: formCliente.value.numero_documento })
+            formNuevo.value.cliente_id = data.id
+            modalCliente.value = false
+            formCliente.value = { tipo_documento: '1', numero_documento: '', razon_social: '', direccion: '', email: '', telefono: '' }
+        } else {
+            errorCliente.value = data.message || 'Error al guardar'
+        }
+    } catch(e) {
+        errorCliente.value = 'Error de conexión'
+    }
+    guardandoCliente.value = false
+}
 const modalPago       = ref(false)
 const actoSeleccionado = ref(null)
 const formNuevo = ref({ tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' })

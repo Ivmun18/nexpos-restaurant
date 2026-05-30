@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CajaRestaurante extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Caja';
     protected $table = 'caja_restaurante';
 
     protected $fillable = [

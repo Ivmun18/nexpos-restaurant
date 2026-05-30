@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Empresa extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Empresas';
     protected $fillable = [
         'ruc',
         'razon_social',

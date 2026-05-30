@@ -51,6 +51,11 @@ class CajaNotariaController extends Controller
                 'estado'             => $a->estado,
                 'fecha_ingreso'      => $a->fecha_ingreso,
                 'pagos'              => $a->pagos,
+                'cliente'            => $a->cliente ? [
+                    'tipo_documento'   => $a->cliente->tipo_documento,
+                    'numero_documento' => $a->cliente->numero_documento,
+                    'nombre'           => $a->cliente->razon_social,
+                ] : null,
             ]);
 
         $sesionAbierta = SesionCaja::where('estado', 'abierta')->exists();
@@ -61,9 +66,34 @@ class CajaNotariaController extends Controller
         // Calcular totales de la sesión actual
         $resumenCaja = null;
         if ($sesionActual) {
-            $ingresos = $sesionActual->movimientos->where('tipo', 'ingreso')->sum('monto');
-            $egresos  = $sesionActual->movimientos->where('tipo', 'egreso')->sum('monto');
+            $movimientos = $sesionActual->movimientos;
+            $ingresos = $movimientos->where('tipo', 'ingreso')->sum('monto');
+            $egresos  = $movimientos->where('tipo', 'egreso')->sum('monto');
+
+            // Desglose por método de pago
+            $porMetodo = $movimientos->where('tipo', 'ingreso')
+                ->groupBy('metodo_pago')
+                ->map(fn($g) => round($g->sum('monto'), 2));
+
+            // Desglose por tipo de cobro
+            $cobrosExpediente = $movimientos->where('tipo', 'ingreso')
+                ->filter(fn($m) => str_contains($m->concepto, 'EXP-') || str_contains($m->concepto, 'Expediente'))
+                ->sum('monto');
+            $ventasDirectas = $movimientos->where('tipo', 'ingreso')
+                ->filter(fn($m) => str_contains($m->concepto, 'Venta directa'))
+                ->sum('monto');
+            $serviciosRapidos = $movimientos->where('tipo', 'ingreso')
+                ->filter(fn($m) => str_contains($m->concepto, 'Servicio rapido'))
+                ->sum('monto');
+            $apertura = $movimientos->where('tipo', 'ingreso')
+                ->filter(fn($m) => str_contains($m->concepto, 'Apertura'))
+                ->sum('monto');
+
             $resumenCaja = [
+                'por_metodo'          => $porMetodo,
+                'cobros_expediente'   => round($cobrosExpediente, 2),
+                'ventas_directas'     => round($ventasDirectas, 2),
+                'servicios_rapidos'   => round($serviciosRapidos, 2),
                 'id'             => $sesionActual->id,
                 'apertura'       => $sesionActual->created_at,
                 'fondo_inicial'  => $sesionActual->monto_apertura,
@@ -78,6 +108,9 @@ class CajaNotariaController extends Controller
             ->where('empresa_id', $empresaId)
             ->where('estado_pago', 'pagado')
             ->whereDate('updated_at', today())
+            ->whereDoesntHave('comprobantes', function($q) {
+                $q->whereIn('estado', ['aceptado', 'emitido']);
+            })
             ->orderBy('updated_at', 'desc')
             ->get()
             ->map(fn($a) => [
@@ -103,6 +136,7 @@ class CajaNotariaController extends Controller
 
     public function cobrar(Request $request, ActoNotarial $acto)
     {
+        \Log::info("cobrar llamado - acto: " . $acto->id . " tipo_comp: " . $request->tipo_comprobante . " cliente: " . $request->cliente_nombre);
         // Verificar que hay caja abierta
         if (!SesionCaja::where('estado', 'abierta')->exists()) {
             return back()->with('error', 'Debe abrir la caja antes de registrar cobros.');
@@ -150,146 +184,81 @@ class CajaNotariaController extends Controller
                 'concepto'     => ucfirst($request->tipo) . ' ' . $acto->numero_expediente . ' (' . $request->metodo_pago . ')',
                 'referencia_id'=> $acto->id,
                 'monto'        => $request->monto,
+                'metodo_pago'  => $request->metodo_pago,
             ]);
         }
 
-        // Emitir comprobante electrónico si se llenaron los datos
-        if ($request->tipo_comprobante && $request->cliente_nombre) {
-            try {
-                $empresa = auth()->user()->empresa;
-                $tipoComp = $request->tipo_comprobante; // '01' o '03'
+        // Solo emitir comprobante cuando el expediente está TOTALMENTE pagado
+        if ($estadoPago === 'pagado' && $request->tipo_comprobante && $request->cliente_nombre) {
+            $resultado = app(\App\Http\Controllers\Notaria\ComprobantesNotariaController::class)->emitir($request, $acto);
+            $data = $resultado->getData(true);
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Pago registrado. ' . ($data['mensaje'] ?? ''),
+                'pdf'     => $data['pdf'] ?? null,
+                'emitido' => $data['success'] ?? false,
+            ]);
+        }
 
-                if ($tipoComp === '01') {
-                    $serie       = $empresa->serie_factura ?? 'F001';
-                    $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
-                    $empresa->increment('ultimo_num_factura');
-                } else {
-                    $serie       = $empresa->serie_boleta ?? 'B001';
-                    $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
-                    $empresa->increment('ultimo_num_boleta');
-                }
+        $saldoPendiente = round($acto->monto_cobrar - $nuevoPagado, 2);
+        $ultimoPago = $acto->pagos()->latest()->first();
+        $msg = $estadoPago === 'pagado'
+            ? 'Pago de S/ ' . $request->monto . ' registrado. Expediente cancelado.'
+            : 'Adelanto de S/ ' . $request->monto . ' registrado. Saldo pendiente: S/ ' . $saldoPendiente;
 
-                $montoComp     = (float) $request->monto;
-                $exonerada     = $empresa->zona_exonerada;
-                $baseImponible = $exonerada ? $montoComp : round($montoComp / 1.18, 2);
-                $igv           = $exonerada ? 0 : round($montoComp - $baseImponible, 2);
-                $fileName      = $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
+        return response()->json([
+            'success' => true,
+            'mensaje' => $msg,
+            'pdf'     => $ultimoPago ? '/notaria/recibo/' . $acto->id . '/' . $ultimoPago->id : null,
+        ]);
+    }
 
-                $valUnit = $exonerada ? $montoComp : round($montoComp / 1.18, 4);
-                $igvItem = $exonerada ? 0 : round($montoComp - $valUnit, 2);
+    public function servicioRapido(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'tipo_servicio'    => 'required|string',
+            'monto'            => 'required|numeric|min:0.01',
+            'metodo_pago'      => 'required|in:efectivo,yape,plin,tarjeta,transferencia',
+            'cliente_nombre'   => 'nullable|string',
+            'cliente_documento'=> 'nullable|string',
+        ]);
 
-                $lineas = [[
-                    'cbc:ID'                  => ['_text' => '1'],
-                    'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
-                    'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
-                    'cac:TaxTotal' => [
-                        'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
-                        'cac:TaxSubtotal' => [[
-                            'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
-                            'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
-                            'cac:TaxCategory'   => [
-                                'cbc:ID'       => ['_attributes' => ['schemeID'=>'UN/ECE 5305','schemeName'=>'Tax Category Identifier','schemeAgencyName'=>'United Nations Economic Commission for Europe'], '_text' => $exonerada ? 'E' : 'S'],
-                                'cbc:Percent'  => ['_text' => $exonerada ? '0' : '18'],
-                                'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
-                            ],
-                        ]],
-                    ],
-                    'cac:Item' => [
-                        'cbc:Description' => ['_text' => $acto->asunto ?? 'Servicio notarial'],
-                        'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => $acto->numero_expediente ?? 'S/C']],
-                    ],
-                    'cac:Price' => [
-                        'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
-                    ],
-                ]];
+        if (!SesionCaja::where('estado', 'abierta')->exists()) {
+            return response()->json(['success' => false, 'mensaje' => 'No hay caja abierta.']);
+        }
 
-                $documentBody = [
-                    'cbc:UBLVersionID'         => ['_text' => '2.1'],
-                    'cbc:CustomizationID'      => ['_text' => '2.0'],
-                    'cbc:ID'                   => ['_text' => $fileName],
-                    'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
-                    'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoComp],
-                    'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-                    'cac:AccountingSupplierParty' => [
-                        'cac:Party' => [
-                            'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
-                            'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
-                            'cac:PartyLegalEntity'    => [
-                                'cbc:RegistrationName' => ['_text' => $empresa->razon_social],
-                                'cac:RegistrationAddress' => [
-                                    'cbc:AddressTypeCode' => ['_text' => '0000'],
-                                    'cac:AddressLine'     => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']],
-                                ],
-                            ],
-                        ],
-                    ],
-                    'cac:AccountingCustomerParty' => [
-                        'cac:Party' => [
-                            'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $request->cliente_tipo_documento ?? '1'], '_text' => $request->cliente_numero_documento]],
-                            'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($request->cliente_nombre)]],
-                        ],
-                    ],
-                    'cac:TaxTotal' => [
-                        'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
-                        'cac:TaxSubtotal' => [[
-                            'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
-                            'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
-                            'cac:TaxCategory'   => ['cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
-                        ]],
-                    ],
-                    'cac:LegalMonetaryTotal' => [
-                        'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
-                        'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $montoComp],
-                        'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $montoComp],
-                    ],
-                    'cac:InvoiceLine' => $lineas,
-                ];
+        $requestEmitir = new \Illuminate\Http\Request();
+        $requestEmitir->merge([
+            'tipo_comprobante'         => '03',
+            'cliente_tipo_documento'   => strlen($request->cliente_documento ?? '') == 11 ? '6' : '1',
+            'cliente_numero_documento' => $request->cliente_documento ?? '00000000',
+            'cliente_nombre'           => $request->cliente_nombre ?? 'CLIENTES VARIOS',
+            'cliente_email'            => '',
+            'metodo_pago'              => $request->metodo_pago,
+            'items'                    => [[
+                'descripcion' => $request->tipo_servicio,
+                'precio'      => $request->monto,
+            ]],
+        ]);
 
-                $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->timeout(30)
-                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
-                        'personaId'    => $empresa->apisunat_ruc,
-                        'personaToken' => $empresa->apisunat_token,
-                        'fileName'     => $fileName,
-                        'documentBody' => $documentBody,
-                    ]);
+        $resultado = app(\App\Http\Controllers\Notaria\ComprobantesNotariaController::class)->ventaDirecta($requestEmitir);
+        $data = $resultado->getData(true);
 
-                $data     = $response->json();
-                $aceptada = $response->successful() && isset($data['sunatResponse']);
-
-                \DB::table('comprobantes_sunat')->insert([
-                    'empresa_id'               => $empresa->id,
-                    'tipo_comprobante'         => $tipoComp,
-                    'serie'                    => $serie,
-                    'numero'                   => $correlativo,
-                    'fecha_emision'            => now()->toDateString(),
-                    'cliente_tipo_documento'   => $request->cliente_tipo_documento ?? '1',
-                    'cliente_numero_documento' => $request->cliente_numero_documento,
-                    'cliente_nombre'           => strtoupper($request->cliente_nombre),
-                    'cliente_email'            => $request->cliente_email ?? '',
-                    'total_gravada'            => $baseImponible,
-                    'total_igv'                => $igv,
-                    'total'                    => $montoComp,
-                    'aceptada_por_sunat'       => $aceptada ? 1 : 0,
-                    'sunat_descripcion'        => $aceptada ? 'Aceptada' : json_encode($data),
-                    'estado'                   => $aceptada ? 'aceptado' : 'emitido',
-                    'created_at'               => now(),
-                    'updated_at'               => now(),
+        if ($data['success'] ?? false) {
+            $sesion = SesionCaja::where('estado', 'abierta')->first();
+            if ($sesion) {
+                \App\Models\CajaMovimiento::create([
+                    'sesion_id'   => $sesion->id,
+                    'usuario_id'  => auth()->id(),
+                    'tipo'        => 'ingreso',
+                    'concepto'    => 'Servicio rapido: ' . $request->tipo_servicio . ' (' . $request->metodo_pago . ')',
+                    'monto'       => $request->monto,
+                    'metodo_pago' => $request->metodo_pago,
                 ]);
-
-                $compMsg = $aceptada
-                    ? ' | Comprobante ' . $fileName . ' emitido ✅'
-                    : ' | Comprobante guardado (pendiente SUNAT)';
-
-                return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado.' . $compMsg);
-
-            } catch (\Exception $e) {
-                \Log::error('Error emitir comprobante en cobro: ' . $e->getMessage());
-                return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado. (Error al emitir comprobante: ' . $e->getMessage() . ')');
             }
         }
 
-        return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado correctamente.');
+        return response()->json($data);
     }
 
     public function abrir(\Illuminate\Http\Request $request)
@@ -300,7 +269,11 @@ class CajaNotariaController extends Controller
             return back()->with('error', 'Ya hay una caja abierta.');
         }
 
+        $caja = \DB::table('caja')->where('empresa_id', auth()->user()->empresa_id)->first();
+        $cajaId = $caja ? $caja->id : 1;
+
         $sesion = SesionCaja::create([
+            'caja_id'        => $cajaId,
             'usuario_id'     => auth()->id(),
             'monto_apertura' => $request->monto_apertura,
             'estado'         => 'abierta',

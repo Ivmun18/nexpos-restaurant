@@ -1,8 +1,12 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 class ActoRequisito extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Notaria';
     protected $table = 'acto_requisitos';
     protected $fillable = ['acto_id', 'documento', 'entregado', 'observacion', 'user_id'];
     protected $casts = ['entregado' => 'boolean'];

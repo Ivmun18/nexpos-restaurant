@@ -18,6 +18,8 @@ use App\Http\Controllers\Venta\CotizacionController;
 use App\Http\Controllers\Mesa\MesaController;
 use App\Http\Controllers\MenuCategoriaController;
 use App\Http\Controllers\MenuProductoController;
+use \App\Http\Controllers\Farmacia\ProductoImportController;
+use App\Http\Controllers\Ferreteria\ProductoImportController as FerreteriaProductoImportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\ReporteRestauranteController;
@@ -46,6 +48,10 @@ Route::get('/dashboard', function () {
         return app(\App\Http\Controllers\Dashboard\DashboardController::class)->index();
     }
 
+
+    if ($industryType === 'gimnasio') {
+        return redirect('/gimnasio/dashboard');
+    }
 
     if ($industryType === 'ferreteria') {
         $hoy  = now()->toDateString();
@@ -215,6 +221,98 @@ Route::get('/dashboard', function () {
             'ventas_por_dia'  => $ventasPorDia,
             'top_productos'   => $topProductos,
             'ultimas_ventas'  => $ultimasVentas,
+        ]);
+    }
+
+    // ── Dashboard Notaría ──
+    if ($industryType === 'notaria') {
+        $empresaId = auth()->user()->empresa_id;
+        $hoy = now()->toDateString();
+        $mes = now()->month;
+        $anio = now()->year;
+
+        // KPIs
+        $actosHoy = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)->count();
+        
+        $ingresosHoy = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+            ->whereDate('created_at', $hoy)->sum('monto');
+        
+        $ingresosHoyCount = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+            ->whereDate('created_at', $hoy)->count();
+        
+        $ingresosMes = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('monto');
+        
+        $actosProceso = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
+            ->where('estado', 'proceso')->count();
+
+        // Ingresos por día (últimos 7 días)
+        $ingresosPorDia = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $fecha = now()->subDays($i);
+            $total = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+                ->whereDate('created_at', $fecha->toDateString())->sum('monto');
+            $ingresosPorDia[] = [
+                'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
+                'total' => round($total, 2),
+            ];
+        }
+
+        // Top actos notariales por tipo
+        $topActos = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
+            ->selectRaw('tipo_acto, COUNT(*) as total_cantidad, SUM(monto_cobrar) as total_monto')
+            ->groupBy('tipo_acto')
+            ->orderByDesc('total_monto')
+            ->limit(5)
+            ->get()
+            ->map(function($item) {
+                $labels = [
+                    'escritura_publica' => 'Escritura Pública',
+                    'poder' => 'Poder Notarial',
+                    'testamento' => 'Testamento',
+                    'acta' => 'Acta Notarial',
+                    'protesto' => 'Protesto',
+                    'compraventa' => 'Compraventa',
+                    'minuta' => 'Minuta',
+                ];
+                $item->tipo_acto_label = $labels[$item->tipo_acto] ?? ucfirst($item->tipo_acto);
+                return $item;
+            });
+
+        // Últimos actos registrados
+        $ultimosActos = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
+            ->with('cliente')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($acto) {
+                $labels = [
+                    'escritura_publica' => 'Escritura Pública',
+                    'poder' => 'Poder Notarial',
+                    'testamento' => 'Testamento',
+                    'acta' => 'Acta Notarial',
+                    'protesto' => 'Protesto',
+                    'compraventa' => 'Compraventa',
+                    'minuta' => 'Minuta',
+                ];
+                $acto->tipo_acto_label = $labels[$acto->tipo_acto] ?? ucfirst($acto->tipo_acto);
+                $acto->monto_total = $acto->monto_cobrar; // Agregar monto_total para el componente Vue
+                return $acto;
+            });
+
+        return Inertia::render('Dashboard/Notaria', [
+            'industry_name' => 'Notaría',
+            'stats' => [
+                'actos_hoy'          => $actosHoy,
+                'ingresos_hoy'       => $ingresosHoy,
+                'ingresos_hoy_count' => $ingresosHoyCount,
+                'ingresos_mes'       => $ingresosMes,
+                'actos_proceso'      => $actosProceso,
+            ],
+            'ingresos_por_dia' => $ingresosPorDia,
+            'top_actos'        => $topActos,
+            'ultimos_actos'    => $ultimosActos,
         ]);
     }
 
@@ -393,6 +491,9 @@ Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middlewa
     Route::put('/mesas/{mesa}', [MesaController::class, 'update'])->name('mesas.update');
     Route::delete('/mesas/{mesa}', [MesaController::class, 'destroy'])->name('mesas.destroy');
     Route::post('/mesas/{mesa}/estado', [MesaController::class, 'cambiarEstado'])->name('mesas.estado');
+    Route::post('/mesas/{mesa}/transferir', [MesaController::class, 'transferir'])->name('mesas.transferir');
+    Route::post('/mesas/{mesa}/unir', [MesaController::class, 'unir'])->name('mesas.unir');
+    Route::post('/mesas/{mesa}/separar', [MesaController::class, 'separar'])->name('mesas.separar');
 
     // Menú / Carta
 
@@ -402,6 +503,7 @@ Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middlewa
     Route::get('/pos/{mesa}',   [PosController::class, 'index'])->name('pos.index');
     Route::post('/pos/{mesa}',  [PosController::class, 'store'])->name('pos.store');
     Route::post('/pos/{mesa}/cerrar', [PosController::class, 'cerrar'])->name('pos.cerrar');
+    Route::post('/pos/detalle/{detalle}/anular', [PosController::class, 'anularPlato'])->name('pos.anular-plato');
 
 
 // Cocina
@@ -412,6 +514,7 @@ Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, '
 // Caja Restaurante
 Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');
 Route::post('/caja-restaurante/{mesa}',  [CajaRestauranteController::class, 'cobrar'])->name('caja-restaurante.cobrar');
+Route::post('/caja-restaurante/{mesa}/platos', [CajaRestauranteController::class, 'cobrarPlatos'])->name('caja-restaurante.cobrar-platos');
 
 // Turnos
 Route::get('/turnos',           [TurnoController::class, 'index'])->name('turnos.index');
@@ -553,6 +656,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ferreteria/productos',              [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'index'])->name('ferreteria.productos');
     Route::post('/ferreteria/productos',             [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'store'])->name('ferreteria.productos.store');
     Route::put('/ferreteria/productos/{producto}',   [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'update'])->name('ferreteria.productos.update');
+    Route::post('/ferreteria/productos/importar', [FerreteriaProductoImportController::class, 'importar'])->middleware('only.admin')->name('ferreteria.productos.importar');
     Route::post('/ferreteria/productos/{producto}/stock', [\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'ajustarStock'])->name('ferreteria.productos.stock');
     Route::delete('/ferreteria/productos/{producto}',[\App\Http\Controllers\Ferreteria\ProductosFerretoriaController::class, 'destroy'])->name('ferreteria.productos.destroy');
 });
@@ -591,6 +695,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ferreteria/cajero', [\App\Http\Controllers\Ferreteria\CajeroFerretoriaController::class, 'index'])->name('ferreteria.cajero');
     Route::post('/ferreteria/cajero/{venta}/cobrar', [\App\Http\Controllers\Ferreteria\CajeroFerretoriaController::class, 'cobrar'])->name('ferreteria.cajero.cobrar');
     Route::get('/ferreteria/ventas', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'ventas'])->name('ferreteria.ventas');
+    Route::get('/ferreteria/ventas/exportar', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'exportarVentas'])->name('ferreteria.ventas.exportar');
     Route::get('/ferreteria/ventas/{venta}', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'show'])->name('ferreteria.ventas.show');
     Route::post('/ferreteria/ventas/{venta}/anular', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'anular'])->name('ferreteria.ventas.anular');
     Route::post('/ferreteria/ventas/{venta}/reintentar', [\App\Http\Controllers\Ferreteria\ReportesFerretoriaController::class, 'reintentar'])->name('ferreteria.ventas.reintentar');
@@ -619,6 +724,7 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::put('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'update'])->middleware('only.admin')->name('productos.update');
     Route::delete('/productos/{producto}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroy'])->middleware('only.admin')->name('productos.destroy');
     Route::post('/productos/{producto}/stock', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'actualizarStock'])->name('productos.stock');
+    Route::post('/productos/importar', [\App\Http\Controllers\Farmacia\ProductoImportController::class, 'importar'])->middleware('only.admin')->name('productos.importar');
 
     // Vencimientos
     Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->middleware('only.admin')->name('vencimientos');
@@ -756,6 +862,7 @@ Route::middleware(['auth'])->post('/notaria/comprobantes/{acto}/emitir', [App\Ht
 Route::middleware(['auth'])->group(function () {
     Route::post('/notaria/caja/abrir', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'abrir'])->name('notaria.caja.abrir');
     Route::post('/notaria/caja/cerrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cerrar'])->name('notaria.caja.cerrar');
+    Route::post('/notaria/caja/venta-directa', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'ventaDirecta'])->name('notaria.caja.venta-directa');
 });
 
 // Requisitos expediente
@@ -766,4 +873,88 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Seguimiento trámites notaría
+
+Route::middleware(['auth'])->get('/reportes/reporte-contador-pdf', [App\Http\Controllers\ReporteContadorController::class, 'exportarPdf'])->name('reportes.contador.pdf');
+
+
+
+Route::middleware(['auth'])->get('/notaria/comprobantes/{id}/recibo-ticket', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reciboTicket'])->name('notaria.comprobantes.recibo-ticket');
+Route::middleware(['auth'])->post('/notaria/comprobantes/{id}/reenviar', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reenviar'])->name('notaria.comprobantes.reenviar');
+Route::middleware(['auth'])->get('/notaria/reportes', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'index'])->name('notaria.reportes.index');
 Route::middleware(['auth'])->get('/notaria/seguimiento', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'seguimiento'])->name('notaria.seguimiento');
+
+// Portal del Cliente - Notaría (público, sin autenticación)
+Route::get('/portal-cliente', [\App\Http\Controllers\Notaria\PortalClienteController::class, 'index'])->name('portal.cliente.index');
+Route::post('/portal-cliente/consultar', [\App\Http\Controllers\Notaria\PortalClienteController::class, 'consultar'])->name('portal.cliente.consultar');
+Route::get('/portal-cliente/documento/{documento}/descargar', [\App\Http\Controllers\Notaria\PortalClienteController::class, 'descargarDocumento'])->name('portal.cliente.documento.descargar');
+
+// Partes intervinientes en actos notariales
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notaria/actos/{acto}/partes', [App\Http\Controllers\Notaria\ActoParteController::class, 'store'])->name('notaria.partes.store');
+    Route::put('/notaria/partes/{parte}', [App\Http\Controllers\Notaria\ActoParteController::class, 'update'])->name('notaria.partes.update');
+    Route::delete('/notaria/partes/{parte}', [App\Http\Controllers\Notaria\ActoParteController::class, 'destroy'])->name('notaria.partes.destroy');
+    Route::post('/notaria/actos/{acto}/partes/reordenar', [App\Http\Controllers\Notaria\ActoParteController::class, 'reordenar'])->name('notaria.partes.reordenar');
+});
+
+// Impresión de actos notariales
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notaria/actos/{acto}/imprimir', [App\Http\Controllers\Notaria\ImpresionActoController::class, 'imprimir'])->name('notaria.actos.imprimir');
+    Route::get('/notaria/actos/{acto}/descargar', [App\Http\Controllers\Notaria\ImpresionActoController::class, 'descargar'])->name('notaria.actos.descargar');
+});
+
+// Requisitos de actos notariales
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notaria/actos/{acto}/requisitos', [App\Http\Controllers\Notaria\ActoRequisitoController::class, 'store'])->name('notaria.actos.requisitos.store');
+    Route::patch('/notaria/requisitos/{requisito}/toggle', [App\Http\Controllers\Notaria\ActoRequisitoController::class, 'toggle'])->name('notaria.requisitos.toggle');
+    Route::delete('/notaria/requisitos/{requisito}', [App\Http\Controllers\Notaria\ActoRequisitoController::class, 'destroy'])->name('notaria.requisitos.destroy');
+});
+
+// Índice Notarial
+Route::prefix('notaria/indice')->name('notaria.indice.')->middleware(['auth'])->group(function () {
+    Route::get('/', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'index'])->name('index');
+    Route::post('/registrar', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'store'])->name('store');
+    Route::post('/registrar-masivo', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'registrarMasivo'])->name('registrar-masivo');
+    Route::post('/cerrar-mes', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'cerrarMes'])->name('cerrar-mes');
+    Route::get('/exportar', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'exportar'])->name('exportar');
+});
+
+// ═══════════════════════════════════════════
+// GIMNASIO
+// ═══════════════════════════════════════════
+Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Gimnasio\DashboardGimnasioController::class, 'index'])->name('dashboard');
+
+    // Miembros
+    Route::get('/miembros',                     [\App\Http\Controllers\Gimnasio\MiembroController::class, 'index'])->name('miembros.index');
+    Route::post('/miembros',                    [\App\Http\Controllers\Gimnasio\MiembroController::class, 'store'])->name('miembros.store');
+    Route::put('/miembros/{miembro}',           [\App\Http\Controllers\Gimnasio\MiembroController::class, 'update'])->name('miembros.update');
+    Route::delete('/miembros/{miembro}',        [\App\Http\Controllers\Gimnasio\MiembroController::class, 'destroy'])->name('miembros.destroy');
+    Route::post('/miembros/{miembro}/renovar',  [\App\Http\Controllers\Gimnasio\MiembroController::class, 'renovar'])->name('miembros.renovar');
+
+    // Planes
+    Route::get('/planes',               [\App\Http\Controllers\Gimnasio\PlanController::class, 'index'])->name('planes.index');
+    Route::post('/planes',              [\App\Http\Controllers\Gimnasio\PlanController::class, 'store'])->name('planes.store');
+    Route::put('/planes/{plan}',        [\App\Http\Controllers\Gimnasio\PlanController::class, 'update'])->name('planes.update');
+    Route::delete('/planes/{plan}',     [\App\Http\Controllers\Gimnasio\PlanController::class, 'destroy'])->name('planes.destroy');
+
+    // Instructores
+    Route::get('/instructores',                     [\App\Http\Controllers\Gimnasio\InstructorController::class, 'index'])->name('instructores.index');
+    Route::post('/instructores',                    [\App\Http\Controllers\Gimnasio\InstructorController::class, 'store'])->name('instructores.store');
+    Route::put('/instructores/{instructor}',        [\App\Http\Controllers\Gimnasio\InstructorController::class, 'update'])->name('instructores.update');
+    Route::delete('/instructores/{instructor}',     [\App\Http\Controllers\Gimnasio\InstructorController::class, 'destroy'])->name('instructores.destroy');
+
+    // Clases y Horarios
+    Route::get('/clases',                          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'index'])->name('clases.index');
+    Route::post('/clases',                         [\App\Http\Controllers\Gimnasio\ClaseController::class, 'store'])->name('clases.store');
+    Route::put('/clases/{clase}',                 [\App\Http\Controllers\Gimnasio\ClaseController::class, 'update'])->name('clases.update');
+    Route::delete('/clases/{clase}',              [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroy'])->name('clases.destroy');
+    Route::post('/horarios',                       [\App\Http\Controllers\Gimnasio\ClaseController::class, 'storeHorario'])->name('horarios.store');
+    Route::put('/horarios/{horario}',             [\App\Http\Controllers\Gimnasio\ClaseController::class, 'updateHorario'])->name('horarios.update');
+    Route::delete('/horarios/{horario}',          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroyHorario'])->name('horarios.destroy');
+    // Accesos
+    Route::get('/accesos',                   [\App\Http\Controllers\Gimnasio\AccesoController::class, 'index'])->name('accesos.index');
+    Route::post('/accesos/entrada',          [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarEntrada'])->name('accesos.entrada');
+    Route::post('/accesos/{acceso}/salida',  [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarSalida'])->name('accesos.salida');
+    Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
+
+});

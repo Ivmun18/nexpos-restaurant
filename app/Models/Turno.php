@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Turno extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Restaurante';
     protected $fillable = [
         'empresa_id', 'user_id', 'tipo', 'nombre', 'estado',
         'apertura', 'cierre', 'total_ventas', 'total_mesas', 'notas',

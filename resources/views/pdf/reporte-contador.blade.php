@@ -38,6 +38,7 @@
             <tr>
                 <th>N°</th>
                 <th>Fecha</th>
+                <th>DNI/RUC</th>
                 <th>Cliente</th>
                 <th>Comprobante</th>
                 <th>Serie-Número</th>
@@ -51,6 +52,7 @@
             <tr>
                 <td>{{ $i + 1 }}</td>
                 <td>{{ $v->fecha }}</td>
+                <td>{{ $v->numero_documento ?? '-' }}</td>
                 <td>{{ $v->cliente }}</td>
                 <td>{{ $tiposComp[$v->comprobante] ?? $v->comprobante ?? 'S/C' }}</td>
                 <td>{{ $v->serie_numero }}</td>
@@ -60,7 +62,7 @@
             </tr>
             @endforeach
             <tr class="totales">
-                <td colspan="5" class="right">TOTALES VENTAS:</td>
+                <td colspan="6" class="right">TOTALES VENTAS:</td>
                 <td class="right">S/ {{ number_format($totalSubVentas, 2) }}</td>
                 <td class="right">S/ {{ number_format($totalIgvVentas, 2) }}</td>
                 <td class="right">S/ {{ number_format($totalVentas, 2) }}</td>

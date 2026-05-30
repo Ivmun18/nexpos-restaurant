@@ -1,8 +1,12 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 class ActoPago extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Notaria';
     protected $table = 'acto_pagos';
     protected $fillable = ['acto_id', 'usuario_id', 'monto', 'metodo_pago', 'tipo', 'referencia', 'observaciones'];
     protected $casts = ['monto' => 'decimal:2'];

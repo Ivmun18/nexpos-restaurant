@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class Cotizacion extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Ferreteria';
     protected $table = 'cotizaciones';
 
     protected $fillable = [

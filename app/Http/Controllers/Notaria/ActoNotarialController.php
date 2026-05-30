@@ -46,7 +46,7 @@ class ActoNotarialController extends Controller
             'cobrado'     => round($actos->sum('monto_pagado'), 2),
         ];
 
-        $clientes = Cliente::where('empresa_id', $empresaId)->orderBy('razon_social')->get(['id', 'razon_social as nombre', 'numero_documento']);
+        $clientes = Cliente::where('empresa_id', $empresaId)->orderBy('razon_social')->get(['id', 'razon_social', 'numero_documento']);
 
         return Inertia::render('Notaria/Actos/Index', [
             'actos'    => $actos,
@@ -110,7 +110,7 @@ class ActoNotarialController extends Controller
 
     public function show(ActoNotarial $acto)
     {
-        $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos', 'requisitos.user']);
+        $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos', 'requisitos.user', 'partes']);
         $datosMapa = $acto->datos->pluck('valor', 'campo');
         return Inertia::render('Notaria/Actos/Show', ['acto' => $acto, 'datos' => $datosMapa]);
     }

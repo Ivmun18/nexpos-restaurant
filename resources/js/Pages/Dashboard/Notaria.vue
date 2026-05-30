@@ -58,16 +58,15 @@
             <div style="background:#FFFFFF; padding:30px; border-radius:16px; border:1px solid #E2E8F0; margin-bottom:30px;">
                 <h2 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 24px;">Ingresos últimos 7 días</h2>
                 <div style="display:flex; align-items:flex-end; gap:12px; height:220px;">
-                    <div v-for="d in ingresos_por_dia" :key="d.dia" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px;">
-                        <p style="font-size:12px; font-weight:600; color:#14B8A6; margin:0;">S/ {{ d.total.toFixed(0) }}</p>
+                    <div v-for="d in ingresos_por_dia" :key="d.dia" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+                        <p style="font-size:12px; font-weight:600; color:#14B8A6; margin:0 0 6px;">S/ {{ d.total.toFixed(0) }}</p>
                         <div :style="{
-                            width:'100%', background:'linear-gradient(180deg, #14B8A6 0%, #0D9488 100%)',
+                            width:'70%', background: d.total > 0 ? 'linear-gradient(180deg, #14B8A6 0%, #0D9488 100%)' : '#E2E8F0',
                             borderRadius:'8px 8px 0 0',
-                            height: (d.total / maxDia * 100) + '%',
-                            minHeight:'6px',
-                            transition:'all 0.3s'
+                            height: d.total > 0 ? Math.max((d.total / maxDia * 160), 8) + 'px' : '4px',
+                            transition:'all 0.5s ease'
                         }"></div>
-                        <p style="font-size:11px; color:#94A3B8; margin:0; font-weight:600;">{{ d.dia }}</p>
+                        <p style="font-size:11px; color:#94A3B8; margin:6px 0 0; font-weight:600;">{{ d.dia }}</p>
                     </div>
                 </div>
             </div>

@@ -428,6 +428,7 @@ const allMenuItems = [
     { path: '/proveedores',         icon: 'proveedor',  label: 'Proveedores',        module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/insumos',             icon: 'inventario', label: 'Inventario',         module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/recetas',             icon: 'receta',     label: 'Recetas',            module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/restaurante/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'pos_restaurante', section: 'RESTAURANTE' },
     
     // SISTEMA
     { path: '/admin/mozos',         icon: 'mozo',         label: 'Mozos',         module: 'mozos',       section: 'SISTEMA' },
@@ -439,14 +440,16 @@ const allMenuItems = [
     { path: '/notaria/indice',      icon: 'book',         label: 'Índice Notarial',  module: 'indice',   section: 'NOTARIA' },
     { path: '/notaria/seguimiento', icon: 'seguimiento',  label: 'Seguimiento',      module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/caja',        icon: 'caja',         label: 'Caja notarial',    module: 'caja',     section: 'NOTARIA' },
-    { path: '/clientes',            icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
+    { path: '/notaria/clientes',    icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
     { path: '/notaria/reportes',    icon: 'reporte',      label: 'Reportes',         module: 'actos',    section: 'NOTARIA' },
+    { path: '/notaria/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'actos', section: 'NOTARIA' },
     { path: '/gimnasio/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/miembros',    icon: 'users',      label: 'Miembros',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/planes',      icon: 'card',       label: 'Planes',        module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/instructores',icon: 'barbell',    label: 'Instructores',  module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/clases',      icon: 'calendar',   label: 'Clases',        module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/accesos',     icon: 'door-enter', label: 'Accesos',       module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'gimnasio', section: 'GIMNASIO' },
 
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
@@ -459,6 +462,7 @@ const allMenuItems = [
     { path: '/minimarket/proveedores',icon: 'proveedor',  label: 'Proveedores',   module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/clientes',   icon: 'cliente',    label: 'Clientes',      module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/compras',               icon: 'compras',    label: 'Compras',       module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'pos_minimarket', section: 'MINIMARKET' },
 
     // FERRETERIA
     { path: '/ferreteria/pos',          icon: 'pos',           label: 'Punto de Venta',    module: 'pos_ferreteria', section: 'FERRETERIA' },
@@ -473,6 +477,7 @@ const allMenuItems = [
     { path: '/ferreteria/garantias',    icon: 'garantia',      label: 'Garantías',         module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/reportes',     icon: 'reporte',       label: 'Reportes',          module: 'pos_ferreteria', section: 'FERRETERIA' },
     { path: '/ferreteria/proveedores',  icon: 'proveedor',     label: 'Proveedores',       module: 'pos_ferreteria', section: 'FERRETERIA' },
+    { path: '/ferreteria/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'pos_ferreteria', section: 'FERRETERIA' },
 
     // FARMACIA
     { path: '/farmacia/pos',                icon: 'pos',         label: 'Punto de Venta',  module: 'pos_farmacia', section: 'FARMACIA' },

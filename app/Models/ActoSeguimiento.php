@@ -1,8 +1,12 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 class ActoSeguimiento extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Notaria';
     protected $table = 'acto_seguimientos';
     protected $fillable = ['acto_id', 'usuario_id', 'estado_nuevo', 'comentario'];
     public function acto() { return $this->belongsTo(ActoNotarial::class, 'acto_id'); }

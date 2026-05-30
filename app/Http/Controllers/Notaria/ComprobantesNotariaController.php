@@ -15,117 +15,137 @@ class ComprobantesNotariaController extends Controller
     public function emitir(Request $request, ActoNotarial $acto)
     {
         $request->validate([
-            'tipo_comprobante'        => 'required|in:01,03',
-            'cliente_tipo_documento'  => 'required|in:1,6',
-            'cliente_numero_documento'=> 'required|string',
-            'cliente_nombre'          => 'required|string',
-            'cliente_email'           => 'nullable|email',
+            'tipo_comprobante'         => 'required|in:01,03',
+            'cliente_tipo_documento'   => 'required|in:0,1,6',
+            'cliente_numero_documento' => 'required|string',
+            'cliente_nombre'           => 'required|string',
+            'cliente_email'            => 'nullable|email',
         ]);
 
-        $empresa = Empresa::find($acto->empresa_id);
+        $empresa   = Empresa::find($acto->empresa_id);
+        $exonerada = $empresa->zona_exonerada;
 
-        // Calcular montos
-        $total       = $acto->monto_cobrar;
-        $gravada     = round($total / 1.18, 2);
-        $igv         = round($total - $gravada, 2);
+        if ($request->tipo_comprobante === '01') {
+            $serie       = $empresa->serie_factura ?? 'F001';
+            $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
+            $empresa->increment('ultimo_num_factura');
+        } else {
+            $serie       = $empresa->serie_boleta ?? 'B001';
+            $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
+            $empresa->increment('ultimo_num_boleta');
+        }
 
-        // Serie según tipo
-        $serie = $request->tipo_comprobante === '01' ? 'F001' : 'B001';
+        $total     = round(floatval($acto->monto_cobrar), 2);
+        $gravada   = $exonerada ? 0 : round($total / 1.18, 2);
+        $igv       = $exonerada ? 0 : round($total - $gravada, 2);
+        $baseImponible = $exonerada ? $total : $gravada;
+        $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Obtener siguiente correlativo
-        $ultimo = \DB::table('comprobantes_sunat')
-            ->where('empresa_id', $empresa->id)
-            ->where('serie', $serie)
-            ->max('numero') ?? 0;
-        $correlativo = $ultimo + 1;
+        // Desglosar: servicio notarial + huella digital (1.50)
+        $huella       = 1.50;
+        $montoServicio = round($total - $huella, 2);
 
-        // Item del servicio notarial
-        $items = [[
-            'unidad_de_medida'           => 'ZZ',
-            'descripcion'                => $acto->tipo_acto_label ?? $acto->asunto,
-            'cantidad'                   => 1,
-            'valor_unitario'             => $gravada,
-            'porcentaje_igv'             => 18,
-            'codigo_tipo_afectacion_igv' => '10',
-            'nombre_tributo'             => 'IGV',
-        ]];
-
-        $payload = [
-            'documento'                   => $request->tipo_comprobante === '01' ? 'factura' : 'boleta',
-            'serie'                       => $serie,
-            'numero'                      => $correlativo,
-            'fecha_de_emision'            => now()->format('Y-m-d'),
-            'moneda'                      => 'PEN',
-            'tipo_operacion'              => '0101',
-            'cliente_tipo_de_documento'   => $request->cliente_tipo_documento,
-            'cliente_numero_de_documento' => $request->cliente_numero_documento,
-            'cliente_denominacion'        => strtoupper($request->cliente_nombre),
-            'cliente_direccion'           => $request->cliente_direccion ?? '',
-            'cliente_correo'              => $request->cliente_email ?? '',
-            'total_gravada'               => $gravada,
-            'total_exonerada'             => 0,
-            'total_inafecta'              => 0,
-            'total_igv'                   => $igv,
-            'total'                       => $total,
-            'items'                       => $items,
+        $lineas = [];
+        $items = [
+            ['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'precio' => $montoServicio],
+            ['desc' => 'Huella digital', 'codigo' => 'HD', 'precio' => $huella],
         ];
 
-        try {
-            // Usar Nubefact
-            $url = 'https://api.nubefact.com/api/v1/';
+        foreach ($items as $idx => $item) {
+            $precioItem = round($item['precio'], 2);
+            $valUnit    = $exonerada ? $precioItem : round($precioItem / 1.18, 4);
+            $igvItem    = $exonerada ? 0 : round($precioItem - $valUnit, 2);
 
-            $nubefactPayload = [
-                'operacion'              => 'generar_comprobante',
-                'tipo_de_comprobante'    => $request->tipo_comprobante === '01' ? 1 : 2,
-                'serie'                  => $serie,
-                'numero'                 => $correlativo,
-                'sunat_transaction'      => 1,
-                'cliente_tipo_de_documento' => $request->tipo_comprobante === '01' ? 6 : 1,
-                'cliente_numero_de_documento' => $request->cliente_numero_documento,
-                'cliente_denominacion'   => strtoupper($request->cliente_nombre),
-                'cliente_direccion'      => $request->cliente_direccion ?? '',
-                'cliente_email'          => $request->cliente_email ?? '',
-                'cliente_email_1'        => '',
-                'fecha_de_emision'       => now()->format('d-m-Y'),
-                'fecha_de_vencimiento'   => '',
-                'moneda'                 => 1,
-                'tipo_de_cambio'         => '',
-                'porcentaje_de_igv'      => 18,
-                'total_gravada'          => $gravada,
-                'total_exonerada'        => '',
-                'total_inafecta'         => '',
-                'total_igv'              => $igv,
-                'total'                  => $total,
-                'detraccion'             => false,
-                'observaciones'          => $acto->asunto,
-                'items'                  => [[
-                    'unidad_de_medida'   => 'ZZ',
-                    'codigo'             => 'S/C',
-                    'descripcion'        => $acto->asunto,
-                    'cantidad'           => 1,
-                    'valor_unitario'     => $gravada,
-                    'precio_unitario'    => $total,
-                    'descuento'          => '',
-                    'subtotal'           => $gravada,
-                    'tipo_de_igv'        => 1,
-                    'igv'                => $igv,
-                    'total'              => $total,
-                    'anticipo_regularizacion' => false,
-                ]],
+            $lineas[] = [
+                'cbc:ID'                  => ['_text' => (string)($idx + 1)],
+                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cac:TaxTotal' => [
+                    'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                    'cac:TaxSubtotal' => [[
+                        'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                        'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                        'cac:TaxCategory'   => [
+                            'cbc:ID'      => ['_text' => 'S'],
+                            'cbc:Percent' => ['_text' => $exonerada ? '0' : '18'],
+                            'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
+                            'cac:TaxScheme' => ['cbc:ID' => ['_text' => '1000'], 'cbc:Name' => ['_text' => 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                        ],
+                    ]],
+                ],
+                'cac:Item' => [
+                    'cbc:Description' => ['_text' => $item['desc']],
+                    'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => $item['codigo']]],
+                ],
+                'cac:PricingReference' => [
+                    'cac:AlternativeConditionPrice' => [
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceTypeCode' => ['_text' => '01'],
+                    ],
+                ],
+                'cac:Price' => [
+                    'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                ],
             ];
+        }
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Token token=' . $empresa->nubefact_token,
-                'Content-Type'  => 'application/json',
-            ])->post($url, $nubefactPayload);
+        $documentBody = [
+            'cbc:UBLVersionID'         => ['_text' => '2.1'],
+            'cbc:CustomizationID'      => ['_text' => '2.0'],
+            'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
+            'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
+            'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
+            'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+            'cac:AccountingSupplierParty' => ['cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
+                'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                'cac:PostalAddress'       => ['cbc:AddressTypeCode' => ['_text' => '0000'], 'cac:AddressLine' => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']]],
+            ]],
+            'cac:AccountingCustomerParty' => ['cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $request->cliente_tipo_documento], '_text' => $request->cliente_numero_documento]],
+                'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($request->cliente_nombre)]],
+            ]],
+            'cac:TaxTotal' => [
+                'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                'cac:TaxSubtotal' => [[
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                    'cac:TaxCategory'   => [
+                        'cbc:ID'      => ['_text' => 'S'],
+                        'cbc:Percent' => ['_text' => $exonerada ? '0' : '18'],
+                        'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
+                        'cac:TaxScheme' => ['cbc:ID' => ['_text' => '1000'], 'cbc:Name' => ['_text' => 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                    ],
+                ]],
+            ],
+            'cac:LegalMonetaryTotal' => [
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+                'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+            ],
+            'cac:InvoiceLine' => $lineas,
+        ];
 
-            $data     = $response->json();
-            \Illuminate\Support\Facades\Log::info('Nubefact response: ' . json_encode($data));
-            $aceptada = $response->successful() && isset($data['enlace_del_pdf']);
+        \Log::info('emitir fileName: ' . $fileName . ' ruc: ' . $empresa->ruc . ' token: ' . substr($empresa->apisunat_token,0,15));
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout(30)
+                ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'fileName'     => $fileName,
+                    'documentBody' => $documentBody,
+                ]);
 
-            // Guardar comprobante
-            $comprobante = \DB::table('comprobantes_sunat')->insertGetId([
+            $data      = $response->json();
+            \Log::info("emitir response: " . json_encode($data));
+            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+            $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+
+            \DB::table('comprobantes_sunat')->insert([
                 'empresa_id'               => $empresa->id,
+                'acto_id'                  => $acto->id,
                 'tipo_comprobante'         => $request->tipo_comprobante,
                 'serie'                    => $serie,
                 'numero'                   => $correlativo,
@@ -134,42 +154,44 @@ class ComprobantesNotariaController extends Controller
                 'cliente_numero_documento' => $request->cliente_numero_documento,
                 'cliente_nombre'           => strtoupper($request->cliente_nombre),
                 'cliente_email'            => $request->cliente_email ?? '',
-                'total_gravada'            => $gravada,
+                'total_gravada'            => $baseImponible,
                 'total_igv'                => $igv,
                 'total'                    => $total,
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
-                'sunat_descripcion'        => $aceptada ? 'Aceptada' : json_encode($data),
-                'enlace_pdf'               => $data['enlace_del_pdf'] ?? null,
-                'enlace_xml'               => $data['enlace_del_xml'] ?? null,
-                'estado'                   => $aceptada ? 'aceptado' : 'rechazado',
+                'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
+                'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
+                'enlace_pdf'               => $pdfUrl,
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'emitido' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
 
-            // Marcar acto como facturado
-            $acto->update(['estado_pago' => 'pagado']);
+            $comprobanteId = \DB::getPdo()->lastInsertId();
 
-            if ($aceptada) {
-                return response()->json([
-                    'success'   => true,
-                    'mensaje'   => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT) . ' emitida correctamente',
-                    'pdf'       => $data['enlace_del_pdf'] ?? null,
-                    'xml'       => $data['enlace_del_xml'] ?? null,
+            $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
+            if ($sesion) {
+                \DB::table('caja_movimientos')->insert([
+                    'sesion_id'  => $sesion->id,
+                    'usuario_id' => auth()->id(),
+                    'tipo'       => 'ingreso',
+                    'concepto'   => 'Expediente ' . $acto->numero_expediente . ' - ' . $fileName,
+                    'monto'      => $total,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
 
-            $mensaje = $data['errors'] ?? $data['error'] ?? $data['mensaje'] ?? 'Token de facturación no configurado. Configure su token Nubefact en Ajustes → Configuración → Facturación.';
             return response()->json([
-                'success' => false,
-                'mensaje' => is_array($mensaje) ? implode(', ', $mensaje) : $mensaje,
-            ], 422);
+                'success' => $aceptada,
+                'mensaje' => $aceptada ? $fileName . ' emitida correctamente' : 'Rechazada: ' . json_encode($data),
+                'pdf'     => '/notaria/comprobantes/' . $comprobanteId . '/recibo-ticket',
+            ]);
 
         } catch (\Exception $e) {
-            Log::error('Error facturación notaría: ' . $e->getMessage());
+            \Log::error('Error emitir comprobante notaria: ' . $e->getMessage());
             return response()->json(['success' => false, 'mensaje' => $e->getMessage()], 500);
         }
     }
-
 
     public function ventaDirecta(Request $request)
     {
@@ -213,7 +235,7 @@ class ComprobantesNotariaController extends Controller
             $baseImponible = $gravada;
         }
 
-        $fileName = $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
+        $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
         // Construir items UBL
         $lineas = [];
@@ -231,8 +253,8 @@ class ComprobantesNotariaController extends Controller
                         'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
                         'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                         'cac:TaxCategory'   => [
-                            'cbc:ID'       => ['_attributes' => ['schemeID'=>'UN/ECE 5305','schemeName'=>'Tax Category Identifier','schemeAgencyName'=>'United Nations Economic Commission for Europe'], '_text' => $exonerada ? 'E' : 'S'],
-                            'cbc:Percent'  => ['_text' => $exonerada ? '0' : '18'],
+                            'cbc:Percent'                => ['_text' => $exonerada ? '0' : '18'],
+                            'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
                             'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
                         ],
                     ]],
@@ -240,6 +262,12 @@ class ComprobantesNotariaController extends Controller
                 'cac:Item' => [
                     'cbc:Description' => ['_text' => $item['descripcion']],
                     'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']],
+                ],
+                'cac:PricingReference' => [
+                    'cac:AlternativeConditionPrice' => [
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceTypeCode' => ['_text' => '01'],
+                    ],
                 ],
                 'cac:Price' => [
                     'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
@@ -250,7 +278,7 @@ class ComprobantesNotariaController extends Controller
         $documentBody = [
             'cbc:UBLVersionID'         => ['_text' => '2.1'],
             'cbc:CustomizationID'      => ['_text' => '2.0'],
-            'cbc:ID'                   => ['_text' => $fileName],
+            'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
             'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
@@ -302,8 +330,9 @@ class ComprobantesNotariaController extends Controller
             $data = $response->json();
             \Log::info('ApiSunat ventaDirecta response: ' . json_encode($data));
 
-            $aceptada = $response->successful() && isset($data['sunatResponse']);
-            $pdfUrl   = null;
+            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+            $pdfUrl    = null;
 
             // Guardar comprobante
             \DB::table('comprobantes_sunat')->insert([
@@ -320,12 +349,14 @@ class ComprobantesNotariaController extends Controller
                 'total_igv'                => $igv,
                 'total'                    => $total,
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
-                'sunat_descripcion'        => $aceptada ? 'Aceptada' : json_encode($data),
+                'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
+                'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'estado'                   => $aceptada ? 'aceptado' : 'emitido',
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'emitido' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
+            $comprobanteId = \DB::getPdo()->lastInsertId();
 
             // Registrar en caja si hay sesión abierta
             $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
@@ -344,7 +375,7 @@ class ComprobantesNotariaController extends Controller
             return response()->json([
                 'success' => true,
                 'mensaje' => $fileName . ' emitida correctamente',
-                'pdf'     => $pdfUrl,
+                'pdf'     => '/notaria/comprobantes/' . $comprobanteId . '/recibo-ticket',
                 'data'    => $data,
             ]);
 
@@ -368,7 +399,9 @@ class ComprobantesNotariaController extends Controller
         $total     = (float) $comp->total;
         $baseImponible = $exonerada ? $total : round($total / 1.18, 2);
         $igv       = $exonerada ? 0 : round($total - $baseImponible, 2);
-        $fileName  = $comp->serie . '-' . str_pad($comp->numero, 8, '0', STR_PAD_LEFT);
+        $serie     = $comp->serie;
+        $correlativo = $comp->numero;
+        $fileName  = $empresa->ruc . '-' . $comp->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
         // Item genérico con datos del comprobante
         $valUnit = $exonerada ? $total : round($total / 1.18, 4);
@@ -384,8 +417,8 @@ class ComprobantesNotariaController extends Controller
                     'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
                     'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                     'cac:TaxCategory'   => [
-                        'cbc:ID'       => ['_attributes' => ['schemeID'=>'UN/ECE 5305','schemeName'=>'Tax Category Identifier','schemeAgencyName'=>'United Nations Economic Commission for Europe'], '_text' => $exonerada ? 'E' : 'S'],
-                        'cbc:Percent'  => ['_text' => $exonerada ? '0' : '18'],
+                        'cbc:Percent'                => ['_text' => $exonerada ? '0' : '18'],
+                        'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
                         'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
                     ],
                 ]],
@@ -393,6 +426,12 @@ class ComprobantesNotariaController extends Controller
             'cac:Item' => [
                 'cbc:Description' => ['_text' => 'Servicio notarial'],
                 'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']],
+            ],
+            'cac:PricingReference' => [
+                'cac:AlternativeConditionPrice' => [
+                    'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+                    'cbc:PriceTypeCode' => ['_text' => '01'],
+                ],
             ],
             'cac:Price' => [
                 'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
@@ -402,7 +441,7 @@ class ComprobantesNotariaController extends Controller
         $documentBody = [
             'cbc:UBLVersionID'         => ['_text' => '2.1'],
             'cbc:CustomizationID'      => ['_text' => '2.0'],
-            'cbc:ID'                   => ['_text' => $fileName],
+            'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
             'cbc:IssueDate'            => ['_text' => $comp->fecha_emision],
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $comp->tipo_comprobante],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
@@ -438,9 +477,10 @@ class ComprobantesNotariaController extends Controller
                 'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
                 'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
             ],
-            'cac:InvoiceLine' => $lineas,
+            'cac:InvoiceLine' => array_values($lineas),
         ];
 
+        \Log::info('ApiSunat reenviar PAYLOAD lineas: ' . json_encode($lineas));
         try {
             $response = Http::withHeaders(['Content-Type' => 'application/json'])
                 ->timeout(30)
@@ -454,17 +494,23 @@ class ComprobantesNotariaController extends Controller
             $data = $response->json();
             \Log::info('ApiSunat reenviar response: ' . json_encode($data));
 
-            $aceptada = $response->successful() && isset($data['sunatResponse']);
+            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+
+            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'emitido' : 'rechazado');
+            $descripcion = $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data));
+            $enlaceXml  = $pendiente && isset($data['xml']) ? $data['xml'] : null;
 
             \DB::table('comprobantes_sunat')->where('id', $id)->update([
                 'aceptada_por_sunat' => $aceptada ? 1 : 0,
-                'sunat_descripcion'  => $aceptada ? 'Aceptada' : json_encode($data),
-                'estado'             => $aceptada ? 'aceptado' : 'rechazado',
+                'sunat_descripcion'  => $descripcion,
+                'estado'             => $estado,
+                'enlace_xml'         => $enlaceXml,
                 'updated_at'         => now(),
             ]);
 
             return response()->json([
-                'success' => $aceptada,
+                'success' => $aceptada || $pendiente,
                 'mensaje' => $aceptada ? $fileName . ' reenviada y aceptada' : 'Rechazada: ' . json_encode($data),
             ]);
 
@@ -472,6 +518,99 @@ class ComprobantesNotariaController extends Controller
             \Log::error('Error reenviar comprobante: ' . $e->getMessage());
             return response()->json(['success' => false, 'mensaje' => $e->getMessage()], 500);
         }
+    }
+
+
+    public function reciboTicket($id)
+    {
+        $empresa = auth()->user()->empresa;
+        $comp = \DB::table('comprobantes_sunat')->where('id', $id)->where('empresa_id', $empresa->id)->first();
+
+        if (!$comp) return abort(404);
+
+        $exonerada = $empresa->zona_exonerada;
+        $total     = (float) $comp->total;
+        $subtotal  = $exonerada ? $total : (float) $comp->total_gravada;
+        $igv       = $exonerada ? 0 : (float) $comp->total_igv;
+
+        // Desglosar: servicio notarial + huella digital
+        $huella = 1.50;
+        $montoServicio = round($total - $huella, 2);
+
+        // Obtener asunto del acto si existe
+        $asunto = 'Servicio notarial';
+        if ($comp->acto_id) {
+            $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
+            if ($acto) $asunto = $acto->asunto;
+        }
+
+        $items = [
+            [
+                'descripcion'    => $asunto,
+                'cantidad'       => 1,
+                'precio_unitario'=> $montoServicio,
+                'total'          => $montoServicio,
+            ],
+            [
+                'descripcion'    => 'Huella digital',
+                'cantidad'       => 1,
+                'precio_unitario'=> $huella,
+                'total'          => $huella,
+            ],
+        ];
+
+        $tipoDoc = $comp->tipo_comprobante === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA ELECTRÓNICA';
+        $serie   = $comp->serie;
+        $numero  = str_pad($comp->numero, 8, '0', STR_PAD_LEFT);
+        $fecha   = \Carbon\Carbon::parse($comp->fecha_emision)->format('Y-m-d H:i:s');
+
+        $totalLetras = $this->numeroALetras($total);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.recibo-notaria-ticket', [
+            'empresa'           => $empresa,
+            'tipoDoc'           => $tipoDoc,
+            'serie'             => $serie,
+            'numero'            => $numero,
+            'fecha'             => $fecha,
+            'clienteNombre'     => $comp->cliente_nombre,
+            'clienteDocumento'  => $comp->cliente_numero_documento,
+            'clienteDireccion'  => '',
+            'items'             => $items,
+            'subtotal'          => $subtotal,
+            'igv'               => $igv,
+            'total'             => $total,
+            'totalLetras'       => $totalLetras,
+            'vendedor'          => auth()->user()->name ?? 'ADMIN',
+            'metodoPago'        => 'EFECTIVO',
+            'exonerada'         => $exonerada,
+        ])->setPaper([0, 0, 226.77, 700], 'portrait');
+
+        return $pdf->stream($serie . '-' . $numero . '.pdf');
+    }
+
+    private function numeroALetras($numero)
+    {
+        $entero  = (int)$numero;
+        $decimal = round(($numero - $entero) * 100);
+        return strtoupper($this->enLetras($entero)) . ' CON ' . str_pad($decimal, 2, '0', STR_PAD_LEFT) . '/100 SOLES';
+    }
+
+    private function enLetras($n)
+    {
+        $u = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE'];
+        $d = ['','','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+        $c = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+        if ($n == 0) return 'CERO';
+        if ($n == 100) return 'CIEN';
+        if ($n < 16) return $u[$n];
+        if ($n < 20) return 'DIECI' . $u[$n - 10];
+        if ($n == 20) return 'VEINTE';
+        if ($n < 30) return 'VEINTI' . $u[$n - 20];
+        if ($n < 100) return $d[intdiv($n,10)] . ($n%10 ? ' Y ' . $u[$n%10] : '');
+        if ($n < 1000) return $c[intdiv($n,100)] . ($n%100 ? ' ' . $this->enLetras($n%100) : '');
+        if ($n < 2000) return 'MIL' . ($n%1000 ? ' ' . $this->enLetras($n%1000) : '');
+        if ($n < 1000000) return $this->enLetras(intdiv($n,1000)) . ' MIL' . ($n%1000 ? ' ' . $this->enLetras($n%1000) : '');
+        return (string)$n;
     }
 
 }

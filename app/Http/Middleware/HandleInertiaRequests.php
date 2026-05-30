@@ -16,7 +16,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'flash' => [
-                'success' => $request->session()->get('success'),
+                'success'    => $request->session()->get('success'),
+                'ticket_url' => $request->session()->get('ticket_url'),
                 'error'   => $request->session()->get('error'),
             ],
             'modalidad_cobro' => $request->user()?->empresa?->modalidad_cobro ?? 'directo',

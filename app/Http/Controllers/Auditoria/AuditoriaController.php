@@ -34,16 +34,23 @@ class AuditoriaController extends Controller
 
         $logs = $query->latest()->paginate(50);
 
+        $industria = auth()->user()->empresa->industry_type ?? 'general';
+        $baseUrl = $industria === 'notaria' ? '/notaria/auditoria' : '/auditoria';
+
         return Inertia::render('Auditoria/Index', [
-            'logs' => $logs,
-            'modulos' => ['Compras', 'Ventas', 'Productos', 'Usuarios', 'Pagos'],
+            'logs'     => $logs,
+            'modulos'  => ['Notaria', 'Facturación', 'Caja', 'Clientes', 'Ventas', 'Compras', 'Productos', 'Usuarios', 'Empresas', 'Pedidos'],
             'acciones' => ['create', 'update', 'delete', 'view'],
+            'baseUrl'  => $baseUrl,
         ]);
     }
 
     public function show(AuditLog $log)
     {
-        $this->authorize('view', $log);
+        // Verificar que el log pertenece a la empresa del usuario
+        if ($log->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
         $log->load('usuario', 'empresa');
         
         return Inertia::render('Auditoria/Show', [

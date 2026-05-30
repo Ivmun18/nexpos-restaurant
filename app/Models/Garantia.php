@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class Garantia extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Ferreteria';
     protected $fillable = [
         'empresa_id', 'producto_id', 'cliente_id', 'numero',
         'cliente_nombre', 'cliente_telefono', 'producto_descripcion',

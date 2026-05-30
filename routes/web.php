@@ -832,7 +832,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Notaría
-Route::middleware(['auth'])->prefix('notaria')->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->prefix('notaria')->group(function () {
     Route::get('/actos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'index'])->name('notaria.actos.index');
     Route::post('/actos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'store'])->name('notaria.actos.store');
     Route::get('/actos/{acto}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'show'])->name('notaria.actos.show');
@@ -841,32 +841,33 @@ Route::middleware(['auth'])->prefix('notaria')->group(function () {
 });
 
 // Caja Notaría
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
+    Route::post('/notaria/clientes', [App\Http\Controllers\Admin\ClienteController::class, 'storeJson'])->name('notaria.clientes.store');
     Route::get('/notaria/caja', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'index'])->name('notaria.caja.index');
     Route::post('/notaria/caja/{acto}/cobrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cobrar'])->name('notaria.caja.cobrar');
 });
 
 // Datos plantilla acto
-Route::middleware(['auth'])->post('/notaria/actos/{acto}/datos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'guardarDatos'])->name('notaria.actos.datos');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/actos/{acto}/datos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'guardarDatos'])->name('notaria.actos.datos');
 
 // Recibos Notaría
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::get('/notaria/recibo/{acto}/ultimo', [App\Http\Controllers\Notaria\ReciboController::class, 'reciboUltimo'])->name('notaria.recibo.ultimo');
     Route::get('/notaria/recibo/{acto}/{pago}', [App\Http\Controllers\Notaria\ReciboController::class, 'recibo'])->name('notaria.recibo');
 });
 
 // Comprobantes Notaría
-Route::middleware(['auth'])->post('/notaria/comprobantes/{acto}/emitir', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'emitir'])->name('notaria.comprobantes.emitir');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/comprobantes/{acto}/emitir', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'emitir'])->name('notaria.comprobantes.emitir');
 
 // Apertura y cierre caja notaría
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::post('/notaria/caja/abrir', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'abrir'])->name('notaria.caja.abrir');
     Route::post('/notaria/caja/cerrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cerrar'])->name('notaria.caja.cerrar');
     Route::post('/notaria/caja/venta-directa', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'ventaDirecta'])->name('notaria.caja.venta-directa');
 });
 
 // Requisitos expediente
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::post('/notaria/actos/{acto}/requisitos', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'agregarRequisito'])->name('notaria.actos.requisitos.store');
     Route::patch('/notaria/requisitos/{requisito}/toggle', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'toggleRequisito'])->name('notaria.actos.requisitos.toggle');
     Route::delete('/notaria/requisitos/{requisito}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'eliminarRequisito'])->name('notaria.actos.requisitos.destroy');
@@ -875,11 +876,18 @@ Route::middleware(['auth'])->group(function () {
 // Seguimiento trámites notaría
 
 Route::middleware(['auth'])->get('/reportes/reporte-contador-pdf', [App\Http\Controllers\ReporteContadorController::class, 'exportarPdf'])->name('reportes.contador.pdf');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/reportes/actos-pdf', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'exportarActosPdf'])->name('notaria.reportes.actos.pdf');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/caja/servicio-rapido', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'servicioRapido'])->name('notaria.caja.servicio-rapido');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes', [App\Http\Controllers\Notaria\ClienteNotariaController::class, 'index'])->name('notaria.clientes.index');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes/{id}', [App\Http\Controllers\Notaria\ClienteNotariaController::class, 'show'])->name('notaria.clientes.show');
 
 
-Route::middleware(['auth'])->post('/notaria/comprobantes/{id}/reenviar', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reenviar'])->name('notaria.comprobantes.reenviar');
-Route::middleware(['auth'])->get('/notaria/reportes', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'index'])->name('notaria.reportes.index');
-Route::middleware(['auth'])->get('/notaria/seguimiento', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'seguimiento'])->name('notaria.seguimiento');
+
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/comprobantes/{id}/recibo-ticket', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reciboTicket'])->name('notaria.comprobantes.recibo-ticket');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/comprobantes/{id}/reenviar', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reenviar'])->name('notaria.comprobantes.reenviar');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/reportes', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'index'])->name('notaria.reportes.index');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/seguimiento', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'seguimiento'])->name('notaria.seguimiento');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('notaria.auditoria.index');
 
 // Portal del Cliente - Notaría (público, sin autenticación)
 Route::get('/portal-cliente', [\App\Http\Controllers\Notaria\PortalClienteController::class, 'index'])->name('portal.cliente.index');
@@ -887,7 +895,7 @@ Route::post('/portal-cliente/consultar', [\App\Http\Controllers\Notaria\PortalCl
 Route::get('/portal-cliente/documento/{documento}/descargar', [\App\Http\Controllers\Notaria\PortalClienteController::class, 'descargarDocumento'])->name('portal.cliente.documento.descargar');
 
 // Partes intervinientes en actos notariales
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::post('/notaria/actos/{acto}/partes', [App\Http\Controllers\Notaria\ActoParteController::class, 'store'])->name('notaria.partes.store');
     Route::put('/notaria/partes/{parte}', [App\Http\Controllers\Notaria\ActoParteController::class, 'update'])->name('notaria.partes.update');
     Route::delete('/notaria/partes/{parte}', [App\Http\Controllers\Notaria\ActoParteController::class, 'destroy'])->name('notaria.partes.destroy');
@@ -895,20 +903,20 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Impresión de actos notariales
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::get('/notaria/actos/{acto}/imprimir', [App\Http\Controllers\Notaria\ImpresionActoController::class, 'imprimir'])->name('notaria.actos.imprimir');
     Route::get('/notaria/actos/{acto}/descargar', [App\Http\Controllers\Notaria\ImpresionActoController::class, 'descargar'])->name('notaria.actos.descargar');
 });
 
 // Requisitos de actos notariales
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::post('/notaria/actos/{acto}/requisitos', [App\Http\Controllers\Notaria\ActoRequisitoController::class, 'store'])->name('notaria.actos.requisitos.store');
     Route::patch('/notaria/requisitos/{requisito}/toggle', [App\Http\Controllers\Notaria\ActoRequisitoController::class, 'toggle'])->name('notaria.requisitos.toggle');
     Route::delete('/notaria/requisitos/{requisito}', [App\Http\Controllers\Notaria\ActoRequisitoController::class, 'destroy'])->name('notaria.requisitos.destroy');
 });
 
 // Índice Notarial
-Route::prefix('notaria/indice')->name('notaria.indice.')->middleware(['auth'])->group(function () {
+Route::prefix('notaria/indice')->name('notaria.indice.')->middleware(['auth', 'notaria.rol'])->group(function () {
     Route::get('/', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'index'])->name('index');
     Route::post('/registrar', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'store'])->name('store');
     Route::post('/registrar-masivo', [App\Http\Controllers\Notaria\IndiceNotarialController::class, 'registrarMasivo'])->name('registrar-masivo');
@@ -955,4 +963,12 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::post('/accesos/{acceso}/salida',  [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarSalida'])->name('accesos.salida');
     Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
 
+});
+
+// Auditoría por industria
+Route::middleware(['auth'])->group(function () {
+    Route::get('/restaurante/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('restaurante.auditoria.index');
+    Route::get('/minimarket/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('minimarket.auditoria.index');
+    Route::get('/ferreteria/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('ferreteria.auditoria.index');
+    Route::get('/gimnasio/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('gimnasio.auditoria.index');
 });

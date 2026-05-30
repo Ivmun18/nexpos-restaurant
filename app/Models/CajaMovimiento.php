@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 
 class CajaMovimiento extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Caja';
     protected $table = 'caja_movimientos';
 
     protected $fillable = [

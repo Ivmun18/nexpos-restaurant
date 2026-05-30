@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ActoParte extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Notaria';
     protected $table = 'acto_partes';
 
     protected $fillable = [

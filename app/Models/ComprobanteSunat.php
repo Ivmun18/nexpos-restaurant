@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ComprobanteSunat extends Model
 {
+    use Auditable;
+
+    protected $auditModulo = 'Facturación';
     protected $table = 'comprobantes_sunat';
 
     protected $fillable = [

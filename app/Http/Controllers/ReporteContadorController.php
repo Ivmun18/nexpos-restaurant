@@ -24,17 +24,19 @@ class ReporteContadorController extends Controller
             $ventas = DB::table('comprobantes_sunat')
                 ->where('empresa_id', $empresaId)
                 ->whereBetween('fecha_emision', [$desde, $hasta])
+                ->where('estado', '!=', 'anulado')
                 ->orderBy('fecha_emision')
                 ->get()
                 ->map(function($v) {
                     return (object)[
-                        'fecha'            => \Carbon\Carbon::parse($v->fecha_emision)->format('d/m/Y'),
-                        'comprobante'      => $v->tipo_comprobante,
-                        'serie_numero'     => $v->serie . '-' . str_pad($v->numero, 8, '0', STR_PAD_LEFT),
-                        'cliente'          => $v->cliente_nombre ?? '-',
-                        'subtotal_sin_igv' => (float) $v->total_gravada,
-                        'igv'              => (float) $v->total_igv,
-                        'total'            => (float) $v->total,
+                        'fecha'             => \Carbon\Carbon::parse($v->fecha_emision)->format('d/m/Y'),
+                        'comprobante'       => $v->tipo_comprobante,
+                        'serie_numero'      => $v->serie . '-' . str_pad($v->numero, 8, '0', STR_PAD_LEFT),
+                        'numero_documento'  => $v->cliente_numero_documento ?? '-',
+                        'cliente'           => $v->cliente_nombre ?? '-',
+                        'subtotal_sin_igv'  => (float) $v->total_gravada,
+                        'igv'               => (float) $v->total_igv,
+                        'total'             => (float) $v->total,
                     ];
                 });
         } elseif ($industria === 'restaurante') {

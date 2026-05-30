@@ -86,14 +86,14 @@
 
             <!-- Paginación -->
             <div v-if="logs.last_page > 1" style="padding: 1rem; display: flex; justify-content: center; gap: 8px; border-top: 1px solid #E2E8F0;">
-                <a v-if="logs.current_page > 1" :href="`/auditoria?page=${logs.current_page - 1}`"
+                <a v-if="logs.current_page > 1" :href="`${props.baseUrl}?page=${logs.current_page - 1}`"
                     style="padding: 6px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px; cursor: pointer;">
                     ← Anterior
                 </a>
                 <span style="padding: 6px 12px; font-size: 12px; color: #64748B;">
                     Página {{ logs.current_page }} de {{ logs.last_page }}
                 </span>
-                <a v-if="logs.current_page < logs.last_page" :href="`/auditoria?page=${logs.current_page + 1}`"
+                <a v-if="logs.current_page < logs.last_page" :href="`${props.baseUrl}?page=${logs.current_page + 1}`"
                     style="padding: 6px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px; cursor: pointer;">
                     Siguiente →
                 </a>
@@ -110,6 +110,7 @@ const props = defineProps({
     logs: Object,
     modulos: Array,
     acciones: Array,
+    baseUrl: { type: String, default: '/auditoria' },
 })
 
 const filtros = ref({
@@ -127,7 +128,7 @@ const aplicarFiltros = () => {
     if (filtros.value.desde) params.append('desde', filtros.value.desde)
     if (filtros.value.hasta) params.append('hasta', filtros.value.hasta)
     
-    window.location.href = `/auditoria?${params.toString()}`
+    window.location.href = `${props.baseUrl}?${params.toString()}`
 }
 
 const getAccionLabel = (accion) => {
