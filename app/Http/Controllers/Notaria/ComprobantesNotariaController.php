@@ -41,8 +41,8 @@ class ComprobantesNotariaController extends Controller
         $baseImponible = $exonerada ? $total : $gravada;
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Desglosar: servicio notarial + huella digital (1.50)
-        $huella       = 1.50;
+        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10)
+        $huella       = $total >= 10 ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
@@ -533,8 +533,8 @@ class ComprobantesNotariaController extends Controller
         $subtotal  = $exonerada ? $total : (float) $comp->total_gravada;
         $igv       = $exonerada ? 0 : (float) $comp->total_igv;
 
-        // Desglosar: servicio notarial + huella digital
-        $huella = 1.50;
+        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10)
+        $huella = $total >= 10 ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         // Obtener asunto del acto si existe
