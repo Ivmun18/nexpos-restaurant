@@ -48,7 +48,7 @@ class ComprobantesNotariaController extends Controller
         $lineas = [];
         $items = [
             ['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'precio' => $montoServicio],
-            ['desc' => 'Huella digital', 'codigo' => 'HD', 'precio' => $huella],
+            ...($huella > 0 ? [['desc' => 'Uso biométrico', 'codigo' => 'UB', 'precio' => $huella]] : []),
         ];
 
         foreach ($items as $idx => $item) {
@@ -551,12 +551,12 @@ class ComprobantesNotariaController extends Controller
                 'precio_unitario'=> $montoServicio,
                 'total'          => $montoServicio,
             ],
-            [
-                'descripcion'    => 'Huella digital',
+            ...($huella > 0 ? [[
+                'descripcion'    => 'Uso biométrico',
                 'cantidad'       => 1,
                 'precio_unitario'=> $huella,
                 'total'          => $huella,
-            ],
+            ]] : []),
         ];
 
         $tipoDoc = $comp->tipo_comprobante === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA ELECTRÓNICA';
