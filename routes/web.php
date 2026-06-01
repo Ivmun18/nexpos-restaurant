@@ -973,3 +973,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/ferreteria/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('ferreteria.auditoria.index');
     Route::get('/gimnasio/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('gimnasio.auditoria.index');
 });
+
+// ── HOTEL ──
+Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Hotel\HotelController::class, 'dashboard'])->name('dashboard');
+    Route::get('/habitaciones', [App\Http\Controllers\Hotel\HotelController::class, 'habitaciones'])->name('habitaciones');
+    Route::post('/habitaciones', [App\Http\Controllers\Hotel\HotelController::class, 'storeHabitacion'])->name('habitaciones.store');
+    Route::put('/habitaciones/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'updateHabitacion'])->name('habitaciones.update');
+    Route::delete('/habitaciones/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'destroyHabitacion'])->name('habitaciones.destroy');
+    Route::get('/tipos', [App\Http\Controllers\Hotel\HotelController::class, 'tipos'])->name('tipos');
+    Route::post('/tipos', [App\Http\Controllers\Hotel\HotelController::class, 'storeTipo'])->name('tipos.store');
+    Route::put('/tipos/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'updateTipo'])->name('tipos.update');
+    Route::get('/recepcion', [App\Http\Controllers\Hotel\HotelController::class, 'recepcion'])->name('recepcion');
+    Route::post('/checkin', [App\Http\Controllers\Hotel\HotelController::class, 'checkin'])->name('checkin');
+    Route::post('/checkout/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'checkout'])->name('checkout');
+    Route::get('/housekeeping', [App\Http\Controllers\Hotel\HotelController::class, 'housekeeping'])->name('housekeeping');
+    Route::put('/housekeeping/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'actualizarHousekeeping'])->name('housekeeping.update');
+    Route::get('/reportes', [App\Http\Controllers\Hotel\HotelController::class, 'reportes'])->name('reportes');
+});

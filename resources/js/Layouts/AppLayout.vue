@@ -27,7 +27,7 @@
             <div style="padding:14px 16px; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
-                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : empresa.industry_type === 'notaria' ? '⚖️' : empresa.industry_type === 'gimnasio' ? '💪' : '🔧' }}
+                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : empresa.industry_type === 'notaria' ? '⚖️' : empresa.industry_type === 'gimnasio' ? '💪' : empresa.industry_type === 'hotel' ? '🏨' : '🔧' }}
                     </div>
                     <div v-if="!collapsed">
                         <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0;">NEXPOS</p>
@@ -451,6 +451,14 @@ const allMenuItems = [
     { path: '/gimnasio/accesos',     icon: 'door-enter', label: 'Accesos',       module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'gimnasio', section: 'GIMNASIO' },
 
+    // HOTEL
+    { path: '/hotel/dashboard',    icon: 'dashboard',  label: 'Dashboard',     module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/recepcion',    icon: 'door-enter', label: 'Recepción',     module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/habitaciones', icon: 'cama',       label: 'Habitaciones',  module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/tipos',        icon: 'categoria',  label: 'Tipos',         module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/housekeeping', icon: 'limpieza',   label: 'Housekeeping',  module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/reportes',     icon: 'reporte',    label: 'Reportes',      module: 'hotel', section: 'HOTEL' },
+
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/ventas',     icon: 'ventas',     label: 'Ventas',        module: 'pos_minimarket', section: 'MINIMARKET' },
@@ -595,6 +603,11 @@ const menuItems = computed(() => {
         // Ocultar módulos de gimnasio si no es gimnasio
         if (industry !== 'gimnasio') {
             if (item.section === 'GIMNASIO') return false
+
+        // Ocultar módulos de hotel si no es hotel
+        if (industry !== 'hotel') {
+            if (item.section === 'HOTEL') return false
+        }
         }
 
         // En notaría ocultar caja general y reportes de otros módulos
