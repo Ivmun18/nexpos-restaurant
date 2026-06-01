@@ -58,9 +58,11 @@ class CajaNotariaController extends Controller
                 ] : null,
             ]);
 
-        $sesionAbierta = SesionCaja::where('estado', 'abierta')->exists();
+        $cajaId = \App\Models\Caja::where('empresa_id', $empresaId)->value('id');
+        $sesionAbierta = SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaId)->exists();
         $sesionActual  = SesionCaja::with('movimientos')
             ->where('estado', 'abierta')
+            ->where('caja_id', $cajaId)
             ->first();
 
         // Calcular totales de la sesión actual
