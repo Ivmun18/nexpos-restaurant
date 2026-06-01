@@ -168,6 +168,20 @@ class ComprobantesNotariaController extends Controller
 
             $comprobanteId = \DB::getPdo()->lastInsertId();
 
+            // Guardar cliente automáticamente si no existe
+            if ($request->cliente_numero_documento && $request->cliente_numero_documento !== '00000000') {
+                \DB::table('clientes')->updateOrInsert(
+                    ['empresa_id' => $empresa->id, 'numero_documento' => $request->cliente_numero_documento],
+                    [
+                        'tipo_documento'  => $request->cliente_tipo_documento ?? '1',
+                        'razon_social'    => strtoupper($request->cliente_nombre),
+                        'email'           => $request->cliente_email ?? null,
+                        'updated_at'      => now(),
+                        'created_at'      => now(),
+                    ]
+                );
+            }
+
             $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
             if ($sesion) {
                 \DB::table('caja_movimientos')->insert([
@@ -357,6 +371,20 @@ class ComprobantesNotariaController extends Controller
                 'updated_at'               => now(),
             ]);
             $comprobanteId = \DB::getPdo()->lastInsertId();
+
+            // Guardar cliente automáticamente si no existe
+            if ($request->cliente_numero_documento && $request->cliente_numero_documento !== '00000000') {
+                \DB::table('clientes')->updateOrInsert(
+                    ['empresa_id' => $empresa->id, 'numero_documento' => $request->cliente_numero_documento],
+                    [
+                        'tipo_documento'  => $request->cliente_tipo_documento ?? '1',
+                        'razon_social'    => strtoupper($request->cliente_nombre),
+                        'email'           => $request->cliente_email ?? null,
+                        'updated_at'      => now(),
+                        'created_at'      => now(),
+                    ]
+                );
+            }
 
             // Registrar en caja si hay sesión abierta
             $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
