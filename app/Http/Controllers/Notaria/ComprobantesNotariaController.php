@@ -164,7 +164,7 @@ class ComprobantesNotariaController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'emitido' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
@@ -369,7 +369,7 @@ class ComprobantesNotariaController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'emitido' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
@@ -528,7 +528,7 @@ class ComprobantesNotariaController extends Controller
             $aceptada  = $response->successful() && isset($data['sunatResponse']);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
 
-            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'emitido' : 'rechazado');
+            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado');
             $descripcion = $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data));
             $enlaceXml  = $pendiente && isset($data['xml']) ? $data['xml'] : null;
 
