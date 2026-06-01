@@ -21,8 +21,19 @@
 </head>
 <body>
     <div class="center mb">
-        @if($empresa->logo_path && file_exists(storage_path('app/public/' . $empresa->logo_path)))
-        <img src="data:image/{{ pathinfo($empresa->logo_path, PATHINFO_EXTENSION) }};base64,{{ base64_encode(file_get_contents(storage_path('app/public/' . $empresa->logo_path))) }}" style="max-width:60mm; max-height:20mm; margin-bottom:4px;" />
+        @php
+            $logoSrc = null;
+            if($empresa->logo_path) {
+                $logoFile = storage_path('app/public/' . $empresa->logo_path);
+                if(file_exists($logoFile)) {
+                    $ext = strtolower(pathinfo($logoFile, PATHINFO_EXTENSION));
+                    $ext = $ext === 'jpg' ? 'jpeg' : $ext;
+                    $logoSrc = 'data:image/' . $ext . ';base64,' . base64_encode(file_get_contents($logoFile));
+                }
+            }
+        @endphp
+        @if($logoSrc)
+        <img src="{{ $logoSrc }}" style="max-width:55mm; max-height:18mm; margin-bottom:4px;" />
         @endif
         <p class="bold" style="font-size:13px; margin:0;">{{ $empresa->razon_social }}</p>
         <p style="margin:2px 0;">RUC: {{ $empresa->ruc }}</p>
