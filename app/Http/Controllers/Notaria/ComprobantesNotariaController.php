@@ -46,10 +46,13 @@ class ComprobantesNotariaController extends Controller
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
-        $items = [
+        $items = array_filter([
             ['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'precio' => $montoServicio],
             ...($huella > 0 ? [['desc' => 'Uso biométrico', 'codigo' => 'UB', 'precio' => $huella]] : []),
-        ];
+        ], fn($item) => $item['precio'] > 0);
+        if (empty($items)) {
+            $items = [['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'precio' => $total]];
+        }
 
         foreach ($items as $idx => $item) {
             $precioItem = round($item['precio'], 2);
@@ -572,7 +575,7 @@ class ComprobantesNotariaController extends Controller
             if ($acto) $asunto = $acto->asunto;
         }
 
-        $items = [
+        $items = array_filter([
             [
                 'descripcion'    => $asunto,
                 'cantidad'       => 1,
@@ -585,7 +588,15 @@ class ComprobantesNotariaController extends Controller
                 'precio_unitario'=> $huella,
                 'total'          => $huella,
             ]] : []),
-        ];
+        ], fn($item) => $item['precio_unitario'] > 0);
+        if (empty($items)) {
+            $items = [[
+                'descripcion'    => $asunto,
+                'cantidad'       => 1,
+                'precio_unitario'=> $total,
+                'total'          => $total,
+            ]];
+        }
 
         $tipoDoc = $comp->tipo_comprobante === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA ELECTRÓNICA';
         $serie   = $comp->serie;
