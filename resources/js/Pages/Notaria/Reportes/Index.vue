@@ -90,12 +90,18 @@
                                     </span>
                                 </td>
                                 <td style="padding:10px 16px;">
-                                    <button v-if="c.estado !== 'aceptado'" @click="reenviar(c)"
+                                    <button v-if="c.estado !== 'aceptado' && c.estado !== 'anulado'" @click="reenviar(c)"
                                         :disabled="reenviando === c.id"
                                         style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
                                         {{ reenviando === c.id ? '⏳...' : '🔄 Reenviar' }}
                                     </button>
-                                    <span v-else style="color:#16A34A; font-size:11px;">✅</span>
+                                    <button v-if="c.estado === 'emitido' || c.estado === 'aceptado'" @click="anular(c)"
+                                        :disabled="anulando === c.id"
+                                        style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; margin-left:4px;">
+                                        {{ anulando === c.id ? '⏳...' : '🚫 Anular' }}
+                                    </button>
+                                    <span v-if="c.estado === 'aceptado'" style="color:#16A34A; font-size:11px;">✅</span>
+                                    <span v-if="c.estado === 'anulado'" style="color:#DC2626; font-size:11px;">❌ Anulado</span>
                                     <a :href="'/notaria/comprobantes/' + c.id + '/recibo-ticket'" target="_blank"
                                         style="background:#F1F5F9; color:#374151; border:1px solid #E2E8F0; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; margin-left:4px;">
                                         🖨️ Ticket
@@ -198,6 +204,33 @@ const totalIgv     = computed(() => props.comprobantes.reduce((s, c) => s + Numb
 const totalGravada = computed(() => props.comprobantes.reduce((s, c) => s + Number(c.total_gravada), 0))
 
 const reenviando = ref(null)
+
+const anulando = ref(null)
+
+const anular = async (comp) => {
+    const motivo = prompt('Motivo de anulación:', 'Error en emisión')
+    if (!motivo) return
+    if (!confirm('¿Anular ' + comp.serie + '-' + String(comp.numero).padStart(8,'0') + ' ante SUNAT?')) return
+    anulando.value = comp.id
+    try {
+        const res = await fetch('/notaria/comprobantes/' + comp.id + '/anular', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+            body: JSON.stringify({ motivo })
+        })
+        const data = await res.json()
+        if (data.success) {
+            comp.estado = 'anulado'
+            alert('✅ Comprobante anulado correctamente')
+        } else {
+            alert('❌ Error: ' + data.mensaje)
+        }
+    } catch(e) {
+        alert('❌ Error de conexión')
+    } finally {
+        anulando.value = null
+    }
+}
 
 const reenviar = async (comp) => {
     reenviando.value = comp.id

@@ -613,4 +613,57 @@ class ComprobantesNotariaController extends Controller
         return (string)$n;
     }
 
+
+    public function anular(Request $request, $id)
+    {
+        $empresa = auth()->user()->empresa;
+        $comp = \DB::table('comprobantes_sunat')->where('id', $id)->where('empresa_id', $empresa->id)->first();
+
+        if (!$comp) {
+            return response()->json(['success' => false, 'mensaje' => 'Comprobante no encontrado'], 404);
+        }
+
+        if ($comp->estado === 'anulado') {
+            return response()->json(['success' => false, 'mensaje' => 'El comprobante ya está anulado'], 400);
+        }
+
+        $motivo = $request->input('motivo', 'Error en emisión');
+        $fechaBaja = now()->format('Y-m-d');
+        $fileName  = $empresa->ruc . '-' . $comp->tipo_comprobante . '-' . $comp->serie . '-' . str_pad($comp->numero, 8, '0', STR_PAD_LEFT);
+
+        try {
+            $response = \Http::withHeaders(['Content-Type' => 'application/json'])
+                ->post('https://back.apisunat.com/personas/v1/sendSummary', [
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'fileName'     => $empresa->ruc . '-RA-' . now()->format('Ymd') . '-1',
+                    'content' => [
+                        'fechaEmision'  => $fechaBaja,
+                        'tipoDocumento' => '07',
+                        'correlativo'   => '1',
+                        'detalles'      => [[
+                            'tipoDocumento'         => $comp->tipo_comprobante,
+                            'serie'                 => $comp->serie,
+                            'correlativoInicio'     => $comp->numero,
+                            'correlativoFin'        => $comp->numero,
+                            'motivoBaja'            => $motivo,
+                        ]],
+                    ],
+                ]);
+
+            $result = $response->json();
+
+            \DB::table('comprobantes_sunat')->where('id', $id)->update([
+                'estado'            => 'anulado',
+                'sunat_descripcion' => json_encode($result),
+                'updated_at'        => now(),
+            ]);
+
+            return response()->json(['success' => true, 'mensaje' => 'Comprobante anulado correctamente', 'resultado' => $result]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'mensaje' => 'Error al anular: ' . $e->getMessage()], 500);
+        }
+    }
+
 }

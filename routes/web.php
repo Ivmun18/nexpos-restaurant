@@ -885,6 +885,7 @@ Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes/{id}', [App\H
 
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/comprobantes/{id}/recibo-ticket', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reciboTicket'])->name('notaria.comprobantes.recibo-ticket');
 Route::middleware(['auth', 'notaria.rol'])->post('/notaria/comprobantes/{id}/reenviar', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'reenviar'])->name('notaria.comprobantes.reenviar');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/comprobantes/{id}/anular', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'anular'])->name('notaria.comprobantes.anular');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/reportes', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'index'])->name('notaria.reportes.index');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/seguimiento', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'seguimiento'])->name('notaria.seguimiento');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('notaria.auditoria.index');
