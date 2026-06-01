@@ -239,14 +239,25 @@ Route::get('/dashboard', function () {
         $actosHoy = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
             ->whereDate('created_at', $hoy)->count();
         
-        $ingresosHoy = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+        // Ingresos expedientes
+        $ingresosHoyExp = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereDate('created_at', $hoy)->sum('monto');
-        
+        // Ingresos venta directa
+        $ingresosHoyVD = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)->whereIn('estado', ['emitido','aceptado'])->sum('total');
+        $ingresosHoy = $ingresosHoyExp + $ingresosHoyVD;
+
         $ingresosHoyCount = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereDate('created_at', $hoy)->count();
-        
-        $ingresosMes = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+        $ingresosHoyCount += \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)->whereIn('estado', ['emitido','aceptado'])->count();
+
+        // Ingresos mes
+        $ingresosHoyExpMes = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('monto');
+        $ingresosVDMes = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
+            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->whereIn('estado', ['emitido','aceptado'])->sum('total');
+        $ingresosMes = $ingresosHoyExpMes + $ingresosVDMes;
         
         $actosProceso = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
             ->where('estado', 'proceso')->count();
@@ -255,11 +266,13 @@ Route::get('/dashboard', function () {
         $ingresosPorDia = [];
         for ($i = 6; $i >= 0; $i--) {
             $fecha = now()->subDays($i);
-            $total = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
+            $totalExp = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
                 ->whereDate('created_at', $fecha->toDateString())->sum('monto');
+            $totalVD = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
+                ->whereDate('created_at', $fecha->toDateString())->whereIn('estado', ['emitido','aceptado'])->sum('total');
             $ingresosPorDia[] = [
                 'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
-                'total' => round($total, 2),
+                'total' => round($totalExp + $totalVD, 2),
             ];
         }
 
