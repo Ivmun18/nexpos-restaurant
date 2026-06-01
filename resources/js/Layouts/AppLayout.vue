@@ -603,11 +603,11 @@ const menuItems = computed(() => {
         // Ocultar módulos de gimnasio si no es gimnasio
         if (industry !== 'gimnasio') {
             if (item.section === 'GIMNASIO') return false
+        }
 
         // Ocultar módulos de hotel si no es hotel
         if (industry !== 'hotel') {
             if (item.section === 'HOTEL') return false
-        }
         }
 
         // En notaría ocultar caja general y reportes de otros módulos
