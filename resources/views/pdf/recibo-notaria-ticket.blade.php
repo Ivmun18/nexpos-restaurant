@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <title>{{ $tipoDoc }} {{ $serie }}-{{ $numero }}</title>
 <style>
-    @page { margin: 10mm; size: 80mm auto; }
-    body { font-family: 'Courier New', monospace; font-size: 11px; color: #000; margin: 0; padding: 0; width: 60mm; }
+    @page { margin: 5mm; size: 80mm auto; }
+    body { font-family: 'Courier New', monospace; font-size: 12px; font-weight: bold; color: #000; margin: 0; padding: 0; width: 72mm; }
     .center { text-align: center; }
     .bold { font-weight: bold; }
     .line { border-top: 1px dashed #000; margin: 6px 0; }
     .table { width: 100%; border-collapse: collapse; }
-    .table th { text-align: left; font-size: 10px; border-bottom: 1px dashed #000; padding: 2px 0; }
-    .table td { font-size: 10px; padding: 2px 0; word-wrap: break-word; }
+    .table th { text-align: left; font-size: 11px; font-weight: bold; border-bottom: 1px dashed #000; padding: 2px 0; }
+    .table td { font-size: 11px; font-weight: bold; padding: 2px 0; word-wrap: break-word; }
     .table { table-layout: fixed; }
     .right { text-align: right; }
-    .small { font-size: 9px; }
+    .small { font-size: 10px; font-weight: bold; }
     .mt { margin-top: 8px; }
     .mb { margin-bottom: 8px; }
 </style>
