@@ -53,6 +53,10 @@ Route::get('/dashboard', function () {
         return redirect('/gimnasio/dashboard');
     }
 
+    if ($industryType === 'hotel') {
+        return redirect('/hotel/dashboard');
+    }
+
     if ($industryType === 'ferreteria') {
         $hoy  = now()->toDateString();
         $mes  = now()->month;
