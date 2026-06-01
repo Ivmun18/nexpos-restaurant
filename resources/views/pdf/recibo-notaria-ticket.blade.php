@@ -21,8 +21,8 @@
 </head>
 <body>
     <div class="center mb">
-        @if($empresa->logo_path)
-        <img src="{{ public_path('storage/' . $empresa->logo_path) }}" style="max-width:60mm; max-height:20mm; margin-bottom:4px;" />
+        @if($empresa->logo_path && file_exists(storage_path('app/public/' . $empresa->logo_path)))
+        <img src="data:image/{{ pathinfo($empresa->logo_path, PATHINFO_EXTENSION) }};base64,{{ base64_encode(file_get_contents(storage_path('app/public/' . $empresa->logo_path))) }}" style="max-width:60mm; max-height:20mm; margin-bottom:4px;" />
         @endif
         <p class="bold" style="font-size:13px; margin:0;">{{ $empresa->razon_social }}</p>
         <p style="margin:2px 0;">RUC: {{ $empresa->ruc }}</p>
