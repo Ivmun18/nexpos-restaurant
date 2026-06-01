@@ -623,13 +623,14 @@ const menuItems = computed(() => {
 
         if (!item.module) return true
         if (item.module === 'gimnasio') return industry === 'gimnasio'
+        if (item.module === 'hotel') return industry === 'hotel'
         if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
         return modulesEnabled.value.includes(item.module)
     })
 })
 
 const menuSections = computed(() => {
-    const orden = ['_default_', 'NOTARIA', 'GIMNASIO', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
+    const orden = ['_default_', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {
