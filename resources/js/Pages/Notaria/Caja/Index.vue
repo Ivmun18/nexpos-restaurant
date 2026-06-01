@@ -170,6 +170,7 @@
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI / RUC (opcional)</label>
                                 <input v-model="formRapido.cliente_documento" type="text" placeholder="00000000"
                                     @input="buscarClienteRapido"
+                                    @focus="if(formRapido.cliente_documento === '00000000') formRapido.cliente_documento = ''"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                                 <div v-if="buscandoRapido" style="font-size:11px; color:#64748B; margin-top:2px;">🔍 Buscando...</div>
                             </div>
