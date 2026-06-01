@@ -132,7 +132,7 @@ class ComprobantesNotariaController extends Controller
         \Log::info('emitir fileName: ' . $fileName . ' ruc: ' . $empresa->ruc . ' token: ' . substr($empresa->apisunat_token,0,15));
         try {
             $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(30)
+                ->timeout(60)
                 ->post('https://back.apisunat.com/personas/v1/sendBill', [
                     'personaId'    => $empresa->apisunat_ruc,
                     'personaToken' => $empresa->apisunat_token,
@@ -336,7 +336,7 @@ class ComprobantesNotariaController extends Controller
 
         try {
             $response = Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(30)
+                ->timeout(60)
                 ->post('https://back.apisunat.com/personas/v1/sendBill', [
                     'personaId'    => $empresa->apisunat_ruc,
                     'personaToken' => $empresa->apisunat_token,
@@ -514,7 +514,7 @@ class ComprobantesNotariaController extends Controller
         \Log::info('ApiSunat reenviar PAYLOAD lineas: ' . json_encode($lineas));
         try {
             $response = Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(30)
+                ->timeout(60)
                 ->post('https://back.apisunat.com/personas/v1/sendBill', [
                     'personaId'    => $empresa->apisunat_ruc,
                     'personaToken' => $empresa->apisunat_token,
