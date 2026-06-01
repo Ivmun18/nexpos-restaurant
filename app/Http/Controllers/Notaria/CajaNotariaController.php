@@ -267,12 +267,12 @@ class CajaNotariaController extends Controller
     {
         $request->validate(['monto_apertura' => 'required|numeric|min:0']);
 
-        if (SesionCaja::where('estado', 'abierta')->exists()) {
-            return back()->with('error', 'Ya hay una caja abierta.');
-        }
-
         $caja = \DB::table('caja')->where('empresa_id', auth()->user()->empresa_id)->first();
         $cajaId = $caja ? $caja->id : 1;
+
+        if (SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaId)->exists()) {
+            return back()->with('error', 'Ya hay una caja abierta.');
+        }
 
         $sesion = SesionCaja::create([
             'caja_id'        => $cajaId,
