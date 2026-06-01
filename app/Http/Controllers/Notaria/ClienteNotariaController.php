@@ -83,10 +83,11 @@ class ClienteNotariaController extends Controller
             ->orderByDesc('fecha_emision')
             ->get();
 
+        $totalComprobantes = $comprobantes->whereIn('estado', ['emitido','aceptado'])->sum('total');
         $resumen = [
             'total_actos'     => $actos->count(),
-            'total_facturado' => $actos->sum('monto_cobrar'),
-            'total_pagado'    => $actos->sum('monto_pagado'),
+            'total_facturado' => $actos->sum('monto_cobrar') + $totalComprobantes,
+            'total_pagado'    => $actos->sum('monto_pagado') + $totalComprobantes,
             'saldo_pendiente' => $actos->sum('saldo'),
             'actos_pagados'   => $actos->where('estado_pago', 'pagado')->count(),
         ];
