@@ -167,13 +167,15 @@
                                     style="width:100%; padding:9px 12px; border:1px solid #10B981; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                             </div>
                             <div style="margin-bottom:12px;">
-                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CLIENTE (opcional)</label>
-                                <input v-model="formRapido.cliente_nombre" type="text" placeholder="Nombre del cliente"
-                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
-                            </div>
-                            <div style="margin-bottom:12px;">
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI / RUC (opcional)</label>
                                 <input v-model="formRapido.cliente_documento" type="text" placeholder="00000000"
+                                    @input="buscarClienteRapido"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
+                                <div v-if="buscandoRapido" style="font-size:11px; color:#64748B; margin-top:2px;">🔍 Buscando...</div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CLIENTE (opcional)</label>
+                                <input v-model="formRapido.cliente_nombre" type="text" placeholder="Nombre del cliente"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                             </div>
                             <div style="margin-bottom:12px;">
@@ -480,6 +482,23 @@ const pdfComp                = ref('')
 const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' })
 const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
 const buscandoCliente = ref(false)
+const buscandoRapido = ref(false)
+
+const buscarClienteRapido = async () => {
+    const doc = formRapido.value.cliente_documento
+    if (doc.length !== 8 && doc.length !== 11) return
+    buscandoRapido.value = true
+    try {
+        const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        })
+        if (res.ok) {
+            const data = await res.json()
+            if (data.nombre) formRapido.value.cliente_nombre = data.nombre
+        }
+    } catch(e) { console.error(e) }
+    finally { buscandoRapido.value = false }
+}
 
 const buscarCliente = async () => {
     const doc = formComp.value.cliente_numero_documento
