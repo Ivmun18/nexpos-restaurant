@@ -601,7 +601,7 @@ class ComprobantesNotariaController extends Controller
         $tipoDoc = $comp->tipo_comprobante === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA ELECTRÓNICA';
         $serie   = $comp->serie;
         $numero  = str_pad($comp->numero, 8, '0', STR_PAD_LEFT);
-        $fecha   = \Carbon\Carbon::parse($comp->fecha_emision)->format('Y-m-d H:i:s');
+        $fecha   = \Carbon\Carbon::parse($comp->fecha_emision)->format('d/m/Y');
 
         $totalLetras = $this->numeroALetras($total);
 
