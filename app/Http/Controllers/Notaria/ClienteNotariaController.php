@@ -17,12 +17,18 @@ class ClienteNotariaController extends Controller
         $clientes = DB::table('clientes as c')
             ->where('c.empresa_id', $empresaId)
             ->leftJoin('actos_notariales as a', 'a.cliente_id', '=', 'c.id')
+            ->leftJoin('comprobantes_sunat as cs', function($join) use ($empresaId) {
+                $join->on('cs.cliente_numero_documento', '=', 'c.numero_documento')
+                     ->where('cs.empresa_id', '=', $empresaId)
+                     ->whereIn('cs.estado', ['emitido', 'aceptado'])
+                     ->whereNull('cs.acto_id');
+            })
             ->select(
                 'c.id', 'c.razon_social', 'c.numero_documento', 'c.tipo_documento',
                 'c.telefono', 'c.email', 'c.direccion', 'c.activo',
-                DB::raw('COUNT(a.id) as total_actos'),
-                DB::raw('SUM(a.monto_cobrar) as total_facturado'),
-                DB::raw('SUM(a.monto_pagado) as total_pagado'),
+                DB::raw('COUNT(DISTINCT a.id) as total_actos'),
+                DB::raw('COALESCE(SUM(DISTINCT a.monto_cobrar),0) + COALESCE(SUM(DISTINCT cs.total),0) as total_facturado'),
+                DB::raw('COALESCE(SUM(DISTINCT a.monto_pagado),0) + COALESCE(SUM(DISTINCT cs.total),0) as total_pagado'),
                 DB::raw('MAX(a.fecha_ingreso) as ultimo_acto')
             )
             ->when($buscar, fn($q) => $q->where(function($q) use ($buscar) {
