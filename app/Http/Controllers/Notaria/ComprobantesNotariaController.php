@@ -63,6 +63,12 @@ class ComprobantesNotariaController extends Controller
                 'cbc:ID'                  => ['_text' => (string)($idx + 1)],
                 'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
                 'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cac:PricingReference' => [
+                    'cac:AlternativeConditionPrice' => [
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceTypeCode' => ['_text' => '01'],
+                    ],
+                ],
                 'cac:TaxTotal' => [
                     'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                     'cac:TaxSubtotal' => [[
@@ -79,12 +85,6 @@ class ComprobantesNotariaController extends Controller
                 'cac:Item' => [
                     'cbc:Description' => ['_text' => $item['desc']],
                     'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => $item['codigo']]],
-                ],
-                'cac:PricingReference' => [
-                    'cac:AlternativeConditionPrice' => [
-                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
-                        'cbc:PriceTypeCode' => ['_text' => '01'],
-                    ],
                 ],
                 'cac:Price' => [
                     'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
@@ -264,6 +264,12 @@ class ComprobantesNotariaController extends Controller
                 'cbc:ID'                  => ['_text' => (string)($idx + 1)],
                 'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
                 'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cac:PricingReference' => [
+                    'cac:AlternativeConditionPrice' => [
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceTypeCode' => ['_text' => '01'],
+                    ],
+                ],
                 'cac:TaxTotal' => [
                     'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                     'cac:TaxSubtotal' => [[
@@ -279,12 +285,6 @@ class ComprobantesNotariaController extends Controller
                 'cac:Item' => [
                     'cbc:Description' => ['_text' => $item['descripcion']],
                     'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']],
-                ],
-                'cac:PricingReference' => [
-                    'cac:AlternativeConditionPrice' => [
-                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
-                        'cbc:PriceTypeCode' => ['_text' => '01'],
-                    ],
                 ],
                 'cac:Price' => [
                     'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
@@ -442,6 +442,12 @@ class ComprobantesNotariaController extends Controller
             'cbc:ID'                  => ['_text' => '1'],
             'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
             'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+            'cac:PricingReference' => [
+                'cac:AlternativeConditionPrice' => [
+                    'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+                    'cbc:PriceTypeCode' => ['_text' => '01'],
+                ],
+            ],
             'cac:TaxTotal' => [
                 'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                 'cac:TaxSubtotal' => [[
@@ -457,12 +463,6 @@ class ComprobantesNotariaController extends Controller
             'cac:Item' => [
                 'cbc:Description' => ['_text' => 'Servicio notarial'],
                 'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']],
-            ],
-            'cac:PricingReference' => [
-                'cac:AlternativeConditionPrice' => [
-                    'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
-                    'cbc:PriceTypeCode' => ['_text' => '01'],
-                ],
             ],
             'cac:Price' => [
                 'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
