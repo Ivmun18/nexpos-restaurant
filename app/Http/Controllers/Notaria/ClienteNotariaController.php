@@ -76,7 +76,10 @@ class ClienteNotariaController extends Controller
 
         $comprobantes = DB::table('comprobantes_sunat')
             ->where('empresa_id', $empresaId)
-            ->whereIn('acto_id', $actos->pluck('id'))
+            ->where(function($q) use ($actos, $cliente) {
+                $q->whereIn('acto_id', $actos->pluck('id'))
+                  ->orWhere('cliente_numero_documento', $cliente->numero_documento);
+            })
             ->orderByDesc('fecha_emision')
             ->get();
 
