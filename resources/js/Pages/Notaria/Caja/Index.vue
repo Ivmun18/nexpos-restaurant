@@ -294,7 +294,9 @@
                                         </select>
                                         <input v-model="formComp.cliente_numero_documento" type="text"
                                             :placeholder="formComp.cliente_tipo_documento==='6' ? '20xxxxxxxxx' : '12345678'"
+                                            @input="buscarCliente"
                                             style="padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+                                        <div v-if="buscandoCliente" style="font-size:11px; color:#64748B; margin-top:2px;">🔍 Buscando...</div>
                                     </div>
                                     <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre completo del cliente *"
                                         style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
@@ -477,6 +479,33 @@ const pdfComp                = ref('')
 
 const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' })
 const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
+const buscandoCliente = ref(false)
+
+const buscarCliente = async () => {
+    const doc = formComp.value.cliente_numero_documento
+    const tipo = formComp.value.cliente_tipo_documento
+    const len = tipo === '6' ? 11 : 8
+    if (doc.length !== len) return
+
+    buscandoCliente.value = true
+    try {
+        // Buscar primero en clientes registrados
+        const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        })
+        if (res.ok) {
+            const data = await res.json()
+            if (data.nombre) {
+                formComp.value.cliente_nombre = data.nombre
+                formComp.value.cliente_email = data.email || ''
+            }
+        }
+    } catch(e) {
+        console.error(e)
+    } finally {
+        buscandoCliente.value = false
+    }
+}
 
 const tiposComp = [
     { value: '03', label: 'Boleta',  icon: '🧾' },

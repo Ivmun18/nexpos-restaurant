@@ -860,6 +860,18 @@ Route::middleware(['auth', 'notaria.rol'])->prefix('notaria')->group(function ()
 // Caja Notaría
 Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::post('/notaria/clientes', [App\Http\Controllers\Admin\ClienteController::class, 'storeJson'])->name('notaria.clientes.store');
+    Route::get('/notaria/clientes/buscar', function(\Illuminate\Http\Request $request) {
+        $empresaId = auth()->user()->empresa_id;
+        $doc = $request->get('documento');
+        $cliente = \DB::table('clientes')
+            ->where('empresa_id', $empresaId)
+            ->where('numero_documento', $doc)
+            ->first();
+        if ($cliente) {
+            return response()->json(['nombre' => $cliente->razon_social, 'email' => $cliente->email]);
+        }
+        return response()->json(['nombre' => null]);
+    })->name('notaria.clientes.buscar');
     Route::get('/notaria/caja', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'index'])->name('notaria.caja.index');
     Route::post('/notaria/caja/{acto}/cobrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cobrar'])->name('notaria.caja.cobrar');
 });
