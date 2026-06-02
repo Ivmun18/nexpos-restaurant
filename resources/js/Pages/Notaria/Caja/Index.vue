@@ -490,12 +490,28 @@ const buscarClienteRapido = async () => {
     if (doc.length !== 8 && doc.length !== 11) return
     buscandoRapido.value = true
     try {
+        // 1. Buscar primero en BD local
         const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
         })
         if (res.ok) {
             const data = await res.json()
-            if (data.nombre) formRapido.value.cliente_nombre = data.nombre
+            if (data.nombre) {
+                formRapido.value.cliente_nombre = data.nombre
+                return
+            }
+        }
+        // 2. Fallback a apis.net.pe via proxy Laravel
+        const r = await fetch('/api/consulta-documento?documento=' + doc, {
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+        })
+        if (r.ok) {
+            const d = await r.json()
+            if (d.nombres) {
+                formRapido.value.cliente_nombre = d.nombres + ' ' + d.apellidoPaterno + ' ' + d.apellidoMaterno
+            } else if (d.razonSocial) {
+                formRapido.value.cliente_nombre = d.razonSocial
+            }
         }
     } catch(e) { console.error(e) }
     finally { buscandoRapido.value = false }

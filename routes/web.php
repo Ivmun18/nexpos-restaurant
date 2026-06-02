@@ -1020,3 +1020,32 @@ Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(
     Route::put('/housekeeping/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'actualizarHousekeeping'])->name('housekeeping.update');
     Route::get('/reportes', [App\Http\Controllers\Hotel\HotelController::class, 'reportes'])->name('reportes');
 });
+
+// Proxy para consulta DNI/RUC
+Route::get('/api/consulta-documento', function(\Illuminate\Http\Request $request) {
+    $doc = $request->get('documento');
+    if (!$doc) return response()->json(['error' => 'Sin documento'], 400);
+
+    if (strlen($doc) === 8) {
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Bearer sk_16067.7KfoUTCobKF4t8DzL60X2e41GjM7gTQM',
+            'Accept' => 'application/json',
+        ])->get('https://api.decolecta.com/v1/reniec/dni?numero=' . $doc);
+        $data = $response->json();
+        return response()->json([
+            'nombres'        => $data['first_name'] ?? null,
+            'apellidoPaterno'=> $data['first_last_name'] ?? null,
+            'apellidoMaterno'=> $data['second_last_name'] ?? null,
+            'nombre_completo'=> $data['full_name'] ?? null,
+        ]);
+    } else {
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Bearer sk_16067.7KfoUTCobKF4t8DzL60X2e41GjM7gTQM',
+            'Accept' => 'application/json',
+        ])->get('https://api.decolecta.com/v1/sunat/ruc?numero=' . $doc);
+        $data = $response->json();
+        return response()->json([
+            'razonSocial' => $data['razon_social'] ?? $data['nombre_comercial'] ?? null,
+        ]);
+    }
+})->middleware('web');
