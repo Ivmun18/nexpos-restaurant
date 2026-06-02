@@ -195,7 +195,7 @@ class ComprobantesNotariaController extends Controller
                 );
             }
 
-            $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
+            $sesion = \DB::table('sesiones_caja')->join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->select('sesiones_caja.*')->first();
             if ($sesion) {
                 \DB::table('caja_movimientos')->insert([
                     'sesion_id'  => $sesion->id,
@@ -407,7 +407,7 @@ class ComprobantesNotariaController extends Controller
 
             // Registrar en caja si hay sesión abierta (solo si no viene de servicio rápido)
             if (!$request->input('skip_caja_registro')) {
-                $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
+                $sesion = \DB::table('sesiones_caja')->join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->select('sesiones_caja.*')->first();
                 if ($sesion) {
                     \DB::table('caja_movimientos')->insert([
                         'sesion_id'  => $sesion->id,
