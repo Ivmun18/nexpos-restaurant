@@ -98,7 +98,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
             'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
-            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '2006'], '_text' => $exonerada ? 'OPERACION EXONERADA' : 'OPERACION GRAVADA'],
+            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
             'cac:PaymentTerms'         => [
                 'cbc:ID'                => ['_text' => 'FormaPago'],
@@ -308,7 +308,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
             'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
-            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '2006'], '_text' => $exonerada ? 'OPERACION EXONERADA' : 'OPERACION GRAVADA'],
+            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
             'cac:PaymentTerms'         => [
                 'cbc:ID'                => ['_text' => 'FormaPago'],
@@ -493,7 +493,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
             'cbc:IssueDate'            => ['_text' => $comp->fecha_emision],
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $comp->tipo_comprobante],
-            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '2006'], '_text' => $exonerada ? 'OPERACION EXONERADA' : 'OPERACION GRAVADA'],
+            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
             'cac:PaymentTerms'         => [
                 'cbc:ID'                => ['_text' => 'FormaPago'],
