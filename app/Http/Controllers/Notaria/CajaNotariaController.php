@@ -75,7 +75,7 @@ class CajaNotariaController extends Controller
                 ->where('empresa_id', $empresaId)
                 ->whereIn('estado', ['aceptado', 'emitido'])
                 ->where('total', '>', 0)
-                ->where('created_at', '>=', $fechaApertura)
+                ->whereDate('fecha_emision', now()->toDateString())
                 ->get();
 
             $ingresos = $comprobantes->sum('total');

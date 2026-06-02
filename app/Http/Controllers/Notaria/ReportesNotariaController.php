@@ -61,7 +61,8 @@ class ReportesNotariaController extends Controller
         $comprobantes = DB::table('comprobantes_sunat')
             ->where('empresa_id', $empresaId)
             ->whereBetween('fecha_emision', [$desde, $hasta])
-            ->orderByDesc('fecha_emision')
+            ->orderBy('tipo_comprobante', 'desc')
+            ->orderBy('numero', 'asc')
             ->get();
 
         $actos = DB::table('actos_notariales as a')
