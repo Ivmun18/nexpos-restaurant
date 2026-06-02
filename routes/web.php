@@ -57,6 +57,10 @@ Route::get('/dashboard', function () {
         return redirect('/hotel/dashboard');
     }
 
+    if ($industryType === 'odontologia') {
+        return app(\App\Http\Controllers\Odontologia\OdontologiaController::class)->dashboard();
+    }
+
     if ($industryType === 'ferreteria') {
         $hoy  = now()->toDateString();
         $mes  = now()->month;
@@ -1049,3 +1053,5 @@ Route::get('/api/consulta-documento', function(\Illuminate\Http\Request $request
         ]);
     }
 })->middleware('web');
+
+require __DIR__.'/odontologia.php';
