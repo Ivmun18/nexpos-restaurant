@@ -100,6 +100,14 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '2006'], '_text' => $exonerada ? 'OPERACION EXONERADA' : 'OPERACION GRAVADA'],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+            'cac:PaymentTerms'         => [
+                'cbc:ID'                => ['_text' => 'FormaPago'],
+                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
+            ],
+            'cac:PaymentTerms'         => [
+                'cbc:ID'                => ['_text' => 'FormaPago'],
+                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
+            ],
             'cac:AccountingSupplierParty' => ['cac:Party' => [
                 'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
                 'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
@@ -302,6 +310,10 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '2006'], '_text' => $exonerada ? 'OPERACION EXONERADA' : 'OPERACION GRAVADA'],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+            'cac:PaymentTerms'         => [
+                'cbc:ID'                => ['_text' => 'FormaPago'],
+                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
+            ],
             'cac:AccountingSupplierParty' => [
                 'cac:Party' => [
                     'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
@@ -481,6 +493,10 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $comp->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '2006'], '_text' => $exonerada ? 'OPERACION EXONERADA' : 'OPERACION GRAVADA'],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+            'cac:PaymentTerms'         => [
+                'cbc:ID'                => ['_text' => 'FormaPago'],
+                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
+            ],
             'cac:AccountingSupplierParty' => [
                 'cac:Party' => [
                     'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
