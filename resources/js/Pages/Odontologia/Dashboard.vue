@@ -44,7 +44,6 @@
       </table>
     </div>
   </div>
-  </div>
   </AppLayout>
 </template>
 
