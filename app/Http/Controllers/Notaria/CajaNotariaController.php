@@ -65,36 +65,39 @@ class CajaNotariaController extends Controller
             ->where('caja_id', $cajaId)
             ->first();
 
-        // Calcular totales de la sesión actual
+        // Calcular totales directamente desde comprobantes_sunat (fuente de verdad)
         $resumenCaja = null;
         if ($sesionActual) {
-            $movimientos = $sesionActual->movimientos;
-            $ingresos = $movimientos->where('tipo', 'ingreso')->sum('monto');
-            $egresos  = $movimientos->where('tipo', 'egreso')->sum('monto');
+            $fechaApertura = $sesionActual->fecha_apertura;
 
-            // Desglose por método de pago
-            $porMetodo = $movimientos->where('tipo', 'ingreso')
-                ->groupBy('metodo_pago')
-                ->map(fn($g) => round($g->sum('monto'), 2));
+            // Ingresos desde comprobantes aceptados
+            $comprobantes = \DB::table('comprobantes_sunat')
+                ->where('empresa_id', $empresaId)
+                ->whereIn('estado', ['aceptado', 'emitido'])
+                ->where('total', '>', 0)
+                ->where('created_at', '>=', $fechaApertura)
+                ->get();
+
+            $ingresos = $comprobantes->sum('total');
+
+            // Egresos desde movimientos manuales
+            $movimientos = $sesionActual->movimientos;
+            $egresos = $movimientos->where('tipo', 'egreso')->sum('monto');
 
             // Desglose por tipo de cobro
-            $cobrosExpediente = $movimientos->where('tipo', 'ingreso')
-                ->filter(fn($m) => str_contains($m->concepto, 'EXP-') || str_contains($m->concepto, 'Expediente'))
-                ->sum('monto');
-            $ventasDirectas = $movimientos->where('tipo', 'ingreso')
-                ->filter(fn($m) => str_contains($m->concepto, 'Venta directa'))
-                ->sum('monto');
-            $serviciosRapidos = $movimientos->where('tipo', 'ingreso')
-                ->filter(fn($m) => str_contains($m->concepto, 'Servicio rapido'))
-                ->sum('monto');
-            $apertura = $movimientos->where('tipo', 'ingreso')
-                ->filter(fn($m) => str_contains($m->concepto, 'Apertura'))
-                ->sum('monto');
+            $cobrosExpediente = $comprobantes->whereNotNull('acto_id')->sum('total');
+            $serviciosRapidos = $comprobantes->whereNull('acto_id')->sum('total');
+
+            // Desglose por método de pago (desde movimientos)
+            $porMetodo = $movimientos->where('tipo', 'ingreso')
+                ->filter(fn($m) => !str_contains($m->concepto, 'Apertura'))
+                ->groupBy('metodo_pago')
+                ->map(fn($g) => round($g->sum('monto'), 2));
 
             $resumenCaja = [
                 'por_metodo'          => $porMetodo,
                 'cobros_expediente'   => round($cobrosExpediente, 2),
-                'ventas_directas'     => round($ventasDirectas, 2),
+                'ventas_directas'     => 0,
                 'servicios_rapidos'   => round($serviciosRapidos, 2),
                 'id'             => $sesionActual->id,
                 'apertura'       => $sesionActual->created_at,
