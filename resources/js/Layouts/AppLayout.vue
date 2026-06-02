@@ -648,7 +648,7 @@ const menuItems = computed(() => {
 })
 
 const menuSections = computed(() => {
-    const orden = ['_default_', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'AJUSTES']
+    const orden = ['ODONTOLOGIA', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'PRINCIPAL', '_default_', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {
