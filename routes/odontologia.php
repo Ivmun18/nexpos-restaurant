@@ -57,6 +57,10 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::put('/laboratorio/pedidos/{id}', [LaboratorioController::class, 'updatePedido'])->name('laboratorio.update');
     Route::get('/proveedores', [LaboratorioController::class, 'proveedores'])->name('proveedores.index');
     Route::post('/proveedores', [LaboratorioController::class, 'storeProveedor'])->name('proveedores.store');
+    // Facturación
+    Route::get('/facturacion', [\App\Http\Controllers\Odontologia\ComprobanteController::class, 'index'])->name('facturacion.index');
+    Route::post('/facturacion/emitir', [\App\Http\Controllers\Odontologia\ComprobanteController::class, 'emitir'])->name('facturacion.emitir');
+
     Route::get('/insumos', [LaboratorioController::class, 'insumos'])->name('insumos.index');
     Route::post('/insumos', [LaboratorioController::class, 'storeInsumo'])->name('insumos.store');
     Route::put('/insumos/{id}', [LaboratorioController::class, 'updateInsumo'])->name('insumos.update');
