@@ -454,6 +454,9 @@ async function cobrarServicioRapido() {
         if (payload.tipo_servicio === '__otro__') {
             payload.tipo_servicio = payload.tipo_servicio_custom || 'Servicio notarial'
         }
+        // Tipo comprobante según documento: RUC=Factura, DNI=Boleta
+        const docLen = (payload.cliente_documento || '').replace(/\D/g, '').length
+        payload.tipo_comprobante = docLen === 11 ? '01' : '03'
         const res = await fetch('/notaria/caja/servicio-rapido', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
