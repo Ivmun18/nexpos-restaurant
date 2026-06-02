@@ -27,7 +27,7 @@
             <div style="padding:14px 16px; border-bottom:1px solid #F0F2F5; flex-shrink:0;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="width:40px; height:40px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
-                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : empresa.industry_type === 'notaria' ? '⚖️' : empresa.industry_type === 'gimnasio' ? '💪' : empresa.industry_type === 'hotel' ? '🏨' : '🔧' }}
+                        {{ empresa.industry_type === 'restaurante' ? '🍽️' : empresa.industry_type === 'farmacia' ? '💊' : empresa.industry_type === 'minimarket' ? '🏪' : empresa.industry_type === 'ferreteria' ? '🔨' : empresa.industry_type === 'notaria' ? '⚖️' : empresa.industry_type === 'gimnasio' ? '💪' : empresa.industry_type === 'hotel' ? '🏨' : empresa.industry_type === 'odontologia' ? '🦷' : '🔧' }}
                     </div>
                     <div v-if="!collapsed">
                         <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0;">NEXPOS</p>
@@ -380,6 +380,7 @@ const modulesEnabled = computed(() => {
 
 // 🎨 PALETA DE COLORES POR SECCIÓN
 const sectionColors = {
+    ODONTOLOGIA: { bg: '#EDE9FE', text: '#7C3AED', border: '#8B5CF6' },
     'PRINCIPAL':    { bg: '#E6F1FB', icon: '#185FA5', text: '#0C447C' },
     'RESTAURANTE':  { bg: '#FAECE7', icon: '#993C1D', text: '#4A1B0C' },
     'FARMACIA':     { bg: '#E1F5EE', icon: '#0F6E56', text: '#04342C' },
@@ -450,6 +451,17 @@ const allMenuItems = [
     { path: '/gimnasio/clases',      icon: 'calendar',   label: 'Clases',        module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/accesos',     icon: 'door-enter', label: 'Accesos',       module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'gimnasio', section: 'GIMNASIO' },
+
+    // ODONTOLOGIA
+    { path: '/odontologia/dashboard',  icon: 'dashboard',  label: 'Dashboard',        module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/pacientes',  icon: 'users',      label: 'Pacientes',        module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/citas',      icon: 'calendar',   label: 'Citas',            module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/doctores',   icon: 'doctor',     label: 'Doctores',         module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/presupuestos', icon: 'reporte',  label: 'Presupuestos',     module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/pagos',      icon: 'caja',       label: 'Pagos',            module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/laboratorio',icon: 'lab',        label: 'Laboratorio',      module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/proveedores',icon: 'proveedor',  label: 'Proveedores',      module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/insumos',    icon: 'cesta',      label: 'Insumos',          module: 'odontologia', section: 'ODONTOLOGIA' },
 
     // HOTEL
     { path: '/hotel/dashboard',    icon: 'dashboard',  label: 'Dashboard',     module: 'hotel', section: 'HOTEL' },
@@ -603,6 +615,11 @@ const menuItems = computed(() => {
         // Ocultar módulos de gimnasio si no es gimnasio
         if (industry !== 'gimnasio') {
             if (item.section === 'GIMNASIO') return false
+        }
+
+        // Ocultar módulos de odontología si no es odontología
+        if (industry !== 'odontologia') {
+            if (item.section === 'ODONTOLOGIA') return false
         }
 
         // Ocultar módulos de hotel si no es hotel
