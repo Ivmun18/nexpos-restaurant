@@ -14,6 +14,21 @@
             </button>
         </div>
 
+        <!-- Historial de cierres -->
+        <div v-if="historialCierres && historialCierres.length" style="max-width:400px; margin:1.5rem auto 0; background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+            <p style="font-size:13px; font-weight:700; color:#374151; margin:0 0 12px;">📋 Historial de cierres</p>
+            <div v-for="c in historialCierres" :key="c.fecha_cierre" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #F1F5F9;">
+                <div>
+                    <p style="margin:0; font-size:13px; font-weight:600; color:#374151;">{{ formatFecha(c.fecha_cierre) }}</p>
+                    <p v-if="c.observaciones" style="margin:2px 0 0; font-size:11px; color:#94A3B8;">{{ c.observaciones }}</p>
+                </div>
+                <div style="text-align:right;">
+                    <p style="margin:0; font-size:15px; font-weight:800; color:#10B981;">S/ {{ Number(c.monto_cierre_sistema).toFixed(2) }}</p>
+                    <p v-if="c.monto_cierre_real" style="margin:0; font-size:11px; color:#64748B;">Contado: S/ {{ Number(c.monto_cierre_real).toFixed(2) }}</p>
+                </div>
+            </div>
+        </div>
+
         <template v-if="sesionAbierta">
 
             <!-- BARRA ESTADO CAJA -->
@@ -498,6 +513,7 @@ const props = defineProps({
     pendientes:    { type: Array,   default: () => [] },
     pagadosHoy:    { type: Array,   default: () => [] },
     sesionAbierta: { type: Boolean, default: false },
+    historialCierres: { type: Array, default: () => [] },
     resumenCaja:   { type: Object,  default: null },
 })
 

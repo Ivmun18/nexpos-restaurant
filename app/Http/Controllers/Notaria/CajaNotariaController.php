@@ -130,12 +130,23 @@ class CajaNotariaController extends Controller
                 'estado_pago'           => $a->estado_pago,
             ]);
 
+        // Historial de cierres de caja
+        $historialCierres = \DB::table('sesiones_caja as s')
+            ->join('caja as c', 's.caja_id', '=', 'c.id')
+            ->where('c.empresa_id', $empresaId)
+            ->where('s.estado', 'cerrada')
+            ->orderByDesc('s.fecha_cierre')
+            ->limit(10)
+            ->select('s.fecha_cierre', 's.monto_cierre_sistema', 's.monto_cierre_real', 's.observaciones')
+            ->get();
+
         return Inertia::render('Notaria/Caja/Index', [
-            'pendientes'    => $pendientes,
-            'pagadosHoy'    => $pagadosHoy,
-            'sesionAbierta' => $sesionAbierta,
-            'resumenCaja'   => $resumenCaja,
-            'filtros'       => ['buscar' => $buscar],
+            'pendientes'      => $pendientes,
+            'pagadosHoy'      => $pagadosHoy,
+            'sesionAbierta'   => $sesionAbierta,
+            'resumenCaja'     => $resumenCaja,
+            'filtros'         => ['buscar' => $buscar],
+            'historialCierres'=> $historialCierres,
         ]);
     }
 
