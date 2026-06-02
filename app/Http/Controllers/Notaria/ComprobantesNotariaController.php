@@ -164,6 +164,7 @@ class ComprobantesNotariaController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
+                'enlace_cdr'               => isset($request->items[0]['descripcion']) ? $request->items[0]['descripcion'] : null,
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
@@ -369,6 +370,7 @@ class ComprobantesNotariaController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
+                'enlace_cdr'               => isset($request->items[0]['descripcion']) ? $request->items[0]['descripcion'] : null,
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
@@ -573,6 +575,8 @@ class ComprobantesNotariaController extends Controller
         if ($comp->acto_id) {
             $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
             if ($acto) $asunto = $acto->asunto;
+        } elseif ($comp->enlace_cdr) {
+            $asunto = $comp->enlace_cdr;
         }
 
         $items = array_filter([
