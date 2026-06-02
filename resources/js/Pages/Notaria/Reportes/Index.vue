@@ -27,7 +27,7 @@
             <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px;">
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
                     <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">COMPROBANTES</p>
-                    <p style="font-size:28px; font-weight:800; color:#4F46E5; margin:0;">{{ comprobantes.length }}</p>
+                    <p style="font-size:28px; font-weight:800; color:#4F46E5; margin:0;">{{ comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').length }}</p>
                 </div>
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
                     <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">TOTAL VENTAS</p>
@@ -199,9 +199,9 @@ const props = defineProps({
 const filtros = ref({ desde: props.desde, hasta: props.hasta })
 const tabActivo = ref('comprobantes')
 
-const totalVentas  = computed(() => props.comprobantes.reduce((s, c) => s + Number(c.total), 0))
-const totalIgv     = computed(() => props.comprobantes.reduce((s, c) => s + Number(c.total_igv), 0))
-const totalGravada = computed(() => props.comprobantes.reduce((s, c) => s + Number(c.total_gravada), 0))
+const totalVentas  = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total), 0))
+const totalIgv     = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_igv), 0))
+const totalGravada = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_gravada), 0))
 
 const reenviando = ref(null)
 
