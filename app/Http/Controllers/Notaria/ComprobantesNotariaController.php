@@ -405,18 +405,20 @@ class ComprobantesNotariaController extends Controller
                 );
             }
 
-            // Registrar en caja si hay sesión abierta
-            $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
-            if ($sesion) {
-                \DB::table('caja_movimientos')->insert([
-                    'sesion_id'  => $sesion->id,
-                    'usuario_id' => auth()->id(),
-                    'tipo'       => 'ingreso',
-                    'concepto'   => 'Venta directa ' . $fileName,
-                    'monto'      => $total,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            // Registrar en caja si hay sesión abierta (solo si no viene de servicio rápido)
+            if (!$request->input('skip_caja_registro')) {
+                $sesion = \DB::table('sesiones_caja')->where('estado', 'abierta')->first();
+                if ($sesion) {
+                    \DB::table('caja_movimientos')->insert([
+                        'sesion_id'  => $sesion->id,
+                        'usuario_id' => auth()->id(),
+                        'tipo'       => 'ingreso',
+                        'concepto'   => 'Venta directa ' . $fileName,
+                        'monto'      => $total,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
 
             return response()->json([

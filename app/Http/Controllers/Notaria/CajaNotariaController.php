@@ -231,6 +231,7 @@ class CajaNotariaController extends Controller
 
         $requestEmitir = new \Illuminate\Http\Request();
         $requestEmitir->merge([
+            'skip_caja_registro'       => true,
             'tipo_comprobante'         => (strlen($request->cliente_documento ?? '') === 11) ? '01' : '03',
             'cliente_tipo_documento'   => strlen($request->cliente_documento ?? '') == 11 ? '6' : '1',
             'cliente_numero_documento' => $request->cliente_documento ?? '00000000',
