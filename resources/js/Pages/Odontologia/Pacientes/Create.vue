@@ -1,4 +1,5 @@
 <template>
+  <AppLayout title="Nuevo paciente" subtitle="">
   <div style="padding:24px; max-width:800px; margin:0 auto;">
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
       <a href="/odontologia/pacientes" style="color:#64748B; text-decoration:none;">← Pacientes</a>
@@ -86,9 +87,11 @@
       </div>
     </form>
   </div>
+  </AppLayout>
 </template>
 
 <script setup>
+import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 

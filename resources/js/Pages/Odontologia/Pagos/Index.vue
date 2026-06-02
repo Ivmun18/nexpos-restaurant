@@ -1,4 +1,5 @@
 <template>
+  <AppLayout title="Pagos" subtitle="">
   <div style="padding:24px; max-width:1200px; margin:0 auto;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
       <h1 style="font-size:22px; font-weight:700; margin:0;">Pagos</h1>
@@ -102,9 +103,11 @@
       </div>
     </div>
   </div>
+  </AppLayout>
 </template>
 
 <script setup>
+import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 

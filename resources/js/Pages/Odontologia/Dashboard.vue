@@ -1,4 +1,5 @@
 <template>
+  <AppLayout title="Centro Odontológico" subtitle="Resumen de operaciones">
   <div style="padding:24px; max-width:1200px; margin:0 auto;">
     <div style="margin-bottom:24px;">
       <h1 style="font-size:24px; font-weight:700; margin:0;">Centro Odontológico</h1>
@@ -43,10 +44,13 @@
       </table>
     </div>
   </div>
+  </div>
+  </AppLayout>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({ stats: Object, citas_hoy: Array })
 

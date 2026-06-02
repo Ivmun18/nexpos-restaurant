@@ -1,4 +1,5 @@
 <template>
+  <AppLayout title="Ficha del paciente" subtitle="">
   <div style="padding:24px; max-width:1200px; margin:0 auto;">
     <!-- Header -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
@@ -96,9 +97,11 @@
       </div>
     </div>
   </div>
+  </AppLayout>
 </template>
 
 <script setup>
+import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 
 const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array })
