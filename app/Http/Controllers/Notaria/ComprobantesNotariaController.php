@@ -626,6 +626,8 @@ class ComprobantesNotariaController extends Controller
             'vendedor'          => auth()->user()->name ?? 'ADMIN',
             'metodoPago'        => 'EFECTIVO',
             'exonerada'         => $exonerada,
+            'tipoComp'          => $comp->tipo_comprobante,
+            'comp'              => $comp,
         ])->setPaper([0, 0, 226.77, 700], 'portrait');
 
         return $pdf->stream($serie . '-' . $numero . '.pdf');

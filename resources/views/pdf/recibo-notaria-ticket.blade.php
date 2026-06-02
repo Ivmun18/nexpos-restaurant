@@ -23,8 +23,8 @@
     <div class="center mb">
         @php
             $logoSrc = null;
-            if($empresa->logo_path) {
-                $logoFile = storage_path('app/public/' . $empresa->logo_path);
+            if($empresa->logo) {
+                $logoFile = storage_path('app/public/' . $empresa->logo);
                 if(file_exists($logoFile)) {
                     $ext = strtolower(pathinfo($logoFile, PATHINFO_EXTENSION));
                     $ext = $ext === 'jpg' ? 'jpeg' : $ext;
@@ -114,6 +114,25 @@
     <div class="center small mb">
         <p style="margin:4px 0;">{{ $empresa->direccion }}</p>
         <p style="margin:2px 0;">{{ $empresa->distrito }} - {{ $empresa->provincia }} - {{ $empresa->departamento }}</p>
+    </div>
+
+    <div class="center mb">
+        @php
+            $qrData = implode('|', [
+                $empresa->ruc,
+                $tipoComp,
+                $serie,
+                $numero,
+                number_format($igv, 2, '.', ''),
+                number_format($total, 2, '.', ''),
+                $fecha,
+                $comp->cliente_tipo_documento,
+                $comp->cliente_numero_documento,
+            ]);
+            $qrImg = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(120)->margin(1)->generate($qrData));
+        @endphp
+        <img src="data:image/png;base64,{{ $qrImg }}" style="width:30mm; height:30mm;" />
+        <p class="small" style="margin:2px 0;">Consulta en: factura.sunat.gob.pe</p>
         <p style="margin:2px 0;">GRACIAS POR SU COMPRA</p>
     </div>
 
