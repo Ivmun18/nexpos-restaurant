@@ -147,9 +147,25 @@
                             </div>
                         </div>
                         <div style="padding:1.25rem;">
-                            <div style="margin-bottom:12px;">
+                            <div style="margin-bottom:12px; position:relative;">
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">TIPO DE SERVICIO</label>
-                                <select v-model="formRapido.tipo_servicio" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;">
+                                <div style="position:relative;">
+                                    <input v-model="servicioQuery" type="text" placeholder="🔍 Buscar o seleccionar servicio..."
+                                        @input="mostrarSugerencias=true; formRapido.tipo_servicio=''"
+                                        @focus="mostrarSugerencias=true"
+                                        @blur="setTimeout(()=>mostrarSugerencias=false, 200)"
+                                        style="width:100%; padding:9px 12px; border:1px solid #10B981; border-radius:8px; font-size:13px; box-sizing:border-box;" />
+                                    <div v-if="mostrarSugerencias" style="position:absolute; z-index:9999; background:white; border:1px solid #E2E8F0; border-radius:8px; width:100%; max-height:220px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.15); top:100%; left:0;">
+                                        <div v-for="s in serviciosFiltrados" :key="s"
+                                            @mousedown.prevent="formRapido.tipo_servicio=s; servicioQuery=s; mostrarSugerencias=false"
+                                            style="padding:9px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #F1F5F9;"
+                                            onmouseover="this.style.background='#ECFDF5'; this.style.color='#065F46'" onmouseout="this.style.background='white'; this.style.color='inherit'">
+                                            {{ s }}
+                                        </div>
+                                        <div v-if="!serviciosFiltrados.length" style="padding:9px 12px; font-size:12px; color:#94A3B8;">Sin resultados</div>
+                                    </div>
+                                </div>
+                                <select v-show="false" v-model="formRapido.tipo_servicio">
                                     <option value="">Seleccionar...</option>
                                     <option value="Legalización de Firma">Legalización de Firma</option>
                                     <option value="Legalización de DNI">Legalización de DNI</option>
@@ -491,6 +507,35 @@ const procesando             = ref(false)
 const modalCerrar            = ref(false)
 const modalServicioRapido    = ref(false)
 const procesandoRapido       = ref(false)
+const servicioQuery = ref('')
+const mostrarSugerencias = ref(false)
+const listaServicios = [
+    'Legalización de Firma','Legalización de DNI','Copia Certificada','Copia Simple',
+    'Certificación de Documento','Carta Notarial','Protesto','Constatación Domiciliaria',
+    'Constatación Notarial','Constatación Notarial Electrónica','Diligencia de Carta Notarial',
+    'Documento Privado con Certificación de Firma','Certificación de Firmas','Legalización de Libros',
+    'Apertura de Libro','Libro de Actas','Certificado Domiciliario','Declaración Jurada',
+    'Poder Especial y General','Carta Poder','Sucesión Intestada','Compra y Venta de Inmueble',
+    'Transferencia Vehicular','Prescripción Adquisitiva Vehicular','Prescripción Adquisitiva de Dominio',
+    'Constitución de Empresa','Constitución de Asociación','Constitución de Hipoteca',
+    'Escritura Pública de Donación','Donación de Acciones y Derechos sobre Bien Inmueble',
+    'Donación de Participaciones','Anticipo de Legítima','Anticipación de Herencia',
+    'Levantamiento de Anticresis','Levantamiento de Hipoteca','Levantamiento de Garantía Inmobiliaria',
+    'Inscripción Registral','Rectificación de Áreas, Linderos y Medidas Perimetricas',
+    'Rectificación de Partidas','Rectificación de Nombre','Adjudicación de Inmueble',
+    'Traslado de Dominio','Trámite de Independización','Trámite Registral','Trámite de Divorcio',
+    'Separación Convencional','Unión de Hecho','Testamento','Modificación de Estatuto',
+    'Contrato de Sesión','Contrato Privado','Contrato Privado de Transferencia de Acciones',
+    'Contrato Preparatorio de Compra y Venta con Arras','Promesa de Compra y Venta',
+    'Mutuo Dinerario a Título Oneroso','Adelanto de Donación','Transferencia de Derecho de Titular',
+    'Derecho de Trámite de Bien Futuro','Sustitución de Régimen Patrimonial',
+    'Electrónica','Biométrico','Servicios Notariales Varios',
+]
+const serviciosFiltrados = computed(() => {
+    if (!servicioQuery.value) return listaServicios
+    return listaServicios.filter(s => s.toLowerCase().includes(servicioQuery.value.toLowerCase()))
+})
+
 const formRapido = ref({
     tipo_servicio: '',
     tipo_servicio_custom: '',
