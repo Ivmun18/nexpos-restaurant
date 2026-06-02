@@ -62,7 +62,7 @@ class ReportesNotariaController extends Controller
             ->where('empresa_id', $empresaId)
             ->whereBetween('fecha_emision', [$desde, $hasta])
             ->orderBy('tipo_comprobante', 'desc')
-            ->orderBy('numero', 'asc')
+            ->orderBy('numero', 'desc')
             ->get();
 
         $actos = DB::table('actos_notariales as a')
