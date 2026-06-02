@@ -228,7 +228,7 @@ class ActoNotarialController extends Controller
 
         $acto->update(['monto_pagado' => $nuevoPagado, 'estado_pago' => $estadoPago]);
 
-        $sesion = \App\Models\SesionCaja::where('estado', 'abierta')->first();
+        $sesion = \App\Models\SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->select('sesiones_caja.*')->first();
         if ($sesion) {
             \App\Models\CajaMovimiento::create([
                 'sesion_id'    => $sesion->id,

@@ -140,7 +140,7 @@ class CajaNotariaController extends Controller
     {
         \Log::info("cobrar llamado - acto: " . $acto->id . " tipo_comp: " . $request->tipo_comprobante . " cliente: " . $request->cliente_nombre);
         // Verificar que hay caja abierta
-        if (!SesionCaja::where('estado', 'abierta')->exists()) {
+        if (!SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->exists()) {
             return back()->with('error', 'Debe abrir la caja antes de registrar cobros.');
         }
 
@@ -225,7 +225,7 @@ class CajaNotariaController extends Controller
             'cliente_documento'=> 'nullable|string',
         ]);
 
-        if (!SesionCaja::where('estado', 'abierta')->exists()) {
+        if (!SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->exists()) {
             return response()->json(['success' => false, 'mensaje' => 'No hay caja abierta.']);
         }
 
@@ -295,7 +295,7 @@ class CajaNotariaController extends Controller
 
     public function cerrar(\Illuminate\Http\Request $request)
     {
-        $sesion = SesionCaja::where('estado', 'abierta')->with('movimientos')->first();
+        $sesion = SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->with('movimientos')->select('sesiones_caja.*')->first();
 
         if (!$sesion) {
             return back()->with('error', 'No hay caja abierta.');
