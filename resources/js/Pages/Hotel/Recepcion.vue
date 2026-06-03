@@ -6,6 +6,7 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({
     reservas: Array,
     habitacionesDisponibles: Array,
+    todasHabitaciones: Array,
     huespedes: Array,
 })
 
@@ -85,6 +86,31 @@ const estadoBadge = (estado) => {
                     style="background:#3B82F6; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
                     ➕ Nuevo Check-in
                 </button>
+            </div>
+
+            <!-- Mapa rápido de habitaciones -->
+            <div style="background:#fff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:16px; margin-bottom:20px;">
+                <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:12px;">🗺️ Estado de habitaciones</div>
+                <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                    <div v-for="h in todasHabitaciones" :key="h.id"
+                        :style="{
+                            padding:'10px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'600', minWidth:'100px', textAlign:'center',
+                            background: h.estado==='disponible' ? '#DCFCE7' : h.estado==='ocupada' ? '#FEE2E2' : h.estado==='limpieza' ? '#FEF9C3' : '#F1F5F9',
+                            color: h.estado==='disponible' ? '#16A34A' : h.estado==='ocupada' ? '#DC2626' : h.estado==='limpieza' ? '#CA8A04' : '#6B7280',
+                            border: '1px solid',
+                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : '#E2E8F0',
+                        }">
+                        <div style="font-size:14px;">Hab. {{ h.numero }}</div>
+                        <div style="font-size:11px; opacity:0.8;">{{ h.tipo?.nombre }}</div>
+                        <div style="font-size:11px; margin-top:4px;">
+                            {{ h.estado==='disponible' ? '✅ Libre' : h.estado==='ocupada' ? '🔴 Ocupada' : h.estado==='limpieza' ? '🧹 Limpieza' : '🔧 Mant.' }}
+                        </div>
+                        <div style="font-size:11px;">S/ {{ h.tipo?.precio_noche }}/noche</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:16px; margin-top:12px; font-size:11px; color:#64748B;">
+                    <span>✅ Disponible</span><span>🔴 Ocupada</span><span>🧹 Limpieza</span><span>🔧 Mantenimiento</span>
+                </div>
             </div>
 
             <!-- Lista de reservas activas -->

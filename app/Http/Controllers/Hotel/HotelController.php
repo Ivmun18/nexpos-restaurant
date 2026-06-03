@@ -109,7 +109,10 @@ class HotelController extends Controller
             ->where('empresa_id', $empresaId)
             ->where('estado', 'disponible')->get();
         $huespedes = HotelHuesped::where('empresa_id', $empresaId)->orderBy('nombre_completo')->get();
-        return Inertia::render('Hotel/Recepcion', compact('reservas','habitacionesDisponibles','huespedes'));
+        $todasHabitaciones = HotelHabitacion::with('tipo')
+            ->where('empresa_id', $empresaId)
+            ->orderBy('numero')->get();
+        return Inertia::render('Hotel/Recepcion', compact('reservas','habitacionesDisponibles','huespedes','todasHabitaciones'));
     }
 
     public function checkin(Request $request)
