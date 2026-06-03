@@ -47,8 +47,8 @@
 
             <nav style="flex:1; min-height:0; padding:8px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
     
-                <!-- Dashboard siempre visible -->
-                <a href="/dashboard" :style="menuItem('/dashboard')">
+                <!-- Dashboard siempre visible (oculto si tiene dashboard propio) -->
+                <a v-if="!['hotel','gimnasio','odontologia'].includes(empresa.industry_type)" href="/dashboard" :style="menuItem('/dashboard')">
                     <span :style="iconWrapperStyle('PRINCIPAL', '/dashboard')">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <rect x="3" y="3" width="7" height="9" rx="1"/>
