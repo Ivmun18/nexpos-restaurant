@@ -15,6 +15,69 @@ const props = defineProps({
 const desde = ref(props.desde)
 const hasta = ref(props.hasta)
 const buscar = () => router.get('/hotel/reportes', { desde: desde.value, hasta: hasta.value })
+
+const exportarPDF = () => {
+    const t = props
+    const filas = props.reservas.map((r, i) => `
+        <tr style="border-bottom:1px solid #eee;">
+            <td>${i+1}</td>
+            <td>${r.codigo}</td>
+            <td>${r.huesped?.nombre_completo || '-'}</td>
+            <td>${r.huesped?.numero_documento || '-'}</td>
+            <td>Hab. ${r.habitacion?.numero} — ${r.habitacion?.tipo?.nombre}</td>
+            <td>${new Date(r.fecha_checkin).toLocaleDateString('es-PE')}</td>
+            <td>${new Date(r.fecha_checkout_previsto).toLocaleDateString('es-PE')}</td>
+            <td>${r.num_noches}</td>
+            <td>S/ ${Number(r.precio_noche).toFixed(2)}</td>
+            <td>S/ ${Number(r.total).toFixed(2)}</td>
+            <td>S/ ${Number(r.monto_pagado).toFixed(2)}</td>
+            <td>${r.estado_pago?.toUpperCase()}</td>
+        </tr>`).join('')
+
+    const html = `<html><head><title>Reporte Hotel</title>
+    <style>
+        body{font-family:Arial,sans-serif;padding:20px;font-size:12px;}
+        h2{text-align:center;color:#1E293B;}
+        .subtitulo{text-align:center;color:#64748B;margin-bottom:20px;}
+        .resumen{display:flex;gap:20px;margin-bottom:20px;}
+        .card{border:1px solid #E2E8F0;border-radius:8px;padding:12px 20px;flex:1;text-align:center;}
+        .card-valor{font-size:20px;font-weight:700;color:#3B82F6;}
+        table{width:100%;border-collapse:collapse;}
+        th{background:#1E293B;color:#fff;padding:8px;text-align:left;font-size:11px;}
+        td{padding:7px 8px;font-size:11px;}
+        tr:nth-child(even){background:#F8FAFC;}
+        .total-row{font-weight:700;background:#EFF6FF;}
+        @media print{button{display:none}}
+    </style></head><body>
+    <h2>🏨 NEXPOS HOTEL — Reporte de Estadías</h2>
+    <p class="subtitulo">Período: ${props.desde} al ${props.hasta}</p>
+    <div class="resumen">
+        <div class="card"><div>Total Reservas</div><div class="card-valor">${props.totalReservas}</div></div>
+        <div class="card"><div>Ingresos Totales</div><div class="card-valor">S/ ${Number(props.totalIngresos).toFixed(2)}</div></div>
+        <div class="card"><div>Ocupación</div><div class="card-valor">${props.ocupacionPromedio}%</div></div>
+    </div>
+    <table>
+        <thead><tr>
+            <th>N°</th><th>Código</th><th>Huésped</th><th>Documento</th><th>Habitación</th>
+            <th>Check-in</th><th>Check-out</th><th>Noches</th><th>Precio/noche</th><th>Total</th><th>Pagado</th><th>Estado</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+        <tfoot><tr class="total-row">
+            <td colspan="9" style="text-align:right;">TOTAL:</td>
+            <td>S/ ${Number(props.reservas.reduce((a,r)=>a+Number(r.total),0)).toFixed(2)}</td>
+            <td>S/ ${Number(props.totalIngresos).toFixed(2)}</td>
+            <td></td>
+        </tr></tfoot>
+    </table>
+    <p style="margin-top:30px;font-size:10px;color:#94A3B8;text-align:center;">Generado el ${new Date().toLocaleString('es-PE')}</p>
+    </body></html>`
+
+    const ventana = window.open('', '_blank', 'width=1000,height=700')
+    ventana.document.write(html)
+    ventana.document.close()
+    ventana.focus()
+    setTimeout(() => ventana.print(), 500)
+}
 </script>
 <template>
     <AppLayout title="Reportes Hotel">
@@ -28,6 +91,7 @@ const buscar = () => router.get('/hotel/reportes', { desde: desde.value, hasta: 
                     <input type="date" v-model="hasta" style="padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px;" />
                 </div>
                 <button @click="buscar" style="background:#3B82F6; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer;">🔍 Buscar</button>
+                <button @click="exportarPDF" style="background:#DC2626; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer;">📄 Exportar PDF</button>
             </div>
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
                 <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #3B82F6;">
