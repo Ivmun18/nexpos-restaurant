@@ -34,8 +34,8 @@
                     <p style="font-size:28px; font-weight:800; color:#10B981; margin:0;">S/ {{ totalVentas.toFixed(2) }}</p>
                 </div>
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
-                    <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">IGV TOTAL</p>
-                    <p style="font-size:28px; font-weight:800; color:#F59E0B; margin:0;">S/ {{ totalIgv.toFixed(2) }}</p>
+                    <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">INGRESOS HOY</p>
+                    <p style="font-size:28px; font-weight:800; color:#F59E0B; margin:0;">S/ {{ ingresosHoy.toFixed(2) }}</p>
                 </div>
             </div>
 
@@ -200,6 +200,10 @@ const filtros = ref({ desde: props.desde, hasta: props.hasta })
 const tabActivo = ref('comprobantes')
 
 const totalVentas  = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total), 0))
+const ingresosHoy  = computed(() => {
+    const hoy = new Date().toISOString().slice(0,10)
+    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision === hoy).reduce((s,c) => s + Number(c.total), 0)
+})
 const totalIgv     = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_igv), 0))
 const totalGravada = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_gravada), 0))
 
