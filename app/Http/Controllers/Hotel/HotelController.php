@@ -81,6 +81,11 @@ class HotelController extends Controller
     public function storeTipo(Request $request)
     {
         $empresaId = auth()->user()->empresa_id;
+        $request->validate([
+            'nombre'       => 'required|string|max:100',
+            'precio_noche' => 'required|numeric|min:0',
+            'capacidad'    => 'required|integer|min:1',
+        ]);
         HotelTipoHabitacion::create([...$request->only(['nombre','descripcion','precio_noche','capacidad','comodidades','activo']), 'empresa_id' => $empresaId]);
         return back()->with('success', 'Tipo creado');
     }

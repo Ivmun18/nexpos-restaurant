@@ -6,7 +6,7 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({ tipos: Array })
 const showForm = ref(false)
 const editando = ref(null)
-const form = ref({ nombre: '', descripcion: '', precio_noche: '', capacidad: 2, activo: true })
+const form = ref({ nombre: '', descripcion: '', precio_noche: 0, capacidad: 2, activo: true })
 
 const abrir = (t = null) => {
     editando.value = t
