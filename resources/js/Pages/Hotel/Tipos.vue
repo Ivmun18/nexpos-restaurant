@@ -15,10 +15,15 @@ const abrir = (t = null) => {
 }
 
 const guardar = async () => {
-    const url = editando.value ? '/hotel/tipos/' + editando.value.id : '/hotel/tipos'
-    const method = editando.value ? 'PUT' : 'POST'
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, body: JSON.stringify(form.value) })
-    if (res.ok) { showForm.value = false; router.reload() }
+    if (editando.value) {
+        router.put('/hotel/tipos/' + editando.value.id, form.value, {
+            onSuccess: () => { showForm.value = false }
+        })
+    } else {
+        router.post('/hotel/tipos', form.value, {
+            onSuccess: () => { showForm.value = false }
+        })
+    }
 }
 </script>
 <template>
