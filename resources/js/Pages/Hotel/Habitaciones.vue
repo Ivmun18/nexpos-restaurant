@@ -14,17 +14,29 @@ const abrir = (h = null) => {
     showForm.value = true
 }
 
-const guardar = async () => {
-    const url = editando.value ? '/hotel/habitaciones/' + editando.value.id : '/hotel/habitaciones'
-    const method = editando.value ? 'PUT' : 'POST'
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, body: JSON.stringify(form.value) })
-    if (res.ok) { showForm.value = false; router.reload() }
+const errores = ref({})
+
+const guardar = () => {
+    errores.value = {}
+    if (!form.value.tipo_id) { errores.value.tipo_id = 'Selecciona un tipo de habitación'; return }
+    if (!form.value.numero) { errores.value.numero = 'Ingresa el número de habitación'; return }
+
+    if (editando.value) {
+        router.put('/hotel/habitaciones/' + editando.value.id, form.value, {
+            onSuccess: () => { showForm.value = false },
+            onError: (e) => { errores.value = e }
+        })
+    } else {
+        router.post('/hotel/habitaciones', form.value, {
+            onSuccess: () => { showForm.value = false },
+            onError: (e) => { errores.value = e }
+        })
+    }
 }
 
-const eliminar = async (id) => {
+const eliminar = (id) => {
     if (!confirm('¿Eliminar habitación?')) return
-    await fetch('/hotel/habitaciones/' + id, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content } })
-    router.reload()
+    router.delete('/hotel/habitaciones/' + id)
 }
 
 const estadoColor = (e) => ({ disponible: '#16A34A', ocupada: '#DC2626', limpieza: '#D97706', mantenimiento: '#6B7280' }[e] || '#6B7280')
@@ -78,6 +90,7 @@ const estadoColor = (e) => ({ disponible: '#16A34A', ocupada: '#DC2626', limpiez
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                             <div><label style="font-size:12px; font-weight:600;">Número</label>
                                 <input v-model="form.numero" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; margin-top:4px;" placeholder="101" />
+                            <p v-if="errores.numero" style="color:#DC2626; font-size:12px; margin:4px 0 0;">{{ errores.numero }}</p>
                             </div>
                             <div><label style="font-size:12px; font-weight:600;">Piso</label>
                                 <input type="number" v-model="form.piso" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; margin-top:4px;" />
