@@ -91,7 +91,7 @@ const exportarPDF = () => {
                     <input type="date" v-model="hasta" style="padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px;" />
                 </div>
                 <button @click="buscar" style="background:#3B82F6; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer;">🔍 Buscar</button>
-                <button @click="exportarPDF" style="background:#DC2626; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer;">📄 Exportar PDF</button>
+                <a :href="'/hotel/reportes/pdf?desde=' + desde + '&hasta=' + hasta" target="_blank" style="background:#DC2626; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none;">📄 Descargar PDF</a>
             </div>
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
                 <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #3B82F6;">

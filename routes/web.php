@@ -1023,6 +1023,7 @@ Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(
     Route::get('/housekeeping', [App\Http\Controllers\Hotel\HotelController::class, 'housekeeping'])->name('housekeeping');
     Route::put('/housekeeping/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'actualizarHousekeeping'])->name('housekeeping.update');
     Route::get('/reportes', [App\Http\Controllers\Hotel\HotelController::class, 'reportes'])->name('reportes');
+    Route::get('/reportes/pdf', [App\Http\Controllers\Hotel\HotelController::class, 'reportesPdf'])->name('reportes.pdf');
 });
 
 // Proxy para consulta DNI/RUC

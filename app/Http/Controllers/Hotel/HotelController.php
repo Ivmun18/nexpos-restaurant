@@ -210,6 +210,24 @@ class HotelController extends Controller
         ]);
     }
 
+    public function reportesPdf(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $empresa   = auth()->user()->empresa;
+        $desde = $request->get('desde', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', Carbon::now()->format('Y-m-d'));
+
+        $reservas = HotelReserva::with('habitacion.tipo','huesped')
+            ->where('empresa_id', $empresaId)
+            ->whereBetween('fecha_checkin', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
+            ->orderBy('fecha_checkin','desc')->get();
+
+        $totalIngresos = $reservas->sum('monto_pagado');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.hotel_reporte', compact('reservas','empresa','desde','hasta','totalIngresos'));
+        return $pdf->download('Reporte_Hotel_' . $desde . '_a_' . $hasta . '.pdf');
+    }
+
     // ── HOUSEKEEPING ──
     public function housekeeping()
     {
