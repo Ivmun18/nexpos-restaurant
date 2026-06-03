@@ -6,15 +6,12 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({ tareas: Array, habitaciones: Array })
 const cargando = ref(null)
 
-const actualizar = async (tarea, estado) => {
+const actualizar = (tarea, estado) => {
     cargando.value = tarea.id
-    const res = await fetch('/hotel/housekeeping/' + tarea.id, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-        body: JSON.stringify({ estado })
+    router.put('/hotel/housekeeping/' + tarea.id, { estado }, {
+        onSuccess: () => { cargando.value = null },
+        onError: () => { cargando.value = null }
     })
-    if (res.ok) router.reload()
-    cargando.value = null
 }
 
 const estadoColor = (e) => ({ pendiente: '#DC2626', en_proceso: '#D97706', completado: '#16A34A' }[e] || '#6B7280')
