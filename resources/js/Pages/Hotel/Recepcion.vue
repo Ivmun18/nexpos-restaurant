@@ -21,7 +21,7 @@ const form = ref({
     email: '',
     telefono: '',
     nacionalidad: 'Peruana',
-    fecha_checkin: new Date().toISOString().slice(0,16),
+    fecha_checkin: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16),
     fecha_checkout: '',
     num_huespedes: 1,
     observaciones: '',
