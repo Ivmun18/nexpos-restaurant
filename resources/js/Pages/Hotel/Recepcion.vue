@@ -59,8 +59,8 @@ const hacerCheckout = async (reserva) => {
         })
         const data = await res.json()
         if (data.success) {
-            alert('✅ ' + data.mensaje)
             showCheckout.value = null
+            ticket.value = data.ticket
             router.reload()
         } else {
             alert('❌ ' + (data.mensaje || 'Error'))
@@ -69,6 +69,7 @@ const hacerCheckout = async (reserva) => {
 }
 
 const infoHuesped = ref(null)
+const ticket = ref(null)
 
 const clickHabitacion = (h) => {
     if (h.estado === 'disponible') {
@@ -317,5 +318,38 @@ const estadoBadge = (estado) => {
                 </div>
             </div>
         </div>
+
+            <!-- Modal Ticket Checkout -->
+            <div v-if="ticket" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:2000;">
+                <div style="background:#fff; border-radius:16px; padding:32px; width:420px; font-family:monospace;">
+                    <div style="text-align:center; margin-bottom:16px;">
+                        <div style="font-size:20px; font-weight:700;">🏨 NEXPOS HOTEL</div>
+                        <div style="font-size:12px; color:#64748B;">COMPROBANTE DE ESTADÍA</div>
+                        <div style="border-top:2px dashed #E2E8F0; margin:12px 0;"></div>
+                    </div>
+                    <div style="font-size:13px; display:grid; gap:6px;">
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Código:</span><b>{{ ticket.codigo }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Huésped:</span><b>{{ ticket.huesped }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Documento:</span><b>{{ ticket.documento }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Habitación:</span><b>{{ ticket.habitacion }}</b></div>
+                        <div style="border-top:1px dashed #E2E8F0; margin:8px 0;"></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Check-in:</span><b>{{ new Date(ticket.fecha_checkin).toLocaleString('es-PE') }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Check-out:</span><b>{{ new Date(ticket.fecha_checkout).toLocaleString('es-PE') }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Noches:</span><b>{{ ticket.noches }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Precio/noche:</span><b>S/ {{ Number(ticket.precio_noche).toFixed(2) }}</b></div>
+                        <div style="border-top:1px dashed #E2E8F0; margin:8px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; font-size:16px;"><span style="font-weight:700;">TOTAL:</span><b style="color:#16A34A;">S/ {{ Number(ticket.total).toFixed(2) }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Método pago:</span><b>{{ ticket.metodo_pago?.toUpperCase() }}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="color:#64748B;">Estado:</span><b :style="{color: ticket.estado_pago==='pagado' ? '#16A34A' : '#DC2626'}">{{ ticket.estado_pago?.toUpperCase() }}</b></div>
+                        <div style="border-top:2px dashed #E2E8F0; margin:12px 0;"></div>
+                        <div style="text-align:center; font-size:11px; color:#64748B;">¡Gracias por su visita!</div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button @click="window.print()" style="flex:1; background:#3B82F6; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">🖨️ Imprimir</button>
+                        <button @click="ticket=null" style="flex:1; background:#F1F5F9; color:#374151; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">✕ Cerrar</button>
+                    </div>
+                </div>
+            </div>
+
     </AppLayout>
 </template>

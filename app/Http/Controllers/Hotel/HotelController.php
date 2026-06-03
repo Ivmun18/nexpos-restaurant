@@ -189,7 +189,25 @@ class HotelController extends Controller
             'estado'        => 'pendiente',
         ]);
 
-        return response()->json(['success' => true, 'mensaje' => 'Check-out realizado ✅']);
+        $reserva->load('habitacion.tipo', 'huesped', 'pagos');
+        return response()->json([
+            'success' => true,
+            'mensaje' => 'Check-out realizado ✅',
+            'ticket'  => [
+                'codigo'          => $reserva->codigo,
+                'huesped'         => $reserva->huesped->nombre_completo,
+                'documento'       => $reserva->huesped->numero_documento,
+                'habitacion'      => 'Hab. ' . $reserva->habitacion->numero . ' — ' . $reserva->habitacion->tipo->nombre,
+                'fecha_checkin'   => $reserva->fecha_checkin,
+                'fecha_checkout'  => $reserva->fecha_checkout_real,
+                'noches'          => $reserva->noches,
+                'precio_noche'    => $reserva->precio_noche,
+                'total'           => $reserva->total,
+                'monto_pagado'    => $reserva->monto_pagado,
+                'estado_pago'     => $reserva->estado_pago,
+                'metodo_pago'     => $request->metodo_pago ?? 'efectivo',
+            ]
+        ]);
     }
 
     // ── HOUSEKEEPING ──
