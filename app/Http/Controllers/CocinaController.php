@@ -12,7 +12,9 @@ class CocinaController extends Controller
 {
     public function index(): Response
     {
+        $empresa_id = auth()->user()->empresa_id;
         $pedidos = Pedido::with(['detalles', 'mesa'])
+            ->where('empresa_id', $empresa_id)
             ->whereIn('estado', ['enviado'])
             ->orderBy('created_at', 'asc')
             ->get();

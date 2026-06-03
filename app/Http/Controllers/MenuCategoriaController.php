@@ -12,7 +12,9 @@ class MenuCategoriaController extends Controller
 {
     public function index(): Response
     {
+        $empresa_id = auth()->user()->empresa_id;
         $categorias = MenuCategoria::with('productosActivos')
+            ->where('empresa_id', $empresa_id)
             ->orderBy('orden')
             ->get();
 
@@ -32,6 +34,7 @@ class MenuCategoriaController extends Controller
             'activo'      => 'boolean',
         ]);
 
+        $validated['empresa_id'] = auth()->user()->empresa_id;
         MenuCategoria::create($validated);
 
         return redirect()->back()->with('success', 'Categoría creada.');
@@ -61,9 +64,10 @@ class MenuCategoriaController extends Controller
 
     public function apiCarta()
     {
+        $empresa_id = auth()->user()->empresa_id;
         $categorias = MenuCategoria::with(['productosActivos' => function ($q) {
             $q->where('disponible', true);
-        }])->activas()->get();
+        }])->where('empresa_id', $empresa_id)->activas()->get();
 
         return response()->json($categorias);
     }
