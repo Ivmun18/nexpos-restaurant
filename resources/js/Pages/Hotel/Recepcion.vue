@@ -23,7 +23,12 @@ const form = ref({
     telefono: '',
     nacionalidad: 'Peruana',
     fecha_checkin: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16),
-    fecha_checkout: '',
+    fecha_checkout: (() => {
+        const manana = new Date()
+        manana.setDate(manana.getDate() + 1)
+        manana.setHours(12, 0, 0, 0)
+        return new Date(manana.getTime() - manana.getTimezoneOffset() * 60000).toISOString().slice(0,16)
+    })(),
     num_huespedes: 1,
     observaciones: '',
 })
