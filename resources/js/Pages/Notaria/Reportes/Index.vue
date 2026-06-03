@@ -63,8 +63,7 @@
                                 <th style="padding:12px 16px; text-align:left;">Cliente</th>
                                 <th style="padding:12px 16px; text-align:left;">Comprobante</th>
                                 <th style="padding:12px 16px; text-align:left;">Serie-Número</th>
-                                <th style="padding:12px 16px; text-align:right;">Subtotal</th>
-                                <th style="padding:12px 16px; text-align:right;">IGV</th>
+
                                 <th style="padding:12px 16px; text-align:right;">Total</th>
                                 <th style="padding:12px 16px; text-align:left;">Estado</th>
                                 <th style="padding:12px 16px; text-align:left;">Acciones</th>
@@ -81,8 +80,7 @@
                                     </span>
                                 </td>
                                 <td style="padding:10px 16px; color:#374151; font-family:monospace;">{{ c.serie }}-{{ String(c.numero).padStart(8, '0') }}</td>
-                                <td style="padding:10px 16px; text-align:right; color:#64748B;">{{ Number(c.total_gravada).toFixed(2) }}</td>
-                                <td style="padding:10px 16px; text-align:right; color:#64748B;">{{ Number(c.total_igv).toFixed(2) }}</td>
+
                                 <td style="padding:10px 16px; text-align:right; font-weight:700; color:#1E293B;">S/ {{ Number(c.total).toFixed(2) }}</td>
                                 <td style="padding:10px 16px;">
                                     <span :style="{ background: c.estado==='aceptado' ? '#D1FAE5' : c.estado==='emitido' ? '#FEF3C7' : '#FEE2E2', color: c.estado==='aceptado' ? '#065F46' : c.estado==='emitido' ? '#92400E' : '#991B1B', padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700' }">
@@ -201,8 +199,9 @@ const tabActivo = ref('comprobantes')
 
 const totalVentas  = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total), 0))
 const ingresosHoy  = computed(() => {
-    const hoy = new Date().toISOString().slice(0,10)
-    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision === hoy).reduce((s,c) => s + Number(c.total), 0)
+    const now = new Date()
+    const hoy = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
+    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision && c.fecha_emision.startsWith(hoy)).reduce((s,c) => s + Number(c.total), 0)
 })
 const totalIgv     = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_igv), 0))
 const totalGravada = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_gravada), 0))
