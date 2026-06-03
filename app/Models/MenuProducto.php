@@ -14,6 +14,7 @@ class MenuProducto extends Model
     protected $table = 'menu_productos';
 
     protected $fillable = [
+        'empresa_id',
         'menu_categoria_id',
         'nombre',
         'descripcion',

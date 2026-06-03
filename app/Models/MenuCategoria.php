@@ -14,6 +14,7 @@ class MenuCategoria extends Model
     protected $table = 'menu_categorias';
 
     protected $fillable = [
+        'empresa_id',
         'nombre',
         'descripcion',
         'icono',
