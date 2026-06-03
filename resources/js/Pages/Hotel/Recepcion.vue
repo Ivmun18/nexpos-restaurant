@@ -76,7 +76,7 @@ const clickHabitacion = (h) => {
         showCheckin.value = true
         infoHuesped.value = null
     } else if (h.estado === 'ocupada') {
-        const reserva = reservas.value ? reservas.value.find(r => r.habitacion_id === h.id && r.estado === 'checkin') : null
+        const reserva = props.reservas ? props.reservas.find(r => r.habitacion_id === h.id && r.estado === 'checkin') : null
         infoHuesped.value = reserva ? {
             habitacion: 'Hab. ' + h.numero + ' — ' + h.tipo?.nombre,
             huesped: reserva.huesped?.nombre_completo,
