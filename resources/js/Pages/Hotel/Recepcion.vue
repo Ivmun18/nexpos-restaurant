@@ -68,6 +68,27 @@ const hacerCheckout = async (reserva) => {
     } finally { cargando.value = false }
 }
 
+const infoHuesped = ref(null)
+
+const clickHabitacion = (h) => {
+    if (h.estado === 'disponible') {
+        form.value.habitacion_id = h.id
+        showCheckin.value = true
+        infoHuesped.value = null
+    } else if (h.estado === 'ocupada') {
+        const reserva = reservas.value ? reservas.value.find(r => r.habitacion_id === h.id && r.estado === 'checkin') : null
+        infoHuesped.value = reserva ? {
+            habitacion: 'Hab. ' + h.numero + ' — ' + h.tipo?.nombre,
+            huesped: reserva.huesped?.nombre_completo,
+            documento: reserva.huesped?.numero_documento,
+            checkin: new Date(reserva.fecha_checkin).toLocaleDateString('es-PE'),
+            checkout: new Date(reserva.fecha_checkout_previsto).toLocaleDateString('es-PE'),
+            total: reserva.total,
+            pagado: reserva.monto_pagado,
+        } : null
+    }
+}
+
 const estadoBadge = (estado) => {
     const m = { reservado: '#3B82F6', checkin: '#16A34A', checkout: '#6B7280', cancelado: '#DC2626' }
     return m[estado] || '#6B7280'
@@ -93,23 +114,45 @@ const estadoBadge = (estado) => {
                 <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:12px;">🗺️ Estado de habitaciones</div>
                 <div style="display:flex; flex-wrap:wrap; gap:10px;">
                     <div v-for="h in todasHabitaciones" :key="h.id"
+                        @click="clickHabitacion(h)"
                         :style="{
-                            padding:'10px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'600', minWidth:'100px', textAlign:'center',
+                            padding:'10px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'600', minWidth:'110px', textAlign:'center',
+                            cursor: h.estado==='disponible' || h.estado==='ocupada' ? 'pointer' : 'default',
                             background: h.estado==='disponible' ? '#DCFCE7' : h.estado==='ocupada' ? '#FEE2E2' : h.estado==='limpieza' ? '#FEF9C3' : '#F1F5F9',
                             color: h.estado==='disponible' ? '#16A34A' : h.estado==='ocupada' ? '#DC2626' : h.estado==='limpieza' ? '#CA8A04' : '#6B7280',
-                            border: '1px solid',
+                            border: '2px solid',
                             borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : '#E2E8F0',
+                            transform: h.estado==='disponible' || h.estado==='ocupada' ? 'scale(1)' : '',
                         }">
-                        <div style="font-size:14px;">Hab. {{ h.numero }}</div>
+                        <div style="font-size:15px; font-weight:700;">Hab. {{ h.numero }}</div>
                         <div style="font-size:11px; opacity:0.8;">{{ h.tipo?.nombre }}</div>
-                        <div style="font-size:11px; margin-top:4px;">
+                        <div style="font-size:12px; margin-top:4px;">
                             {{ h.estado==='disponible' ? '✅ Libre' : h.estado==='ocupada' ? '🔴 Ocupada' : h.estado==='limpieza' ? '🧹 Limpieza' : '🔧 Mant.' }}
                         </div>
                         <div style="font-size:11px;">S/ {{ h.tipo?.precio_noche }}/noche</div>
+                        <div v-if="h.estado==='disponible'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para check-in</div>
+                        <div v-if="h.estado==='ocupada'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para ver info</div>
                     </div>
                 </div>
+
+                <!-- Info huésped al clic en habitación ocupada -->
+                <div v-if="infoHuesped" style="margin-top:16px; background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:700; color:#DC2626; font-size:13px;">🔴 {{ infoHuesped.habitacion }}</div>
+                        <button @click="infoHuesped=null" style="background:none; border:none; cursor:pointer; color:#94A3B8; font-size:16px;">✕</button>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px; font-size:12px;">
+                        <div><span style="color:#64748B;">Huésped:</span><br><b>{{ infoHuesped.huesped }}</b></div>
+                        <div><span style="color:#64748B;">Documento:</span><br><b>{{ infoHuesped.documento }}</b></div>
+                        <div><span style="color:#64748B;">Check-in:</span><br><b>{{ infoHuesped.checkin }}</b></div>
+                        <div><span style="color:#64748B;">Check-out prev.:</span><br><b>{{ infoHuesped.checkout }}</b></div>
+                        <div><span style="color:#64748B;">Total:</span><br><b>S/ {{ infoHuesped.total }}</b></div>
+                        <div><span style="color:#64748B;">Pagado:</span><br><b>S/ {{ infoHuesped.pagado }}</b></div>
+                    </div>
+                </div>
+
                 <div style="display:flex; gap:16px; margin-top:12px; font-size:11px; color:#64748B;">
-                    <span>✅ Disponible</span><span>🔴 Ocupada</span><span>🧹 Limpieza</span><span>🔧 Mantenimiento</span>
+                    <span>✅ Disponible — clic para check-in</span><span>🔴 Ocupada — clic para ver huésped</span><span>🧹 Limpieza</span><span>🔧 Mantenimiento</span>
                 </div>
             </div>
 
