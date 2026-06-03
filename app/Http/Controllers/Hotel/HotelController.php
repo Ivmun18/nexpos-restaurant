@@ -234,7 +234,7 @@ class HotelController extends Controller
         if ($request->estado === 'completado') {
             $tarea->habitacion->update(['estado' => 'disponible']);
         }
-        return response()->json(['success' => true, 'mensaje' => 'Tarea actualizada ✅']);
+        return redirect()->back()->with('success', 'Tarea actualizada ✅');
     }
 
     // ── REPORTES ──
