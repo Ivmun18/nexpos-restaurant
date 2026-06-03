@@ -119,7 +119,7 @@ class HotelController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
         $habitacion = HotelHabitacion::findOrFail($request->habitacion_id);
-        $noches = max(1, Carbon::parse($request->fecha_checkin)->diffInDays(Carbon::parse($request->fecha_checkout)));
+        $noches = max(1, Carbon::parse($request->fecha_checkin)->startOfDay()->diffInDays(Carbon::parse($request->fecha_checkout)->startOfDay()));
         $total  = $habitacion->tipo->precio_noche * $noches;
 
         // Crear o encontrar huésped
