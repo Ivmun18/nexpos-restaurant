@@ -246,7 +246,7 @@ class HotelController extends Controller
 
         $reservas = HotelReserva::with('habitacion.tipo','huesped')
             ->where('empresa_id', $empresaId)
-            ->whereBetween('fecha_checkin', [$desde, $hasta])
+            ->whereBetween('fecha_checkin', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
             ->orderBy('fecha_checkin','desc')->get();
 
         $totalIngresos = $reservas->sum('monto_pagado');
