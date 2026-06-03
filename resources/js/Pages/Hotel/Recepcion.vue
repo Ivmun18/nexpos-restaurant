@@ -71,6 +71,41 @@ const hacerCheckout = async (reserva) => {
 const infoHuesped = ref(null)
 const ticket = ref(null)
 
+const imprimirTicket = () => {
+    const t = ticket.value
+    const contenido = `
+        <html><head><title>Ticket Hotel</title>
+        <style>body{font-family:monospace;padding:20px;max-width:380px;margin:auto}
+        h2{text-align:center}.linea{border-top:2px dashed #ccc;margin:10px 0}
+        .fila{display:flex;justify-content:space-between;margin:4px 0;font-size:13px}
+        .total{font-size:18px;font-weight:bold}.footer{text-align:center;font-size:11px;color:#999}
+        </style></head><body>
+        <h2>🏨 NEXPOS HOTEL</h2>
+        <p style="text-align:center;font-size:12px;color:#999">COMPROBANTE DE ESTADÍA</p>
+        <div class="linea"></div>
+        <div class="fila"><span>Código:</span><b>${t.codigo}</b></div>
+        <div class="fila"><span>Huésped:</span><b>${t.huesped}</b></div>
+        <div class="fila"><span>Documento:</span><b>${t.documento}</b></div>
+        <div class="fila"><span>Habitación:</span><b>${t.habitacion}</b></div>
+        <div class="linea"></div>
+        <div class="fila"><span>Check-in:</span><b>${new Date(t.fecha_checkin).toLocaleString('es-PE')}</b></div>
+        <div class="fila"><span>Check-out:</span><b>${new Date(t.fecha_checkout).toLocaleString('es-PE')}</b></div>
+        <div class="fila"><span>Noches:</span><b>${t.noches}</b></div>
+        <div class="fila"><span>Precio/noche:</span><b>S/ ${Number(t.precio_noche).toFixed(2)}</b></div>
+        <div class="linea"></div>
+        <div class="fila total"><span>TOTAL:</span><b>S/ ${Number(t.total).toFixed(2)}</b></div>
+        <div class="fila"><span>Método pago:</span><b>${t.metodo_pago?.toUpperCase()}</b></div>
+        <div class="fila"><span>Estado:</span><b>${t.estado_pago?.toUpperCase()}</b></div>
+        <div class="linea"></div>
+        <p class="footer">¡Gracias por su visita!</p>
+        </body></html>`
+    const ventana = window.open('', '_blank', 'width=420,height=600')
+    ventana.document.write(contenido)
+    ventana.document.close()
+    ventana.focus()
+    ventana.print()
+}
+
 const clickHabitacion = (h) => {
     if (h.estado === 'disponible') {
         form.value.habitacion_id = h.id
