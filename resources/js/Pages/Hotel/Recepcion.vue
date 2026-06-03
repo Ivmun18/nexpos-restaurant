@@ -7,6 +7,8 @@ const props = defineProps({
     reservas: Array,
     habitacionesDisponibles: Array,
     todasHabitaciones: Array,
+    productos: Array,
+    cargos: Array,
     huespedes: Array,
 })
 
@@ -74,6 +76,22 @@ const hacerCheckout = async (reserva) => {
 }
 
 const infoHuesped = ref(null)
+const showCargo = ref(null) // reserva seleccionada para agregar cargo
+const formCargo = ref({ producto_id: '', cantidad: 1 })
+
+const agregarCargo = () => {
+    if (!formCargo.value.producto_id) return
+    router.post('/hotel/cargos', {
+        reserva_id:  showCargo.value.id,
+        producto_id: formCargo.value.producto_id,
+        cantidad:    formCargo.value.cantidad,
+    }, { onSuccess: () => { showCargo.value = null; formCargo.value = { producto_id: '', cantidad: 1 } } })
+}
+
+const eliminarCargo = (id) => {
+    if (!confirm('¿Eliminar cargo?')) return
+    router.delete('/hotel/cargos/' + id)
+}
 const ticket = ref(null)
 
 const imprimirTicket = () => {
@@ -191,7 +209,11 @@ const estadoBadge = (estado) => {
                         <div><span style="color:#64748B;">Total:</span><br><b>S/ {{ infoHuesped.total }}</b></div>
                         <div><span style="color:#64748B;">Pagado:</span><br><b>S/ {{ infoHuesped.pagado }}</b></div>
                     </div>
-                    <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+                    <div style="margin-top:14px; display:flex; justify-content:flex-end; gap:10px;">
+                        <button @click="showCargo = infoHuesped.reserva; infoHuesped=null"
+                            style="background:#7C3AED; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            🛒 Agregar cargo
+                        </button>
                         <button @click="showCheckout = infoHuesped.reserva; pagoForm.monto = infoHuesped.total - infoHuesped.pagado; infoHuesped=null"
                             style="background:#DC2626; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
                             🚪 Hacer Check-out
@@ -387,6 +409,65 @@ const estadoBadge = (estado) => {
                     <div style="display:flex; gap:10px; margin-top:20px;">
                         <button @click="window.print()" style="flex:1; background:#3B82F6; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">🖨️ Imprimir</button>
                         <button @click="ticket=null" style="flex:1; background:#F1F5F9; color:#374151; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">✕ Cerrar</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Modal Agregar Cargo -->
+            <div v-if="showCargo" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+                <div style="background:#fff; border-radius:16px; padding:28px; width:520px; max-height:90vh; overflow-y:auto;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="font-size:18px; font-weight:700; margin:0;">🛒 Agregar cargo a habitación</h2>
+                        <button @click="showCargo=null" style="background:none; border:none; cursor:pointer; font-size:20px; color:#94A3B8;">✕</button>
+                    </div>
+
+                    <!-- Seleccionar producto -->
+                    <div style="display:grid; gap:12px; margin-bottom:20px;">
+                        <div>
+                            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Producto</label>
+                            <select v-model="formCargo.producto_id" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px;">
+                                <option value="">Seleccionar producto...</option>
+                                <option v-for="p in productos" :key="p.id" :value="p.id">
+                                    {{ p.nombre }} — S/ {{ Number(p.precio).toFixed(2) }}
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Cantidad</label>
+                            <input type="number" v-model="formCargo.cantidad" min="1"
+                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; box-sizing:border-box;" />
+                        </div>
+                        <button @click="agregarCargo"
+                            style="background:#7C3AED; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:600; cursor:pointer;">
+                            ➕ Agregar cargo
+                        </button>
+                    </div>
+
+                    <!-- Cargos actuales de esta reserva -->
+                    <div style="border-top:1px solid #F1F5F9; padding-top:16px;">
+                        <div style="font-size:13px; font-weight:700; margin-bottom:12px; color:#374151;">Cargos actuales</div>
+                        <div v-if="cargos.filter(c => c.reserva_id === showCargo.id).length === 0"
+                            style="text-align:center; color:#94A3B8; font-size:13px; padding:20px;">
+                            No hay cargos aún
+                        </div>
+                        <div v-for="c in cargos.filter(c => c.reserva_id === showCargo.id)" :key="c.id"
+                            style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #F8FAFC;">
+                            <div>
+                                <div style="font-size:13px; font-weight:600;">{{ c.descripcion }}</div>
+                                <div style="font-size:11px; color:#64748B;">{{ c.cantidad }} x S/ {{ Number(c.precio_unitario).toFixed(2) }}</div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-weight:700; color:#374151;">S/ {{ Number(c.subtotal).toFixed(2) }}</span>
+                                <button @click="eliminarCargo(c.id)"
+                                    style="background:#FEF2F2; color:#DC2626; border:none; padding:4px 10px; border-radius:6px; font-size:12px; cursor:pointer;">🗑️</button>
+                            </div>
+                        </div>
+                        <div v-if="cargos.filter(c => c.reserva_id === showCargo.id).length > 0"
+                            style="display:flex; justify-content:space-between; margin-top:10px; font-weight:700; font-size:14px;">
+                            <span>Total cargos:</span>
+                            <span style="color:#7C3AED;">S/ {{ Number(cargos.filter(c => c.reserva_id === showCargo.id).reduce((a,c) => a + Number(c.subtotal), 0)).toFixed(2) }}</span>
+                        </div>
                     </div>
                 </div>
             </div>

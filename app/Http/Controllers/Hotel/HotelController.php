@@ -7,6 +7,8 @@ use App\Models\HotelHuesped;
 use App\Models\HotelReserva;
 use App\Models\HotelPago;
 use App\Models\HotelHousekeeping;
+use App\Models\HotelProducto;
+use App\Models\HotelCargo;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -112,7 +114,12 @@ class HotelController extends Controller
         $todasHabitaciones = HotelHabitacion::with('tipo')
             ->where('empresa_id', $empresaId)
             ->orderBy('numero')->get();
-        return Inertia::render('Hotel/Recepcion', compact('reservas','habitacionesDisponibles','huespedes','todasHabitaciones'));
+        $productos = HotelProducto::where('empresa_id', $empresaId)->where('activo', true)->orderBy('categoria')->orderBy('nombre')->get();
+        $cargos = HotelCargo::with('producto','reserva')
+            ->where('empresa_id', $empresaId)
+            ->whereHas('reserva', fn($q) => $q->where('estado', 'checkin'))
+            ->orderByDesc('created_at')->get();
+        return Inertia::render('Hotel/Recepcion', compact('reservas','habitacionesDisponibles','huespedes','todasHabitaciones','productos','cargos'));
     }
 
     public function checkin(Request $request)
@@ -274,5 +281,84 @@ class HotelController extends Controller
             : 0;
 
         return Inertia::render('Hotel/Reportes', compact('reservas','totalIngresos','totalReservas','ocupacionPromedio','desde','hasta'));
+    }
+
+    // ── PRODUCTOS HOTEL ──
+    public function productos()
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $productos = HotelProducto::where('empresa_id', $empresaId)->orderBy('categoria')->orderBy('nombre')->get();
+        return Inertia::render('Hotel/Productos', compact('productos'));
+    }
+
+    public function storeProducto(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $request->validate(['nombre' => 'required|string|max:100', 'precio' => 'required|numeric|min:0']);
+        HotelProducto::create([...$request->only(['nombre','descripcion','categoria','precio','stock','controla_stock','activo']), 'empresa_id' => $empresaId]);
+        return redirect()->back()->with('success', 'Producto creado');
+    }
+
+    public function updateProducto(Request $request, $id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelProducto::where('id', $id)->where('empresa_id', $empresaId)
+            ->update($request->only(['nombre','descripcion','categoria','precio','stock','controla_stock','activo']));
+        return redirect()->back()->with('success', 'Producto actualizado');
+    }
+
+    public function destroyProducto($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelProducto::where('id', $id)->where('empresa_id', $empresaId)->delete();
+        return redirect()->back()->with('success', 'Producto eliminado');
+    }
+
+    // ── CARGOS A HABITACION ──
+    public function storeCargo(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $request->validate(['reserva_id' => 'required', 'producto_id' => 'required', 'cantidad' => 'required|integer|min:1']);
+
+        $producto = HotelProducto::where('id', $request->producto_id)->where('empresa_id', $empresaId)->firstOrFail();
+        $subtotal = $producto->precio * $request->cantidad;
+
+        HotelCargo::create([
+            'empresa_id'      => $empresaId,
+            'reserva_id'      => $request->reserva_id,
+            'producto_id'     => $producto->id,
+            'usuario_id'      => auth()->id(),
+            'descripcion'     => $producto->nombre,
+            'cantidad'        => $request->cantidad,
+            'precio_unitario' => $producto->precio,
+            'subtotal'        => $subtotal,
+        ]);
+
+        // Actualizar total de la reserva
+        $totalCargos = HotelCargo::where('reserva_id', $request->reserva_id)->sum('subtotal');
+        $reserva = \App\Models\HotelReserva::find($request->reserva_id);
+        $reserva->update(['total' => ($reserva->precio_noche * $reserva->num_noches) + $totalCargos]);
+
+        // Descontar stock si aplica
+        if ($producto->controla_stock) {
+            $producto->decrement('stock', $request->cantidad);
+        }
+
+        return redirect()->back()->with('success', 'Cargo agregado');
+    }
+
+    public function destroyCargo($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $cargo = HotelCargo::where('id', $id)->where('empresa_id', $empresaId)->firstOrFail();
+        $reserva_id = $cargo->reserva_id;
+        $cargo->delete();
+
+        // Recalcular total
+        $reserva = \App\Models\HotelReserva::find($reserva_id);
+        $totalCargos = HotelCargo::where('reserva_id', $reserva_id)->sum('subtotal');
+        $reserva->update(['total' => ($reserva->precio_noche * $reserva->num_noches) + $totalCargos]);
+
+        return redirect()->back()->with('success', 'Cargo eliminado');
     }
 }

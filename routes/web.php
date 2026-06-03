@@ -1024,6 +1024,12 @@ Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(
     Route::put('/housekeeping/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'actualizarHousekeeping'])->name('housekeeping.update');
     Route::get('/reportes', [App\Http\Controllers\Hotel\HotelController::class, 'reportes'])->name('reportes');
     Route::get('/reportes/pdf', [App\Http\Controllers\Hotel\HotelController::class, 'reportesPdf'])->name('reportes.pdf');
+    Route::get('/productos',         [App\Http\Controllers\Hotel\HotelController::class, 'productos'])->name('productos');
+    Route::post('/productos',        [App\Http\Controllers\Hotel\HotelController::class, 'storeProducto'])->name('productos.store');
+    Route::put('/productos/{id}',    [App\Http\Controllers\Hotel\HotelController::class, 'updateProducto'])->name('productos.update');
+    Route::delete('/productos/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'destroyProducto'])->name('productos.destroy');
+    Route::post('/cargos',           [App\Http\Controllers\Hotel\HotelController::class, 'storeCargo'])->name('cargos.store');
+    Route::delete('/cargos/{id}',    [App\Http\Controllers\Hotel\HotelController::class, 'destroyCargo'])->name('cargos.destroy');
 });
 
 // Proxy para consulta DNI/RUC

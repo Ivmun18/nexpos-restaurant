@@ -471,6 +471,7 @@ const allMenuItems = [
     { path: '/hotel/tipos',        icon: 'categoria',  label: 'Tipos',         module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/housekeeping', icon: 'limpieza',   label: 'Housekeeping',  module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/reportes',     icon: 'reporte',    label: 'Reportes',      module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/productos',    icon: 'box',        label: 'Productos',     module: 'hotel', section: 'HOTEL' },
 
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
