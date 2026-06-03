@@ -10,7 +10,7 @@ const form = ref({ tipo_id: '', numero: '', piso: 1, estado: 'disponible', obser
 
 const abrir = (h = null) => {
     editando.value = h
-    form.value = h ? { tipo_id: h.tipo_id, numero: h.numero, piso: h.piso, estado: h.estado, observaciones: h.observaciones } : { tipo_id: '', numero: '', piso: 1, estado: 'disponible', observaciones: '' }
+    form.value = h ? { tipo_id: h.tipo_id, numero: h.numero, piso: h.piso, estado: h.estado, observaciones: h.observaciones } : { tipo_id: props.tipos?.[0]?.id ?? '', numero: '', piso: 1, estado: 'disponible', observaciones: '' }
     showForm.value = true
 }
 
@@ -91,6 +91,7 @@ const estadoColor = (e) => ({ disponible: '#16A34A', ocupada: '#DC2626', limpiez
                             <div><label style="font-size:12px; font-weight:600;">Número</label>
                                 <input v-model="form.numero" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; margin-top:4px;" placeholder="101" />
                             <p v-if="errores.numero" style="color:#DC2626; font-size:12px; margin:4px 0 0;">{{ errores.numero }}</p>
+                            <p v-if="errores.tipo_id" style="color:#DC2626; font-size:12px; margin:4px 0 0;">{{ errores.tipo_id }}</p>
                             </div>
                             <div><label style="font-size:12px; font-weight:600;">Piso</label>
                                 <input type="number" v-model="form.piso" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; margin-top:4px;" />
