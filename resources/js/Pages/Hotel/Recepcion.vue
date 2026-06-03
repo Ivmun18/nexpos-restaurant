@@ -78,6 +78,7 @@ const clickHabitacion = (h) => {
     } else if (h.estado === 'ocupada') {
         const reserva = props.reservas ? props.reservas.find(r => r.habitacion_id === h.id && r.estado === 'checkin') : null
         infoHuesped.value = reserva ? {
+            reserva: reserva,
             habitacion: 'Hab. ' + h.numero + ' — ' + h.tipo?.nombre,
             huesped: reserva.huesped?.nombre_completo,
             documento: reserva.huesped?.numero_documento,
@@ -148,6 +149,12 @@ const estadoBadge = (estado) => {
                         <div><span style="color:#64748B;">Check-out prev.:</span><br><b>{{ infoHuesped.checkout }}</b></div>
                         <div><span style="color:#64748B;">Total:</span><br><b>S/ {{ infoHuesped.total }}</b></div>
                         <div><span style="color:#64748B;">Pagado:</span><br><b>S/ {{ infoHuesped.pagado }}</b></div>
+                    </div>
+                    <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+                        <button @click="showCheckout = infoHuesped.reserva; pagoForm.monto = infoHuesped.total - infoHuesped.pagado; infoHuesped=null"
+                            style="background:#DC2626; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            🚪 Hacer Check-out
+                        </button>
                     </div>
                 </div>
 
