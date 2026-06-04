@@ -254,7 +254,8 @@ class CajaNotariaController extends Controller
             'metodo_pago'              => $request->metodo_pago,
             'items'                    => [[
                 'descripcion' => $request->tipo_servicio,
-                'precio'      => $request->monto,
+                'cantidad'    => $request->cantidad ?? 1,
+                'precio'      => round($request->monto / max(1, $request->cantidad ?? 1), 4),
             ]],
         ]);
 

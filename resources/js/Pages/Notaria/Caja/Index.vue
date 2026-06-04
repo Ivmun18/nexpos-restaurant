@@ -14,20 +14,6 @@
             </button>
         </div>
 
-        <!-- Historial de cierres -->
-        <div v-if="historialCierres && historialCierres.length" style="max-width:400px; margin:1.5rem auto 0; background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
-            <p style="font-size:13px; font-weight:700; color:#374151; margin:0 0 12px;">📋 Historial de cierres</p>
-            <div v-for="c in historialCierres" :key="c.fecha_cierre" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #F1F5F9;">
-                <div>
-                    <p style="margin:0; font-size:13px; font-weight:600; color:#374151;">{{ formatFecha(c.fecha_cierre) }}</p>
-                    <p v-if="c.observaciones" style="margin:2px 0 0; font-size:11px; color:#94A3B8;">{{ c.observaciones }}</p>
-                </div>
-                <div style="text-align:right;">
-                    <p style="margin:0; font-size:15px; font-weight:800; color:#10B981;">S/ {{ Number(c.monto_cierre_sistema).toFixed(2) }}</p>
-                    <p v-if="c.monto_cierre_real" style="margin:0; font-size:11px; color:#64748B;">Contado: S/ {{ Number(c.monto_cierre_real).toFixed(2) }}</p>
-                </div>
-            </div>
-        </div>
 
         <template v-if="sesionAbierta">
 
@@ -265,10 +251,21 @@
                                 <input v-model="formRapido.cliente_nombre" type="text" placeholder="Nombre del cliente"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                             </div>
-                            <div style="margin-bottom:12px;">
-                                <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">MONTO (S/)</label>
-                                <input v-model="formRapido.monto" type="number" step="0.01" min="0" placeholder="0.00"
-                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:800; text-align:center; box-sizing:border-box;" />
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CANTIDAD</label>
+                                    <input v-model.number="formRapido.cantidad" type="number" step="1" min="1" placeholder="1"
+                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:800; text-align:center; box-sizing:border-box;" />
+                                </div>
+                                <div>
+                                    <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">PRECIO UNIT. (S/)</label>
+                                    <input v-model.number="formRapido.precio_unitario" type="number" step="0.01" min="0" placeholder="0.00"
+                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:800; text-align:center; box-sizing:border-box;" />
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px; background:#ECFDF5; border-radius:8px; padding:10px 14px; text-align:center;">
+                                <label style="font-size:11px; font-weight:600; color:#065F46; display:block; margin-bottom:2px;">TOTAL A COBRAR (S/)</label>
+                                <span style="font-size:24px; font-weight:900; color:#059669;">S/ {{ ((formRapido.cantidad || 1) * (formRapido.precio_unitario || 0)).toFixed(2) }}</span>
                             </div>
                             <div style="margin-bottom:16px;">
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">MÉTODO DE PAGO</label>
@@ -280,9 +277,9 @@
                                     </button>
                                 </div>
                             </div>
-                            <button @click="cobrarServicioRapido" :disabled="!formRapido.tipo_servicio || !formRapido.monto || procesandoRapido"
+                            <button @click="cobrarServicioRapido" :disabled="!formRapido.tipo_servicio || !formRapido.precio_unitario || procesandoRapido"
                                 style="width:100%; padding:12px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
-                                {{ procesandoRapido ? '⏳ Procesando...' : '💰 Cobrar S/ ' + (Number(formRapido.monto)||0).toFixed(2) }}
+                                {{ procesandoRapido ? '⏳ Procesando...' : '💰 Cobrar S/ ' + ((formRapido.cantidad||1) * (formRapido.precio_unitario||0)).toFixed(2) }}
                             </button>
                         </div>
                     </div>
@@ -501,6 +498,22 @@
             </div>
         </div>
 
+
+        <!-- Historial de cierres -->
+        <div v-if="historialCierres && historialCierres.length" style="max-width:400px; margin:1.5rem auto 0; background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+            <p style="font-size:13px; font-weight:700; color:#374151; margin:0 0 12px;">📋 Historial de cierres</p>
+            <div v-for="c in historialCierres" :key="c.fecha_cierre" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #F1F5F9;">
+                <div>
+                    <p style="margin:0; font-size:13px; font-weight:600; color:#374151;">{{ formatFecha(c.fecha_cierre) }}</p>
+                    <p v-if="c.observaciones" style="margin:2px 0 0; font-size:11px; color:#94A3B8;">{{ c.observaciones }}</p>
+                </div>
+                <div style="text-align:right;">
+                    <p style="margin:0; font-size:15px; font-weight:800; color:#10B981;">S/ {{ Number(c.monto_cierre_sistema).toFixed(2) }}</p>
+                    <p v-if="c.monto_cierre_real" style="margin:0; font-size:11px; color:#64748B;">Contado: S/ {{ Number(c.monto_cierre_real).toFixed(2) }}</p>
+                </div>
+            </div>
+        </div>
+
     </AppLayout>
 </template>
 
@@ -558,7 +571,8 @@ const formRapido = ref({
     cliente_nombre: 'CLIENTES VARIOS',
     cliente_documento: '00000000',
     metodo_pago: 'efectivo',
-    monto: '',
+    cantidad: 1,
+    precio_unitario: '',
 })
 
 async function cobrarServicioRapido() {
@@ -583,7 +597,7 @@ async function cobrarServicioRapido() {
             alert('✅ ' + data.mensaje)
             if (data.pdf) window.open(data.pdf, '_blank')
             modalServicioRapido.value = false
-            formRapido.value = { tipo_servicio: '', tipo_servicio_custom: '', cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', monto: '' }
+            formRapido.value = { tipo_servicio: '', tipo_servicio_custom: '', cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', cantidad: 1, precio_unitario: '' }
             router.reload({ only: ['resumenCaja'] })
         } else {
             alert('❌ ' + data.mensaje)
