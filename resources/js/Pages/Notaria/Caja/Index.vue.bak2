@@ -152,13 +152,13 @@
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">TIPO DE SERVICIO</label>
                                 <div style="position:relative;">
                                     <input v-model="servicioQuery" type="text" placeholder="🔍 Buscar o seleccionar servicio..."
-                                        @input="mostrarSugerencias=true; itemActual.tipo_servicio=''"
+                                        @input="mostrarSugerencias=true; formRapido.tipo_servicio=''"
                                         @focus="mostrarSugerencias=true"
                                         @blur="setTimeout(()=>mostrarSugerencias=false, 200)"
                                         style="width:100%; padding:9px 12px; border:1px solid #10B981; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                                     <div v-if="mostrarSugerencias" style="position:absolute; z-index:9999; background:white; border:1px solid #E2E8F0; border-radius:8px; width:100%; max-height:220px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.15); top:100%; left:0;">
                                         <div v-for="s in serviciosFiltrados" :key="s"
-                                            @mousedown.prevent="itemActual.tipo_servicio=s; servicioQuery=s; mostrarSugerencias=false"
+                                            @mousedown.prevent="formRapido.tipo_servicio=s; servicioQuery=s; mostrarSugerencias=false"
                                             style="padding:9px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #F1F5F9;"
                                             onmouseover="this.style.background='#ECFDF5'; this.style.color='#065F46'" onmouseout="this.style.background='white'; this.style.color='inherit'">
                                             {{ s }}
@@ -166,7 +166,7 @@
                                         <div v-if="!serviciosFiltrados.length" style="padding:9px 12px; font-size:12px; color:#94A3B8;">Sin resultados</div>
                                     </div>
                                 </div>
-                                <select v-show="false" v-model="itemActual.tipo_servicio">
+                                <select v-show="false" v-model="formRapido.tipo_servicio">
                                     <option value="">Seleccionar...</option>
                                     <option value="Legalización de Firma">Legalización de Firma</option>
                                     <option value="Legalización de DNI">Legalización de DNI</option>
@@ -233,9 +233,9 @@
                                     <option value="__otro__">Otro (escribir)...</option>
                                 </select>
                             </div>
-                            <div v-if="itemActual.tipo_servicio === '__otro__'" style="margin-bottom:12px;">
+                            <div v-if="formRapido.tipo_servicio === '__otro__'" style="margin-bottom:12px;">
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DESCRIPCIÓN DEL SERVICIO</label>
-                                <input v-model="itemActual.tipo_servicio_custom" type="text" placeholder="Ej: Certificación de poder..."
+                                <input v-model="formRapido.tipo_servicio_custom" type="text" placeholder="Ej: Certificación de poder..."
                                     style="width:100%; padding:9px 12px; border:1px solid #10B981; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                             </div>
                             <div style="margin-bottom:12px;">
@@ -251,39 +251,21 @@
                                 <input v-model="formRapido.cliente_nombre" type="text" placeholder="Nombre del cliente"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                             </div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
                                 <div>
                                     <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CANTIDAD</label>
-                                    <input v-model.number="itemActual.cantidad" type="number" step="1" min="1" placeholder="1"
-                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:16px; font-weight:800; text-align:center; box-sizing:border-box;" />
+                                    <input v-model.number="formRapido.cantidad" type="number" step="1" min="1" placeholder="1"
+                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:800; text-align:center; box-sizing:border-box;" />
                                 </div>
                                 <div>
                                     <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">PRECIO UNIT. (S/)</label>
-                                    <input v-model.number="itemActual.precio_unitario" type="number" step="0.01" min="0" placeholder="0.00"
-                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:16px; font-weight:800; text-align:center; box-sizing:border-box;" />
+                                    <input v-model.number="formRapido.precio_unitario" type="number" step="0.01" min="0" placeholder="0.00"
+                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:18px; font-weight:800; text-align:center; box-sizing:border-box;" />
                                 </div>
                             </div>
-                            <button @click="agregarItem" :disabled="!itemActual.tipo_servicio"
-                                style="width:100%; padding:9px; background:#6366F1; color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; margin-bottom:12px;">
-                                ➕ Agregar ítem (S/ {{ ((itemActual.cantidad||1) * (itemActual.precio_unitario||0)).toFixed(2) }})
-                            </button>
-                            <!-- Lista de ítems agregados -->
-                            <div v-if="itemsRapido.length" style="margin-bottom:12px; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
-                                <div style="background:#F8FAFC; padding:6px 10px; font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Ítems agregados</div>
-                                <div v-for="(it, idx) in itemsRapido" :key="idx" style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-top:1px solid #F1F5F9;">
-                                    <div style="flex:1;">
-                                        <p style="margin:0; font-size:12px; font-weight:600; color:#1E293B;">{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</p>
-                                        <p style="margin:0; font-size:11px; color:#64748B;">{{ it.cantidad }} × S/ {{ Number(it.precio_unitario).toFixed(2) }}</p>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <span style="font-size:13px; font-weight:800; color:#059669;">S/ {{ (it.cantidad * it.precio_unitario).toFixed(2) }}</span>
-                                        <button @click="quitarItem(idx)" style="background:#FEF2F2; border:none; color:#EF4444; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:13px; font-weight:700;">✕</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-if="itemsRapido.length" style="margin-bottom:12px; background:#ECFDF5; border-radius:8px; padding:10px 14px; text-align:center;">
+                            <div style="margin-bottom:12px; background:#ECFDF5; border-radius:8px; padding:10px 14px; text-align:center;">
                                 <label style="font-size:11px; font-weight:600; color:#065F46; display:block; margin-bottom:2px;">TOTAL A COBRAR (S/)</label>
-                                <span style="font-size:24px; font-weight:900; color:#059669;">S/ {{ totalRapido.toFixed(2) }}</span>
+                                <span style="font-size:24px; font-weight:900; color:#059669;">S/ {{ ((formRapido.cantidad || 1) * (formRapido.precio_unitario || 0)).toFixed(2) }}</span>
                             </div>
                             <div style="margin-bottom:16px;">
                                 <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">MÉTODO DE PAGO</label>
@@ -295,9 +277,9 @@
                                     </button>
                                 </div>
                             </div>
-                            <button @click="cobrarServicioRapido" :disabled="!itemsRapido.length || procesandoRapido"
+                            <button @click="cobrarServicioRapido" :disabled="!formRapido.tipo_servicio || !formRapido.precio_unitario || procesandoRapido"
                                 style="width:100%; padding:12px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
-                                {{ procesandoRapido ? '⏳ Procesando...' : '💰 Cobrar S/ ' + totalRapido.toFixed(2) }}
+                                {{ procesandoRapido ? '⏳ Procesando...' : '💰 Cobrar S/ ' + ((formRapido.cantidad||1) * (formRapido.precio_unitario||0)).toFixed(2) }}
                             </button>
                         </div>
                     </div>
@@ -584,35 +566,25 @@ const serviciosFiltrados = computed(() => {
 })
 
 const formRapido = ref({
+    tipo_servicio: '',
+    tipo_servicio_custom: '',
     cliente_nombre: 'CLIENTES VARIOS',
     cliente_documento: '00000000',
     metodo_pago: 'efectivo',
+    cantidad: 1,
+    precio_unitario: '',
 })
-const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
-const itemsRapido = ref([])
-const totalRapido = computed(() => itemsRapido.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0))
-
-function agregarItem() {
-    if (!itemActual.value.tipo_servicio || !itemActual.value.precio_unitario) return
-    itemsRapido.value.push({ ...itemActual.value })
-    itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
-    servicioQuery.value = ''
-}
-function quitarItem(i) { itemsRapido.value.splice(i, 1) }
 
 async function cobrarServicioRapido() {
-    if (!itemsRapido.value.length) return
+    if (!formRapido.value.tipo_servicio || !formRapido.value.monto) return
     procesandoRapido.value = true
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-        const items = itemsRapido.value.map(it => ({
-            tipo_servicio: it.tipo_servicio === '__otro__' ? (it.tipo_servicio_custom || 'Servicio notarial') : it.tipo_servicio,
-            cantidad: it.cantidad,
-            precio_unitario: it.precio_unitario,
-            monto: it.cantidad * it.precio_unitario,
-        }))
-        const totalMonto = items.reduce((s, i) => s + i.monto, 0)
-        const payload = { ...formRapido.value, items, monto: totalMonto }
+        const payload = { ...formRapido.value }
+        if (payload.tipo_servicio === '__otro__') {
+            payload.tipo_servicio = payload.tipo_servicio_custom || 'Servicio notarial'
+        }
+        // Tipo comprobante según documento: RUC=Factura, DNI=Boleta
         const docLen = (payload.cliente_documento || '').replace(/\D/g, '').length
         payload.tipo_comprobante = docLen === 11 ? '01' : '03'
         const res = await fetch('/notaria/caja/servicio-rapido', {
@@ -625,9 +597,7 @@ async function cobrarServicioRapido() {
             alert('✅ ' + data.mensaje)
             if (data.pdf) window.open(data.pdf, '_blank')
             modalServicioRapido.value = false
-            formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo' }
-            itemsRapido.value = []
-            itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
+            formRapido.value = { tipo_servicio: '', tipo_servicio_custom: '', cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', cantidad: 1, precio_unitario: '' }
             router.reload({ only: ['resumenCaja'] })
         } else {
             alert('❌ ' + data.mensaje)

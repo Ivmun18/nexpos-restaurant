@@ -252,11 +252,11 @@ class CajaNotariaController extends Controller
             'cliente_nombre'           => $request->cliente_nombre ?? 'CLIENTES VARIOS',
             'cliente_email'            => '',
             'metodo_pago'              => $request->metodo_pago,
-            'items'                    => [[
-                'descripcion' => $request->tipo_servicio,
-                'cantidad'    => $request->cantidad ?? 1,
-                'precio'      => round($request->monto / max(1, $request->cantidad ?? 1), 4),
-            ]],
+            'items' => collect($request->items ?? [])->map(fn($it) => [
+                'descripcion' => $it['tipo_servicio'] ?? 'Servicio notarial',
+                'cantidad'    => $it['cantidad'] ?? 1,
+                'precio'      => round(($it['precio_unitario'] ?? 0), 4),
+            ])->toArray(),
         ]);
 
         $resultado = app(\App\Http\Controllers\Notaria\ComprobantesNotariaController::class)->ventaDirecta($requestEmitir);
