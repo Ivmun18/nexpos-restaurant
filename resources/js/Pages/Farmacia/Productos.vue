@@ -583,6 +583,11 @@ const editarProducto = (p) => {
         categoria_id:      p.categoria_id,
         lote:              p.lote || '',
         fecha_vencimiento: p.fecha_vencimiento ? p.fecha_vencimiento.slice(0, 10) : '',
+        laboratorio:       p.laboratorio || '',
+        principio_activo:  p.principio_activo || '',
+        presentacion:      p.presentacion || '',
+        concentracion:     p.concentracion || '',
+        requiere_receta:   p.requiere_receta || false,
     }
     modalEditar.value = true
 }
