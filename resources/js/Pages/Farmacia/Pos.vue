@@ -17,6 +17,7 @@
                             @focus="$event.target.style.border='2px solid #14B8A6'"
                             @blur="$event.target.style.border='2px solid #E2E8F0'"
                             @keyup.enter="escanearCodigo"
+                            autofocus
                         />
                         <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:18px;" title="Listo para lector de barras">📷</span>
                     </div>
@@ -399,9 +400,27 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+// Listener global: pistola lectora enfoca el input automáticamente
+const handleGlobalKeydown = (e) => {
+    const tag = document.activeElement?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+    if (inputBusqueda.value) {
+        inputBusqueda.value.focus()
+    }
+}
+
+onMounted(() => {
+    if (inputBusqueda.value) inputBusqueda.value.focus()
+    document.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', handleGlobalKeydown)
+})
 
 const props = defineProps({
     productos: { type: Array, default: () => [] },

@@ -93,6 +93,10 @@
                                     style="padding:6px 12px; background:#FFF7ED; color:#C2410C; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #FED7AA; cursor:pointer;">
                                     📊 Kardex
                                 </button>
+                                <button @click="eliminarProducto(p)"
+                                    style="padding:6px 12px; background:#FFF1F2; color:#BE123C; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #FECDD3; cursor:pointer;">
+                                    🗑️ Eliminar
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -624,6 +628,17 @@ const verHistorial = async (p) => {
     }
 }
 
+const eliminarProducto = (p) => {
+    if (!confirm(`¿Eliminar "${p.descripcion}"? Esta acción no se puede deshacer.`)) return
+    router.delete(`/farmacia/productos/${p.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            router.reload({ only: ['productos'] })
+        },
+        onError: (e) => alert('Error al eliminar: ' + (e.message || JSON.stringify(e)))
+    })
+}
+
 const ajustarStock = (p) => {
     productoSeleccionado.value = p
     formStock.value = { tipo: 'entrada', cantidad: 1 }
@@ -642,6 +657,11 @@ const guardar = () => {
             categoria_id:      form.value.categoria_id,
             lote:              form.value.lote,
             fecha_vencimiento: form.value.fecha_vencimiento,
+            laboratorio:       form.value.laboratorio,
+            principio_activo:  form.value.principio_activo,
+            presentacion:      form.value.presentacion,
+            concentracion:     form.value.concentracion,
+            requiere_receta:   form.value.requiere_receta,
         }, {
             onSuccess: () => {
                 modalNuevo.value = false
@@ -654,14 +674,21 @@ const guardar = () => {
         })
     } else {
         router.post('/farmacia/productos', {
-            descripcion:   form.value.descripcion,
-            codigo:        form.value.codigo,
-            codigo_barras: form.value.codigo_barras,
-            precio_compra: form.value.precio_compra,
-            precio_venta:  form.value.precio_venta,
-            stock_actual:  form.value.stock_actual,
-            stock_minimo:  form.value.stock_minimo,
-            categoria_id:  form.value.categoria_id,
+            descripcion:       form.value.descripcion,
+            codigo:            form.value.codigo,
+            codigo_barras:     form.value.codigo_barras,
+            precio_compra:     form.value.precio_compra,
+            precio_venta:      form.value.precio_venta,
+            stock_actual:      form.value.stock_actual,
+            stock_minimo:      form.value.stock_minimo,
+            categoria_id:      form.value.categoria_id,
+            lote:              form.value.lote,
+            fecha_vencimiento: form.value.fecha_vencimiento,
+            laboratorio:       form.value.laboratorio,
+            principio_activo:  form.value.principio_activo,
+            presentacion:      form.value.presentacion,
+            concentracion:     form.value.concentracion,
+            requiere_receta:   form.value.requiere_receta,
         }, {
             onSuccess: () => {
                 modalNuevo.value = false
