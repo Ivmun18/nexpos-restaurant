@@ -593,6 +593,8 @@ Route::middleware(['auth'])->prefix('comprobantes')->group(function () {
     Route::post('/caja/{caja}/boleta', [\App\Http\Controllers\ComprobanteSunatController::class, 'emitirBoleta'])->name('comprobantes.boleta');
     Route::post('/caja/{caja}/factura', [\App\Http\Controllers\ComprobanteSunatController::class, 'emitirFactura'])->name('comprobantes.factura');
     Route::get('/{comprobante}', [\App\Http\Controllers\ComprobanteSunatController::class, 'show'])->name('comprobantes.show');
+    Route::post('/{id}/reenviar', [\App\Http\Controllers\ComprobanteSunatController::class, 'reenviar'])->name('comprobantes.reenviar');
+    Route::post('/{id}/anular', [\App\Http\Controllers\ComprobanteSunatController::class, 'anular'])->name('comprobantes.anular');
 });
 
 // ==========================================
@@ -759,6 +761,14 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::get('/auditoria',                [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'index'])->middleware('only.admin')->name('auditoria.index');
     Route::get('/auditoria/{id}',           [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'show'])->middleware('only.admin')->name('auditoria.show');
     Route::get('/auditoria-exportar/csv',   [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'exportarCsv'])->middleware('only.admin')->name('auditoria.export');
+
+    Route::get('/farmacia/productos/{producto}/historial', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'historial'])->name('farmacia.productos.historial');
+
+    // Recetas médicas farmacia
+    Route::get('/farmacia/recetas',          [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'index'])->name('farmacia.recetas.index');
+    Route::post('/farmacia/recetas',         [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'store'])->name('farmacia.recetas.store');
+    Route::put('/farmacia/recetas/{receta}', [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'update'])->name('farmacia.recetas.update');
+    Route::delete('/farmacia/recetas/{receta}', [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'destroy'])->name('farmacia.recetas.destroy');
 
 
     // ====== PLANTILLAS / DATOS DEMO ======
@@ -1009,6 +1019,17 @@ Route::middleware(['auth'])->group(function () {
 
 // ── HOTEL ──
 Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(function () {
+    // Nuevas rutas
+    Route::post('/reservar',                   [\App\Http\Controllers\Hotel\HotelController::class, 'reservar'])->name('reservar');
+    Route::post('/reservas/{id}/confirmar-checkin', [\App\Http\Controllers\Hotel\HotelController::class, 'confirmarCheckin'])->name('confirmar-checkin');
+    Route::post('/reservas/{id}/cancelar',          [\App\Http\Controllers\Hotel\HotelController::class, 'cancelarReserva'])->name('cancelar-reserva');
+    Route::post('/reservas/{id}/extender',     [\App\Http\Controllers\Hotel\HotelController::class, 'extenderEstadia'])->name('extender');
+    Route::post('/reservas/{id}/cambiar-hab',  [\App\Http\Controllers\Hotel\HotelController::class, 'cambiarHabitacion'])->name('cambiar-hab');
+    Route::post('/reservas/{id}/pago',         [\App\Http\Controllers\Hotel\HotelController::class, 'registrarPago'])->name('pago');
+    Route::get('/cierre-diario',               [\App\Http\Controllers\Hotel\HotelController::class, 'cierreDiario'])->name('cierre-diario');
+    Route::get('/caja',                        [\App\Http\Controllers\Hotel\CajaHotelController::class, 'index'])->name('caja');
+    Route::post('/caja/abrir',                 [\App\Http\Controllers\Hotel\CajaHotelController::class, 'abrir'])->name('caja.abrir');
+    Route::post('/caja/{caja}/cerrar',         [\App\Http\Controllers\Hotel\CajaHotelController::class, 'cerrar'])->name('caja.cerrar');
     Route::get('/dashboard', [App\Http\Controllers\Hotel\HotelController::class, 'dashboard'])->name('dashboard');
     Route::get('/habitaciones', [App\Http\Controllers\Hotel\HotelController::class, 'habitaciones'])->name('habitaciones');
     Route::post('/habitaciones', [App\Http\Controllers\Hotel\HotelController::class, 'storeHabitacion'])->name('habitaciones.store');
@@ -1062,3 +1083,14 @@ Route::get('/api/consulta-documento', function(\Illuminate\Http\Request $request
 })->middleware('web');
 
 require __DIR__.'/odontologia.php';
+
+
+// Servicios Notariales
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
+    Route::get('/notaria/servicios', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'index'])->name('notaria.servicios.index');
+    Route::post('/notaria/servicios', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'store'])->name('notaria.servicios.store');
+    Route::put('/notaria/servicios/{servicio}', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'update'])->name('notaria.servicios.update');
+    Route::delete('/notaria/servicios/{servicio}', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'destroy'])->name('notaria.servicios.destroy');
+    Route::get('/notaria/servicios/lista', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'lista'])->name('notaria.servicios.lista');
+});
+

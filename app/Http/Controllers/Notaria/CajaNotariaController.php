@@ -147,6 +147,7 @@ class CajaNotariaController extends Controller
             'resumenCaja'     => $resumenCaja,
             'filtros'         => ['buscar' => $buscar],
             'historialCierres'=> $historialCierres,
+            'serviciosNotaria' => \App\Models\NotariaServicio::where('empresa_id', $empresaId)->where('activo', true)->orderBy('nombre')->get(['id','nombre','precio']),
         ]);
     }
 
@@ -232,7 +233,7 @@ class CajaNotariaController extends Controller
     public function servicioRapido(\Illuminate\Http\Request $request)
     {
         $request->validate([
-            'tipo_servicio'    => 'required|string',
+            'tipo_servicio'    => 'nullable|string',
             'monto'            => 'required|numeric|min:0.01',
             'metodo_pago'      => 'required|in:efectivo,yape,plin,tarjeta,transferencia',
             'cliente_nombre'   => 'nullable|string',

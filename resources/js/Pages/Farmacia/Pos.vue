@@ -214,10 +214,31 @@
                                 <button @click="limpiarCliente" style="background:none; border:none; color:#94A3B8; cursor:pointer; font-size:16px;">✕</button>
                             </div>
 
-                            <input v-model="clienteDni" type="text"
-                                :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
+                            <!-- DNI/RUC con búsqueda automática -->
+                            <div style="position:relative;">
+                                <input v-model="clienteDni" type="text" maxlength="11"
+                                    :placeholder="tipoComprobante === 'factura' ? 'RUC (11 dígitos) *' : 'DNI (8 dígitos)'"
+                                    @input="onDocumentoInput"
+                                    style="width:100%; padding:10px 38px 10px 10px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                                    :style="{ borderColor: clienteEncontrado ? '#14B8A6' : clienteError ? '#EF4444' : '#E2E8F0' }"
+                                />
+                                <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:16px;">
+                                    <span v-if="buscandoDoc">⏳</span>
+                                    <span v-else-if="clienteEncontrado">✅</span>
+                                    <span v-else-if="clienteError">❌</span>
+                                    <span v-else>🔍</span>
+                                </span>
+                            </div>
+
+                            <!-- Nombre encontrado -->
+                            <div v-if="clienteEncontrado && !clienteSeleccionado" style="padding:8px 12px; background:#F0FDFA; border-radius:8px; border:1px solid #CCFBF1;">
+                                <p style="margin:0; font-size:13px; font-weight:600; color:#0F766E;">{{ clienteRazonSocial }}</p>
+                                <p style="margin:2px 0 0; font-size:11px; color:#64748B;">{{ tipoComprobante === 'factura' ? 'RUC' : 'DNI' }}: {{ clienteDni }}</p>
+                            </div>
+                            <div v-if="clienteError" style="padding:6px 10px; background:#FEF2F2; border-radius:8px; border:1px solid #FECACA;">
+                                <p style="margin:0; font-size:12px; color:#991B1B;">{{ clienteError }}</p>
+                            </div>
+
                             <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
                                 placeholder="Razón social del cliente *"
                                 style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
@@ -399,6 +420,43 @@ const tipoComprobante = ref('ninguno')
 const clienteDni = ref('')
 const clienteRazonSocial = ref('')
 const clienteEmail = ref('')
+const buscandoDoc = ref(false)
+const clienteEncontrado = ref(false)
+const clienteError = ref('')
+
+let docTimer = null
+function onDocumentoInput() {
+    clienteEncontrado.value = false
+    clienteError.value = ''
+    const doc = clienteDni.value.replace(/\D/g, '')
+    clienteDni.value = doc
+    const esDni = doc.length === 8
+    const esRuc = doc.length === 11
+    if (!esDni && !esRuc) return
+    clearTimeout(docTimer)
+    docTimer = setTimeout(async () => {
+        buscandoDoc.value = true
+        clienteError.value = ''
+        try {
+            const res = await fetch(`/api/consulta-documento?documento=${doc}`)
+            const data = await res.json()
+            if (esDni && data.nombre_completo) {
+                clienteRazonSocial.value = data.nombre_completo
+                clienteEncontrado.value = true
+            } else if (esRuc && data.razon_social) {
+                clienteRazonSocial.value = data.razon_social
+                clienteEncontrado.value = true
+            } else {
+                clienteError.value = esDni ? 'DNI no encontrado en RENIEC' : 'RUC no encontrado en SUNAT'
+                clienteRazonSocial.value = ''
+            }
+        } catch(e) {
+            clienteError.value = 'Error al consultar, ingresa el nombre manualmente'
+        } finally {
+            buscandoDoc.value = false
+        }
+    }, 600)
+}
 const busquedaCliente = ref('')
 const clienteSeleccionado = ref(null)
 const mostrarSugerencias = ref(false)

@@ -129,6 +129,29 @@ class ProductosFarmaciaController extends Controller
         return redirect()->back()->with('success', 'Stock actualizado');
     }
 
+    public function historial(Producto $producto)
+    {
+        if ($producto->empresa_id !== EmpresaHelper::id()) abort(403);
+
+        $historial = \App\Models\CompraDetalle::with('compra.proveedor')
+            ->where('producto_id', $producto->id)
+            ->orderBy('created_at', 'desc')
+            ->take(20)
+            ->get()
+            ->map(fn($d) => [
+                'fecha'            => $d->compra->fecha_emision?->format('d/m/Y'),
+                'numero'           => $d->compra->numero_comprobante,
+                'proveedor'        => $d->compra->proveedor?->razon_social,
+                'cantidad'         => $d->cantidad,
+                'precio_unitario'  => $d->precio_unitario,
+                'lote'             => $d->lote,
+                'fecha_vencimiento'=> $d->fecha_vencimiento,
+                'total'            => $d->total,
+            ]);
+
+        return response()->json($historial);
+    }
+
     public function vencimientos()
     {
         $empresa_id = auth()->user()->empresa_id;

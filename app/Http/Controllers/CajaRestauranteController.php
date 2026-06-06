@@ -183,16 +183,174 @@ class CajaRestauranteController extends Controller
 
         Mesa::whereIn('id', $this->idsGrupoMesa($mesa))->update(['estado' => 'libre', 'mesa_principal_id' => null]);
 
-        $tipo = $request->tipo_comprobante ?? 'boleta';
+        $tipo = $request->tipo_comprobante ?? 'ninguno';
 
         if ($tipo === 'ninguno') {
             return redirect()->route('mesas.index')
                 ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}");
         }
 
+        // Si vienen datos del cliente, emitir comprobante directo sin redirigir
+        $clienteDoc  = $request->cliente_documento ?? '';
+        $clienteNombre = $request->cliente_nombre ?? '';
+        $clienteEmail  = $request->cliente_email ?? '';
+
+        if ($clienteDoc && $clienteNombre) {
+            $empresa   = auth()->user()->empresa;
+            $exonerada = $empresa->zona_exonerada ?? false;
+            $totalMonto = round(floatval($caja->total), 2);
+
+            if ($exonerada) { $gravada = 0; $igv = 0; }
+            else { $gravada = round($totalMonto / 1.18, 2); $igv = round($totalMonto - $gravada, 2); }
+            $baseImponible = $exonerada ? $totalMonto : $gravada;
+
+            $tipoComp  = $tipo === 'factura' ? '01' : '03';
+            if ($tipo === 'factura') {
+                $serie       = $empresa->serie_factura ?? 'F001';
+                $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
+                $empresa->increment('ultimo_num_factura');
+            } else {
+                $serie       = $empresa->serie_boleta ?? 'B001';
+                $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
+                $empresa->increment('ultimo_num_boleta');
+            }
+
+            $fileName = $empresa->ruc . '-' . $tipoComp . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
+            $tipoDocCliente = $tipo === 'factura' ? '6' : ($request->cliente_tipo_documento ?? '1');
+
+            $valUnit = $exonerada ? $totalMonto : round($totalMonto / 1.18, 4);
+            $igvItem = $exonerada ? 0 : round($totalMonto - $valUnit, 2);
+
+            $lineas = [[
+                'cbc:ID'                  => ['_text' => '1'],
+                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cac:PricingReference'    => ['cac:AlternativeConditionPrice' => [
+                    'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $totalMonto],
+                    'cbc:PriceTypeCode' => ['_text' => '01'],
+                ]],
+                'cac:TaxTotal' => [
+                    'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                    'cac:TaxSubtotal' => [[
+                        'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                        'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                        'cac:TaxCategory'   => [
+                            'cbc:Percent'                => ['_text' => $exonerada ? '0' : '18'],
+                            'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
+                            'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                        ],
+                    ]],
+                ],
+                'cac:Item'  => ['cbc:Description' => ['_text' => 'Consumo Mesa ' . $mesa->numero], 'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']]],
+                'cac:Price' => ['cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit]],
+            ]];
+
+            $documentBody = [
+                'cbc:UBLVersionID'         => ['_text' => '2.1'],
+                'cbc:CustomizationID'      => ['_text' => '2.0'],
+                'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
+                'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
+                'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoComp],
+                'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => strtoupper($this->numeroALetras($totalMonto))],
+                'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+                'cac:PaymentTerms'         => ['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Contado']],
+                'cac:AccountingSupplierParty' => ['cac:Party' => [
+                    'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
+                    'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                    'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => $empresa->razon_social], 'cac:RegistrationAddress' => ['cbc:AddressTypeCode' => ['_text' => '0000'], 'cac:AddressLine' => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']]]],
+                ]],
+                'cac:AccountingCustomerParty' => ['cac:Party' => [
+                    'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $tipoDocCliente], '_text' => $clienteDoc]],
+                    'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($clienteNombre)]],
+                ]],
+                'cac:TaxTotal' => [
+                    'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                    'cac:TaxSubtotal' => [[
+                        'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                        'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                        'cac:TaxCategory'   => ['cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
+                    ]],
+                ],
+                'cac:LegalMonetaryTotal' => [
+                    'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                    'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $totalMonto],
+                    'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $totalMonto],
+                ],
+                'cac:InvoiceLine' => $lineas,
+            ];
+
+            try {
+                $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->timeout(60)
+                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                        'personaId'    => $empresa->apisunat_ruc,
+                        'personaToken' => $empresa->apisunat_token,
+                        'fileName'     => $fileName,
+                        'documentBody' => $documentBody,
+                    ]);
+
+                $data      = $response->json();
+                $aceptada  = $response->successful() && isset($data['sunatResponse']);
+                $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+                $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+
+                $comprobante = \App\Models\ComprobanteSunat::create([
+                    'empresa_id'               => $empresa->id,
+                    'caja_restaurante_id'      => $caja->id,
+                    'tipo_comprobante'         => $tipoComp,
+                    'serie'                    => $serie,
+                    'numero'                   => $correlativo,
+                    'fecha_emision'            => now()->toDateString(),
+                    'cliente_tipo_documento'   => $tipoDocCliente,
+                    'cliente_numero_documento' => $clienteDoc,
+                    'cliente_nombre'           => strtoupper($clienteNombre),
+                    'cliente_email'            => $clienteEmail,
+                    'total_gravada'            => $gravada,
+                    'total_igv'                => $igv,
+                    'total'                    => $totalMonto,
+                    'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                    'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
+                    'enlace_pdf'               => $pdfUrl,
+                    'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error emitir comprobante cobro: ' . $e->getMessage());
+            }
+
+            return redirect()->route('comprobantes.show', $comprobante)
+                ->with('success', "Mesa {$mesa->numero} cobrada y comprobante emitido.")
+                ->with('imprimir', true);
+        }
+
+        // Sin datos de cliente → redirigir a página de comprobante
         return redirect()->route('comprobantes.crear', $caja)
             ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}")
             ->with('tipo_comprobante', $tipo);
+    }
+
+    private function numeroALetras($numero)
+    {
+        $entero  = (int)$numero;
+        $decimal = round(($numero - $entero) * 100);
+        return $this->enLetras($entero) . ' CON ' . str_pad($decimal, 2, '0', STR_PAD_LEFT) . '/100 SOLES';
+    }
+
+    private function enLetras($n)
+    {
+        $u = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE'];
+        $d = ['','','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+        $c = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+        if ($n == 0) return 'CERO';
+        if ($n == 100) return 'CIEN';
+        if ($n < 16) return $u[$n];
+        if ($n < 20) return 'DIECI' . $u[$n - 10];
+        if ($n == 20) return 'VEINTE';
+        if ($n < 30) return 'VEINTI' . $u[$n - 20];
+        if ($n < 100) return $d[intdiv($n,10)] . ($n%10 ? ' Y ' . $u[$n%10] : '');
+        if ($n < 1000) return $c[intdiv($n,100)] . ($n%100 ? ' ' . $this->enLetras($n%100) : '');
+        if ($n < 2000) return 'MIL' . ($n%1000 ? ' ' . $this->enLetras($n%1000) : '');
+        if ($n < 1000000) return $this->enLetras(intdiv($n,1000)) . ' MIL' . ($n%1000 ? ' ' . $this->enLetras($n%1000) : '');
+        return (string)$n;
     }
 
     // Cobrar solo los platos seleccionados (division por platos)

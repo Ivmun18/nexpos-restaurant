@@ -20,6 +20,8 @@ class CompraDetalle extends Model
         'total_valor',
         'total_igv',
         'total',
+        'lote',
+        'fecha_vencimiento',
     ];
 
     protected $casts = [

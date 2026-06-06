@@ -83,10 +83,23 @@
                             <label style="display:block; font-size:13px; font-weight:600; color:#64748B; margin-bottom:8px;">
                                 Número de Documento *
                             </label>
-                            <input type="text" v-model="formBoleta.cliente_documento" required
-                                :maxlength="formBoleta.cliente_tipo_documento === '1' ? 8 : 11"
-                                placeholder="Ej: 12345678"
-                                style="width:100%; padding:12px 16px; border:1px solid #E2E8F0; border-radius:10px; font-size:14px; color:#1E293B;">
+                            <div style="position:relative;">
+                                <input type="text" v-model="formBoleta.cliente_documento" required
+                                    :maxlength="formBoleta.cliente_tipo_documento === '1' ? 8 : 11"
+                                    placeholder="Ej: 12345678"
+                                    @input="onDocBoleta"
+                                    style="width:100%; padding:12px 40px 12px 16px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; color:#1E293B; outline:none; box-sizing:border-box;"
+                                    :style="{ borderColor: docBoletaEncontrado ? '#14B8A6' : docBoletaError ? '#EF4444' : '#E2E8F0' }"/>
+                                <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:16px;">
+                                    <span v-if="buscandoBoleta">⏳</span>
+                                    <span v-else-if="docBoletaEncontrado">✅</span>
+                                    <span v-else-if="docBoletaError">❌</span>
+                                    <span v-else>🔍</span>
+                                </span>
+                            </div>
+                            <div v-if="docBoletaError" style="padding:6px 10px; background:#FEF2F2; border-radius:8px; border:1px solid #FECACA; margin-top:4px;">
+                                <p style="margin:0; font-size:12px; color:#991B1B;">{{ docBoletaError }}</p>
+                            </div>
                         </div>
 
                         <!-- Nombre -->
@@ -97,6 +110,7 @@
                             <input type="text" v-model="formBoleta.cliente_nombre" required
                                 placeholder="Ej: Juan Pérez"
                                 style="width:100%; padding:12px 16px; border:1px solid #E2E8F0; border-radius:10px; font-size:14px; color:#1E293B;">
+                            <p v-if="docBoletaEncontrado" style="font-size:11px; color:#0F766E; margin:4px 0 0;">✅ Nombre obtenido automáticamente de RENIEC</p>
                         </div>
 
                         <!-- Email -->
@@ -220,6 +234,43 @@ const formBoleta = ref({
     cliente_nombre: '',
     cliente_email: '',
 })
+
+const buscandoBoleta    = ref(false)
+const docBoletaEncontrado = ref(false)
+const docBoletaError    = ref('')
+let timerBoleta = null
+
+function onDocBoleta() {
+    docBoletaEncontrado.value = false
+    docBoletaError.value = ''
+    formBoleta.value.cliente_nombre = ''
+    const doc = formBoleta.value.cliente_documento.replace(/[^0-9]/g, '')
+    formBoleta.value.cliente_documento = doc
+    const esDni = doc.length === 8
+    const esRuc = doc.length === 11
+    if (!esDni && !esRuc) return
+    clearTimeout(timerBoleta)
+    timerBoleta = setTimeout(async () => {
+        buscandoBoleta.value = true
+        try {
+            const res = await fetch(`/api/consulta-documento?documento=${doc}`)
+            const data = await res.json()
+            if (esDni && data.nombre_completo) {
+                formBoleta.value.cliente_nombre = data.nombre_completo
+                docBoletaEncontrado.value = true
+            } else if (esRuc && data.razon_social) {
+                formBoleta.value.cliente_nombre = data.razon_social
+                docBoletaEncontrado.value = true
+            } else {
+                docBoletaError.value = esDni ? 'DNI no encontrado en RENIEC' : 'RUC no encontrado en SUNAT'
+            }
+        } catch(e) {
+            docBoletaError.value = 'Error al consultar, ingresa el nombre manualmente'
+        } finally {
+            buscandoBoleta.value = false
+        }
+    }, 600)
+}
 
 const formFactura = ref({
     cliente_ruc: '',

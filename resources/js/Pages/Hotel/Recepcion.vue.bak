@@ -12,16 +12,10 @@ const props = defineProps({
     huespedes: Array,
 })
 
-const showCheckin   = ref(false)
-const showReservar  = ref(false)
-const showCheckout  = ref(null)
-const showExtender  = ref(null)
-const showCambiarHab = ref(null)
-const showPagoParcial = ref(null)
-const cargando      = ref(false)
-const ticket        = ref(null)
+const showCheckin = ref(false)
+const showCheckout = ref(null)
+const cargando = ref(false)
 
-// ── FORM CHECK-IN / RESERVA ──
 const form = ref({
     habitacion_id: '',
     tipo_documento: '1',
@@ -39,109 +33,22 @@ const form = ref({
     })(),
     num_huespedes: 1,
     observaciones: '',
-    adelanto: 0,
-    metodo_adelanto: 'efectivo',
 })
 
-// ── CONSULTA DNI/RUC RENIEC ──
-const buscandoDoc   = ref(false)
-const docEncontrado = ref(false)
-const docError      = ref('')
-let docTimer = null
+const pagoForm = ref({ monto: 0, metodo_pago: 'efectivo', referencia: '' })
 
-async function onDocInput() {
-    docEncontrado.value = false
-    docError.value = ''
-    form.value.nombre_completo = ''
-    const doc = form.value.numero_documento.replace(/[^0-9]/g, '')
-    form.value.numero_documento = doc
-    const esDni = doc.length === 8
-    const esRuc = doc.length === 11
-    if (!esDni && !esRuc) return
-    clearTimeout(docTimer)
-    docTimer = setTimeout(async () => {
-        buscandoDoc.value = true
-        try {
-            const res = await fetch(`/api/consulta-documento?documento=${doc}`)
-            const data = await res.json()
-            if (esDni && data.nombre_completo) {
-                form.value.nombre_completo = data.nombre_completo
-                docEncontrado.value = true
-            } else if (esRuc && data.razon_social) {
-                form.value.nombre_completo = data.razon_social
-                docEncontrado.value = true
-            } else {
-                docError.value = esDni ? 'DNI no encontrado en RENIEC' : 'RUC no encontrado'
-            }
-        } catch(e) {
-            docError.value = 'Error al consultar, ingresa el nombre manualmente'
-        } finally {
-            buscandoDoc.value = false
-        }
-    }, 600)
-}
-
-// ── CHECKOUT FORM ──
-const pagoForm = ref({
-    monto: 0,
-    metodo_pago: 'efectivo',
-    referencia: '',
-    tipo_comprobante: 'ninguno',
-    cliente_documento: '',
-    cliente_nombre: '',
-    cliente_email: '',
-})
-
-// Consulta DNI checkout
-const docCheckoutEncontrado = ref(false)
-const docCheckoutError = ref('')
-const buscandoDocCheckout = ref(false)
-let docCheckoutTimer = null
-
-async function onDocCheckoutInput() {
-    docCheckoutEncontrado.value = false
-    docCheckoutError.value = ''
-    const doc = pagoForm.value.cliente_documento.replace(/[^0-9]/g, '')
-    pagoForm.value.cliente_documento = doc
-    const esDni = doc.length === 8
-    const esRuc = doc.length === 11
-    if (!esDni && !esRuc) return
-    clearTimeout(docCheckoutTimer)
-    docCheckoutTimer = setTimeout(async () => {
-        buscandoDocCheckout.value = true
-        try {
-            const res = await fetch(`/api/consulta-documento?documento=${doc}`)
-            const data = await res.json()
-            if (esDni && data.nombre_completo) {
-                pagoForm.value.cliente_nombre = data.nombre_completo
-                docCheckoutEncontrado.value = true
-            } else if (esRuc && data.razon_social) {
-                pagoForm.value.cliente_nombre = data.razon_social
-                docCheckoutEncontrado.value = true
-            } else {
-                docCheckoutError.value = 'No encontrado'
-            }
-        } catch(e) {
-            docCheckoutError.value = 'Error al consultar'
-        } finally { buscandoDocCheckout.value = false }
-    }, 600)
-}
-
-// ── CHECKIN ──
-const hacerCheckin = async (esReserva = false) => {
+const hacerCheckin = async () => {
     cargando.value = true
     try {
-        const url = esReserva ? '/hotel/reservar' : '/hotel/checkin'
-        const res = await fetch(url, {
+        const res = await fetch('/hotel/checkin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
             body: JSON.stringify(form.value)
         })
         const data = await res.json()
         if (data.success) {
-            alert('✅ ' + data.mensaje + (data.codigo ? ' — Código: ' + data.codigo : ''))
+            alert('✅ ' + data.mensaje)
             showCheckin.value = false
-            showReservar.value = false
             router.reload()
         } else {
             alert('❌ ' + (data.mensaje || 'Error'))
@@ -149,23 +56,6 @@ const hacerCheckin = async (esReserva = false) => {
     } finally { cargando.value = false }
 }
 
-// ── CONFIRMAR CHECKIN DE RESERVA ──
-const confirmarCheckin = async (reserva) => {
-    if (!confirm('¿Confirmar check-in para ' + reserva.huesped?.nombre_completo + '?')) return
-    cargando.value = true
-    try {
-        const res = await fetch('/hotel/reservas/' + reserva.id + '/confirmar-checkin', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-            body: JSON.stringify({})
-        })
-        const data = await res.json()
-        if (data.success) { alert('✅ ' + data.mensaje); router.reload() }
-        else alert('❌ ' + data.mensaje)
-    } finally { cargando.value = false }
-}
-
-// ── CHECKOUT ──
 const hacerCheckout = async (reserva) => {
     cargando.value = true
     try {
@@ -178,7 +68,6 @@ const hacerCheckout = async (reserva) => {
         if (data.success) {
             showCheckout.value = null
             ticket.value = data.ticket
-            if (data.comprobante_pdf) window.open(data.comprobante_pdf, '_blank')
             router.reload()
         } else {
             alert('❌ ' + (data.mensaje || 'Error'))
@@ -186,74 +75,8 @@ const hacerCheckout = async (reserva) => {
     } finally { cargando.value = false }
 }
 
-// ── EXTENDER ESTADIA ──
-const extenderForm = ref({ nueva_fecha_checkout: '' })
-const extenderEstadia = async () => {
-    cargando.value = true
-    try {
-        const res = await fetch('/hotel/reservas/' + showExtender.value.id + '/extender', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-            body: JSON.stringify(extenderForm.value)
-        })
-        const data = await res.json()
-        if (data.success) { alert('✅ ' + data.mensaje); showExtender.value = null; router.reload() }
-        else alert('❌ ' + data.mensaje)
-    } finally { cargando.value = false }
-}
-
-// ── CAMBIAR HABITACION ──
-const cambiarHabForm = ref({ nueva_habitacion_id: '' })
-const cambiarHabitacion = async () => {
-    cargando.value = true
-    try {
-        const res = await fetch('/hotel/reservas/' + showCambiarHab.value.id + '/cambiar-hab', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-            body: JSON.stringify(cambiarHabForm.value)
-        })
-        const data = await res.json()
-        if (data.success) { alert('✅ ' + data.mensaje); showCambiarHab.value = null; router.reload() }
-        else alert('❌ ' + data.mensaje)
-    } finally { cargando.value = false }
-}
-
-// ── PAGO PARCIAL ──
-const pagoParcialForm = ref({ monto: 0, metodo_pago: 'efectivo', referencia: '' })
-const cancelarReserva = async (reserva) => {
-    if (!confirm('¿Cancelar la reserva de ' + reserva.huesped?.nombre_completo + '?')) return
-    cargando.value = true
-    try {
-        const res = await fetch('/hotel/reservas/' + reserva.id + '/cancelar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-            body: JSON.stringify({})
-        })
-        const data = await res.json()
-        if (data.success) { alert('✅ ' + data.mensaje); router.reload() }
-        else alert('❌ ' + data.mensaje)
-    } finally { cargando.value = false }
-}
-
-const registrarPago = async () => {
-    cargando.value = true
-    try {
-        const res = await fetch('/hotel/reservas/' + showPagoParcial.value.id + '/pago', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-            body: JSON.stringify(pagoParcialForm.value)
-        })
-        const data = await res.json()
-        if (data.success) {
-            alert('✅ Pago registrado. Saldo: S/ ' + Number(data.saldo).toFixed(2))
-            showPagoParcial.value = null
-            router.reload()
-        } else alert('❌ ' + data.mensaje)
-    } finally { cargando.value = false }
-}
-
 const infoHuesped = ref(null)
-const showCargo = ref(null)
+const showCargo = ref(null) // reserva seleccionada para agregar cargo
 const formCargo = ref({ producto_id: '', cantidad: 1 })
 
 const agregarCargo = () => {
@@ -269,6 +92,7 @@ const eliminarCargo = (id) => {
     if (!confirm('¿Eliminar cargo?')) return
     router.delete('/hotel/cargos/' + id)
 }
+const ticket = ref(null)
 
 const imprimirTicket = () => {
     const t = ticket.value
@@ -326,7 +150,7 @@ const clickHabitacion = (h) => {
 }
 
 const estadoBadge = (estado) => {
-    const m = { reservado: '#3B82F6', checkin: '#16A34A', checkout: '#6B7280', cancelado: '#DC2626', reservada: '#8B5CF6' }
+    const m = { reservado: '#3B82F6', checkin: '#16A34A', checkout: '#6B7280', cancelado: '#DC2626' }
     return m[estado] || '#6B7280'
 }
 </script>
@@ -343,9 +167,6 @@ const estadoBadge = (estado) => {
                     style="background:#3B82F6; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px;">
                     ➕ Nuevo Check-in
                 </button>
-                <button @click="showReservar = true" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8); color:white; border:none; padding:10px 20px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
-                    📅 Reservar
-                </button>
             </div>
 
             <!-- Mapa rápido de habitaciones -->
@@ -358,25 +179,19 @@ const estadoBadge = (estado) => {
                             padding:'10px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'600', minWidth:'110px', textAlign:'center',
                             cursor: h.estado==='disponible' || h.estado==='ocupada' ? 'pointer' : 'default',
                             background: h.estado==='disponible' ? '#DCFCE7' : h.estado==='ocupada' ? '#FEE2E2' : h.estado==='limpieza' ? '#FEF9C3' : '#F1F5F9',
-                            color: h.estado==='disponible' ? '#16A34A' : h.estado==='ocupada' ? '#DC2626' : h.estado==='limpieza' ? '#CA8A04' : h.estado==='reservada' ? '#1D4ED8' : '#6B7280',
+                            color: h.estado==='disponible' ? '#16A34A' : h.estado==='ocupada' ? '#DC2626' : h.estado==='limpieza' ? '#CA8A04' : '#6B7280',
                             border: '2px solid',
-                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : h.estado==='reservada' ? '#93C5FD' : '#E2E8F0',
+                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : '#E2E8F0',
                             transform: h.estado==='disponible' || h.estado==='ocupada' ? 'scale(1)' : '',
                         }">
                         <div style="font-size:15px; font-weight:700;">Hab. {{ h.numero }}</div>
                         <div style="font-size:11px; opacity:0.8;">{{ h.tipo?.nombre }}</div>
                         <div style="font-size:12px; margin-top:4px;">
-                            {{ h.estado==='disponible' ? '✅ Libre' : h.estado==='ocupada' ? '🔴 Ocupada' : h.estado==='limpieza' ? '🧹 Limpieza' : h.estado==='reservada' ? '📅 Reservada' : '🔧 Mant.' }}
+                            {{ h.estado==='disponible' ? '✅ Libre' : h.estado==='ocupada' ? '🔴 Ocupada' : h.estado==='limpieza' ? '🧹 Limpieza' : '🔧 Mant.' }}
                         </div>
                         <div style="font-size:11px;">S/ {{ h.tipo?.precio_noche }}/noche</div>
                         <div v-if="h.estado==='disponible'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para check-in</div>
                         <div v-if="h.estado==='ocupada'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para ver info</div>
-                        <!-- Badge reserva futura -->
-                        <div v-if="h.reservas_futuras?.length"
-                            style="margin-top:6px; background:#1D4ED8; color:white; border-radius:6px; padding:3px 6px; font-size:10px; font-weight:700; line-height:1.3;">
-                            📅 Reservada {{ new Date(h.reservas_futuras[0].fecha_checkin).toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit'}) }}
-                            <div style="font-size:9px; opacity:0.85; font-weight:400;">{{ h.reservas_futuras[0].huesped?.nombre_completo?.split(' ')[0] }}</div>
-                        </div>
                     </div>
                 </div>
 
@@ -449,32 +264,10 @@ const estadoBadge = (estado) => {
                                 </span>
                             </td>
                             <td style="padding:12px 16px;">
-                                <div style="display:flex; flex-wrap:wrap; gap:6px; min-width:160px;">
-                                    <button v-if="r.estado === 'reservado'" @click="confirmarCheckin(r)"
-                                        style="padding:6px 12px; background:#3B82F6; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                                        ✅ Confirmar check-in
-                                    </button>
-                                    <button v-if="r.estado === 'reservado'" @click="cancelarReserva(r)"
-                                        style="padding:6px 12px; background:#6B7280; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                                        ✕ Cancelar reserva
-                                    </button>
-                                    <button v-if="r.estado === 'checkin'" @click="showPagoParcial = r; pagoParcialForm.monto = r.total - r.monto_pagado"
-                                        style="padding:6px 12px; background:#F59E0B; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                                        💰 Pago
-                                    </button>
-                                    <button v-if="r.estado === 'checkin'" @click="showExtender = r; extenderForm.nueva_fecha_checkout = r.fecha_checkout_previsto?.slice(0,10)"
-                                        style="padding:6px 12px; background:#8B5CF6; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                                        📅 Extender
-                                    </button>
-                                    <button v-if="r.estado === 'checkin'" @click="showCambiarHab = r; cambiarHabForm.nueva_habitacion_id = ''"
-                                        style="padding:6px 12px; background:#06B6D4; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                                        🔄 Cambiar hab.
-                                    </button>
-                                    <button v-if="r.estado === 'checkin'" @click="showCheckout = r; pagoForm.monto = r.total - r.monto_pagado; pagoForm.cliente_documento = r.huesped?.numero_documento; pagoForm.cliente_nombre = r.huesped?.nombre_completo"
-                                        style="padding:6px 12px; background:#DC2626; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
-                                        🚪 Check-out
-                                    </button>
-                                </div>
+                                <button v-if="r.estado === 'checkin'" @click="showCheckout = r; pagoForm.monto = r.total - r.monto_pagado"
+                                    style="background:#DC2626; color:#fff; border:none; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                                    🚪 Check-out
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -506,19 +299,7 @@ const estadoBadge = (estado) => {
                         </div>
                         <div>
                             <label style="font-size:12px; font-weight:600; color:#374151;">N° Documento</label>
-                            <div style="position:relative;">
-                                <input v-model="form.numero_documento" @input="onDocInput" maxlength="11"
-                                    style="width:100%; padding:8px 36px 8px 8px; border:2px solid #E2E8F0; border-radius:8px; margin-top:4px; outline:none;"
-                                    :style="{ borderColor: docEncontrado ? '#14B8A6' : docError ? '#EF4444' : '#E2E8F0' }"
-                                    placeholder="DNI 8 dígitos o RUC 11 dígitos" />
-                                <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%);">
-                                    <span v-if="buscandoDoc">⏳</span>
-                                    <span v-else-if="docEncontrado">✅</span>
-                                    <span v-else-if="docError">❌</span>
-                                    <span v-else>🔍</span>
-                                </span>
-                            </div>
-                            <p v-if="docError" style="font-size:11px; color:#EF4444; margin:2px 0 0;">{{ docError }}</p>
+                            <input v-model="form.numero_documento" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; margin-top:4px;" placeholder="12345678" />
                         </div>
                         <div style="grid-column:1/-1;">
                             <label style="font-size:12px; font-weight:600; color:#374151;">Nombre Completo</label>
@@ -590,44 +371,6 @@ const estadoBadge = (estado) => {
                             <option value="transferencia">Transferencia</option>
                         </select>
                     </div>
-                    <!-- Comprobante -->
-                    <div style="margin-bottom:14px;">
-                        <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">📄 Comprobante</label>
-                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
-                            <button @click="pagoForm.tipo_comprobante='boleta'"
-                                :style="{padding:'8px', borderRadius:'8px', border: pagoForm.tipo_comprobante==='boleta' ? '2px solid #14B8A6' : '2px solid #E2E8F0', background: pagoForm.tipo_comprobante==='boleta' ? '#F0FDFA' : 'white', cursor:'pointer', fontSize:'12px', fontWeight:'700', color: pagoForm.tipo_comprobante==='boleta' ? '#0F766E' : '#64748B'}">
-                                🧾 Boleta
-                            </button>
-                            <button @click="pagoForm.tipo_comprobante='factura'"
-                                :style="{padding:'8px', borderRadius:'8px', border: pagoForm.tipo_comprobante==='factura' ? '2px solid #3B82F6' : '2px solid #E2E8F0', background: pagoForm.tipo_comprobante==='factura' ? '#EFF6FF' : 'white', cursor:'pointer', fontSize:'12px', fontWeight:'700', color: pagoForm.tipo_comprobante==='factura' ? '#1D4ED8' : '#64748B'}">
-                                🏢 Factura
-                            </button>
-                            <button @click="pagoForm.tipo_comprobante='ninguno'"
-                                :style="{padding:'8px', borderRadius:'8px', border: pagoForm.tipo_comprobante==='ninguno' ? '2px solid #94A3B8' : '2px solid #E2E8F0', background: pagoForm.tipo_comprobante==='ninguno' ? '#F8FAFC' : 'white', cursor:'pointer', fontSize:'12px', fontWeight:'700', color: pagoForm.tipo_comprobante==='ninguno' ? '#475569' : '#64748B'}">
-                                🚫 Sin boleta
-                            </button>
-                        </div>
-                        <!-- Datos cliente -->
-                        <div v-if="pagoForm.tipo_comprobante !== 'ninguno'" style="margin-top:8px; display:grid; gap:8px;">
-                            <div style="position:relative;">
-                                <input v-model="pagoForm.cliente_documento" @input="onDocCheckoutInput" maxlength="11"
-                                    :placeholder="pagoForm.tipo_comprobante==='factura' ? 'RUC (11 dígitos)' : 'DNI (8 dígitos)'"
-                                    style="width:100%; padding:8px 36px 8px 8px; border:2px solid #E2E8F0; border-radius:8px; font-size:12px; box-sizing:border-box; outline:none;"
-                                    :style="{ borderColor: docCheckoutEncontrado ? '#14B8A6' : docCheckoutError ? '#EF4444' : '#E2E8F0' }"/>
-                                <span style="position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:13px;">
-                                    <span v-if="buscandoDocCheckout">⏳</span>
-                                    <span v-else-if="docCheckoutEncontrado">✅</span>
-                                    <span v-else-if="docCheckoutError">❌</span>
-                                    <span v-else>🔍</span>
-                                </span>
-                            </div>
-                            <input v-model="pagoForm.cliente_nombre"
-                                :placeholder="pagoForm.tipo_comprobante==='factura' ? 'Razón social' : 'Nombre completo'"
-                                style="width:100%; padding:8px; border:2px solid #E2E8F0; border-radius:8px; font-size:12px; box-sizing:border-box; outline:none;"/>
-                            <p v-if="docCheckoutEncontrado" style="margin:0; font-size:11px; color:#0F766E;">✅ Datos obtenidos automáticamente</p>
-                        </div>
-                    </div>
-
                     <div style="display:flex; gap:10px; justify-content:flex-end;">
                         <button @click="showCheckout = null" style="background:#F1F5F9; color:#374151; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">Cancelar</button>
                         <button @click="hacerCheckout(showCheckout)" :disabled="cargando" style="background:#DC2626; color:#fff; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:600;">
@@ -729,154 +472,5 @@ const estadoBadge = (estado) => {
                 </div>
             </div>
 
-    
-    <!-- ══ MODAL EXTENDER ESTADIA ══ -->
-    <div v-if="showExtender" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:16px;">
-        <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:380px;">
-            <h3 style="margin:0 0 16px;font-size:16px;font-weight:700;">📅 Extender estadía</h3>
-            <p style="font-size:13px;color:#64748B;margin:0 0 12px;">{{ showExtender.huesped?.nombre_completo }} — Hab. {{ showExtender.habitacion?.numero }}</p>
-            <label style="font-size:12px;font-weight:600;color:#64748B;">Nueva fecha de checkout</label>
-            <input type="date" v-model="extenderForm.nueva_fecha_checkout"
-                style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:14px;margin-top:4px;box-sizing:border-box;"/>
-            <div style="display:flex;gap:8px;margin-top:16px;">
-                <button @click="showExtender=null" style="flex:1;padding:12px;background:#F1F5F9;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancelar</button>
-                <button @click="extenderEstadia" :disabled="cargando" style="flex:2;padding:12px;background:#8B5CF6;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;">
-                    {{ cargando ? 'Guardando...' : '✅ Confirmar extensión' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ MODAL CAMBIAR HABITACION ══ -->
-    <div v-if="showCambiarHab" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:16px;">
-        <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:380px;">
-            <h3 style="margin:0 0 16px;font-size:16px;font-weight:700;">🔄 Cambiar habitación</h3>
-            <p style="font-size:13px;color:#64748B;margin:0 0 12px;">{{ showCambiarHab.huesped?.nombre_completo }} — Actual: Hab. {{ showCambiarHab.habitacion?.numero }}</p>
-            <label style="font-size:12px;font-weight:600;color:#64748B;">Nueva habitación disponible</label>
-            <select v-model="cambiarHabForm.nueva_habitacion_id"
-                style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:14px;margin-top:4px;box-sizing:border-box;">
-                <option value="">Seleccionar habitación...</option>
-                <option v-for="h in props.habitacionesDisponibles" :key="h.id" :value="h.id">
-                    Hab. {{ h.numero }} — {{ h.tipo?.nombre }} — S/ {{ h.tipo?.precio_noche }}/noche
-                </option>
-            </select>
-            <div style="display:flex;gap:8px;margin-top:16px;">
-                <button @click="showCambiarHab=null" style="flex:1;padding:12px;background:#F1F5F9;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancelar</button>
-                <button @click="cambiarHabitacion" :disabled="cargando || !cambiarHabForm.nueva_habitacion_id"
-                    style="flex:2;padding:12px;background:#06B6D4;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;">
-                    {{ cargando ? 'Cambiando...' : '✅ Confirmar cambio' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ MODAL PAGO PARCIAL ══ -->
-    <div v-if="showPagoParcial" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:16px;">
-        <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:380px;">
-            <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;">💰 Registrar pago</h3>
-            <p style="font-size:13px;color:#64748B;margin:0 0 16px;">
-                {{ showPagoParcial.huesped?.nombre_completo }} —
-                Saldo: <b style="color:#EF4444;">S/ {{ Number(showPagoParcial.total - showPagoParcial.monto_pagado).toFixed(2) }}</b>
-            </p>
-            <label style="font-size:12px;font-weight:600;color:#64748B;">Monto a pagar</label>
-            <input type="number" v-model="pagoParcialForm.monto" step="0.01"
-                style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:14px;margin-top:4px;box-sizing:border-box;"/>
-            <label style="font-size:12px;font-weight:600;color:#64748B;display:block;margin-top:12px;">Método de pago</label>
-            <select v-model="pagoParcialForm.metodo_pago"
-                style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:14px;margin-top:4px;box-sizing:border-box;">
-                <option value="efectivo">💵 Efectivo</option>
-                <option value="yape">📱 Yape</option>
-                <option value="plin">📲 Plin</option>
-                <option value="tarjeta">💳 Tarjeta</option>
-                <option value="transferencia">🏦 Transferencia</option>
-            </select>
-            <label style="font-size:12px;font-weight:600;color:#64748B;display:block;margin-top:12px;">Referencia (opcional)</label>
-            <input type="text" v-model="pagoParcialForm.referencia" placeholder="Nro. operación..."
-                style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:14px;margin-top:4px;box-sizing:border-box;"/>
-            <div style="display:flex;gap:8px;margin-top:16px;">
-                <button @click="showPagoParcial=null" style="flex:1;padding:12px;background:#F1F5F9;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancelar</button>
-                <button @click="registrarPago" :disabled="cargando || !pagoParcialForm.monto"
-                    style="flex:2;padding:12px;background:#F59E0B;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;">
-                    {{ cargando ? 'Guardando...' : '✅ Registrar pago' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ MODAL RESERVA ANTICIPADA ══ -->
-    <div v-if="showReservar" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
-        <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:460px;margin:auto;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h3 style="margin:0;font-size:16px;font-weight:700;">📅 Reserva anticipada</h3>
-                <button @click="showReservar=false" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94A3B8;">✕</button>
-            </div>
-            <div style="display:grid;gap:10px;">
-                <div>
-                    <label style="font-size:12px;font-weight:600;color:#64748B;">Habitación</label>
-                    <select v-model="form.habitacion_id" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;">
-                        <option value="">Seleccionar...</option>
-                        <option v-for="h in props.habitacionesDisponibles" :key="h.id" :value="h.id">
-                            Hab. {{ h.numero }} — {{ h.tipo?.nombre }} — S/ {{ h.tipo?.precio_noche }}/noche
-                        </option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:12px;font-weight:600;color:#64748B;">DNI / RUC huésped</label>
-                    <div style="position:relative;">
-                        <input v-model="form.numero_documento" @input="onDocInput" maxlength="11"
-                            style="width:100%;padding:10px 36px 10px 10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;"
-                            :style="{ borderColor: docEncontrado ? '#14B8A6' : docError ? '#EF4444' : '#E2E8F0' }"
-                            placeholder="DNI 8 dígitos o RUC 11 dígitos"/>
-                        <span style="position:absolute;right:8px;top:55%;transform:translateY(-50%);">
-                            <span v-if="buscandoDoc">⏳</span>
-                            <span v-else-if="docEncontrado">✅</span>
-                            <span v-else-if="docError">❌</span>
-                        </span>
-                    </div>
-                </div>
-                <div>
-                    <label style="font-size:12px;font-weight:600;color:#64748B;">Nombre completo</label>
-                    <input v-model="form.nombre_completo" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;" placeholder="Nombre del huésped"/>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div>
-                        <label style="font-size:12px;font-weight:600;color:#64748B;">Check-in</label>
-                        <input type="date" v-model="form.fecha_checkin" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;"/>
-                    </div>
-                    <div>
-                        <label style="font-size:12px;font-weight:600;color:#64748B;">Check-out</label>
-                        <input type="date" v-model="form.fecha_checkout" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;"/>
-                    </div>
-                </div>
-                <div>
-                    <label style="font-size:12px;font-weight:600;color:#64748B;">Teléfono</label>
-                    <input v-model="form.telefono" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;" placeholder="Opcional"/>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div>
-                        <label style="font-size:12px;font-weight:600;color:#64748B;">Adelanto (S/)</label>
-                        <input type="number" v-model="form.adelanto" step="0.01" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;" placeholder="0.00"/>
-                    </div>
-                    <div>
-                        <label style="font-size:12px;font-weight:600;color:#64748B;">Método adelanto</label>
-                        <select v-model="form.metodo_adelanto" style="width:100%;padding:10px;border:2px solid #E2E8F0;border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box;">
-                            <option value="efectivo">💵 Efectivo</option>
-                            <option value="yape">📱 Yape</option>
-                            <option value="tarjeta">💳 Tarjeta</option>
-                            <option value="transferencia">🏦 Transferencia</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:16px;">
-                <button @click="showReservar=false" style="flex:1;padding:12px;background:#F1F5F9;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancelar</button>
-                <button @click="hacerCheckin(true)" :disabled="cargando"
-                    style="flex:2;padding:12px;background:linear-gradient(135deg,#3B82F6,#1D4ED8);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;">
-                    {{ cargando ? 'Guardando...' : '📅 Confirmar reserva' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-</AppLayout>
+    </AppLayout>
 </template>

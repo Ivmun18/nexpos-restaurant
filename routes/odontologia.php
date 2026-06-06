@@ -65,3 +65,12 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::post('/insumos', [LaboratorioController::class, 'storeInsumo'])->name('insumos.store');
     Route::put('/insumos/{id}', [LaboratorioController::class, 'updateInsumo'])->name('insumos.update');
 });
+
+// Servicios Notariales
+Route::middleware(['auth', 'notaria.rol'])->group(function () {
+    Route::get('/notaria/servicios', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'index'])->name('notaria.servicios.index');
+    Route::post('/notaria/servicios', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'store'])->name('notaria.servicios.store');
+    Route::put('/notaria/servicios/{servicio}', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'update'])->name('notaria.servicios.update');
+    Route::delete('/notaria/servicios/{servicio}', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'destroy'])->name('notaria.servicios.destroy');
+    Route::get('/notaria/servicios/lista', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'lista'])->name('notaria.servicios.lista');
+});

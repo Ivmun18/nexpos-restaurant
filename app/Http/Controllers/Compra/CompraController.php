@@ -94,12 +94,21 @@ class CompraController extends Controller
                     'total_valor'         => $totalValor,
                     'total_igv'           => $igvItem,
                     'total'               => $totalItem,
+                    'lote'                => $item['lote'] ?? null,
+                    'fecha_vencimiento'   => $item['fecha_vencimiento'] ?? null,
                 ];
 
-                // Actualizar stock
+                // Actualizar stock y lote/vencimiento
                 if (!empty($item['producto_id'])) {
-                    Producto::find($item['producto_id'])
-                        ?->increment('stock_actual', $cantidad);
+                    $prod = Producto::find($item['producto_id']);
+                    if ($prod) {
+                        $prod->increment('stock_actual', $cantidad);
+                        // Actualizar lote y vencimiento si se proporcionaron
+                        $updateData = [];
+                        if (!empty($item['lote'])) $updateData['lote'] = $item['lote'];
+                        if (!empty($item['fecha_vencimiento'])) $updateData['fecha_vencimiento'] = $item['fecha_vencimiento'];
+                        if (!empty($updateData)) $prod->update($updateData);
+                    }
                 }
             }
 

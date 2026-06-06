@@ -85,6 +85,10 @@
                                     style="padding:6px 12px; background:#EFF6FF; color:#1D4ED8; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #BFDBFE; cursor:pointer;">
                                     📦 Stock
                                 </button>
+                                <button @click="verHistorial(p)"
+                                    style="padding:6px 12px; background:#FDF4FF; color:#7C3AED; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #E9D5FF; cursor:pointer;">
+                                    📜 Historial
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -374,6 +378,54 @@
             </div>
         </div>
 
+
+<!-- Modal Historial de Compras -->
+<Teleport to="body">
+    <div v-if="modalHistorial" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:20px; padding:32px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0;">📜 Historial de Compras</p>
+                    <p style="font-size:13px; color:#64748B; margin:4px 0 0;">{{ productoHistorial?.descripcion }}</p>
+                </div>
+                <button @click="modalHistorial=false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94A3B8;">✕</button>
+            </div>
+
+            <div v-if="cargandoHistorial" style="text-align:center; padding:40px; color:#94A3B8;">Cargando...</div>
+
+            <div v-else-if="historialData.length === 0" style="text-align:center; padding:40px; color:#94A3B8;">
+                No hay compras registradas para este producto
+            </div>
+
+            <table v-else style="width:100%; border-collapse:collapse; font-size:13px;">
+                <thead>
+                    <tr style="background:#F8FAFC;">
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Fecha</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Comprobante</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Proveedor</th>
+                        <th style="padding:10px 12px; text-align:center; color:#64748B; font-weight:600;">Cant.</th>
+                        <th style="padding:10px 12px; text-align:right; color:#64748B; font-weight:600;">P. Compra</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Lote</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Vence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(h, i) in historialData" :key="i" style="border-top:1px solid #F1F5F9;">
+                        <td style="padding:10px 12px;">{{ h.fecha }}</td>
+                        <td style="padding:10px 12px; color:#3B82F6;">{{ h.numero }}</td>
+                        <td style="padding:10px 12px;">{{ h.proveedor || '—' }}</td>
+                        <td style="padding:10px 12px; text-align:center; font-weight:600;">{{ h.cantidad }}</td>
+                        <td style="padding:10px 12px; text-align:right; font-weight:600; color:#059669;">S/ {{ Number(h.precio_unitario).toFixed(2) }}</td>
+                        <td style="padding:10px 12px; color:#7C3AED;">{{ h.lote || '—' }}</td>
+                        <td style="padding:10px 12px;" :style="h.fecha_vencimiento && h.fecha_vencimiento < hoy ? 'color:#DC2626; font-weight:600;' : ''">
+                            {{ h.fecha_vencimiento || '—' }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</Teleport>
 </template>
 
 <script setup>
@@ -470,6 +522,27 @@ const editarProducto = (p) => {
         categoria_id:  p.categoria_id,
     }
     modalEditar.value = true
+}
+
+const modalHistorial    = ref(false)
+const productoHistorial = ref(null)
+const historialData     = ref([])
+const cargandoHistorial = ref(false)
+const hoy = new Date().toISOString().slice(0, 10)
+
+const verHistorial = async (p) => {
+    productoHistorial.value = p
+    modalHistorial.value    = true
+    cargandoHistorial.value = true
+    historialData.value     = []
+    try {
+        const res = await fetch('/farmacia/productos/' + p.id + '/historial')
+        historialData.value = await res.json()
+    } catch (e) {
+        historialData.value = []
+    } finally {
+        cargandoHistorial.value = false
+    }
 }
 
 const ajustarStock = (p) => {

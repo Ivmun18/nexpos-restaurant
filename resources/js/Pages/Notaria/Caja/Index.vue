@@ -158,10 +158,11 @@
                                         style="width:100%; padding:9px 12px; border:1px solid #10B981; border-radius:8px; font-size:13px; box-sizing:border-box;" />
                                     <div v-if="mostrarSugerencias" style="position:absolute; z-index:9999; background:white; border:1px solid #E2E8F0; border-radius:8px; width:100%; max-height:220px; overflow-y:auto; box-shadow:0 4px 16px rgba(0,0,0,0.15); top:100%; left:0;">
                                         <div v-for="s in serviciosFiltrados" :key="s"
-                                            @mousedown.prevent="itemActual.tipo_servicio=s; servicioQuery=s; mostrarSugerencias=false"
+                                            @mousedown.prevent="seleccionarServicio(s)"
                                             style="padding:9px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #F1F5F9;"
                                             onmouseover="this.style.background='#ECFDF5'; this.style.color='#065F46'" onmouseout="this.style.background='white'; this.style.color='inherit'">
-                                            {{ s }}
+                                            <span v-if="s === '__otro__'" style="color:#6D28D9; font-weight:600;">✏️ Otros (descripción libre)...</span>
+                                            <span v-else>{{ s }}</span>
                                         </div>
                                         <div v-if="!serviciosFiltrados.length" style="padding:9px 12px; font-size:12px; color:#94A3B8;">Sin resultados</div>
                                     </div>
@@ -546,6 +547,7 @@ const props = defineProps({
     sesionAbierta: { type: Boolean, default: false },
     historialCierres: { type: Array, default: () => [] },
     resumenCaja:   { type: Object,  default: null },
+    serviciosNotaria: { type: Array, default: () => [] },
 })
 
 const busqueda               = ref('')
@@ -579,8 +581,11 @@ const listaServicios = [
     'Electrónica','Biométrico','Servicios Notariales Varios',
 ]
 const serviciosFiltrados = computed(() => {
-    if (!servicioQuery.value) return listaServicios
-    return listaServicios.filter(s => s.toLowerCase().includes(servicioQuery.value.toLowerCase()))
+    const fuente = props.serviciosNotaria.length ? props.serviciosNotaria.map(s => s.nombre) : listaServicios
+    const query = servicioQuery.value.toLowerCase()
+    const filtrados = query ? fuente.filter(s => s.toLowerCase().includes(query)) : fuente
+    // Siempre mostrar "Otros" al final
+    return [...filtrados, '__otro__']
 })
 
 const formRapido = ref({
@@ -591,6 +596,22 @@ const formRapido = ref({
 const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
 const itemsRapido = ref([])
 const totalRapido = computed(() => itemsRapido.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0))
+
+function seleccionarServicio(nombre) {
+    if (nombre === '__otro__') {
+        itemActual.value.tipo_servicio = '__otro__'
+        itemActual.value.tipo_servicio_custom = ''
+        servicioQuery.value = ''
+        mostrarSugerencias.value = false
+        return
+    }
+    itemActual.value.tipo_servicio = nombre
+    itemActual.value.tipo_servicio_custom = ''
+    servicioQuery.value = nombre
+    mostrarSugerencias.value = false
+    const sv = props.serviciosNotaria.find(x => x.nombre === nombre)
+    if (sv && sv.precio > 0) itemActual.value.precio_unitario = sv.precio
+}
 
 function agregarItem() {
     if (!itemActual.value.tipo_servicio || !itemActual.value.precio_unitario) return
@@ -605,12 +626,17 @@ async function cobrarServicioRapido() {
     procesandoRapido.value = true
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-        const items = itemsRapido.value.map(it => ({
-            tipo_servicio: it.tipo_servicio === '__otro__' ? (it.tipo_servicio_custom || 'Servicio notarial') : it.tipo_servicio,
-            cantidad: it.cantidad,
-            precio_unitario: it.precio_unitario,
-            monto: it.cantidad * it.precio_unitario,
-        }))
+        const items = itemsRapido.value.map(it => {
+            const desc = it.tipo_servicio === '__otro__' ? (it.tipo_servicio_custom || 'Servicio notarial') : it.tipo_servicio
+            return {
+                tipo_servicio: desc,
+                descripcion: desc,
+                cantidad: it.cantidad,
+                precio_unitario: it.precio_unitario,
+                precio: it.precio_unitario,
+                monto: it.cantidad * it.precio_unitario,
+            }
+        })
         const totalMonto = items.reduce((s, i) => s + i.monto, 0)
         const payload = { ...formRapido.value, items, monto: totalMonto }
         const docLen = (payload.cliente_documento || '').replace(/\D/g, '').length

@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const props = defineProps({
@@ -10,6 +10,17 @@ const props = defineProps({
     ocupacionPromedio: Number,
     desde: String,
     hasta: String,
+    totalNoches: Number,
+    promedioNoche: Number,
+    pagos: Array,
+    ingresosPorMes: Array,
+    ocupacionPorMes: Array,
+    totalHabitaciones: Number,
+})
+
+const maxIngreso = computed(() => {
+    if (!props.ingresosPorMes?.length) return 1
+    return Math.max(...props.ingresosPorMes.map(m => m.ingresos), 1)
 })
 
 const desde = ref(props.desde)
@@ -93,18 +104,88 @@ const exportarPDF = () => {
                 <button @click="buscar" style="background:#3B82F6; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer;">🔍 Buscar</button>
                 <a :href="'/hotel/reportes/pdf?desde=' + desde + '&hasta=' + hasta" style="background:#DC2626; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;">📄 Descargar PDF</a>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
-                <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #3B82F6;">
-                    <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Total Reservas</div>
-                    <div style="font-size:32px; font-weight:700; color:#1E293B;">{{ totalReservas }}</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px;">
+                <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #3B82F6;">
+                    <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Reservas</div>
+                    <div style="font-size:28px; font-weight:700; color:#1E293B;">{{ totalReservas }}</div>
                 </div>
-                <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #10B981;">
+                <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #10B981;">
                     <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Ingresos</div>
-                    <div style="font-size:24px; font-weight:700; color:#10B981;">S/ {{ Number(totalIngresos).toFixed(2) }}</div>
+                    <div style="font-size:22px; font-weight:700; color:#10B981;">S/ {{ Number(totalIngresos).toFixed(2) }}</div>
                 </div>
-                <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #8B5CF6;">
+                <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #8B5CF6;">
                     <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Ocupación</div>
-                    <div style="font-size:32px; font-weight:700; color:#8B5CF6;">{{ ocupacionPromedio }}%</div>
+                    <div style="font-size:28px; font-weight:700; color:#8B5CF6;">{{ ocupacionPromedio }}%</div>
+                </div>
+                <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #F59E0B;">
+                    <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Noches</div>
+                    <div style="font-size:28px; font-weight:700; color:#D97706;">{{ totalNoches }}</div>
+                </div>
+                <div style="background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border-left:4px solid #14B8A6;">
+                    <div style="font-size:11px; color:#64748B; font-weight:600; text-transform:uppercase;">Prom/noche</div>
+                    <div style="font-size:20px; font-weight:700; color:#0F766E;">S/ {{ Number(promedioNoche).toFixed(2) }}</div>
+                </div>
+            </div>
+
+            <!-- Gráfico ingresos por mes -->
+            <div style="background:white; border-radius:14px; padding:18px; border:1px solid #E2E8F0; margin-bottom:14px;">
+                <div style="font-size:14px; font-weight:700; color:#1E293B; margin-bottom:14px;">📈 Ingresos últimos 6 meses</div>
+                <div style="display:flex; align-items:flex-end; gap:8px; height:120px;">
+                    <div v-for="m in ingresosPorMes" :key="m.mes"
+                        style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%;">
+                        <span style="font-size:9px; color:#64748B; font-weight:600; white-space:nowrap;">{{ Number(m.ingresos).toFixed(0) }}</span>
+                        <div style="flex:1; width:100%; display:flex; align-items:flex-end;">
+                            <div :style="{
+                                width:'100%',
+                                height: maxIngreso > 0 ? Math.max((m.ingresos / maxIngreso * 90), 3) + 'px' : '3px',
+                                background:'linear-gradient(180deg,#14B8A6,#0F766E)',
+                                borderRadius:'4px 4px 0 0'
+                            }"></div>
+                        </div>
+                        <span style="font-size:9px; color:#94A3B8; white-space:nowrap;">{{ m.mes }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico ocupación por mes -->
+            <div style="background:white; border-radius:14px; padding:18px; border:1px solid #E2E8F0; margin-bottom:14px;">
+                <div style="font-size:14px; font-weight:700; color:#1E293B; margin-bottom:14px;">🏨 Ocupación últimos 6 meses</div>
+                <div style="display:flex; align-items:flex-end; gap:8px; height:120px;">
+                    <div v-for="m in ocupacionPorMes" :key="m.mes"
+                        style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%;">
+                        <span style="font-size:9px; color:#64748B; font-weight:600;">{{ m.ocupacion }}%</span>
+                        <div style="flex:1; width:100%; display:flex; align-items:flex-end;">
+                            <div :style="{
+                                width:'100%',
+                                height: Math.max(m.ocupacion, 3) + 'px',
+                                background: m.ocupacion > 70 ? 'linear-gradient(180deg,#EF4444,#DC2626)' : m.ocupacion > 40 ? 'linear-gradient(180deg,#F59E0B,#D97706)' : 'linear-gradient(180deg,#3B82F6,#1D4ED8)',
+                                borderRadius:'4px 4px 0 0'
+                            }"></div>
+                        </div>
+                        <span style="font-size:9px; color:#94A3B8; white-space:nowrap;">{{ m.mes }}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; margin-top:8px; font-size:10px; color:#64748B;">
+                    <span>🔵 Baja</span><span>🟡 Media</span><span>🔴 Alta</span>
+                </div>
+            </div>
+
+            <!-- Por método de pago -->
+            <div v-if="pagos?.length" style="background:white; border-radius:14px; padding:18px; border:1px solid #E2E8F0; margin-bottom:14px;">
+                <div style="font-size:14px; font-weight:700; color:#1E293B; margin-bottom:12px;">💳 Por método de pago</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div v-for="p in pagos" :key="p.metodo_pago" style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:12px; font-weight:600; color:#1E293B; width:90px; flex-shrink:0; text-transform:capitalize;">{{ p.metodo_pago }}</span>
+                        <div style="flex:1; background:#F1F5F9; border-radius:6px; height:18px; overflow:hidden;">
+                            <div :style="{
+                                width: totalIngresos > 0 ? (p.total / totalIngresos * 100) + '%' : '0%',
+                                height:'100%',
+                                background:'linear-gradient(90deg,#14B8A6,#0F766E)',
+                                borderRadius:'6px'
+                            }"></div>
+                        </div>
+                        <span style="font-size:12px; font-weight:700; color:#0F766E; width:75px; text-align:right; flex-shrink:0;">S/ {{ Number(p.total).toFixed(2) }}</span>
+                    </div>
                 </div>
             </div>
             <div style="background:#fff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); overflow:hidden;">

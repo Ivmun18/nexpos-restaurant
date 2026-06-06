@@ -27,13 +27,63 @@ const props = defineProps({
 })
 
 const form = useForm({
-    metodo_pago:       'efectivo',
-    monto_pagado:      props.total ? Number(props.total).toFixed(2) : '',
-    tipo_comprobante:  'boleta',
-    notas:        '',
-    partes_total:      1,
-    parte_numero:      1,
+    metodo_pago:          'efectivo',
+    monto_pagado:         props.total ? Number(props.total).toFixed(2) : '',
+    tipo_comprobante:     'ninguno',
+    notas:                '',
+    partes_total:         1,
+    parte_numero:         1,
+    cliente_documento:    '',
+    cliente_nombre:       '',
+    cliente_email:        '',
+    cliente_tipo_documento: '1',
 })
+
+const mostrarModalCliente = ref(false)
+const buscandoDoc   = ref(false)
+const docEncontrado = ref(false)
+const docError      = ref('')
+let docTimer = null
+
+function onTipoComprobante(tipo) {
+    form.tipo_comprobante = tipo
+    if (tipo === 'boleta' || tipo === 'factura') {
+        mostrarModalCliente.value = true
+    }
+}
+
+function onDocInput() {
+    docEncontrado.value = false
+    docError.value = ''
+    form.cliente_nombre = ''
+    const doc = form.cliente_documento.replace(/[^0-9]/g, '')
+    form.cliente_documento = doc
+    const esDni = doc.length === 8
+    const esRuc = doc.length === 11
+    form.cliente_tipo_documento = esRuc ? '6' : '1'
+    if (!esDni && !esRuc) return
+    clearTimeout(docTimer)
+    docTimer = setTimeout(async () => {
+        buscandoDoc.value = true
+        try {
+            const res = await fetch(`/api/consulta-documento?documento=${doc}`)
+            const data = await res.json()
+            if (esDni && data.nombre_completo) {
+                form.cliente_nombre = data.nombre_completo
+                docEncontrado.value = true
+            } else if (esRuc && data.razon_social) {
+                form.cliente_nombre = data.razon_social
+                docEncontrado.value = true
+            } else {
+                docError.value = esDni ? 'DNI no encontrado' : 'RUC no encontrado'
+            }
+        } catch(e) {
+            docError.value = 'Error al consultar'
+        } finally {
+            buscandoDoc.value = false
+        }
+    }, 600)
+}
 
 // Saldo que realmente falta cobrar de la cuenta
 const saldoReal = computed(() => {
@@ -406,19 +456,94 @@ function cobrar() {
                     <!-- Tipo comprobante -->
                     <div style="margin-top:16px;">
                         <p style="font-size:14px; font-weight:600; color:#64748B; margin:0 0 10px;">📄 Tipo de comprobante</p>
-                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px;">
-                            <button @click="form.tipo_comprobante='boleta'"
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+                            <button @click="onTipoComprobante('boleta')"
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='boleta' ? '2px solid #14B8A6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='boleta' ? '#F0FDFA' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='boleta' ? '#0F766E' : '#64748B'}">
                                 🧾 Boleta
                             </button>
-                            <button @click="form.tipo_comprobante='factura'"
+                            <button @click="onTipoComprobante('factura')"
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='factura' ? '2px solid #3B82F6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='factura' ? '#EFF6FF' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='factura' ? '#1D4ED8' : '#64748B'}">
                                 🏢 Factura
                             </button>
-                            <button @click="form.tipo_comprobante='ninguno'"
+                            <button @click="form.tipo_comprobante='ninguno'; mostrarModalCliente=false"
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='ninguno' ? '2px solid #94A3B8' : '2px solid #E2E8F0', background: form.tipo_comprobante==='ninguno' ? '#F8FAFC' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='ninguno' ? '#475569' : '#64748B'}">
                                 🚫 Sin boleta
                             </button>
+                        </div>
+                        <!-- Resumen cliente seleccionado -->
+                        <div v-if="form.cliente_nombre" style="margin-top:8px; padding:8px 12px; background:#F0FDFA; border-radius:8px; border:1px solid #CCFBF1; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <p style="margin:0; font-size:13px; font-weight:600; color:#0F766E;">{{ form.cliente_nombre }}</p>
+                                <p style="margin:0; font-size:11px; color:#64748B;">{{ form.cliente_tipo_documento === '6' ? 'RUC' : 'DNI' }}: {{ form.cliente_documento }}</p>
+                            </div>
+                            <button @click="mostrarModalCliente=true" style="background:none; border:none; color:#14B8A6; cursor:pointer; font-size:12px; font-weight:600;">✏️ Editar</button>
+                        </div>
+                    </div>
+
+                    <!-- MODAL DATOS CLIENTE -->
+                    <div v-if="mostrarModalCliente" style="position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.5);">
+                        <div style="background:white; border-radius:20px; padding:24px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h3 style="margin:0; font-size:18px; font-weight:700; color:#1E293B;">
+                                    {{ form.tipo_comprobante === 'factura' ? '🏢 Datos para Factura' : '🧾 Datos para Boleta' }}
+                                </h3>
+                                <button @click="mostrarModalCliente=false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94A3B8;">✕</button>
+                            </div>
+
+                            <!-- DNI/RUC -->
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:13px; font-weight:600; color:#64748B; margin-bottom:6px;">
+                                    {{ form.tipo_comprobante === 'factura' ? 'RUC (11 dígitos)' : 'DNI (8 dígitos)' }}
+                                </label>
+                                <div style="position:relative;">
+                                    <input v-model="form.cliente_documento" type="text"
+                                        :maxlength="form.tipo_comprobante === 'factura' ? 11 : 8"
+                                        :placeholder="form.tipo_comprobante === 'factura' ? 'Ej: 20123456789' : 'Ej: 12345678'"
+                                        @input="onDocInput"
+                                        style="width:100%; padding:12px 40px 12px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;"
+                                        :style="{ borderColor: docEncontrado ? '#14B8A6' : docError ? '#EF4444' : '#E2E8F0' }"/>
+                                    <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%);">
+                                        <span v-if="buscandoDoc">⏳</span>
+                                        <span v-else-if="docEncontrado">✅</span>
+                                        <span v-else-if="docError">❌</span>
+                                        <span v-else>🔍</span>
+                                    </span>
+                                </div>
+                                <p v-if="docError" style="margin:4px 0 0; font-size:12px; color:#EF4444;">{{ docError }}</p>
+                            </div>
+
+                            <!-- Nombre -->
+                            <div style="margin-bottom:14px;">
+                                <label style="display:block; font-size:13px; font-weight:600; color:#64748B; margin-bottom:6px;">
+                                    {{ form.tipo_comprobante === 'factura' ? 'Razón Social' : 'Nombre completo' }}
+                                </label>
+                                <input v-model="form.cliente_nombre" type="text"
+                                    :placeholder="form.tipo_comprobante === 'factura' ? 'Ej: Empresa SAC' : 'Ej: Juan Pérez'"
+                                    style="width:100%; padding:12px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;"/>
+                                <p v-if="docEncontrado" style="margin:4px 0 0; font-size:11px; color:#0F766E;">✅ Obtenido automáticamente</p>
+                            </div>
+
+                            <!-- Email -->
+                            <div style="margin-bottom:20px;">
+                                <label style="display:block; font-size:13px; font-weight:600; color:#64748B; margin-bottom:6px;">Email (opcional)</label>
+                                <input v-model="form.cliente_email" type="email"
+                                    placeholder="cliente@email.com"
+                                    style="width:100%; padding:12px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;"/>
+                            </div>
+
+                            <!-- Botones -->
+                            <div style="display:flex; gap:10px;">
+                                <button @click="mostrarModalCliente=false; form.tipo_comprobante='ninguno'; form.cliente_documento=''; form.cliente_nombre=''"
+                                    style="flex:1; padding:14px; background:#F1F5F9; color:#64748B; border:none; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer;">
+                                    Cancelar
+                                </button>
+                                <button @click="mostrarModalCliente=false"
+                                    :disabled="!form.cliente_nombre"
+                                    style="flex:2; padding:14px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;"
+                                    :style="{ opacity: form.cliente_nombre ? 1 : 0.5 }">
+                                    ✅ Confirmar datos
+                                </button>
+                            </div>
                         </div>
                     </div>
 

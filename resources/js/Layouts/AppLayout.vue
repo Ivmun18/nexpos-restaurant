@@ -313,7 +313,7 @@
             </div>
 
             <!-- Slot del contenido de la página -->
-            <div style="flex:1; padding:24px 28px;">
+            <div :style="{flex:1, padding: isMobile ? '8px 10px' : '24px 28px'}">
                 <slot />
             </div>
 
@@ -444,6 +444,7 @@ const allMenuItems = [
     { path: '/notaria/clientes',    icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
     { path: '/notaria/reportes',    icon: 'reporte',      label: 'Reportes',         module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'actos', section: 'NOTARIA' },
+    { path: '/notaria/servicios',  icon: 'config',      label: 'Servicios',        module: 'actos',    section: 'NOTARIA' },
     { path: '/gimnasio/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/miembros',    icon: 'users',      label: 'Miembros',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/planes',      icon: 'card',       label: 'Planes',        module: 'gimnasio', section: 'GIMNASIO' },
@@ -470,7 +471,8 @@ const allMenuItems = [
     { path: '/hotel/habitaciones', icon: 'cama',       label: 'Habitaciones',  module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/tipos',        icon: 'categoria',  label: 'Tipos',         module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/housekeeping', icon: 'limpieza',   label: 'Housekeeping',  module: 'hotel', section: 'HOTEL' },
-    { path: '/hotel/reportes',     icon: 'reporte',    label: 'Reportes',      module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/reportes',      icon: 'reporte',    label: 'Reportes',      module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/caja',          icon: 'caja',       label: 'Caja',          module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/productos',    icon: 'box',        label: 'Productos',     module: 'hotel', section: 'HOTEL' },
 
     // MINIMARKET
@@ -512,6 +514,7 @@ const allMenuItems = [
     { path: '/compras',                     icon: 'compras',     label: 'Compras',         module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/proveedores',                 icon: 'proveedor',   label: 'Proveedores',     module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/clientes',                    icon: 'cliente',     label: 'Clientes',        module: 'pos_farmacia', section: 'FARMACIA' },
+    { path: '/farmacia/recetas',            icon: 'receta',      label: '📋 Recetas',       module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/categorias',         icon: 'categoria',   label: 'Categorías',      module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/auditoria',          icon: 'auditoria',   label: '🔍 Auditoría',    module: 'pos_farmacia', section: 'FARMACIA' },
     { path: '/farmacia/reportes',           icon: 'reporte',     label: 'Reportes',        module: 'pos_farmacia', section: 'FARMACIA' },
