@@ -576,13 +576,15 @@ const cerrarModales = () => {
 const editarProducto = (p) => {
     productoSeleccionado.value = p
     form.value = {
-        descripcion:   p.descripcion,
-        codigo:        p.codigo,
-        codigo_barras: p.codigo_barras,
-        precio_compra: p.precio_compra,
-        precio_venta:  p.precio_venta,
-        stock_minimo:  p.stock_minimo,
-        categoria_id:  p.categoria_id,
+        descripcion:       p.descripcion,
+        codigo:            p.codigo,
+        codigo_barras:     p.codigo_barras,
+        precio_compra:     p.precio_compra,
+        precio_venta:      p.precio_venta,
+        stock_minimo:      p.stock_minimo,
+        categoria_id:      p.categoria_id,
+        lote:              p.lote || '',
+        fecha_vencimiento: p.fecha_vencimiento ? p.fecha_vencimiento.slice(0, 10) : '',
     }
     modalEditar.value = true
 }
@@ -637,13 +639,15 @@ const ajustarStock = (p) => {
 const guardar = () => {
     if (modalEditar.value) {
         router.put(`/farmacia/productos/${productoSeleccionado.value.id}`, {
-            descripcion:   form.value.descripcion,
-            codigo:        form.value.codigo,
-            codigo_barras: form.value.codigo_barras,
-            precio_compra: form.value.precio_compra,
-            precio_venta:  form.value.precio_venta,
-            stock_minimo:  form.value.stock_minimo,
-            categoria_id:  form.value.categoria_id,
+            descripcion:       form.value.descripcion,
+            codigo:            form.value.codigo,
+            codigo_barras:     form.value.codigo_barras,
+            precio_compra:     form.value.precio_compra,
+            precio_venta:      form.value.precio_venta,
+            stock_minimo:      form.value.stock_minimo,
+            categoria_id:      form.value.categoria_id,
+            lote:              form.value.lote,
+            fecha_vencimiento: form.value.fecha_vencimiento,
         }, {
             onSuccess: () => {
                 modalNuevo.value = false

@@ -68,7 +68,7 @@ class Producto extends Model
         'controla_stock'    => 'boolean',
         'activo'            => 'boolean',
         'requiere_receta'   => 'boolean',
-        'fecha_vencimiento' => 'date',
+        'fecha_vencimiento' => 'datetime:Y-m-d',
     ];
 
     public function categoria()
