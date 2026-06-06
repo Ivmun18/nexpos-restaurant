@@ -370,6 +370,32 @@
         </div>
 
     </AppLayout>
+
+<!-- Modal selección de lote -->
+<Teleport to="body">
+    <div v-if="mostrarModalLote" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; padding:24px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="font-size:16px; font-weight:700; color:#1E293B; margin:0;">🏷️ Selecciona el lote</h3>
+                <button @click="mostrarModalLote=false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94A3B8;">✕</button>
+            </div>
+            <p style="font-size:13px; color:#64748B; margin:0 0 16px;">Este producto tiene varios lotes disponibles:</p>
+            <div v-for="p in productosLoteModal" :key="p.id"
+                @click="elegirLote(p)"
+                style="padding:12px 16px; border:1px solid #E2E8F0; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:background 0.15s;"
+                @mouseover="$event.currentTarget.style.background='#F0FDF9'"
+                @mouseleave="$event.currentTarget.style.background='white'">
+                <div style="font-weight:600; color:#1E293B; font-size:14px;">{{ p.descripcion }}</div>
+                <div style="display:flex; gap:16px; margin-top:4px; font-size:12px; color:#64748B;">
+                    <span>🏷️ Lote: <strong>{{ p.lote || '—' }}</strong></span>
+                    <span>📅 Vence: <strong>{{ p.fecha_vencimiento ? p.fecha_vencimiento.slice(0,10) : '—' }}</strong></span>
+                    <span>📦 Stock: <strong>{{ p.stock_actual }}</strong></span>
+                </div>
+                <div style="margin-top:4px; font-size:13px; font-weight:600; color:#14B8A6;">S/ {{ Number(p.precio_venta).toFixed(2) }}</div>
+            </div>
+        </div>
+    </div>
+</Teleport>
 </template>
 
 <script setup>
@@ -502,16 +528,25 @@ const iconProducto = (categoria) => {
 
 const inputBusqueda = ref(null)
 
+const productosLoteModal = ref([])
+const mostrarModalLote  = ref(false)
+
 const escanearCodigo = () => {
     const codigo = busqueda.value.trim()
     if (!codigo) return
 
-    const producto = props.productos.find(p =>
+    const coincidencias = props.productos.filter(p =>
         p.codigo_barras === codigo || p.codigo === codigo
     )
 
-    if (producto) {
-        agregarAlCarrito(producto)
+    if (coincidencias.length === 0) {
+        const input = inputBusqueda.value
+        if (input) {
+            input.style.border = '2px solid #DC2626'
+            setTimeout(() => { input.style.border = '2px solid #E2E8F0' }, 800)
+        }
+    } else if (coincidencias.length === 1) {
+        agregarAlCarrito(coincidencias[0])
         busqueda.value = ''
         const input = inputBusqueda.value
         if (input) {
@@ -519,12 +554,17 @@ const escanearCodigo = () => {
             setTimeout(() => { input.style.border = '2px solid #E2E8F0' }, 500)
         }
     } else {
-        const input = inputBusqueda.value
-        if (input) {
-            input.style.border = '2px solid #DC2626'
-            setTimeout(() => { input.style.border = '2px solid #E2E8F0' }, 800)
-        }
+        // Múltiples lotes — mostrar modal para elegir
+        productosLoteModal.value = coincidencias
+        mostrarModalLote.value = true
+        busqueda.value = ''
     }
+}
+
+const elegirLote = (producto) => {
+    agregarAlCarrito(producto)
+    mostrarModalLote.value = false
+    productosLoteModal.value = []
 }
 
 const productoAlerta = ref(null)
