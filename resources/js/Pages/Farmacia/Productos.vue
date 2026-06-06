@@ -541,13 +541,7 @@ const activarEscaneo = () => {
 
 const onCodigoBarrasEnter = () => {
     escaneando.value = false
-    const existe = props.productos.find(p =>
-        p.codigo_barras === form.value.codigo_barras && p.id !== (productoSeleccionado.value ? productoSeleccionado.value.id : null)
-    )
-    if (existe) {
-        alert("Este codigo ya esta asignado a: " + existe.descripcion)
-        form.value.codigo_barras = ""
-    }
+    // Permitido: mismo código de barras para distintos lotes del mismo medicamento
 }
 
 const productosFiltrados = computed(() => {
