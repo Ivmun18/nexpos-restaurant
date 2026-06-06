@@ -89,6 +89,10 @@
                                     style="padding:6px 12px; background:#FDF4FF; color:#7C3AED; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #E9D5FF; cursor:pointer;">
                                     📜 Historial
                                 </button>
+                                <button @click="verKardex(p)"
+                                    style="padding:6px 12px; background:#FFF7ED; color:#C2410C; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #FED7AA; cursor:pointer;">
+                                    📊 Kardex
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -426,6 +430,65 @@
         </div>
     </div>
 </Teleport>
+
+<!-- Modal Kardex -->
+<Teleport to="body">
+    <div v-if="modalKardex" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:20px; padding:32px; width:100%; max-width:800px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0;">📊 Kardex</p>
+                    <p style="font-size:13px; color:#64748B; margin:4px 0 0;">{{ kardexProducto?.descripcion }} — Stock actual: <strong>{{ kardexData?.producto?.stock_actual }}</strong></p>
+                </div>
+                <button @click="modalKardex=false" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94A3B8;">✕</button>
+            </div>
+
+            <div v-if="cargandoKardex" style="text-align:center; padding:40px; color:#94A3B8;">Cargando...</div>
+
+            <div v-else-if="!kardexData?.kardex?.length" style="text-align:center; padding:40px; color:#94A3B8;">
+                No hay movimientos registrados
+            </div>
+
+            <table v-else style="width:100%; border-collapse:collapse; font-size:13px;">
+                <thead>
+                    <tr style="background:#F8FAFC;">
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Fecha</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Tipo</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Referencia</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Detalle</th>
+                        <th style="padding:10px 12px; text-align:left; color:#64748B; font-weight:600;">Lote</th>
+                        <th style="padding:10px 12px; text-align:center; color:#64748B; font-weight:600;">Entrada</th>
+                        <th style="padding:10px 12px; text-align:center; color:#64748B; font-weight:600;">Salida</th>
+                        <th style="padding:10px 12px; text-align:center; color:#64748B; font-weight:600;">Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(m, i) in kardexData.kardex" :key="i"
+                        :style="'border-top:1px solid #F1F5F9;' + (m.tipo==='ENTRADA' ? 'background:#F0FDF4;' : '')">
+                        <td style="padding:10px 12px; white-space:nowrap;">{{ m.fecha }}</td>
+                        <td style="padding:10px 12px;">
+                            <span :style="m.tipo==='ENTRADA'
+                                ? 'padding:2px 8px; background:#dcfce7; color:#166534; border-radius:20px; font-size:11px; font-weight:700;'
+                                : 'padding:2px 8px; background:#fee2e2; color:#991b1b; border-radius:20px; font-size:11px; font-weight:700;'">
+                                {{ m.tipo }}
+                            </span>
+                        </td>
+                        <td style="padding:10px 12px; color:#3B82F6; font-size:12px;">{{ m.referencia }}</td>
+                        <td style="padding:10px 12px; font-size:12px; color:#475569;">{{ m.detalle }}</td>
+                        <td style="padding:10px 12px; font-size:12px; color:#7C3AED;">{{ m.lote || '—' }}</td>
+                        <td style="padding:10px 12px; text-align:center; font-weight:600; color:#16A34A;">
+                            {{ m.tipo==='ENTRADA' ? m.cantidad : '—' }}
+                        </td>
+                        <td style="padding:10px 12px; text-align:center; font-weight:600; color:#DC2626;">
+                            {{ m.tipo==='SALIDA' ? m.cantidad : '—' }}
+                        </td>
+                        <td style="padding:10px 12px; text-align:center; font-weight:700; color:#1E293B;">{{ m.saldo }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</Teleport>
 </template>
 
 <script setup>
@@ -529,6 +592,26 @@ const productoHistorial = ref(null)
 const historialData     = ref([])
 const cargandoHistorial = ref(false)
 const hoy = new Date().toISOString().slice(0, 10)
+
+const modalKardex    = ref(false)
+const kardexProducto = ref(null)
+const kardexData     = ref(null)
+const cargandoKardex = ref(false)
+
+const verKardex = async (p) => {
+    kardexProducto.value = p
+    modalKardex.value    = true
+    cargandoKardex.value = true
+    kardexData.value     = null
+    try {
+        const res = await fetch('/farmacia/productos/' + p.id + '/kardex')
+        kardexData.value = await res.json()
+    } catch (e) {
+        kardexData.value = null
+    } finally {
+        cargandoKardex.value = false
+    }
+}
 
 const verHistorial = async (p) => {
     productoHistorial.value = p

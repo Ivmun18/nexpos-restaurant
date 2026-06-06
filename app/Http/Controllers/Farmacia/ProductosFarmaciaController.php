@@ -129,6 +129,80 @@ class ProductosFarmaciaController extends Controller
         return redirect()->back()->with('success', 'Stock actualizado');
     }
 
+    public function kardex(Producto $producto)
+    {
+        if ($producto->empresa_id !== EmpresaHelper::id()) abort(403);
+
+        // Entradas (compras)
+        $entradas = \App\Models\CompraDetalle::with('compra.proveedor')
+            ->where('producto_id', $producto->id)
+            ->get()
+            ->map(fn($d) => [
+                'fecha'       => $d->compra->fecha_emision?->format('Y-m-d'),
+                'tipo'        => 'ENTRADA',
+                'referencia'  => 'Compra ' . $d->compra->numero_comprobante,
+                'detalle'     => $d->compra->proveedor?->razon_social ?? '—',
+                'lote'        => $d->lote,
+                'cantidad'    => floatval($d->cantidad),
+                'costo'       => floatval($d->precio_unitario),
+                'created_at'  => $d->created_at,
+            ]);
+
+        // Salidas (ventas)
+        $salidas = \DB::table('venta_detalle')
+            ->join('ventas', 'ventas.id', '=', 'venta_detalle.venta_id')
+            ->where('venta_detalle.producto_id', $producto->id)
+            ->where('ventas.empresa_id', EmpresaHelper::id())
+            ->whereNotIn('ventas.estado', ['anulado'])
+            ->select(
+                'ventas.fecha_emision as fecha',
+                'ventas.numero_completo as referencia',
+                'ventas.cliente_razon_social as detalle',
+                'venta_detalle.lote',
+                'venta_detalle.cantidad',
+                'venta_detalle.precio_unitario as costo',
+                'venta_detalle.created_at'
+            )
+            ->get()
+            ->map(fn($d) => [
+                'fecha'      => $d->fecha,
+                'tipo'       => 'SALIDA',
+                'referencia' => 'Venta ' . $d->referencia,
+                'detalle'    => $d->detalle ?? 'Cliente general',
+                'lote'       => $d->lote,
+                'cantidad'   => floatval($d->cantidad),
+                'costo'      => floatval($d->costo),
+                'created_at' => $d->created_at,
+            ]);
+
+        // Unir y ordenar por fecha
+        $movimientos = $entradas->concat($salidas)
+            ->sortBy('created_at')
+            ->values();
+
+        // Calcular saldo acumulado
+        $saldo = 0;
+        $kardex = $movimientos->map(function($m) use (&$saldo) {
+            if ($m['tipo'] === 'ENTRADA') {
+                $saldo += $m['cantidad'];
+            } else {
+                $saldo -= $m['cantidad'];
+            }
+            return array_merge($m, ['saldo' => $saldo]);
+        });
+
+        return response()->json([
+            'producto' => [
+                'id'          => $producto->id,
+                'descripcion' => $producto->descripcion,
+                'stock_actual'=> $producto->stock_actual,
+                'lote'        => $producto->lote,
+                'fecha_vencimiento' => $producto->fecha_vencimiento,
+            ],
+            'kardex' => $kardex,
+        ]);
+    }
+
     public function historial(Producto $producto)
     {
         if ($producto->empresa_id !== EmpresaHelper::id()) abort(403);

@@ -762,13 +762,14 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::get('/auditoria/{id}',           [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'show'])->middleware('only.admin')->name('auditoria.show');
     Route::get('/auditoria-exportar/csv',   [\App\Http\Controllers\Farmacia\AuditoriaController::class, 'exportarCsv'])->middleware('only.admin')->name('auditoria.export');
 
-    Route::get('/farmacia/productos/{producto}/historial', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'historial'])->name('farmacia.productos.historial');
+    Route::get('/productos/{producto}/historial', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'historial'])->name('productos.historial');
+    Route::get('/productos/{producto}/kardex',   [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'kardex'])->name('productos.kardex');
 
     // Recetas médicas farmacia
-    Route::get('/farmacia/recetas',          [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'index'])->name('farmacia.recetas.index');
-    Route::post('/farmacia/recetas',         [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'store'])->name('farmacia.recetas.store');
-    Route::put('/farmacia/recetas/{receta}', [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'update'])->name('farmacia.recetas.update');
-    Route::delete('/farmacia/recetas/{receta}', [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'destroy'])->name('farmacia.recetas.destroy');
+    Route::get('/recetas',          [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'index'])->name('recetas.index');
+    Route::post('/recetas',         [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'store'])->name('recetas.store');
+    Route::put('/recetas/{receta}', [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'update'])->name('recetas.update');
+    Route::delete('/recetas/{receta}', [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'destroy'])->name('recetas.destroy');
 
 
     // ====== PLANTILLAS / DATOS DEMO ======
