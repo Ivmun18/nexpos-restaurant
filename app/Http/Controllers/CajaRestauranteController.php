@@ -290,8 +290,9 @@ class CajaRestauranteController extends Controller
                     ]);
 
                 $data      = $response->json();
+                $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
                 $aceptada  = $response->successful() && isset($data['sunatResponse']);
-                $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+                $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
                 $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
 
                 $comprobante = \App\Models\ComprobanteSunat::create([
