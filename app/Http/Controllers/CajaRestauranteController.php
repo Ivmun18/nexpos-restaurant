@@ -123,7 +123,10 @@ class CajaRestauranteController extends Controller
             'pagado_acumulado' => round($pagadoAcumulado, 2),
         ]);
 
-        $sesion = SesionCaja::where('estado', 'abierta')->first();
+        $cajaEmpresa = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)->first();
+        $sesion = $cajaEmpresa
+            ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresa->id)->first()
+            : null;
         if ($sesion) {
             $concepto = 'Cobro Mesa ' . $mesa->numero . ' (' . $request->metodo_pago . ')';
             if ($partesTotal > 1) {
@@ -403,7 +406,10 @@ class CajaRestauranteController extends Controller
         \App\Models\PedidoDetalle::whereIn('id', $detalles->pluck('id'))
             ->update(['pagado' => true, 'caja_detalle_id' => $caja->id]);
 
-        $sesion = SesionCaja::where('estado', 'abierta')->first();
+        $cajaEmpresaPlatos = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)->first();
+        $sesion = $cajaEmpresaPlatos
+            ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresaPlatos->id)->first()
+            : null;
         if ($sesion) {
             CajaMovimiento::create([
                 'sesion_id'    => $sesion->id,
