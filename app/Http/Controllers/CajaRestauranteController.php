@@ -76,6 +76,7 @@ class CajaRestauranteController extends Controller
         $request->validate([
             'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin',
             'monto_pagado'      => 'required|numeric|min:0',
+            'descuento'        => 'nullable|numeric|min:0',
             'notas'             => 'nullable|string',
             'tipo_comprobante'  => 'nullable|in:boleta,factura,ninguno',
             'partes_total'      => 'nullable|integer|min:1',
@@ -107,6 +108,7 @@ class CajaRestauranteController extends Controller
 
         $vuelto = $cuentaSaldada ? round(max(0, $pagadoAcumulado - $total), 2) : 0;
 
+        $descuento = (float) ($request->descuento ?? 0);
         $caja = CajaRestaurante::create([
             'empresa_id'       => auth()->user()->empresa_id,
             'mesa_id'          => $mesa->id,
@@ -114,6 +116,7 @@ class CajaRestauranteController extends Controller
             'total'            => $total,
             'monto_pagado'     => $montoPagado,
             'vuelto'           => $vuelto,
+            'descuento'        => $descuento,
             'metodo_pago'      => $request->metodo_pago,
             'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
             'notas'            => $request->notas,
@@ -387,6 +390,7 @@ class CajaRestauranteController extends Controller
         $subtotal = $detalles->sum('subtotal');
         $vuelto   = max(0, $request->monto_pagado - $subtotal);
 
+        $descuentoPlatos = (float) ($request->descuento ?? 0);
         $caja = CajaRestaurante::create([
             'empresa_id'       => auth()->user()->empresa_id,
             'mesa_id'          => $mesa->id,
