@@ -7,6 +7,7 @@ use App\Models\HotelHuesped;
 use App\Models\HotelReserva;
 use App\Models\HotelPago;
 use App\Models\HotelHousekeeping;
+use App\Models\HotelTarifaTemporada;
 use App\Models\HotelProducto;
 use App\Models\HotelCargo;
 use Illuminate\Http\Request;
@@ -176,7 +177,18 @@ class HotelController extends Controller
         $empresaId  = auth()->user()->empresa_id;
         $habitacion = HotelHabitacion::findOrFail($request->habitacion_id);
         $noches     = max(1, Carbon::parse($request->fecha_checkin)->startOfDay()->diffInDays(Carbon::parse($request->fecha_checkout)->startOfDay()));
-        $total      = $habitacion->tipo->precio_noche * $noches;
+        // Tarifa de temporada
+        $tarifaTemp = HotelTarifaTemporada::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->where('fecha_inicio', '<=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where('fecha_fin', '>=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where(function($q) use ($habitacion) {
+                $q->whereNull('tipo_id')->orWhere('tipo_id', $habitacion->tipo_id);
+            })
+            ->orderByDesc('tipo_id')
+            ->first();
+        $precioNoche = $tarifaTemp ? $tarifaTemp->precio_noche : $habitacion->tipo->precio_noche;
+        $total      = $precioNoche * $noches;
 
         // Verificar si hay reservas futuras que se cruzan con las fechas solicitadas
         $checkinSolicitado  = Carbon::parse($request->fecha_checkin)->startOfDay();
@@ -219,7 +231,7 @@ class HotelController extends Controller
             'fecha_checkin'          => $request->fecha_checkin,
             'fecha_checkout_previsto'=> $request->fecha_checkout,
             'num_huespedes'          => $request->num_huespedes ?? 1,
-            'precio_noche'           => $habitacion->tipo->precio_noche,
+            'precio_noche'           => $precioNoche,
             'num_noches'             => $noches,
             'total'                  => $total,
             'monto_pagado'           => 0,
@@ -296,7 +308,17 @@ class HotelController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $habitacion = HotelHabitacion::findOrFail($request->habitacion_id);
         $noches = max(1, Carbon::parse($request->fecha_checkin)->startOfDay()->diffInDays(Carbon::parse($request->fecha_checkout)->startOfDay()));
-        $total  = $habitacion->tipo->precio_noche * $noches;
+        $tarifaTemp2 = HotelTarifaTemporada::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->where('fecha_inicio', '<=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where('fecha_fin', '>=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where(function($q) use ($habitacion) {
+                $q->whereNull('tipo_id')->orWhere('tipo_id', $habitacion->tipo_id);
+            })
+            ->orderByDesc('tipo_id')
+            ->first();
+        $precioNoche2 = $tarifaTemp2 ? $tarifaTemp2->precio_noche : $habitacion->tipo->precio_noche;
+        $total  = $precioNoche2 * $noches;
 
         $huesped = HotelHuesped::firstOrCreate(
             ['empresa_id' => $empresaId, 'numero_documento' => $request->numero_documento],
@@ -338,7 +360,7 @@ class HotelController extends Controller
             'fecha_checkin'           => $request->fecha_checkin,
             'fecha_checkout_previsto' => $request->fecha_checkout,
             'num_huespedes'           => $request->num_huespedes ?? 1,
-            'precio_noche'            => $habitacion->tipo->precio_noche,
+            'precio_noche'            => $precioNoche2,
             'num_noches'              => $noches,
             'total'                   => $total,
             'monto_pagado'            => $request->adelanto ?? 0,
@@ -907,5 +929,41 @@ class HotelController extends Controller
         $reserva->update(['total' => ($reserva->precio_noche * $reserva->num_noches) + $totalCargos]);
 
         return redirect()->back()->with('success', 'Cargo eliminado');
+    }
+    // ── TARIFAS TEMPORADA ──
+    public function tarifas()
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $tarifas = HotelTarifaTemporada::with('tipo')
+            ->where('empresa_id', $empresaId)
+            ->orderBy('fecha_inicio')->get();
+        $tipos = HotelTipoHabitacion::where('empresa_id', $empresaId)->where('activo', true)->get();
+        return Inertia::render('Hotel/Tarifas', compact('tarifas', 'tipos'));
+    }
+
+    public function storeTarifa(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelTarifaTemporada::create([
+            ...$request->only(['nombre','tipo_id','fecha_inicio','fecha_fin','precio_noche','color','descripcion']),
+            'empresa_id' => $empresaId,
+            'activo'     => true,
+        ]);
+        return back()->with('success', 'Tarifa creada ✅');
+    }
+
+    public function updateTarifa(Request $request, $id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelTarifaTemporada::where('id', $id)->where('empresa_id', $empresaId)
+            ->update($request->only(['nombre','tipo_id','fecha_inicio','fecha_fin','precio_noche','color','activo','descripcion']));
+        return back()->with('success', 'Tarifa actualizada ✅');
+    }
+
+    public function destroyTarifa($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelTarifaTemporada::where('id', $id)->where('empresa_id', $empresaId)->delete();
+        return back()->with('success', 'Tarifa eliminada');
     }
 }

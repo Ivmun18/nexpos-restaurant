@@ -1042,6 +1042,10 @@ Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(
     Route::get('/recepcion', [App\Http\Controllers\Hotel\HotelController::class, 'recepcion'])->name('recepcion');
     Route::post('/checkin', [App\Http\Controllers\Hotel\HotelController::class, 'checkin'])->name('checkin');
     Route::get('/reservas/{id}/ticket', [App\Http\Controllers\Hotel\HotelController::class, 'ticketCheckin'])->name('ticket.checkin');
+    Route::get('/tarifas',        [App\Http\Controllers\Hotel\HotelController::class, 'tarifas'])->name('tarifas');
+    Route::post('/tarifas',       [App\Http\Controllers\Hotel\HotelController::class, 'storeTarifa'])->name('tarifas.store');
+    Route::put('/tarifas/{id}',   [App\Http\Controllers\Hotel\HotelController::class, 'updateTarifa'])->name('tarifas.update');
+    Route::delete('/tarifas/{id}',[App\Http\Controllers\Hotel\HotelController::class, 'destroyTarifa'])->name('tarifas.destroy');
     Route::post('/checkout/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'checkout'])->name('checkout');
     Route::get('/housekeeping', [App\Http\Controllers\Hotel\HotelController::class, 'housekeeping'])->name('housekeeping');
     Route::put('/housekeeping/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'actualizarHousekeeping'])->name('housekeeping.update');
