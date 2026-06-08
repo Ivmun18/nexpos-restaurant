@@ -106,8 +106,15 @@ const buscar = () => {
     clearTimeout(timer)
     if (busqueda.value.length < 2) { resultados.value = []; return }
     timer = setTimeout(async () => {
-        const res = await axios.get(route('gimnasio.accesos.buscar'), { params: { q: busqueda.value } })
-        resultados.value = res.data
+        try {
+            const res = await fetch('/gimnasio/accesos/buscar?q=' + encodeURIComponent(busqueda.value), {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            resultados.value = await res.json()
+        } catch(e) {
+            console.error('Error buscar:', e)
+            resultados.value = []
+        }
     }, 300)
 }
 
