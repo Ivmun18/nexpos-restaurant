@@ -449,6 +449,7 @@ const allMenuItems = [
     { path: '/gimnasio/miembros',    icon: 'users',      label: 'Miembros',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/planes',      icon: 'card',       label: 'Planes',        module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/pagos',       icon: 'caja',       label: 'Pagos',         module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/reportes',    icon: 'reporte',    label: 'Reportes',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/instructores',icon: 'barbell',    label: 'Instructores',  module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/clases',      icon: 'calendar',   label: 'Clases',        module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/accesos',     icon: 'door-enter', label: 'Accesos',       module: 'gimnasio', section: 'GIMNASIO' },
