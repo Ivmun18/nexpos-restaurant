@@ -342,6 +342,7 @@ const registrarPago = async () => {
 }
 
 const infoHuesped = ref(null)
+const showCuenta = ref(null)
 const showCargo = ref(null)
 const formCargo = ref({ producto_id: '', cantidad: 1 })
 
@@ -523,6 +524,10 @@ const estadoBadge = (estado) => {
                                     <button v-if="r.estado === 'checkin'" @click="showCambiarHab = r; cambiarHabForm.nueva_habitacion_id = ''"
                                         style="padding:6px 12px; background:#06B6D4; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
                                         🔄 Cambiar hab.
+                                    </button>
+                                    <button v-if="r.estado === 'checkin'" @click="showCuenta = r"
+                                        style="padding:6px 12px; background:#1D4ED8; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                        📋 Cuenta
                                     </button>
                                     <button v-if="r.estado === 'checkin'" @click="imprimirTicket(r)"
                                         style="padding:6px 12px; background:#0F766E; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
@@ -937,4 +942,114 @@ const estadoBadge = (estado) => {
     </div>
 
 </AppLayout>
+
+            <!-- Modal Estado de Cuenta -->
+            <div v-if="showCuenta" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+                <div style="background:#fff; border-radius:16px; padding:28px; width:600px; max-height:90vh; overflow-y:auto;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="font-size:18px; font-weight:700; margin:0;">📋 Estado de Cuenta</h2>
+                        <button @click="showCuenta = null" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94A3B8;">✕</button>
+                    </div>
+
+                    <!-- Datos huésped -->
+                    <div style="background:#F8FAFC; border-radius:10px; padding:14px; margin-bottom:16px;">
+                        <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:8px;">👤 Huésped</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            <div style="font-size:13px;"><span style="color:#64748B;">Nombre: </span><b>{{ showCuenta.huesped?.nombre_completo }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Documento: </span><b>{{ showCuenta.huesped?.numero_documento }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Habitación: </span><b>Hab. {{ showCuenta.habitacion?.numero }} — {{ showCuenta.habitacion?.tipo?.nombre }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Código: </span><b>{{ showCuenta.codigo }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Check-in: </span><b>{{ new Date(showCuenta.fecha_checkin).toLocaleDateString('es-PE') }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Check-out: </span><b>{{ new Date(showCuenta.fecha_checkout_previsto).toLocaleDateString('es-PE') }}</b></div>
+                        </div>
+                    </div>
+
+                    <!-- Cargos -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:8px;">🧾 Cargos</div>
+                        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                            <thead>
+                                <tr style="background:#F1F5F9;">
+                                    <th style="padding:8px; text-align:left; font-size:11px; color:#64748B;">CONCEPTO</th>
+                                    <th style="padding:8px; text-align:center; font-size:11px; color:#64748B;">CANT.</th>
+                                    <th style="padding:8px; text-align:right; font-size:11px; color:#64748B;">PRECIO</th>
+                                    <th style="padding:8px; text-align:right; font-size:11px; color:#64748B;">SUBTOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Hospedaje -->
+                                <tr style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:8px;">🛏️ Hospedaje ({{ showCuenta.num_noches }} noche{{ showCuenta.num_noches > 1 ? 's' : '' }})</td>
+                                    <td style="padding:8px; text-align:center;">{{ showCuenta.num_noches }}</td>
+                                    <td style="padding:8px; text-align:right;">S/ {{ Number(showCuenta.precio_noche).toFixed(2) }}</td>
+                                    <td style="padding:8px; text-align:right; font-weight:600;">S/ {{ (showCuenta.num_noches * showCuenta.precio_noche).toFixed(2) }}</td>
+                                </tr>
+                                <!-- Cargos extras -->
+                                <tr v-for="c in cargos.filter(x => x.reserva_id === showCuenta.id)" :key="c.id" style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:8px;">🛒 {{ c.producto?.nombre }}</td>
+                                    <td style="padding:8px; text-align:center;">{{ c.cantidad }}</td>
+                                    <td style="padding:8px; text-align:right;">S/ {{ Number(c.precio_unitario).toFixed(2) }}</td>
+                                    <td style="padding:8px; text-align:right; font-weight:600;">S/ {{ Number(c.subtotal).toFixed(2) }}</td>
+                                </tr>
+                                <tr v-if="cargos.filter(x => x.reserva_id === showCuenta.id).length === 0">
+                                    <td colspan="4" style="padding:8px; text-align:center; color:#94A3B8; font-size:12px;">Sin cargos adicionales</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagos realizados -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:8px;">💰 Pagos Realizados</div>
+                        <div v-if="!showCuenta.pagos || showCuenta.pagos.length === 0" style="font-size:12px; color:#94A3B8; text-align:center; padding:8px;">Sin pagos registrados</div>
+                        <table v-else style="width:100%; border-collapse:collapse; font-size:13px;">
+                            <thead>
+                                <tr style="background:#F1F5F9;">
+                                    <th style="padding:8px; text-align:left; font-size:11px; color:#64748B;">FECHA</th>
+                                    <th style="padding:8px; text-align:left; font-size:11px; color:#64748B;">MÉTODO</th>
+                                    <th style="padding:8px; text-align:right; font-size:11px; color:#64748B;">MONTO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="p in showCuenta.pagos" :key="p.id" style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:8px;">{{ new Date(p.created_at).toLocaleDateString('es-PE') }}</td>
+                                    <td style="padding:8px; text-transform:capitalize;">{{ p.metodo_pago }}</td>
+                                    <td style="padding:8px; text-align:right; font-weight:600; color:#16A34A;">S/ {{ Number(p.monto).toFixed(2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Resumen total -->
+                    <div style="border-top:2px solid #E2E8F0; padding-top:14px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px;">
+                            <span style="color:#374151;">Total estadía:</span>
+                            <b>S/ {{ Number(showCuenta.total).toFixed(2) }}</b>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px;">
+                            <span style="color:#16A34A;">Total pagado:</span>
+                            <b style="color:#16A34A;">S/ {{ Number(showCuenta.monto_pagado).toFixed(2) }}</b>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:12px; border-radius:10px; font-size:16px; font-weight:700;"
+                            :style="{ background: showCuenta.total - showCuenta.monto_pagado > 0 ? '#FEF2F2' : '#F0FDF4', color: showCuenta.total - showCuenta.monto_pagado > 0 ? '#DC2626' : '#16A34A' }">
+                            <span>{{ showCuenta.total - showCuenta.monto_pagado > 0 ? 'Saldo pendiente:' : '✅ Pagado completo' }}</span>
+                            <span>S/ {{ (showCuenta.total - showCuenta.monto_pagado).toFixed(2) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end;">
+                        <button @click="showPagoParcial = showCuenta; pagoParcialForm.monto = showCuenta.total - showCuenta.monto_pagado; showCuenta = null"
+                            v-if="showCuenta.total - showCuenta.monto_pagado > 0"
+                            style="padding:10px 20px; background:#F59E0B; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            💰 Registrar Pago
+                        </button>
+                        <button @click="showCuenta = null"
+                            style="padding:10px 20px; background:#F1F5F9; color:#374151; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
 </template>

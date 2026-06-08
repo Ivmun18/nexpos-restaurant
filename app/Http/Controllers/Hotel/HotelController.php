@@ -103,7 +103,7 @@ class HotelController extends Controller
     public function recepcion()
     {
         $empresaId = auth()->user()->empresa_id;
-        $reservas = HotelReserva::with('habitacion.tipo','huesped')
+        $reservas = HotelReserva::with('habitacion.tipo','huesped','pagos')
             ->where('empresa_id', $empresaId)
             ->whereIn('estado', ['reservado','checkin'])
             ->orderBy('fecha_checkin','desc')->get();
