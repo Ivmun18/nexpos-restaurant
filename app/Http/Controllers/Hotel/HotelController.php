@@ -767,6 +767,24 @@ class HotelController extends Controller
             ? round($reservas->whereIn('estado', ['checkin','checkout'])->count() / max($totalReservas, 1) * 100, 1)
             : 0;
 
+        // Desglose: hospedaje vs room service
+        $ingresosHospedaje = $reservas->whereIn('estado', ['checkin','checkout'])->sum(function($r) {
+            return $r->precio_noche * $r->num_noches;
+        });
+        $ingresosRoomService = HotelCargo::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))
+            ->whereHas('reserva', fn($q) => $q->whereBetween('fecha_checkin', [$desde . ' 00:00:00', $hasta . ' 23:59:59']))
+            ->sum('subtotal');
+
+        // Top productos más vendidos (room service)
+        $topProductos = HotelCargo::with('producto')
+            ->whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId)
+                ->whereBetween('fecha_checkin', [$desde . ' 00:00:00', $hasta . ' 23:59:59']))
+            ->selectRaw('producto_id, SUM(cantidad) as total_cantidad, SUM(subtotal) as total_monto')
+            ->groupBy('producto_id')
+            ->orderByDesc('total_monto')
+            ->limit(5)
+            ->get();
+
         // Ingresos por método de pago
         $pagos = \App\Models\HotelPago::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereBetween('created_at', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
@@ -808,7 +826,8 @@ class HotelController extends Controller
         return Inertia::render('Hotel/Reportes', compact(
             'reservas','totalIngresos','totalReservas','ocupacionPromedio',
             'desde','hasta','totalNoches','promedioNoche','pagos',
-            'ingresosPorMes','ocupacionPorMes','totalHabitaciones'
+            'ingresosPorMes','ocupacionPorMes','totalHabitaciones',
+            'ingresosHospedaje','ingresosRoomService','topProductos'
         ));
     }
 

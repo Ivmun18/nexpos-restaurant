@@ -16,6 +16,9 @@ const props = defineProps({
     ingresosPorMes: Array,
     ocupacionPorMes: Array,
     totalHabitaciones: Number,
+    ingresosHospedaje: Number,
+    ingresosRoomService: Number,
+    topProductos: Array,
 })
 
 const maxIngreso = computed(() => {
@@ -215,4 +218,73 @@ const exportarPDF = () => {
             </div>
         </div>
     </AppLayout>
+
+            <!-- Desglose hospedaje vs room service -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+
+                <!-- Dona de ingresos -->
+                <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                    <h3 style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 16px;">🍩 Desglose de Ingresos</h3>
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        <div style="position:relative; width:100px; height:100px; flex-shrink:0;">
+                            <svg viewBox="0 0 36 36" style="width:100px; height:100px; transform:rotate(-90deg);">
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#E2E8F0" stroke-width="3.8"/>
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3B82F6" stroke-width="3.8"
+                                    :stroke-dasharray="(ingresosHospedaje + ingresosRoomService) > 0 ? (ingresosHospedaje / (ingresosHospedaje + ingresosRoomService) * 100) + ' 100' : '0 100'"
+                                    stroke-linecap="round"/>
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F59E0B" stroke-width="3.8"
+                                    :stroke-dasharray="(ingresosHospedaje + ingresosRoomService) > 0 ? (ingresosRoomService / (ingresosHospedaje + ingresosRoomService) * 100) + ' 100' : '0 100'"
+                                    :stroke-dashoffset="(ingresosHospedaje + ingresosRoomService) > 0 ? -(ingresosHospedaje / (ingresosHospedaje + ingresosRoomService) * 100) : 0"
+                                    stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                                <div style="width:12px; height:12px; border-radius:3px; background:#3B82F6; flex-shrink:0;"></div>
+                                <div style="flex:1;">
+                                    <div style="font-size:12px; color:#374151; font-weight:600;">🛏️ Hospedaje</div>
+                                    <div style="font-size:14px; font-weight:800; color:#1E293B;">S/ {{ Number(ingresosHospedaje||0).toFixed(2) }}</div>
+                                </div>
+                                <div style="font-size:12px; font-weight:700; color:#3B82F6;">
+                                    {{ (ingresosHospedaje + ingresosRoomService) > 0 ? Math.round(ingresosHospedaje / (ingresosHospedaje + ingresosRoomService) * 100) : 0 }}%
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="width:12px; height:12px; border-radius:3px; background:#F59E0B; flex-shrink:0;"></div>
+                                <div style="flex:1;">
+                                    <div style="font-size:12px; color:#374151; font-weight:600;">🛒 Room Service</div>
+                                    <div style="font-size:14px; font-weight:800; color:#1E293B;">S/ {{ Number(ingresosRoomService||0).toFixed(2) }}</div>
+                                </div>
+                                <div style="font-size:12px; font-weight:700; color:#F59E0B;">
+                                    {{ (ingresosHospedaje + ingresosRoomService) > 0 ? Math.round(ingresosRoomService / (ingresosHospedaje + ingresosRoomService) * 100) : 0 }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top productos -->
+                <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                    <h3 style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 16px;">🏆 Top Productos Room Service</h3>
+                    <div v-if="!topProductos || topProductos.length === 0" style="text-align:center; color:#94A3B8; font-size:13px; padding:20px 0;">
+                        Sin cargos de room service en el período
+                    </div>
+                    <div v-for="(p, i) in topProductos" :key="p.producto_id" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                        <div :style="{width:'22px', height:'22px', borderRadius:'50%', background: ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444'][i]+'20', color: ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444'][i], display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:'900', flexShrink:0}">
+                            {{ i+1 }}
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:12px; font-weight:600; color:#1E293B; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.producto?.nombre || 'Producto' }}</div>
+                            <div style="background:#F1F5F9; border-radius:4px; height:5px; margin-top:4px;">
+                                <div :style="{width: (topProductos[0].total_monto > 0 ? p.total_monto/topProductos[0].total_monto*100 : 0)+'%', height:'5px', borderRadius:'4px', background: ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444'][i]}"></div>
+                            </div>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0;">
+                            <div style="font-size:12px; font-weight:700; color:#1E293B;">S/ {{ Number(p.total_monto).toFixed(2) }}</div>
+                            <div style="font-size:10px; color:#94A3B8;">{{ p.total_cantidad }} unid.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 </template>
