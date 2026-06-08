@@ -126,13 +126,13 @@ const seleccionar = (m) => {
 
 const registrarEntrada = () => {
     if (!miembroSeleccionado.value) return
-    router.post(route('gimnasio.accesos.entrada'), { miembro_id: miembroSeleccionado.value.id }, {
+    router.post('/gimnasio/accesos/entrada', { miembro_id: miembroSeleccionado.value.id }, {
         onSuccess: () => { miembroSeleccionado.value = null; busqueda.value = '' }
     })
 }
 
 const registrarSalida = (acceso) => {
-    router.post(route('gimnasio.accesos.salida', acceso.id))
+    router.post('/gimnasio/accesos/' + acceso.id + '/salida')
 }
 
 const formatHora = (dt) => dt ? new Date(dt).toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' }) : '-'
