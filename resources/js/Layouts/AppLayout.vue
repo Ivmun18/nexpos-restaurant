@@ -473,6 +473,7 @@ const allMenuItems = [
     { path: '/hotel/housekeeping', icon: 'limpieza',   label: 'Housekeeping',  module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/reportes',      icon: 'reporte',    label: 'Reportes',      module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/tarifas',       icon: 'categoria',  label: 'Tarifas',       module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/huespedes',     icon: 'huesped',    label: 'Huéspedes',     module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/caja',          icon: 'caja',       label: 'Caja',          module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/productos',    icon: 'box',        label: 'Productos',     module: 'hotel', section: 'HOTEL' },
 

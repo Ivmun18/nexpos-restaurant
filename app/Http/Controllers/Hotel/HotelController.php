@@ -930,6 +930,49 @@ class HotelController extends Controller
 
         return redirect()->back()->with('success', 'Cargo eliminado');
     }
+
+    // ── HUÉSPEDES ──
+    public function huespedes(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $buscar = $request->get('buscar', '');
+
+        $huespedes = HotelHuesped::where('empresa_id', $empresaId)
+            ->when($buscar, function($q) use ($buscar) {
+                $q->where(function($q2) use ($buscar) {
+                    $q2->where('nombre_completo', 'like', "%$buscar%")
+                       ->orWhere('numero_documento', 'like', "%$buscar%")
+                       ->orWhere('telefono', 'like', "%$buscar%");
+                });
+            })
+            ->withCount('reservas')
+            ->withSum(['reservas as total_gastado' => function($q) {
+                $q->whereIn('estado', ['checkin','checkout']);
+            }], 'monto_pagado')
+            ->orderByDesc('updated_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Hotel/Huespedes', compact('huespedes', 'buscar'));
+    }
+
+    public function huesped($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $huesped = HotelHuesped::where('id', $id)->where('empresa_id', $empresaId)->firstOrFail();
+        $reservas = HotelReserva::with('habitacion.tipo', 'pagos')
+            ->where('huesped_id', $id)
+            ->where('empresa_id', $empresaId)
+            ->orderByDesc('fecha_checkin')
+            ->get();
+
+        $totalGastado  = $reservas->whereIn('estado', ['checkin','checkout'])->sum('monto_pagado');
+        $totalEstadias = $reservas->whereIn('estado', ['checkin','checkout'])->count();
+        $totalNoches   = $reservas->whereIn('estado', ['checkin','checkout'])->sum('num_noches');
+
+        return Inertia::render('Hotel/HuespedDetalle', compact('huesped','reservas','totalGastado','totalEstadias','totalNoches'));
+    }
+
     // ── TARIFAS TEMPORADA ──
     public function tarifas()
     {
