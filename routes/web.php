@@ -983,6 +983,7 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::post('/miembros/{miembro}/renovar',  [\App\Http\Controllers\Gimnasio\MiembroController::class, 'renovar'])->name('miembros.renovar');
 
     // Planes
+    Route::get('/pagos', [\App\Http\Controllers\Gimnasio\PagoController::class, 'index'])->name('pagos.index');
     Route::get('/planes',               [\App\Http\Controllers\Gimnasio\PlanController::class, 'index'])->name('planes.index');
     Route::post('/planes',              [\App\Http\Controllers\Gimnasio\PlanController::class, 'store'])->name('planes.store');
     Route::put('/planes/{plan}',        [\App\Http\Controllers\Gimnasio\PlanController::class, 'update'])->name('planes.update');
