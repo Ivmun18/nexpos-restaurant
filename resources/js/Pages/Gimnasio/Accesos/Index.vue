@@ -32,7 +32,7 @@
                     </div>
                     <div v-if="miembroSeleccionado" style="flex:1; min-width:240px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:14px;">
                         <p style="margin:0; font-weight:700; color:#166534;">{{ miembroSeleccionado.nombre_completo }}</p>
-                        <p style="margin:4px 0 0; font-size:13px; color:#166534;">{{ miembroSeleccionado.plan?.nombre }} · {{ miembroSeleccionado.dias_restantes }} días restantes</p>
+                        <p style="margin:4px 0 0; font-size:13px; color:#166534;">{{ miembroSeleccionado.plan?.nombre }} · {{ Math.ceil(miembroSeleccionado.dias_restantes) }} días restantes</p>
                     </div>
                     <button @click="registrarEntrada" :disabled="!miembroSeleccionado"
                         style="background:#166534; color:white; border:none; padding:12px 24px; border-radius:10px; font-weight:700; cursor:pointer; font-size:15px; white-space:nowrap;"
