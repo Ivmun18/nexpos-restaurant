@@ -21,13 +21,54 @@ class HotelController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $hoy = Carbon::today();
 
+        // Estado habitaciones
         $totalHabitaciones  = HotelHabitacion::where('empresa_id', $empresaId)->count();
         $disponibles        = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'disponible')->count();
         $ocupadas           = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'ocupada')->count();
         $limpieza           = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'limpieza')->count();
-        $checkinsHoy        = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkin', $hoy)->count();
-        $checkoutsHoy       = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkout_previsto', $hoy)->where('estado', 'checkin')->count();
-        $ingresosMes        = HotelReserva::where('empresa_id', $empresaId)->whereMonth('created_at', $hoy->month)->sum('monto_pagado');
+        $mantenimiento      = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'mantenimiento')->count();
+        $ocupacionPct       = $totalHabitaciones > 0 ? round(($ocupadas / $totalHabitaciones) * 100) : 0;
+
+        // Actividad hoy
+        $checkinsHoy    = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkin', $hoy)->count();
+        $checkoutsHoy   = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkout_previsto', $hoy)->where('estado', 'checkin')->count();
+        $ingresosHoy    = HotelPago::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))->whereDate('created_at', $hoy)->sum('monto');
+
+        // Mes actual
+        $ingresosMes    = HotelPago::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))->whereMonth('created_at', $hoy->month)->whereYear('created_at', $hoy->year)->sum('monto');
+
+        // Saldos pendientes (reservas activas con deuda)
+        $saldoPendiente = HotelReserva::where('empresa_id', $empresaId)
+            ->where('estado', 'checkin')
+            ->whereRaw('monto_pagado < total')
+            ->selectRaw('SUM(total - monto_pagado) as saldo')
+            ->value('saldo') ?? 0;
+
+        $reservasPendientesPago = HotelReserva::where('empresa_id', $empresaId)
+            ->where('estado', 'checkin')
+            ->whereRaw('monto_pagado < total')
+            ->count();
+
+        // Próximos checkouts (hoy y mañana)
+        $proximosCheckouts = HotelReserva::with('habitacion.tipo','huesped')
+            ->where('empresa_id', $empresaId)
+            ->where('estado', 'checkin')
+            ->whereDate('fecha_checkout_previsto', '<=', $hoy->copy()->addDay())
+            ->orderBy('fecha_checkout_previsto')
+            ->get();
+
+        // Próximos checkins (hoy y mañana)
+        $proximosCheckins = HotelReserva::with('habitacion.tipo','huesped')
+            ->where('empresa_id', $empresaId)
+            ->where('estado', 'reservado')
+            ->whereDate('fecha_checkin', '<=', $hoy->copy()->addDay())
+            ->orderBy('fecha_checkin')
+            ->get();
+
+        // Housekeeping pendiente
+        $housekeepingPendiente = HotelHousekeeping::where('empresa_id', $empresaId)
+            ->whereIn('estado', ['pendiente','en_proceso'])
+            ->count();
 
         $habitaciones = HotelHabitacion::with('tipo','reservaActual.huesped')
             ->where('empresa_id', $empresaId)
@@ -35,8 +76,11 @@ class HotelController extends Controller
             ->get();
 
         return Inertia::render('Hotel/Dashboard', compact(
-            'totalHabitaciones','disponibles','ocupadas','limpieza',
-            'checkinsHoy','checkoutsHoy','ingresosMes','habitaciones'
+            'totalHabitaciones','disponibles','ocupadas','limpieza','mantenimiento','ocupacionPct',
+            'checkinsHoy','checkoutsHoy','ingresosHoy','ingresosMes',
+            'saldoPendiente','reservasPendientesPago',
+            'proximosCheckouts','proximosCheckins',
+            'housekeepingPendiente','habitaciones'
         ));
     }
 
