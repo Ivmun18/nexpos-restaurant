@@ -408,15 +408,16 @@ const estadoBadge = (estado) => {
                 <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:12px;">🗺️ Estado de habitaciones</div>
                 <div style="display:flex; flex-wrap:wrap; gap:10px;">
                     <div v-for="h in todasHabitaciones" :key="h.id"
-                        @click="clickHabitacion(h)"
+                        @click="h.estado !== 'mantenimiento' && clickHabitacion(h)"
                         :style="{
                             padding:'10px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'600', minWidth:'110px', textAlign:'center',
                             cursor: h.estado==='disponible' || h.estado==='ocupada' ? 'pointer' : 'default',
                             background: h.estado==='disponible' ? '#DCFCE7' : h.estado==='ocupada' ? '#FEE2E2' : h.estado==='limpieza' ? '#FEF9C3' : '#F1F5F9',
                             color: h.estado==='disponible' ? '#16A34A' : h.estado==='ocupada' ? '#DC2626' : h.estado==='limpieza' ? '#CA8A04' : h.estado==='reservada' ? '#1D4ED8' : '#6B7280',
                             border: '2px solid',
-                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : h.estado==='reservada' ? '#93C5FD' : '#E2E8F0',
+                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : h.estado==='reservada' ? '#93C5FD' : h.estado==='mantenimiento' ? '#FB923C' : '#E2E8F0',
                             transform: h.estado==='disponible' || h.estado==='ocupada' ? 'scale(1)' : '',
+                            cursor: h.estado==='mantenimiento' ? 'not-allowed' : 'pointer',
                         }">
                         <div style="font-size:15px; font-weight:700;">Hab. {{ h.numero }}</div>
                         <div style="font-size:11px; opacity:0.8;">{{ h.tipo?.nombre }}</div>
@@ -426,6 +427,7 @@ const estadoBadge = (estado) => {
                         <div style="font-size:11px;">S/ {{ h.tipo?.precio_noche }}/noche</div>
                         <div v-if="h.estado==='disponible'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para check-in</div>
                         <div v-if="h.estado==='ocupada'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para ver info</div>
+                        <div v-if="h.estado==='mantenimiento'" style="font-size:10px; margin-top:4px; opacity:0.7; color:#EA580C;">No disponible</div>
                         <!-- Badge reserva futura -->
                         <div v-if="h.reservas_futuras?.length"
                             style="margin-top:6px; background:#1D4ED8; color:white; border-radius:6px; padding:3px 6px; font-size:10px; font-weight:700; line-height:1.3;">
@@ -462,7 +464,7 @@ const estadoBadge = (estado) => {
                 </div>
 
                 <div style="display:flex; gap:16px; margin-top:12px; font-size:11px; color:#64748B;">
-                    <span>✅ Disponible — clic para check-in</span><span>🔴 Ocupada — clic para ver huésped</span><span>🧹 Limpieza</span><span>🔧 Mantenimiento</span>
+                    <span>✅ Disponible — clic para check-in</span><span>🔴 Ocupada — clic para ver huésped</span><span>🧹 Limpieza</span><span style="color:#EA580C;">🔧 Mantenimiento — bloqueada</span>
                 </div>
             </div>
 
