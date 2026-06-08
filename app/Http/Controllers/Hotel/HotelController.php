@@ -189,6 +189,63 @@ class HotelController extends Controller
         return response()->json(['success' => true, 'reserva' => $reserva, 'codigo' => $codigo, 'mensaje' => 'Check-in realizado ✅']);
     }
 
+
+    // ── TICKET CHECK-IN ──
+    public function ticketCheckin($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $reserva = HotelReserva::with('habitacion.tipo', 'huesped')
+            ->where('id', $id)
+            ->where('empresa_id', $empresaId)
+            ->firstOrFail();
+
+        $empresa = auth()->user()->empresa;
+
+        $logoBase64 = '';
+        if ($empresa->logo) {
+            $logoPath = public_path('storage/' . $empresa->logo);
+            if (file_exists($logoPath)) {
+                $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $mime = $ext === 'png' ? 'image/png' : 'image/jpeg';
+                $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+            }
+        }
+
+        return response()->json([
+            'empresa' => [
+                'nombre'    => $empresa->nombre_comercial ?? $empresa->razon_social,
+                'ruc'       => $empresa->ruc,
+                'direccion' => $empresa->direccion,
+                'telefono'  => $empresa->telefono,
+                'logo'      => $logoBase64,
+            ],
+            'reserva' => [
+                'codigo'             => $reserva->codigo,
+                'fecha_checkin'      => $reserva->fecha_checkin,
+                'fecha_checkout'     => $reserva->fecha_checkout_previsto,
+                'num_noches'         => $reserva->num_noches,
+                'num_huespedes'      => $reserva->num_huespedes,
+                'precio_noche'       => $reserva->precio_noche,
+                'total'              => $reserva->total,
+                'monto_pagado'       => $reserva->monto_pagado,
+                'saldo'              => $reserva->total - $reserva->monto_pagado,
+                'observaciones'      => $reserva->observaciones,
+            ],
+            'habitacion' => [
+                'numero' => $reserva->habitacion->numero,
+                'piso'   => $reserva->habitacion->piso,
+                'tipo'   => $reserva->habitacion->tipo->nombre,
+            ],
+            'huesped' => [
+                'nombre'          => $reserva->huesped->nombre_completo,
+                'tipo_documento'  => $reserva->huesped->tipo_documento,
+                'numero_documento'=> $reserva->huesped->numero_documento,
+                'telefono'        => $reserva->huesped->telefono,
+                'nacionalidad'    => $reserva->huesped->nacionalidad,
+            ],
+        ]);
+    }
+
     // ── RESERVA ANTICIPADA ──
     public function reservar(Request $request)
     {

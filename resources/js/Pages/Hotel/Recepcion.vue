@@ -220,6 +220,95 @@ const cambiarHabitacion = async () => {
 
 // ── PAGO PARCIAL ──
 const pagoParcialForm = ref({ monto: 0, metodo_pago: 'efectivo', referencia: '' })
+const imprimirTicket = async (reserva) => {
+    try {
+        const res = await fetch('/hotel/reservas/' + reserva.id + '/ticket')
+        const d = await res.json()
+        const fmt = (f) => f ? new Date(f).toLocaleDateString('es-PE') : '-'
+        const fmtMoney = (n) => 'S/ ' + Number(n).toFixed(2)
+        const logoHtml = d.empresa.logo ? `<img src="${d.empresa.logo}" style="height:60px;margin-bottom:8px;">` : ''
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>Ticket Check-in ${d.reserva.codigo}</title>
+        <style>
+            * { margin:0; padding:0; box-sizing:border-box; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; color: #1a1a1a; background: #fff; }
+            .ticket { width: 320px; margin: 0 auto; padding: 20px 16px; }
+            .header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 14px; margin-bottom: 14px; }
+            .hotel-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+            .hotel-sub { font-size: 10px; color: #555; margin-top: 3px; }
+            .titulo { text-align: center; font-size: 13px; font-weight: 700; background: #1E293B; color: #fff; padding: 6px; border-radius: 4px; margin-bottom: 14px; letter-spacing: 1px; }
+            .codigo { text-align: center; font-size: 22px; font-weight: 900; letter-spacing: 2px; margin-bottom: 14px; color: #1E293B; }
+            .seccion { margin-bottom: 12px; }
+            .seccion-titulo { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #6B7280; border-bottom: 1px solid #E5E7EB; padding-bottom: 3px; margin-bottom: 6px; letter-spacing: 1px; }
+            .fila { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .fila span { font-size: 11px; color: #374151; }
+            .fila b { font-size: 11px; font-weight: 700; color: #111; text-align: right; max-width: 55%; }
+            .total-box { background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 6px; padding: 10px; margin: 12px 0; text-align: center; }
+            .total-label { font-size: 10px; color: #166534; font-weight: 600; }
+            .total-valor { font-size: 20px; font-weight: 900; color: #15803D; }
+            .saldo-box { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 8px; margin-bottom: 12px; text-align: center; }
+            .saldo-label { font-size: 10px; color: #991B1B; font-weight: 600; }
+            .saldo-valor { font-size: 16px; font-weight: 900; color: #DC2626; }
+            .footer { text-align: center; border-top: 2px dashed #ccc; padding-top: 12px; margin-top: 12px; font-size: 10px; color: #9CA3AF; }
+            .bienvenida { text-align: center; font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style></head><body>
+        <div class="ticket">
+            <div class="header">
+                ${logoHtml}
+                <div class="hotel-name">${d.empresa.nombre}</div>
+                <div class="hotel-sub">${d.empresa.direccion || ''}</div>
+                <div class="hotel-sub">RUC: ${d.empresa.ruc || ''} ${d.empresa.telefono ? '| Tel: ' + d.empresa.telefono : ''}</div>
+            </div>
+            <div class="titulo">✅ COMPROBANTE DE CHECK-IN</div>
+            <div class="codigo">${d.reserva.codigo}</div>
+            <div class="seccion">
+                <div class="seccion-titulo">👤 Datos del Huésped</div>
+                <div class="fila"><span>Nombre:</span><b>${d.huesped.nombre}</b></div>
+                <div class="fila"><span>Documento:</span><b>${d.huesped.tipo_documento === '1' ? 'DNI' : d.huesped.tipo_documento === '7' ? 'Pasaporte' : 'Doc.'} ${d.huesped.numero_documento}</b></div>
+                <div class="fila"><span>Nacionalidad:</span><b>${d.huesped.nacionalidad || 'Peruana'}</b></div>
+                ${d.huesped.telefono ? `<div class="fila"><span>Teléfono:</span><b>${d.huesped.telefono}</b></div>` : ''}
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">🛏️ Habitación</div>
+                <div class="fila"><span>Número:</span><b>Hab. ${d.habitacion.numero} — Piso ${d.habitacion.piso}</b></div>
+                <div class="fila"><span>Tipo:</span><b>${d.habitacion.tipo}</b></div>
+                <div class="fila"><span>Precio/noche:</span><b>${fmtMoney(d.reserva.precio_noche)}</b></div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">📅 Estadía</div>
+                <div class="fila"><span>Check-in:</span><b>${fmt(d.reserva.fecha_checkin)}</b></div>
+                <div class="fila"><span>Check-out:</span><b>${fmt(d.reserva.fecha_checkout)}</b></div>
+                <div class="fila"><span>Noches:</span><b>${d.reserva.num_noches}</b></div>
+                <div class="fila"><span>Huéspedes:</span><b>${d.reserva.num_huespedes}</b></div>
+                ${d.reserva.observaciones ? `<div class="fila"><span>Observ.:</span><b>${d.reserva.observaciones}</b></div>` : ''}
+            </div>
+            <div class="total-box">
+                <div class="total-label">TOTAL DE ESTADÍA</div>
+                <div class="total-valor">${fmtMoney(d.reserva.total)}</div>
+            </div>
+            ${d.reserva.saldo > 0 ? `
+            <div class="saldo-box">
+                <div class="saldo-label">SALDO PENDIENTE</div>
+                <div class="saldo-valor">${fmtMoney(d.reserva.saldo)}</div>
+            </div>` : '<div style="text-align:center;color:#15803D;font-weight:700;font-size:12px;margin-bottom:12px;">✅ PAGADO COMPLETO</div>'}
+            <div class="bienvenida">¡Bienvenido a nuestro hotel!</div>
+            <div class="footer">
+                Emitido: ${new Date().toLocaleString('es-PE')}<br>
+                Conserve este comprobante durante su estadía
+            </div>
+        </div>
+        <script>window.onload = () => { window.print(); }<\/script>
+        </body></html>`
+
+        const win = window.open('', '_blank', 'width=400,height=700')
+        win.document.write(html)
+        win.document.close()
+    } catch(e) {
+        alert('Error al generar ticket: ' + e.message)
+    }
+}
+
 const cancelarReserva = async (reserva) => {
     if (!confirm('¿Cancelar la reserva de ' + reserva.huesped?.nombre_completo + '?')) return
     cargando.value = true
@@ -268,41 +357,6 @@ const agregarCargo = () => {
 const eliminarCargo = (id) => {
     if (!confirm('¿Eliminar cargo?')) return
     router.delete('/hotel/cargos/' + id)
-}
-
-const imprimirTicket = () => {
-    const t = ticket.value
-    const contenido = `
-        <html><head><title>Ticket Hotel</title>
-        <style>body{font-family:monospace;padding:20px;max-width:380px;margin:auto}
-        h2{text-align:center}.linea{border-top:2px dashed #ccc;margin:10px 0}
-        .fila{display:flex;justify-content:space-between;margin:4px 0;font-size:13px}
-        .total{font-size:18px;font-weight:bold}.footer{text-align:center;font-size:11px;color:#999}
-        </style></head><body>
-        <h2>🏨 NEXPOS HOTEL</h2>
-        <p style="text-align:center;font-size:12px;color:#999">COMPROBANTE DE ESTADÍA</p>
-        <div class="linea"></div>
-        <div class="fila"><span>Código:</span><b>${t.codigo}</b></div>
-        <div class="fila"><span>Huésped:</span><b>${t.huesped}</b></div>
-        <div class="fila"><span>Documento:</span><b>${t.documento}</b></div>
-        <div class="fila"><span>Habitación:</span><b>${t.habitacion}</b></div>
-        <div class="linea"></div>
-        <div class="fila"><span>Check-in:</span><b>${new Date(t.fecha_checkin).toLocaleString('es-PE')}</b></div>
-        <div class="fila"><span>Check-out:</span><b>${new Date(t.fecha_checkout).toLocaleString('es-PE')}</b></div>
-        <div class="fila"><span>Noches:</span><b>${t.noches}</b></div>
-        <div class="fila"><span>Precio/noche:</span><b>S/ ${Number(t.precio_noche).toFixed(2)}</b></div>
-        <div class="linea"></div>
-        <div class="fila total"><span>TOTAL:</span><b>S/ ${Number(t.total).toFixed(2)}</b></div>
-        <div class="fila"><span>Método pago:</span><b>${t.metodo_pago?.toUpperCase()}</b></div>
-        <div class="fila"><span>Estado:</span><b>${t.estado_pago?.toUpperCase()}</b></div>
-        <div class="linea"></div>
-        <p class="footer">¡Gracias por su visita!</p>
-        </body></html>`
-    const ventana = window.open('', '_blank', 'width=420,height=600')
-    ventana.document.write(contenido)
-    ventana.document.close()
-    ventana.focus()
-    ventana.print()
 }
 
 const clickHabitacion = (h) => {
@@ -469,6 +523,10 @@ const estadoBadge = (estado) => {
                                     <button v-if="r.estado === 'checkin'" @click="showCambiarHab = r; cambiarHabForm.nueva_habitacion_id = ''"
                                         style="padding:6px 12px; background:#06B6D4; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
                                         🔄 Cambiar hab.
+                                    </button>
+                                    <button v-if="r.estado === 'checkin'" @click="imprimirTicket(r)"
+                                        style="padding:6px 12px; background:#0F766E; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                        🖨️ Ticket
                                     </button>
                                     <button v-if="r.estado === 'checkin'" @click="showCheckout = r; pagoForm.monto = r.total - r.monto_pagado; pagoForm.cliente_documento = r.huesped?.numero_documento; pagoForm.cliente_nombre = r.huesped?.nombre_completo"
                                         style="padding:6px 12px; background:#DC2626; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
