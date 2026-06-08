@@ -1006,9 +1006,9 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::delete('/horarios/{horario}',          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroyHorario'])->name('horarios.destroy');
     // Accesos
     Route::get('/accesos',                   [\App\Http\Controllers\Gimnasio\AccesoController::class, 'index'])->name('accesos.index');
+    Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
     Route::post('/accesos/entrada',          [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarEntrada'])->name('accesos.entrada');
     Route::post('/accesos/{acceso}/salida',  [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarSalida'])->name('accesos.salida');
-    Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
 
 });
 
