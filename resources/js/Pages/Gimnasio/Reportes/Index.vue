@@ -108,7 +108,7 @@ const metodoBadge = (m) => ({
                     </div>
                     <button @click="filtrar" style="padding:9px 20px; background:#EA580C; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;">🔍 Aplicar</button>
                     <button @click="exportarPDF" style="padding:9px 20px; background:#1E293B; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;">🖨️ Imprimir</button>
-                    <a :href="'/gimnasio/reportes/contable?desde=' + desde + '&hasta=' + hasta"
+                    <a :href="'/reportes/reporte-contador-pdf?desde=' + desde + '&hasta=' + hasta"
                         target="_blank"
                         style="padding:9px 20px; background:#EA580C; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px; text-decoration:none; display:inline-block;">
                         📥 PDF Contable

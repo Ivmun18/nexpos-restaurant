@@ -6,6 +6,7 @@ use App\Models\Compra;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Gimnasio\GimnasioPago;
 
 class ReporteContadorController extends Controller
 {
