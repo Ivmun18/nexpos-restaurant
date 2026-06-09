@@ -75,6 +75,27 @@ class ReporteContadorController extends Controller
                         'total'           => (float) $v->total,
                     ];
                 });
+            $ventas = \App\Models\Gimnasio\GimnasioPago::where('empresa_id', $empresaId)
+                ->whereBetween('fecha_pago', [$desde, $hasta])
+                ->where('estado', 'pagado')
+                ->with('miembro', 'plan')
+                ->orderBy('fecha_pago')
+                ->get()
+                ->map(function($p) {
+                    $total = (float) $p->monto;
+                    $igv   = round($total - ($total / 1.18), 2);
+                    $sub   = round($total - $igv, 2);
+                    return (object)[
+                        'fecha'            => \Carbon\Carbon::parse($p->fecha_pago)->format('d/m/Y'),
+                        'comprobante'      => $p->tipo_comprobante ?? 'ninguno',
+                        'serie_numero'     => 'REC-' . str_pad($p->id, 6, '0', STR_PAD_LEFT),
+                        'numero_documento' => $p->miembro?->dni ?? '-',
+                        'cliente'          => ($p->miembro?->nombre ?? '') . ' ' . ($p->miembro?->apellidos ?? ''),
+                        'subtotal_sin_igv' => $sub,
+                        'igv'              => $igv,
+                        'total'            => $total,
+                    ];
+                });
         }
 
         $totalVentas    = $ventas->sum('total');
