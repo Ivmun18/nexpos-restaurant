@@ -9,7 +9,7 @@
             </div>
 
             <!-- Buscador principal — grande y llamativo -->
-            <div style="background:linear-gradient(135deg,#6D28D9,#4C1D95); border-radius:20px; padding:28px; margin-bottom:24px; box-shadow:0 8px 30px rgba(109,40,217,0.4);">
+            <div style="background:linear-gradient(135deg,#EA580C,#C2410C); border-radius:20px; padding:28px; margin-bottom:24px; box-shadow:0 8px 30px rgba(234,88,12,0.4);">
                 <div style="font-size:16px; font-weight:700; color:#E9D5FF; margin-bottom:14px; text-align:center;">
                     💪 ¿Quién entra al gym hoy?
                 </div>
@@ -26,7 +26,7 @@
                             @mouseover="e => e.currentTarget.style.background='#F5F3FF'"
                             @mouseleave="e => e.currentTarget.style.background='#fff'">
                             <div style="display:flex; align-items:center; gap:12px;">
-                                <div style="width:40px; height:40px; background:linear-gradient(135deg,#6D28D9,#7C3AED); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; flex-shrink:0;">
+                                <div style="width:40px; height:40px; background:linear-gradient(135deg,#EA580C,#F97316); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; flex-shrink:0;">
                                     {{ m.nombre_completo.charAt(0) }}
                                 </div>
                                 <div>
@@ -44,7 +44,7 @@
                 <!-- Miembro seleccionado -->
                 <div v-if="miembroSeleccionado" style="max-width:600px; margin:16px auto 0; background:rgba(255,255,255,0.15); border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(10px);">
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="width:48px; height:48px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#6D28D9; flex-shrink:0;">
+                        <div style="width:48px; height:48px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#EA580C; flex-shrink:0;">
                             {{ miembroSeleccionado.nombre_completo.charAt(0) }}
                         </div>
                         <div>
@@ -53,7 +53,7 @@
                         </div>
                     </div>
                     <button @click="registrarEntrada"
-                        style="background:#fff; color:#6D28D9; border:none; padding:12px 24px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.2); white-space:nowrap;">
+                        style="background:#fff; color:#EA580C; border:none; padding:12px 24px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.2); white-space:nowrap;">
                         ✅ Registrar entrada
                     </button>
                 </div>
@@ -61,12 +61,12 @@
 
             <!-- Stats rápidas -->
             <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px;">
-                <div style="background:#fff; border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center; border-top:4px solid #6D28D9;">
-                    <div style="font-size:36px; font-weight:900; color:#6D28D9;">{{ dentro_ahora.length }}</div>
+                <div style="background:#fff; border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center; border-top:4px solid #EA580C;">
+                    <div style="font-size:36px; font-weight:900; color:#EA580C;">{{ dentro_ahora.length }}</div>
                     <div style="font-size:13px; font-weight:700; color:#64748B; margin-top:4px;">Dentro ahora</div>
                     <div style="display:flex; justify-content:center; gap:4px; margin-top:8px;">
                         <span v-for="i in Math.min(dentro_ahora.length, 5)" :key="i"
-                            style="width:8px; height:8px; background:#6D28D9; border-radius:50%; animation:pulse 1.5s infinite;"></span>
+                            style="width:8px; height:8px; background:#EA580C; border-radius:50%; animation:pulse 1.5s infinite;"></span>
                     </div>
                 </div>
                 <div style="background:#fff; border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center; border-top:4px solid #0EA5E9;">
@@ -87,9 +87,9 @@
                 <!-- Dentro ahora -->
                 <div style="background:#fff; border-radius:16px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
-                        <div style="width:10px; height:10px; background:#16A34A; border-radius:50%; box-shadow:0 0 0 3px #DCFCE7;"></div>
+                        <div style="width:10px; height:10px; background:#16A34A; border-radius:50%; box-shadow:0 0 0 3px #FFEDD5;"></div>
                         <h3 style="font-size:15px; font-weight:800; color:#1E293B; margin:0;">En el gimnasio ahora</h3>
-                        <span style="background:linear-gradient(135deg,#6D28D9,#7C3AED); color:#fff; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; margin-left:auto;">{{ dentro_ahora.length }}</span>
+                        <span style="background:linear-gradient(135deg,#EA580C,#F97316); color:#fff; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; margin-left:auto;">{{ dentro_ahora.length }}</span>
                     </div>
                     <div v-if="dentro_ahora.length === 0" style="text-align:center; padding:30px 0; color:#94A3B8;">
                         <div style="font-size:40px; margin-bottom:8px;">🏋️</div>
@@ -97,7 +97,7 @@
                     </div>
                     <div v-for="a in dentro_ahora" :key="a.id"
                         style="display:flex; align-items:center; gap:12px; padding:12px; border-radius:12px; background:#F8FAFC; margin-bottom:8px;">
-                        <div style="width:44px; height:44px; background:linear-gradient(135deg,#6D28D9,#7C3AED); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px; flex-shrink:0;">
+                        <div style="width:44px; height:44px; background:linear-gradient(135deg,#EA580C,#F97316); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px; flex-shrink:0;">
                             {{ a.miembro?.nombre?.charAt(0) }}
                         </div>
                         <div style="flex:1;">
@@ -125,7 +125,7 @@
                         <div v-for="a in accesos_hoy" :key="a.id"
                             style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; margin-bottom:6px;"
                             :style="{background: !a.salida ? '#F5F3FF' : '#F8FAFC'}">
-                            <div :style="{width:'36px', height:'36px', borderRadius:'50%', background: !a.salida ? 'linear-gradient(135deg,#6D28D9,#7C3AED)' : '#E2E8F0', display:'flex', alignItems:'center', justifyContent:'center', color: !a.salida ? '#fff' : '#64748B', fontWeight:'800', fontSize:'14px', flexShrink:0}">
+                            <div :style="{width:'36px', height:'36px', borderRadius:'50%', background: !a.salida ? 'linear-gradient(135deg,#EA580C,#F97316)' : '#E2E8F0', display:'flex', alignItems:'center', justifyContent:'center', color: !a.salida ? '#fff' : '#64748B', fontWeight:'800', fontSize:'14px', flexShrink:0}">
                                 {{ a.miembro?.nombre?.charAt(0) }}
                             </div>
                             <div style="flex:1; min-width:0;">
@@ -135,7 +135,7 @@
                                     <span v-if="a.salida"> → {{ formatHora(a.salida) }} · {{ duracion(a.entrada, a.salida) }}</span>
                                 </div>
                             </div>
-                            <span v-if="!a.salida" style="background:#EDE9FE; color:#6D28D9; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; white-space:nowrap;">Dentro</span>
+                            <span v-if="!a.salida" style="background:#EDE9FE; color:#EA580C; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; white-space:nowrap;">Dentro</span>
                             <span v-else style="background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; white-space:nowrap;">✓ Salió</span>
                         </div>
                     </div>

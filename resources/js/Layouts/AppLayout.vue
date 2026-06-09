@@ -417,7 +417,7 @@ const modulesEnabled = computed(() => {
 // 🎨 PALETA DE COLORES POR SECCIÓN
 const sectionColors = {
     ODONTOLOGIA: { bg: '#EDE9FE', text: '#7C3AED', border: '#8B5CF6' },
-    'GIMNASIO':     { bg: '#F5F3FF', icon: '#6D28D9', text: '#4C1D95', active: 'linear-gradient(135deg,#6D28D9,#7C3AED)' },
+    'GIMNASIO':     { bg: '#FFF7ED', icon: '#EA580C', text: '#7C2D12', active: 'linear-gradient(135deg,#EA580C,#F97316)' },
     'HOTEL':        { bg: '#FFF7ED', icon: '#C2410C', text: '#7C2D12', active: 'linear-gradient(135deg,#EA580C,#F97316)' },
     'PRINCIPAL':    { bg: '#E6F1FB', icon: '#185FA5', text: '#0C447C' },
     'RESTAURANTE':  { bg: '#FAECE7', icon: '#993C1D', text: '#4A1B0C' },
