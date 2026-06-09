@@ -8,6 +8,8 @@ const props = defineProps({
     totalIngresos: Number, totalPagos: Number, ticketPromedio: Number,
     porPlan: Array, porMetodo: Array, porDia: Array, porMes: Array,
     miembrosNuevos: Number, totalAccesos: Number,
+    ingresosSesion: Number, ingresosMembresia: Number,
+    ingresosHoy: Number, ingresosSemana: Number, ingresosMesAct: Number,
 })
 
 const desde = ref(props.desde)
@@ -18,7 +20,7 @@ const money = (n) => 'S/ ' + Number(n||0).toFixed(2)
 const fmt = (f) => f ? new Date(f+'T00:00:00').toLocaleDateString('es-PE') : '-'
 const maxMes = Math.max(...(props.porMes?.map(m => m.total) || [1]), 1)
 const maxDia = Math.max(...(props.porDia?.map(d => d.total) || [1]), 1)
-const colores = ['#6D28D9','#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6']
+const colores = ['#EA580C','#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6']
 const metodoBadge = (m) => ({
     efectivo:'💵', yape:'📱', plin:'📱', transferencia:'🏦', tarjeta:'💳'
 }[m] || '💰')
@@ -42,13 +44,13 @@ const metodoBadge = (m) => ({
                         <label style="font-size:11px; font-weight:700; color:#64748B; display:block; margin-bottom:4px;">HASTA</label>
                         <input type="date" v-model="hasta" style="padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;" />
                     </div>
-                    <button @click="filtrar" style="padding:9px 20px; background:#6D28D9; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;">🔍 Aplicar</button>
+                    <button @click="filtrar" style="padding:9px 20px; background:#EA580C; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;">🔍 Aplicar</button>
                 </div>
             </div>
 
             <!-- KPIs -->
             <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:24px;">
-                <div style="background:linear-gradient(135deg,#6D28D9,#4C1D95); border-radius:12px; padding:18px; color:#fff; box-shadow:0 2px 8px rgba(109,40,217,0.3);">
+                <div style="background:linear-gradient(135deg,#EA580C,#C2410C); border-radius:12px; padding:18px; color:#fff; box-shadow:0 2px 8px rgba(234,88,12,0.3);">
                     <div style="font-size:11px; opacity:0.8; font-weight:700; text-transform:uppercase; margin-bottom:6px;">💰 Total Ingresos</div>
                     <div style="font-size:26px; font-weight:900;">{{ money(totalIngresos) }}</div>
                     <div style="font-size:11px; opacity:0.75; margin-top:4px;">{{ fmt(desde) }} — {{ fmt(hasta) }}</div>
@@ -75,13 +77,39 @@ const metodoBadge = (m) => ({
                 </div>
             </div>
 
+            <!-- Resumen rápido hoy / semana / mes -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:24px;">
+                <div style="background:linear-gradient(135deg,#EA580C,#C2410C); border-radius:14px; padding:18px; color:#fff; box-shadow:0 4px 15px rgba(234,88,12,0.3); text-align:center;">
+                    <div style="font-size:11px; opacity:0.8; font-weight:700; text-transform:uppercase; margin-bottom:6px;">💰 Hoy</div>
+                    <div style="font-size:28px; font-weight:900;">{{ money(ingresosHoy) }}</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#0EA5E9,#0284C7); border-radius:14px; padding:18px; color:#fff; box-shadow:0 4px 15px rgba(14,165,233,0.3); text-align:center;">
+                    <div style="font-size:11px; opacity:0.8; font-weight:700; text-transform:uppercase; margin-bottom:6px;">📅 Esta semana</div>
+                    <div style="font-size:28px; font-weight:900;">{{ money(ingresosSemana) }}</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#10B981,#059669); border-radius:14px; padding:18px; color:#fff; box-shadow:0 4px 15px rgba(16,185,129,0.3); text-align:center;">
+                    <div style="font-size:11px; opacity:0.8; font-weight:700; text-transform:uppercase; margin-bottom:6px;">🗓️ Este mes</div>
+                    <div style="font-size:28px; font-weight:900;">{{ money(ingresosMesAct) }}</div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center; border-top:4px solid #EA580C;">
+                    <div style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; margin-bottom:6px;">🏃 Sesiones</div>
+                    <div style="font-size:28px; font-weight:900; color:#EA580C;">{{ money(ingresosSesion) }}</div>
+                    <div style="font-size:11px; color:#94A3B8; margin-top:2px;">pago por sesión</div>
+                </div>
+                <div style="background:#fff; border-radius:14px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.06); text-align:center; border-top:4px solid #10B981;">
+                    <div style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; margin-bottom:6px;">📋 Membresías</div>
+                    <div style="font-size:28px; font-weight:900; color:#10B981;">{{ money(ingresosMembresia) }}</div>
+                    <div style="font-size:11px; color:#94A3B8; margin-top:2px;">renovaciones</div>
+                </div>
+            </div>
+
             <!-- Gráfico ingresos por mes -->
             <div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.08); margin-bottom:20px;">
                 <h3 style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 16px;">📈 Ingresos últimos 6 meses</h3>
                 <div style="display:flex; align-items:flex-end; gap:10px; height:140px;">
                     <div v-for="m in porMes" :key="m.mes" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
                         <div style="font-size:10px; color:#64748B; font-weight:600;">{{ m.total > 0 ? 'S/'+Math.round(m.total) : '' }}</div>
-                        <div :style="{width:'100%', background: 'linear-gradient(180deg,#6D28D9,#4C1D95)', borderRadius:'4px 4px 0 0', height: Math.max((m.total/maxMes*110),4)+'px', transition:'height 0.3s'}"></div>
+                        <div :style="{width:'100%', background: 'linear-gradient(180deg,#EA580C,#C2410C)', borderRadius:'4px 4px 0 0', height: Math.max((m.total/maxMes*110),4)+'px', transition:'height 0.3s'}"></div>
                         <div style="font-size:10px; color:#94A3B8; text-align:center;">{{ m.mes }}</div>
                     </div>
                 </div>

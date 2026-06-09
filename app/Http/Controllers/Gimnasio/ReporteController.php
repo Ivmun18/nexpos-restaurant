@@ -74,10 +74,23 @@ class ReporteController extends Controller
             ->whereBetween('entrada', [$desde.' 00:00:00', $hasta.' 23:59:59'])
             ->count();
 
+        // Pagos por sesión (sin plan)
+        $pagosSesion = $pagos->whereNull('plan_id');
+        $ingresosSesion = $pagosSesion->sum('monto');
+        $ingresosMembresia = $pagos->whereNotNull('plan_id')->sum('monto');
+
+        // Resumen hoy / semana / mes
+        $hoy = Carbon::today();
+        $ingresosHoy     = GimnasioPago::where('empresa_id', $empresa_id)->whereDate('fecha_pago', $hoy)->where('estado','pagado')->sum('monto');
+        $ingresosSemana  = GimnasioPago::where('empresa_id', $empresa_id)->whereBetween('fecha_pago', [$hoy->copy()->startOfWeek(), $hoy->copy()->endOfWeek()])->where('estado','pagado')->sum('monto');
+        $ingresosMesAct  = GimnasioPago::where('empresa_id', $empresa_id)->whereMonth('fecha_pago', $hoy->month)->whereYear('fecha_pago', $hoy->year)->where('estado','pagado')->sum('monto');
+
         return Inertia::render('Gimnasio/Reportes/Index', compact(
             'desde', 'hasta', 'totalIngresos', 'totalPagos', 'ticketPromedio',
             'porPlan', 'porMetodo', 'porDia', 'porMes',
-            'miembrosNuevos', 'totalAccesos'
+            'miembrosNuevos', 'totalAccesos',
+            'ingresosSesion', 'ingresosMembresia',
+            'ingresosHoy', 'ingresosSemana', 'ingresosMesAct'
         ));
     }
 }
