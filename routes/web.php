@@ -981,6 +981,7 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::put('/miembros/{miembro}',           [\App\Http\Controllers\Gimnasio\MiembroController::class, 'update'])->name('miembros.update');
     Route::delete('/miembros/{miembro}',        [\App\Http\Controllers\Gimnasio\MiembroController::class, 'destroy'])->name('miembros.destroy');
     Route::post('/miembros/{miembro}/renovar',  [\App\Http\Controllers\Gimnasio\MiembroController::class, 'renovar'])->name('miembros.renovar');
+    Route::get('/miembros/pago/{id}/recibo',    [\App\Http\Controllers\Gimnasio\MiembroController::class, 'recibo'])->name('miembros.recibo');
 
     // Planes
     Route::get('/pagos',     [\App\Http\Controllers\Gimnasio\PagoController::class, 'index'])->name('pagos.index');

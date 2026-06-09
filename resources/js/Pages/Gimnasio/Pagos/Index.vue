@@ -15,6 +15,77 @@ const buscar = ref(props.buscar || '')
 const filtrar = () => router.get('/gimnasio/pagos', { desde: desde.value, hasta: hasta.value, buscar: buscar.value }, { preserveState: true })
 
 const money = (n) => 'S/ ' + Number(n||0).toFixed(2)
+
+const imprimirRecibo = async (pago) => {
+    try {
+        const res = await fetch('/gimnasio/miembros/pago/' + pago.id + '/recibo', {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        const d = await res.json()
+        const logoHtml = d.empresa.logo ? `<img src="${d.empresa.logo}" style="height:50px;margin-bottom:6px;">` : ''
+        const periodo = d.pago.periodo_inicio && d.pago.periodo_fin
+            ? `<div class="fila"><span>Período:</span><b>${new Date(d.pago.periodo_inicio+'T00:00:00').toLocaleDateString('es-PE')} al ${new Date(d.pago.periodo_fin+'T00:00:00').toLocaleDateString('es-PE')}</b></div>`
+            : ''
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo #${d.pago.id}</title>
+        <style>
+            *{margin:0;padding:0;box-sizing:border-box;}
+            body{font-family:'Courier New',monospace;font-size:12px;color:#1a1a1a;}
+            .ticket{width:300px;margin:0 auto;padding:20px 16px;}
+            .header{text-align:center;border-bottom:2px dashed #ccc;padding-bottom:12px;margin-bottom:12px;}
+            .gym-name{font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:1px;}
+            .titulo{text-align:center;font-size:13px;font-weight:700;background:#EA580C;color:#fff;padding:6px;border-radius:4px;margin-bottom:12px;}
+            .num{text-align:center;font-size:11px;color:#64748B;margin-bottom:12px;}
+            .seccion{margin-bottom:10px;}
+            .sec-titulo{font-size:9px;font-weight:700;text-transform:uppercase;color:#6B7280;border-bottom:1px solid #E5E7EB;padding-bottom:2px;margin-bottom:6px;letter-spacing:1px;}
+            .fila{display:flex;justify-content:space-between;margin-bottom:4px;}
+            .fila span{font-size:11px;color:#374151;}
+            .fila b{font-size:11px;font-weight:700;color:#111;text-align:right;}
+            .total-box{background:#FFF7ED;border:2px solid #EA580C;border-radius:8px;padding:10px;margin:12px 0;text-align:center;}
+            .total-label{font-size:10px;color:#EA580C;font-weight:700;}
+            .total-valor{font-size:24px;font-weight:900;color:#EA580C;}
+            .footer{text-align:center;border-top:2px dashed #ccc;padding-top:10px;margin-top:10px;font-size:10px;color:#9CA3AF;}
+            @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+        </style></head><body>
+        <div class="ticket">
+            <div class="header">
+                ${logoHtml}
+                <div class="gym-name">${d.empresa.nombre}</div>
+                <div style="font-size:10px;color:#555;margin-top:3px;">${d.empresa.direccion || ''}</div>
+                <div style="font-size:10px;color:#555;">RUC: ${d.empresa.ruc || ''} ${d.empresa.telefono ? '| Tel: '+d.empresa.telefono : ''}</div>
+            </div>
+            <div class="titulo">🧾 RECIBO DE PAGO</div>
+            <div class="num">N° ${String(d.pago.id).padStart(6,'0')}</div>
+            <div class="seccion">
+                <div class="sec-titulo">👤 Miembro</div>
+                <div class="fila"><span>Nombre:</span><b>${d.miembro.nombre}</b></div>
+                <div class="fila"><span>DNI:</span><b>${d.miembro.dni || '-'}</b></div>
+                ${d.miembro.telefono ? `<div class="fila"><span>Tel:</span><b>${d.miembro.telefono}</b></div>` : ''}
+            </div>
+            <div class="seccion">
+                <div class="sec-titulo">💪 Detalle</div>
+                <div class="fila"><span>Plan:</span><b>${d.pago.plan}</b></div>
+                <div class="fila"><span>Fecha:</span><b>${new Date(d.pago.fecha_pago).toLocaleDateString('es-PE')}</b></div>
+                <div class="fila"><span>Método:</span><b>${d.pago.metodo_pago?.toUpperCase()}</b></div>
+                ${periodo}
+            </div>
+            <div class="total-box">
+                <div class="total-label">TOTAL PAGADO</div>
+                <div class="total-valor">S/ ${Number(d.pago.monto).toFixed(2)}</div>
+            </div>
+            <div class="footer">
+                Emitido: ${new Date().toLocaleString('es-PE')}<br>
+                ¡Gracias por entrenar con nosotros! 💪
+            </div>
+        </div>
+        <script>window.onload=()=>{window.print()}<\/script>
+        </body></html>`
+        const w = window.open('','_blank','width=380,height=650')
+        w.document.write(html)
+        w.document.close()
+    } catch(e) {
+        alert('Error al generar recibo: ' + e.message)
+    }
+}
 const fmt = (f) => f ? new Date(f+'T00:00:00').toLocaleDateString('es-PE') : '-'
 const metodoBadge = (m) => ({
     efectivo: { bg:'#F0FDF4', color:'#16A34A', label:'💵 Efectivo' },
@@ -154,7 +225,13 @@ const exportarPDF = () => {
                                 {{ p.periodo_inicio ? fmt(p.periodo_inicio) + ' → ' + fmt(p.periodo_fin) : '-' }}
                             </td>
                             <td style="padding:12px 16px; text-align:right; font-size:15px; font-weight:800; color:#1E293B;">
-                                {{ money(p.monto) }}
+                                <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+                                    {{ money(p.monto) }}
+                                    <button @click="imprimirRecibo(p)"
+                                        style="background:#FFF7ED; color:#EA580C; border:1px solid #FED7AA; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                        🖨️
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

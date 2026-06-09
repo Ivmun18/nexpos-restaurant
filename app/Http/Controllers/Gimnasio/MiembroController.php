@@ -4,9 +4,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Gimnasio\GimnasioMiembro;
 use App\Models\Gimnasio\GimnasioPlan;
 use App\Models\Gimnasio\GimnasioPago;
+use App\Models\ComprobanteSunat;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class MiembroController extends Controller
 {
@@ -101,4 +103,48 @@ class MiembroController extends Controller
 
         return back()->with('success', 'Membresía renovada hasta ' . Carbon::parse($fin)->format('d/m/Y'));
     }
+    public function recibo($id)
+    {
+        $empresa_id = auth()->user()->empresa_id;
+        $pago = \App\Models\Gimnasio\GimnasioPago::with('miembro', 'plan')
+            ->where('id', $id)
+            ->whereHas('miembro', fn($q) => $q->where('empresa_id', $empresa_id))
+            ->firstOrFail();
+
+        $empresa = auth()->user()->empresa;
+        $logoBase64 = '';
+        if ($empresa->logo) {
+            $logoPath = public_path('storage/' . $empresa->logo);
+            if (file_exists($logoPath)) {
+                $ext  = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $mime = $ext === 'png' ? 'image/png' : 'image/jpeg';
+                $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+            }
+        }
+
+        return response()->json([
+            'empresa' => [
+                'nombre'    => $empresa->nombre_comercial ?? $empresa->razon_social,
+                'ruc'       => $empresa->ruc,
+                'direccion' => $empresa->direccion,
+                'telefono'  => $empresa->telefono,
+                'logo'      => $logoBase64,
+            ],
+            'pago' => [
+                'id'          => $pago->id,
+                'monto'       => $pago->monto,
+                'metodo_pago' => $pago->metodo_pago,
+                'fecha_pago'  => $pago->fecha_pago,
+                'plan'        => $pago->plan?->nombre ?? 'Sesion diaria',
+                'periodo_inicio' => $pago->periodo_inicio,
+                'periodo_fin'    => $pago->periodo_fin,
+            ],
+            'miembro' => [
+                'nombre'   => $pago->miembro->nombre . ' ' . $pago->miembro->apellidos,
+                'dni'      => $pago->miembro->dni,
+                'telefono' => $pago->miembro->telefono,
+            ],
+        ]);
+    }
+
 }
