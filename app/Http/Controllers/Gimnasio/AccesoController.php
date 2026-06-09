@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Gimnasio;
 use App\Http\Controllers\Controller;
 use App\Models\Gimnasio\GimnasioAcceso;
 use App\Models\Gimnasio\GimnasioMiembro;
+use App\Models\Gimnasio\GimnasioPago;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -39,9 +40,10 @@ class AccesoController extends Controller
         $empresa_id = auth()->user()->empresa_id;
         $miembro = GimnasioMiembro::findOrFail($request->miembro_id);
 
-        // Verificar membresía activa
-        if ($miembro->estado !== 'activo') {
-            return back()->with('error', 'El miembro no tiene membresía activa.');
+        // Verificar membresía — permitir entrada con advertencia si está vencido
+        $advertencia = null;
+        if ($miembro->estado === 'vencido') {
+            $advertencia = '⚠️ Membresía vencida — entrada registrada como visita';
         }
 
         // Verificar si ya está dentro
@@ -59,10 +61,27 @@ class AccesoController extends Controller
             'empresa_id' => $empresa_id,
             'miembro_id' => $miembro->id,
             'entrada'    => Carbon::now(),
-            'tipo_acceso'=> $request->tipo_acceso ?? 'normal',
+            'tipo_acceso'=> $request->tipo_acceso ?? ($miembro->estado === 'vencido' ? 'visita' : 'normal'),
         ]);
 
-        return back()->with('success', '✅ Entrada registrada para ' . $miembro->nombre . ' ' . $miembro->apellidos);
+        // Si pagó por sesión, registrar pago
+        if ($request->monto_sesion > 0) {
+            GimnasioPago::create([
+                'empresa_id'  => $empresa_id,
+                'miembro_id'  => $miembro->id,
+                'plan_id'     => null,
+                'monto'       => $request->monto_sesion,
+                'metodo_pago' => $request->metodo_pago ?? 'efectivo',
+                'fecha_pago'  => Carbon::today(),
+                'periodo_inicio' => Carbon::today(),
+                'periodo_fin'    => Carbon::today(),
+                'estado'      => 'pagado',
+                'usuario_id'  => auth()->id(),
+            ]);
+        }
+
+        $msg = $advertencia ?? '✅ Entrada registrada para ' . $miembro->nombre . ' ' . $miembro->apellidos;
+        return back()->with('success', $msg);
     }
 
     public function registrarSalida(GimnasioAcceso $acceso)
@@ -78,6 +97,7 @@ class AccesoController extends Controller
 
         $miembros = GimnasioMiembro::where('empresa_id', $empresa_id)
             ->where('activo', true)
+            ->whereIn('estado', ['activo', 'vencido'])
             ->where(function($query) use ($q) {
                 $query->where('nombre', 'like', "%$q%")
                       ->orWhere('apellidos', 'like', "%$q%")

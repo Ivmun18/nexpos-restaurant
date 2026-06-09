@@ -41,21 +41,58 @@
                     </div>
                 </div>
 
-                <!-- Miembro seleccionado -->
-                <div v-if="miembroSeleccionado" style="max-width:600px; margin:16px auto 0; background:rgba(255,255,255,0.15); border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(10px);">
+                <!-- Miembro seleccionado ACTIVO -->
+                <div v-if="miembroSeleccionado && miembroSeleccionado.estado === 'activo'" style="max-width:600px; margin:16px auto 0; background:rgba(255,255,255,0.15); border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(10px);">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <div style="width:48px; height:48px; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#EA580C; flex-shrink:0;">
                             {{ miembroSeleccionado.nombre_completo.charAt(0) }}
                         </div>
                         <div>
                             <div style="font-size:16px; font-weight:800; color:#fff;">{{ miembroSeleccionado.nombre_completo }}</div>
-                            <div style="font-size:13px; color:#DDD6FE;">{{ miembroSeleccionado.plan?.nombre }} · {{ Math.ceil(miembroSeleccionado.dias_restantes) }} días restantes</div>
+                            <div style="font-size:13px; color:#FED7AA;">{{ miembroSeleccionado.plan?.nombre }} · {{ Math.ceil(miembroSeleccionado.dias_restantes) }} días restantes</div>
                         </div>
                     </div>
-                    <button @click="registrarEntrada"
+                    <button @click="registrarEntrada(false)"
                         style="background:#fff; color:#EA580C; border:none; padding:12px 24px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.2); white-space:nowrap;">
                         ✅ Registrar entrada
                     </button>
+                </div>
+
+                <!-- Miembro seleccionado VENCIDO -->
+                <div v-if="miembroSeleccionado && miembroSeleccionado.estado !== 'activo'" style="max-width:600px; margin:16px auto 0; background:rgba(255,255,255,0.15); border-radius:14px; padding:16px; backdrop-filter:blur(10px);">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+                        <div style="width:48px; height:48px; background:#FEF2F2; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#DC2626; flex-shrink:0;">
+                            {{ miembroSeleccionado.nombre_completo.charAt(0) }}
+                        </div>
+                        <div>
+                            <div style="font-size:16px; font-weight:800; color:#fff;">{{ miembroSeleccionado.nombre_completo }}</div>
+                            <div style="font-size:13px; color:#FCA5A5;">⚠️ Membresía vencida — pago por sesión</div>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#FED7AA; display:block; margin-bottom:4px;">MONTO S/</label>
+                            <input type="number" v-model="montoPorSesion" min="0" step="0.50"
+                                style="width:100%; padding:10px; border:none; border-radius:10px; font-size:15px; font-weight:700; text-align:center; box-sizing:border-box;" />
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#FED7AA; display:block; margin-bottom:4px;">MÉTODO</label>
+                            <select v-model="metodoPagoSesion" style="width:100%; padding:10px; border:none; border-radius:10px; font-size:13px; box-sizing:border-box;">
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="yape">📱 Yape</option>
+                                <option value="plin">📱 Plin</option>
+                            </select>
+                        </div>
+                        <button @click="registrarEntrada(true)"
+                            style="background:#fff; color:#EA580C; border:none; padding:10px 18px; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; white-space:nowrap;">
+                            💰 Cobrar y entrar
+                        </button>
+                    </div>
+                    <div style="text-align:center; margin-top:10px;">
+                        <button @click="registrarEntrada(false)" style="background:none; border:none; color:#FCA5A5; font-size:12px; cursor:pointer; text-decoration:underline;">
+                            Dejar pasar sin cobrar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -154,6 +191,8 @@ import { router } from '@inertiajs/vue3'
 const props = defineProps({ accesos_hoy: Array, dentro_ahora: Array })
 
 const busqueda = ref('')
+const montoPorSesion = ref(10)
+const metodoPagoSesion = ref('efectivo')
 const resultados = ref([])
 const miembroSeleccionado = ref(null)
 let timer = null
@@ -179,9 +218,14 @@ const seleccionar = (m) => {
     resultados.value = []
 }
 
-const registrarEntrada = () => {
+const registrarEntrada = (cobrarSesion = false) => {
     if (!miembroSeleccionado.value) return
-    router.post('/gimnasio/accesos/entrada', { miembro_id: miembroSeleccionado.value.id }, {
+    const payload = {
+        miembro_id: miembroSeleccionado.value.id,
+        monto_sesion: cobrarSesion ? montoPorSesion.value : 0,
+        metodo_pago: metodoPagoSesion.value,
+    }
+    router.post('/gimnasio/accesos/entrada', payload, {
         onSuccess: () => { miembroSeleccionado.value = null; busqueda.value = '' }
     })
 }
