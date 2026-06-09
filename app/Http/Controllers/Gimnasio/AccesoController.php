@@ -42,7 +42,7 @@ class AccesoController extends Controller
 
         // Verificar membresía — permitir entrada con advertencia si está vencido
         $advertencia = null;
-        if ($miembro->estado === 'vencido') {
+        if (in_array($miembro->estado, ['vencido', 'inactivo', 'suspendido'])) {
             $advertencia = '⚠️ Membresía vencida — entrada registrada como visita';
         }
 
@@ -61,7 +61,7 @@ class AccesoController extends Controller
             'empresa_id' => $empresa_id,
             'miembro_id' => $miembro->id,
             'entrada'    => Carbon::now(),
-            'tipo_acceso'=> $request->tipo_acceso ?? ($miembro->estado === 'vencido' ? 'visita' : 'normal'),
+            'tipo_acceso'=> $request->tipo_acceso ?? ($miembro->estado === 'activo' ? 'normal' : 'visita'),
         ]);
 
         // Si pagó por sesión, registrar pago
@@ -97,7 +97,7 @@ class AccesoController extends Controller
 
         $miembros = GimnasioMiembro::where('empresa_id', $empresa_id)
             ->where('activo', true)
-            ->whereIn('estado', ['activo', 'vencido'])
+            ->whereIn('estado', ['activo', 'vencido', 'inactivo', 'suspendido'])
             ->where(function($query) use ($q) {
                 $query->where('nombre', 'like', "%$q%")
                       ->orWhere('apellidos', 'like', "%$q%")
