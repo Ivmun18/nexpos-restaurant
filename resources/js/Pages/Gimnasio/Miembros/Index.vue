@@ -216,9 +216,9 @@ const cerrarForm = () => { form.value = { ...formVacio }; showForm.value = false
 
 const guardar = () => {
     if (form.value.id) {
-        router.put(route('gimnasio.miembros.update', form.value.id), form.value, { onSuccess: cerrarForm })
+        router.put('/gimnasio/miembros/' + form.value.id, form.value, { onSuccess: cerrarForm })
     } else {
-        router.post(route('gimnasio.miembros.store'), form.value, { onSuccess: cerrarForm })
+        router.post('/gimnasio/miembros', form.value, { onSuccess: cerrarForm })
     }
 }
 
@@ -229,7 +229,7 @@ const abrirRenovar = (m) => {
 }
 
 const confirmarRenovar = () => {
-    router.post(route('gimnasio.miembros.renovar', miembroSeleccionado.value.id), formRenovar.value, {
+    router.post('/gimnasio/miembros/' + miembroSeleccionado.value.id + '/renovar', formRenovar.value, {
         onSuccess: () => { showRenovar.value = false }
     })
 }
