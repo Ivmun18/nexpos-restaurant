@@ -985,7 +985,8 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
 
     // Planes
     Route::get('/pagos',     [\App\Http\Controllers\Gimnasio\PagoController::class, 'index'])->name('pagos.index');
-    Route::get('/reportes',  [\App\Http\Controllers\Gimnasio\ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes',          [\App\Http\Controllers\Gimnasio\ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/contable', [\App\Http\Controllers\Gimnasio\ReportePdfController::class, 'contable'])->name('reportes.contable');
     Route::get('/planes',               [\App\Http\Controllers\Gimnasio\PlanController::class, 'index'])->name('planes.index');
     Route::post('/planes',              [\App\Http\Controllers\Gimnasio\PlanController::class, 'store'])->name('planes.store');
     Route::put('/planes/{plan}',        [\App\Http\Controllers\Gimnasio\PlanController::class, 'update'])->name('planes.update');
