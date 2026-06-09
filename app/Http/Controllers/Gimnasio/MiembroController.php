@@ -45,6 +45,8 @@ class MiembroController extends Controller
             $plan = GimnasioPlan::find($request->plan_id);
             $data['membrecia_vencimiento'] = Carbon::parse($request->membrecia_inicio)->addDays($plan->duracion_dias);
             $data['estado'] = 'activo';
+        } else {
+            $data['estado'] = 'vencido'; // sin plan = pago por sesión
         }
         GimnasioMiembro::create($data);
         return back()->with('success', 'Miembro registrado correctamente.');
