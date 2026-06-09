@@ -85,12 +85,29 @@ class ReporteController extends Controller
         $ingresosSemana  = GimnasioPago::where('empresa_id', $empresa_id)->whereBetween('fecha_pago', [$hoy->copy()->startOfWeek(), $hoy->copy()->endOfWeek()])->where('estado','pagado')->sum('monto');
         $ingresosMesAct  = GimnasioPago::where('empresa_id', $empresa_id)->whereMonth('fecha_pago', $hoy->month)->whereYear('fecha_pago', $hoy->year)->where('estado','pagado')->sum('monto');
 
-        return Inertia::render('Gimnasio/Reportes/Index', compact(
+        // Lista detallada para la tabla
+        $pagosDetalle = GimnasioPago::where('empresa_id', $empresa_id)
+            ->whereBetween('fecha_pago', [$desde, $hasta])
+            ->where('estado', 'pagado')
+            ->with('miembro', 'plan')
+            ->orderByDesc('fecha_pago')
+            ->get();
+
+        // Lista detallada para la tabla
+        $pagosDetalle = GimnasioPago::where('empresa_id', $empresa_id)
+            ->whereBetween('fecha_pago', [$desde, $hasta])
+            ->where('estado', 'pagado')
+            ->with('miembro', 'plan')
+            ->orderByDesc('fecha_pago')
+            ->get();
+
+        return Inertia::render('Gimnasio/Reportes/Index', array_merge(compact(
             'desde', 'hasta', 'totalIngresos', 'totalPagos', 'ticketPromedio',
             'porPlan', 'porMetodo', 'porDia', 'porMes',
-            'miembrosNuevos', 'totalAccesos',
+            'miembrosNuevos', 'totalAccesos', 'pagosDetalle',
             'ingresosSesion', 'ingresosMembresia',
-            'ingresosHoy', 'ingresosSemana', 'ingresosMesAct'
-        ));
+            'ingresosHoy', 'ingresosSemana', 'ingresosMesAct',
+            
+        ), ['pagos' => $pagosDetalle]));
     }
 }
