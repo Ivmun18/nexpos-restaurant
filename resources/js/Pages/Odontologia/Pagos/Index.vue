@@ -8,7 +8,7 @@
         <input type="date" v-model="hasta" style="padding:8px 10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;" />
         <a :href="'/reportes/reporte-contador-pdf?desde=' + desde + '&hasta=' + hasta" target="_blank"
           style="background:#0F766E; color:white; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">
-          📊 Reporte Contador
+          📄 PDF Contador
         </a>
         <button @click="modalNuevo=true" style="background:#8B5CF6; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer;">+ Nuevo pago</button>
       </div>
@@ -120,6 +120,12 @@ import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const props = defineProps({ pagos: Object })
+const hoy = new Date()
+const pad = n => String(n).padStart(2,'0')
+const primerDiaMes = `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-01`
+const hoyStr = `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`
+const desde = ref(primerDiaMes)
+const hasta = ref(hoyStr)
 const modalNuevo = ref(false)
 const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
