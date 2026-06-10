@@ -242,6 +242,7 @@ const guardarAdelanto = async () => {
     modalAdelanto.value = false
     mensaje.value = `Adelanto de S/ ${Number(adelantoForm.value.monto).toFixed(2)} registrado. Saldo pendiente: S/ ${data.saldo.toFixed(2)}`
     setTimeout(() => mensaje.value = '', 5000)
+    window.open(`/odontologia/pagos/${data.pago_id}/ticket-adelanto`, '_blank')
   }
 }
 

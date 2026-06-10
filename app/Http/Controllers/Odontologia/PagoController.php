@@ -157,7 +157,7 @@ class PagoController extends Controller
             'metodo_pago'      => $request->metodo_pago,
             'estado'           => 'pagado',
         ]);
-        return response()->json(['success' => true, 'saldo' => max(0, $saldo)]);
+        return response()->json(['success' => true, 'saldo' => max(0, $saldo), 'pago_id' => $pago->id]);
     }
 
     public function cobroRapido(Request $request) {
@@ -187,6 +187,57 @@ class PagoController extends Controller
             'estado'           => 'pagado',
         ]);
         return back()->with('success', 'Cobro registrado correctamente.');
+    }
+
+
+    public function ticketAdelanto($pagoId) {
+        $empresaId = $this->empresaId();
+        $pago = \DB::table('odonto_pagos')->where('id', $pagoId)->where('empresa_id', $empresaId)->first();
+        if (!$pago) abort(404);
+        $paciente = \DB::table('odonto_pacientes')->where('id', $pago->paciente_id)->first();
+        $presupuesto = $pago->presupuesto_id ? \DB::table('odonto_presupuestos')->where('id', $pago->presupuesto_id)->first() : null;
+        $cuota = \DB::table('odonto_pago_cuotas')->where('pago_id', $pagoId)->first();
+        $empresa = auth()->user()->empresa;
+        $totalAdelantado = \DB::table('odonto_pagos')
+            ->where('presupuesto_id', $pago->presupuesto_id)
+            ->where('tipo_movimiento', 'adelanto')
+            ->sum('monto_total');
+
+        $html = "<!DOCTYPE html><html><head><meta charset='utf-8'>
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 13px; color: #1E293B; margin: 0; padding: 24px; max-width: 400px; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #8B5CF6; padding-bottom: 16px; }
+            .empresa { font-size: 18px; font-weight: 700; color: #8B5CF6; }
+            .titulo { font-size: 16px; font-weight: 700; margin: 10px 0 4px; }
+            .no-sunat { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 6px; padding: 8px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #92400E; margin: 12px 0; }
+            .row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+            .row .label { color: #64748B; }
+            .monto { font-size: 22px; font-weight: 700; color: #8B5CF6; text-align: center; padding: 12px; background: #F5F3FF; border-radius: 8px; margin: 14px 0; }
+            .saldo { font-size: 14px; font-weight: 700; color: #DC2626; text-align: center; }
+            .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #94A3B8; border-top: 1px dashed #E2E8F0; padding-top: 12px; }
+        </style></head><body>
+        <div class='header'>
+            <div class='empresa'>🦷 {$empresa->nombre}</div>
+            <div style='font-size:11px; color:#64748B; margin-top:4px;'>{$empresa->direccion} · {$empresa->telefono}</div>
+            <div class='titulo'>RECIBO DE ADELANTO</div>
+            <div style='font-size:12px; color:#64748B;'>N° {$pagoId} · " . now()->format('d/m/Y H:i') . "</div>
+        </div>
+        <div class='no-sunat'>⚠️ DOCUMENTO INTERNO — NO ES COMPROBANTE SUNAT</div>
+        <div class='row'><span class='label'>Paciente</span><span style='font-weight:600;'>" . ($paciente->apellidos ?? '') . ", " . ($paciente->nombres ?? '') . "</span></div>
+        <div class='row'><span class='label'>DNI</span><span>" . ($paciente->dni ?? '-') . "</span></div>
+        " . ($presupuesto ? "<div class='row'><span class='label'>Presupuesto</span><span>#" . $presupuesto->id . " — S/ " . number_format($presupuesto->total, 2) . "</span></div>" : "") . "
+        <div class='row'><span class='label'>Método de pago</span><span style='text-transform:uppercase;'>" . ($cuota->metodo_pago ?? '-') . "</span></div>
+        <div class='row'><span class='label'>Fecha</span><span>" . $pago->fecha . "</span></div>
+        <div class='monto'>ADELANTO: S/ " . number_format($pago->monto_total, 2) . "</div>
+        " . ($presupuesto ? "<div class='saldo'>Saldo pendiente: S/ " . number_format(max(0, $presupuesto->total - $totalAdelantado), 2) . "</div>" : "") . "
+        <div class='footer'>
+            Gracias por su confianza<br>
+            {$empresa->nombre} · " . now()->format('d/m/Y H:i') . "
+        </div>
+        </body></html>";
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper([0, 0, 226, 400], 'portrait');
+        return $pdf->stream('adelanto-'.$pagoId.'.pdf');
     }
 
 }
