@@ -134,7 +134,8 @@ const cambiarEstado = (id, estado) => router.put(`/odontologia/presupuestos/${id
 
 const guardar = () => {
   router.post('/odontologia/presupuestos', form.value, {
-    onSuccess: () => { modalNuevo.value = false; form.value = { paciente_id:'', doctor_id:'', items:[], observaciones:'' } }
+    onSuccess: () => { modalNuevo.value = false; form.value = { paciente_id:'', doctor_id:'', items:[], observaciones:'' } },
+    onError: (e) => { alert('Error: ' + JSON.stringify(e)) }
   })
 }
 
