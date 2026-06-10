@@ -53,6 +53,7 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::post('/pagos/cuota/{cuotaId}', [PagoController::class, 'pagarCuota'])->name('pagos.cuota');
     Route::get('/pagos/caja', [PagoController::class, 'caja'])->name('pagos.caja');
     Route::get('/pagos/{pagoId}/ticket-adelanto', [PagoController::class, 'ticketAdelanto'])->name('pagos.ticket_adelanto');
+    Route::post('/pagos/recibo-cobro', [PagoController::class, 'reciboCobroPDF'])->name('pagos.recibo_cobro');
     Route::post('/pagos/adelanto', [PagoController::class, 'registrarAdelanto'])->name('pagos.adelanto');
     Route::post('/pagos/cobro-rapido', [PagoController::class, 'cobroRapido'])->name('pagos.cobro_rapido');
     Route::get('/pagos/presupuestos-paciente/{pacienteId}', [PagoController::class, 'presupuestosPaciente'])->name('pagos.presupuestos_paciente');

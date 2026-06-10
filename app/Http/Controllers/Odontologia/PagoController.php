@@ -240,4 +240,62 @@ class PagoController extends Controller
         return $pdf->stream('adelanto-'.$pagoId.'.pdf');
     }
 
+
+    public function reciboCobroPDF(Request $request) {
+        $empresaId = $this->empresaId();
+        $empresa = auth()->user()->empresa;
+        $paciente = $request->paciente_id ? \DB::table('odonto_pacientes')->where('id', $request->paciente_id)->first() : null;
+        $items = $request->items ?? [];
+        $total = collect($items)->sum(fn($i) => $i['monto']);
+        $metodo = strtoupper($request->metodo_pago ?? 'EFECTIVO');
+        $fecha = now()->format('d/m/Y H:i');
+        $numero = 'RC-' . str_pad(rand(1, 9999), 6, '0', STR_PAD_LEFT);
+
+        $itemsHtml = collect($items)->map(fn($i) => "
+            <tr>
+                <td style='padding:6px 8px; border-bottom:1px solid #F1F5F9; font-size:12px;'>{$i['descripcion']}</td>
+                <td style='padding:6px 8px; border-bottom:1px solid #F1F5F9; text-align:right; font-size:12px; font-weight:600;'>S/ " . number_format($i['monto'], 2) . "</td>
+            </tr>")->implode('');
+
+        $pacienteHtml = $paciente
+            ? "<div class='row'><span class='label'>Paciente</span><span style='font-weight:600;'>{$paciente->apellidos}, {$paciente->nombres}</span></div>
+               <div class='row'><span class='label'>DNI</span><span>{$paciente->dni}</span></div>"
+            : "<div class='row'><span class='label'>Paciente</span><span>Cliente general</span></div>";
+
+        $html = "<!DOCTYPE html><html><head><meta charset='utf-8'>
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 13px; color: #1E293B; margin: 0; padding: 24px; max-width: 400px; }
+            .header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #8B5CF6; padding-bottom: 14px; }
+            .empresa { font-size: 18px; font-weight: 700; color: #8B5CF6; }
+            .titulo { font-size: 15px; font-weight: 700; margin: 8px 0 2px; }
+            .interno { background:#EDE9FE; border-radius:6px; padding:6px 12px; text-align:center; font-size:11px; font-weight:700; color:#5B21B6; margin:10px 0; }
+            .row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #F1F5F9; font-size:12px; }
+            .label { color:#64748B; }
+            table { width:100%; border-collapse:collapse; margin:12px 0; }
+            th { background:#F8FAFC; padding:8px; text-align:left; font-size:11px; color:#64748B; font-weight:600; }
+            .metodo { display:inline-block; background:#EDE9FE; color:#5B21B6; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+            .total { font-size:20px; font-weight:700; color:#8B5CF6; text-align:center; padding:12px; background:#F5F3FF; border-radius:8px; margin:12px 0; }
+            .footer { text-align:center; margin-top:16px; font-size:11px; color:#94A3B8; border-top:1px dashed #E2E8F0; padding-top:10px; }
+        </style></head><body>
+        <div class='header'>
+            <div class='empresa'>🦷 {$empresa->nombre}</div>
+            <div style='font-size:11px; color:#64748B; margin-top:3px;'>{$empresa->direccion} · {$empresa->telefono}</div>
+            <div class='titulo'>RECIBO DE PAGO</div>
+            <div style='font-size:11px; color:#64748B;'>{$numero} · {$fecha}</div>
+        </div>
+        <div class='interno'>📋 DOCUMENTO INTERNO — NO ES COMPROBANTE SUNAT</div>
+        {$pacienteHtml}
+        <div class='row'><span class='label'>Método de pago</span><span class='metodo'>{$metodo}</span></div>
+        <table>
+            <thead><tr><th>Descripción</th><th style='text-align:right;'>Monto</th></tr></thead>
+            <tbody>{$itemsHtml}</tbody>
+        </table>
+        <div class='total'>TOTAL COBRADO: S/ " . number_format($total, 2) . "</div>
+        <div class='footer'>Gracias por su pago · {$empresa->nombre}<br>{$fecha}</div>
+        </body></html>";
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->setPaper([0,0,226,500],'portrait');
+        return $pdf->stream('recibo-cobro.pdf');
+    }
+
 }

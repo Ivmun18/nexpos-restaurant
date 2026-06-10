@@ -363,14 +363,46 @@ const cobrar = () => {
     }))
   })
 
-  Promise.all(promises).then(() => {
+  Promise.all(promises).then(async () => {
+    const itemsParaPDF = [...itemsCobro.value]
+    const pacienteId = pacienteSeleccionado.value?.id || null
+    const metodo = metodoPago.value
     itemsCobro.value = []
     cuotasEnCobro.value = []
     montoRecibido.value = 0
     if (pacienteSeleccionado.value) seleccionarPaciente(pacienteSeleccionado.value)
     mensaje.value = 'Cobro registrado correctamente.'
     setTimeout(() => mensaje.value = '', 4000)
-    window.print()
+    // Abrir PDF recibo
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = '/odontologia/pagos/recibo-cobro'
+    form.target = '_blank'
+    const csrfInput = document.createElement('input')
+    csrfInput.type = 'hidden'
+    csrfInput.name = '_token'
+    csrfInput.value = document.querySelector('meta[name=csrf-token]')?.content || ''
+    form.appendChild(csrfInput)
+    const dataInput = document.createElement('input')
+    dataInput.type = 'hidden'
+    dataInput.name = 'items'
+    dataInput.value = JSON.stringify(itemsParaPDF)
+    form.appendChild(dataInput)
+    const metodoInput = document.createElement('input')
+    metodoInput.type = 'hidden'
+    metodoInput.name = 'metodo_pago'
+    metodoInput.value = metodo
+    form.appendChild(metodoInput)
+    if (pacienteId) {
+      const pacInput = document.createElement('input')
+      pacInput.type = 'hidden'
+      pacInput.name = 'paciente_id'
+      pacInput.value = pacienteId
+      form.appendChild(pacInput)
+    }
+    document.body.appendChild(form)
+    form.submit()
+    document.body.removeChild(form)
   })
 }
 </script>
