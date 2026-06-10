@@ -6,6 +6,8 @@ use App\Models\Odontologia\OdontoPago;
 use App\Models\Odontologia\OdontoPagoCuota;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Odontologia\OdontoDoctor;
+use App\Models\Odontologia\OdontoPaciente;
 
 class PagoController extends Controller
 {
@@ -17,7 +19,9 @@ class PagoController extends Controller
             ->where('empresa_id', $empresaId)
             ->orderByDesc('fecha')
             ->paginate(20);
-        return Inertia::render('Odontologia/Pagos/Index', compact('pagos'));
+        $doctores = OdontoDoctor::where('empresa_id', $empresaId)->where('activo', true)->get(['id','nombre']);
+        $pacientes = OdontoPaciente::where('empresa_id', $empresaId)->where('activo', true)->get(['id','nombres','apellidos','dni']);
+        return Inertia::render('Odontologia/Pagos/Index', compact('pagos','doctores','pacientes'));
     }
 
     public function store(Request $request) {

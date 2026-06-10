@@ -6,6 +6,7 @@ use App\Models\Odontologia\OdontoPresupuesto;
 use App\Models\Odontologia\OdontoPresupuestoItem;
 use App\Models\Odontologia\OdontoTratamientoCatalogo;
 use App\Models\Odontologia\OdontoDoctor;
+use App\Models\Odontologia\OdontoPaciente;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,7 +20,9 @@ class PresupuestoController extends Controller
             ->where('empresa_id', $empresaId)
             ->orderByDesc('fecha')
             ->paginate(20);
-        return Inertia::render('Odontologia/Presupuestos/Index', compact('presupuestos'));
+        $doctores = OdontoDoctor::where('empresa_id', $empresaId)->where('activo', true)->get(['id','nombre']);
+        $pacientes = OdontoPaciente::where('empresa_id', $empresaId)->where('activo', true)->get(['id','nombres','apellidos','dni']);
+        return Inertia::render('Odontologia/Presupuestos/Index', compact('presupuestos','doctores','pacientes'));
     }
 
     public function store(Request $request) {

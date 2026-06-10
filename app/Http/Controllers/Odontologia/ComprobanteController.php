@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Odontologia\OdontoComprobante;
 use App\Models\Odontologia\OdontoPago;
 use App\Models\Odontologia\OdontoPaciente;
+use App\Models\Odontologia\OdontoDoctor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
@@ -29,7 +30,9 @@ class ComprobanteController extends Controller
 
         $totalVentas = $comprobantes->whereIn('estado', ['aceptado','emitido'])->sum('total');
 
-        return Inertia::render('Odontologia/Facturacion/Index', compact('comprobantes','totalVentas','desde','hasta'));
+        $doctores = OdontoDoctor::where('empresa_id', $empresaId)->where('activo', true)->get(['id','nombre']);
+        $pacientes = OdontoPaciente::where('empresa_id', $empresaId)->where('activo', true)->get(['id','nombres','apellidos','dni']);
+        return Inertia::render('Odontologia/Facturacion/Index', compact('comprobantes','totalVentas','desde','hasta','doctores','pacientes'));
     }
 
     public function emitir(Request $request) {
