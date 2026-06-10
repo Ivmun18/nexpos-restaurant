@@ -98,6 +98,34 @@ class ReporteContadorController extends Controller
                 });
         }
 
+        if ($industria === 'odontologia') {
+            $ventas = \DB::table('odonto_pago_cuotas')
+                ->join('odonto_pagos', 'odonto_pagos.id', '=', 'odonto_pago_cuotas.pago_id')
+                ->join('odonto_pacientes', 'odonto_pacientes.id', '=', 'odonto_pagos.paciente_id')
+                ->where('odonto_pagos.empresa_id', $empresaId)
+                ->whereBetween('odonto_pago_cuotas.fecha_pago', [$desde, $hasta])
+                ->where('odonto_pago_cuotas.estado', 'pagado')
+                ->orderBy('odonto_pago_cuotas.fecha_pago')
+                ->select('odonto_pago_cuotas.*', 'odonto_pacientes.nombres', 'odonto_pacientes.apellidos', 'odonto_pacientes.dni', 'odonto_pagos.tipo_movimiento')
+                ->get()
+                ->map(function($p) {
+                    $total = (float) $p->monto;
+                    $igv   = round($total - ($total / 1.18), 2);
+                    $sub   = round($total - $igv, 2);
+                    $tipo  = $p->tipo_movimiento === 'adelanto' ? 'ADELANTO' : 'PAGO';
+                    return (object)[
+                        'fecha'            => \Carbon\Carbon::parse($p->fecha_pago)->format('d/m/Y'),
+                        'comprobante'      => $tipo,
+                        'serie_numero'     => 'REC-' . str_pad($p->id, 6, '0', '0'),
+                        'numero_documento' => $p->dni ?? '-',
+                        'cliente'          => ($p->apellidos ?? '') . ', ' . ($p->nombres ?? ''),
+                        'subtotal_sin_igv' => $sub,
+                        'igv'              => $igv,
+                        'total'            => $total,
+                    ];
+                });
+        }
+
         $totalVentas    = $ventas->sum('total');
         $totalIgvVentas = $ventas->sum('igv');
         $totalSubVentas = $ventas->sum('subtotal_sin_igv');
@@ -121,6 +149,7 @@ class ReporteContadorController extends Controller
             'ferreteria'  => 'Ferretería',
             'notaria'     => 'Notaría',
             'gimnasio'    => 'Gimnasio',
+            'odontologia' => 'Odontología',
         ];
         $nombreIndustria = $industrias[$industria] ?? ucfirst($industria);
 

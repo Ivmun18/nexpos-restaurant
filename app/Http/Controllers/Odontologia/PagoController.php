@@ -245,7 +245,7 @@ class PagoController extends Controller
         $empresaId = $this->empresaId();
         $empresa = auth()->user()->empresa;
         $paciente = $request->paciente_id ? \DB::table('odonto_pacientes')->where('id', $request->paciente_id)->first() : null;
-        $items = $request->items ?? [];
+        $items = is_string($request->items) ? json_decode($request->items, true) : ($request->items ?? []);
         $total = collect($items)->sum(fn($i) => $i['monto']);
         $metodo = strtoupper($request->metodo_pago ?? 'EFECTIVO');
         $fecha = now()->format('d/m/Y H:i');

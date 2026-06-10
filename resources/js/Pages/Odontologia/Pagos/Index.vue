@@ -3,7 +3,15 @@
   <div style="padding:24px; max-width:1200px; margin:0 auto;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
       <h1 style="font-size:22px; font-weight:700; margin:0;">Pagos</h1>
-      <button @click="modalNuevo=true" style="background:#8B5CF6; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer;">+ Nuevo pago</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input type="date" v-model="desde" style="padding:8px 10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;" />
+        <input type="date" v-model="hasta" style="padding:8px 10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;" />
+        <a :href="'/reportes/reporte-contador-pdf?desde=' + desde + '&hasta=' + hasta" target="_blank"
+          style="background:#0F766E; color:white; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">
+          📊 Reporte Contador
+        </a>
+        <button @click="modalNuevo=true" style="background:#8B5CF6; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer;">+ Nuevo pago</button>
+      </div>
     </div>
 
     <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; overflow:hidden;">
