@@ -39,6 +39,8 @@
             </td>
             <td style="padding:12px 16px;">
               <button @click="verDetalle(p)" style="color:#8B5CF6; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer;">Ver</button>
+              <button @click="imprimirPDF(p.id)" style="color:#0F766E; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; margin-left:8px;">🖨️ PDF</button>
+              <button @click="enviarWhatsApp(p)" style="color:#16A34A; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; margin-left:8px;">📲 WA</button>
             </td>
           </tr>
         </tbody>
@@ -62,7 +64,7 @@
           </div>
           <div>
             <label style="font-size:12px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DOCTOR *</label>
-            <select v-model="form.doctor_id" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px;">
+            <select v-model="form.doctor_id" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px;"><option value="">Seleccionar doctor...</option><option v-for="d in doctores" :key="d.id" :value="Number(d.id)">{{ d.nombre }}</option>
               <option value="">Seleccionar...</option>
             </select>
           </div>
@@ -106,7 +108,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 
-const props = defineProps({ presupuestos: Object })
+const props = defineProps({ presupuestos: Object, doctores: Array, pacientes: Array })
 const modalNuevo = ref(false)
 const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
@@ -137,4 +139,15 @@ const guardar = () => {
 }
 
 const verDetalle = (p) => router.get(`/odontologia/pacientes/${p.paciente_id}`)
+
+const imprimirPDF = (id) => window.open(`/odontologia/presupuestos/${id}/pdf`, '_blank')
+
+const enviarWhatsApp = (p) => {
+  const paciente = p.paciente?.apellidos + ', ' + p.paciente?.nombres
+  const doctor = p.doctor?.nombre || ''
+  const items = p.items?.map(i => `  • ${i.descripcion} x${i.cantidad} = S/ ${(i.precio * i.cantidad).toFixed(2)}`).join('\n') || ''
+  const msg = `🦷 *PRESUPUESTO DENTAL #${p.id}*\n\n*Paciente:* ${paciente}\n*Doctor:* ${doctor}\n*Fecha:* ${p.fecha}\n\n*Tratamientos:*\n${items}\n\n*TOTAL: S/ ${Number(p.total).toFixed(2)}*\n\n_Presupuesto válido por 30 días._`
+  const tel = p.paciente?.telefono || ''
+  window.open(`https://wa.me/51${tel}?text=${encodeURIComponent(msg)}`, '_blank')
+}
 </script>

@@ -42,6 +42,7 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     // Presupuestos
     Route::get('/presupuestos', [PresupuestoController::class, 'index'])->name('presupuestos.index');
     Route::post('/presupuestos', [PresupuestoController::class, 'store'])->name('presupuestos.store');
+    Route::get('/presupuestos/{id}/pdf', [PresupuestoController::class, 'pdf'])->name('presupuestos.pdf');
     Route::put('/presupuestos/{id}', [PresupuestoController::class, 'update'])->name('presupuestos.update');
     Route::get('/catalogo-tratamientos', [PresupuestoController::class, 'catalogo'])->name('catalogo');
     Route::post('/catalogo-tratamientos', [PresupuestoController::class, 'storeCatalogo'])->name('catalogo.store');
@@ -50,6 +51,9 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::get('/pagos', [PagoController::class, 'index'])->name('pagos.index');
     Route::post('/pagos', [PagoController::class, 'store'])->name('pagos.store');
     Route::post('/pagos/cuota/{cuotaId}', [PagoController::class, 'pagarCuota'])->name('pagos.cuota');
+    Route::get('/pagos/caja', [PagoController::class, 'caja'])->name('pagos.caja');
+    Route::post('/pagos/cobro-rapido', [PagoController::class, 'cobroRapido'])->name('pagos.cobro_rapido');
+    Route::get('/pagos/presupuestos-paciente/{pacienteId}', [PagoController::class, 'presupuestosPaciente'])->name('pagos.presupuestos_paciente');
 
     // Laboratorio y proveedores
     Route::get('/laboratorio', [LaboratorioController::class, 'index'])->name('laboratorio.index');
