@@ -45,7 +45,7 @@
                 </button>
             </div>
 
-            <nav style="flex:1; min-height:0; padding:8px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+            <nav ref="navRef" style="flex:1; min-height:0; padding:8px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
     
                 <!-- Dashboard siempre visible (oculto si tiene dashboard propio) -->
                 <a v-if="!['hotel','gimnasio','odontologia'].includes(empresa.industry_type)" href="/dashboard" :style="menuItem('/dashboard')">
@@ -62,12 +62,12 @@
 
                 <!-- Secciones dinámicas -->
                 <template v-for="(items, sectionName) in menuSections" :key="sectionName">
-                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL' && sectionName !== '_default_'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
+                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL' && sectionName !== '_default_' && sectionName !== 'PRINCIPAL'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0; margin-top: sectionName === 'AJUSTES' ? '8px' : '0';">
                         {{ sectionName }}
                     </p>
                     
                     <template v-for="item in items" :key="item.path">
-                        <a v-if="item.path !== '/dashboard'" :href="item.path" :style="menuItem(item.path)">
+                        <Link v-if="item.path !== '/dashboard'" :href="item.path" :style="menuItem(item.path)">
                             <!-- Contenedor del ícono con color de sección -->
                             <span :style="iconWrapperStyle(item.section, item.path)">
                                 <!-- MESAS -->
@@ -285,7 +285,7 @@
                             </span>
                             
                             <span v-if="!collapsed">{{ item.label }}</span>
-                        </a>
+                        </Link>
                     </template>
                 </template>
 
@@ -358,8 +358,8 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
+import { ref, computed, defineProps, onMounted } from 'vue'
+import { Link, router, usePage } from '@inertiajs/vue3'
 
 defineProps({
     title:    { type: String, default: 'Dashboard' },
@@ -370,6 +370,10 @@ const page = usePage()
 const collapsed = ref(false)
 const mobileOpen = ref(false)
 const isMobile = ref(window.innerWidth < 768)
+const navRef = ref(null)
+let savedScrollTop = 0
+router.on('before', () => { if (navRef.value) savedScrollTop = navRef.value.scrollTop })
+router.on('navigate', () => { setTimeout(() => { if (navRef.value) navRef.value.scrollTop = savedScrollTop }, 50) })
 
 const handleResize = () => {
     isMobile.value = window.innerWidth < 768
