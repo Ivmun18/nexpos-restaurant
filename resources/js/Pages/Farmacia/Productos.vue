@@ -8,7 +8,7 @@
                 <p style="font-size:14px; color:#94A3B8; margin:4px 0 0;">{{ productos.length }} productos registrados</p>
             </div>
             <div style="display:flex; gap:12px;">
-                <button v-if="user_rol === 'admin' && productos.length === 0" @click="cargarDemo"
+                <button v-if="props.user_rol === 'admin' && props.productos.length === 0" @click="cargarDemo"
                     style="padding:10px 20px; background:linear-gradient(135deg,#F59E0B,#D97706); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
                     🧪 Cargar medicamentos demo
                 </button>
@@ -507,6 +507,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
     productos: { type: Array, default: () => [] },
     categorias: { type: Array, default: () => [] },
+    user_rol: { type: String, default: '' },
 })
 
 const busqueda    = ref('')
