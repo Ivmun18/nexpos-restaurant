@@ -256,12 +256,14 @@
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
                     <button @click="cargarPlantilla" :disabled="cargandoPlantilla"
-                        style="padding:10px 20px; background:linear-gradient(135deg,#F59E0B,#D97706); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
-                        {{ cargandoPlantilla ? '⏳ Cargando...' : '🧪 Cargar medicamentos demo' }}
+                        style="padding:10px 20px; background:linear-gradient(135deg,#F59E0B,#D97706); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; opacity: cargandoPlantilla ? 0.8 : 1;">
+                        <svg v-if="cargandoPlantilla" style="animation:spin 1s linear infinite; width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                        <span>{{ cargandoPlantilla ? 'Cargando medicamentos...' : '🧪 Cargar medicamentos demo' }}</span>
                     </button>
                     <button @click="limpiarDatos" :disabled="limpiando"
-                        style="padding:10px 20px; background:linear-gradient(135deg,#EF4444,#DC2626); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
-                        {{ limpiando ? '⏳ Borrando...' : '🗑️ Limpiar datos demo' }}
+                        style="padding:10px 20px; background:linear-gradient(135deg,#EF4444,#DC2626); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                        <svg v-if="limpiando" style="animation:spin 1s linear infinite; width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                        <span>{{ limpiando ? 'Borrando datos...' : '🗑️ Limpiar datos demo' }}</span>
                     </button>
                 </div>
             </div>
