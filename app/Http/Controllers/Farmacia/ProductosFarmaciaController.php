@@ -22,7 +22,8 @@ class ProductosFarmaciaController extends Controller
             ->get();
         $categorias = Categoria::where('empresa_id', $empresa_id)->orderBy('nombre')->get();
 
-        return Inertia::render('Farmacia/Productos', compact('productos', 'categorias'));
+        $user_rol = auth()->user()->rol;
+        return Inertia::render('Farmacia/Productos', compact('productos', 'categorias', 'user_rol'));
     }
 
     public function store(Request $request)
@@ -255,4 +256,24 @@ class ProductosFarmaciaController extends Controller
 
         return Inertia::render('Farmacia/Vencimientos', compact('vencidos', 'porVencer', 'porVencer90', 'stockBajo'));
     }
+
+    public function cargarDemo()
+    {
+        $empresaId = auth()->user()->empresa_id;
+        
+        // Verificar que no tenga productos ya cargados
+        $total = \App\Models\Producto::where('empresa_id', $empresaId)->count();
+        if ($total > 0) {
+            return back()->with('error', 'Ya tienes ' . $total . ' productos registrados. Limpia el catálogo antes de cargar el demo.');
+        }
+
+        try {
+            $seeder = new \Database\Seeders\FarmaciaBasicaSeeder();
+            $seeder->run($empresaId);
+            return back()->with('success', '✅ Medicamentos demo cargados correctamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
+
 }

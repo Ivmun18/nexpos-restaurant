@@ -751,6 +751,7 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
 
     // Vencimientos
     Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->middleware('only.admin')->name('vencimientos');
+    Route::post('/productos/cargar-demo', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'cargarDemo'])->middleware('only.admin')->name('productos.cargar-demo');
 
     // ====== INVENTARIO INICIAL (con scanner) ======
     Route::get('/inventario-inicial',         [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'index'])->name('inventario.inicial');
