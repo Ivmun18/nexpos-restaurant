@@ -105,14 +105,14 @@ Object.entries(props.odontograma).forEach(([fdi, data]) => {
 })
 
 const estados = [
-  { key:'sano',        label:'Sano',        fill:'#E1F5EE', stroke:'#0F6E56', dark:'#085041' },
-  { key:'caries',      label:'Caries',      fill:'#FCEBEB', stroke:'#A32D2D', dark:'#791F1F' },
-  { key:'tratamiento', label:'Tratamiento',  fill:'#FAEEDA', stroke:'#854F0B', dark:'#633806' },
-  { key:'extraccion',  label:'Extracción',   fill:'#EEEDFE', stroke:'#534AB7', dark:'#3C3489' },
-  { key:'ausente',     label:'Ausente',      fill:'#F1EFE8', stroke:'#888780', dark:'#5F5E5A' },
-  { key:'corona',      label:'Corona',       fill:'#E6F1FB', stroke:'#185FA5', dark:'#0C447C' },
-  { key:'implante',    label:'Implante',     fill:'#F0FDF4', stroke:'#15803D', dark:'#14532D' },
-  { key:'sellante',    label:'Sellante',     fill:'#FDF4FF', stroke:'#9333EA', dark:'#581C87' },
+  { key:'sano',        label:'Sano',        fill:'#9FE1CB', stroke:'#0F6E56', dark:'#085041' },
+  { key:'caries',      label:'Caries',      fill:'#F09595', stroke:'#791F1F', dark:'#501313' },
+  { key:'tratamiento', label:'Tratamiento',  fill:'#FAC775', stroke:'#854F0B', dark:'#412402' },
+  { key:'extraccion',  label:'Extracción',   fill:'#AFA9EC', stroke:'#3C3489', dark:'#26215C' },
+  { key:'ausente',     label:'Ausente',      fill:'#B4B2A9', stroke:'#444441', dark:'#2C2C2A' },
+  { key:'corona',      label:'Corona',       fill:'#85B7EB', stroke:'#0C447C', dark:'#042C53' },
+  { key:'implante',    label:'Implante',     fill:'#97C459', stroke:'#27500A', dark:'#173404' },
+  { key:'sellante',    label:'Sellante',     fill:'#ED93B1', stroke:'#72243E', dark:'#4B1528' },
 ]
 
 const types = ['molar','molar','molar','premolar','premolar','canino','incisivo','incisivo','incisivo','incisivo','canino','premolar','premolar','molar','molar','molar']

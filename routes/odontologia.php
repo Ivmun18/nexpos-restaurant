@@ -5,6 +5,7 @@ use App\Http\Controllers\Odontologia\DoctorController;
 use App\Http\Controllers\Odontologia\CitaController;
 use App\Http\Controllers\Odontologia\PresupuestoController;
 use App\Http\Controllers\Odontologia\PagoController;
+use App\Http\Controllers\Odontologia\OdontogramaController;
 use App\Http\Controllers\Odontologia\HistoriaClinicaController;
 use App\Http\Controllers\Odontologia\LaboratorioController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,8 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
     Route::get('/pacientes/crear', [PacienteController::class, 'create'])->name('pacientes.create');
     Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
+    Route::get('/odontograma/{pacienteId}', [OdontogramaController::class, 'show'])->name('odontograma.show');
+    Route::put('/odontograma/{pacienteId}', [OdontogramaController::class, 'update'])->name('odontograma.update');
     Route::get('/pacientes/buscar', [PacienteController::class, 'buscar'])->name('pacientes.buscar');
     Route::get('/pacientes/{id}', [PacienteController::class, 'show'])->name('pacientes.show');
     Route::get('/pacientes/{id}/editar', [PacienteController::class, 'edit'])->name('pacientes.edit');
