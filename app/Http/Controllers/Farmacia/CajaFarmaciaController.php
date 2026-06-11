@@ -56,7 +56,7 @@ class CajaFarmaciaController extends Controller
             ->get()
             ->map(function($caja) use ($empresaId) {
                 $ventas = Venta::where('empresa_id', $empresaId)
-                    ->whereDate('fecha_emision', Carbon::parse($caja->apertura_at)->toDateString())
+                    ->where('caja_id', $caja->id)
                     ->where('estado', '!=', 'anulado')
                     ->get();
                 $caja->cantidad_ventas = $ventas->count();
