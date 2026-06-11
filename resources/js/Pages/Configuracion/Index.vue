@@ -356,7 +356,7 @@ const getCsrf = () => {
     return cookie ? decodeURIComponent(cookie.split('=')[1]) : ''
 }
 
-const cargarPlantilla = async () => {
+const cargarPlantilla = () => {
     if (!plantillaDisponible.value) {
         alert('No hay plantilla disponible')
         return
@@ -364,35 +364,23 @@ const cargarPlantilla = async () => {
     if (!confirm('¿Cargar ' + plantillaDisponible.value.total_productos + ' productos demo?\n\nEsto agregará productos a tu inventario actual.')) return
 
     cargandoPlantilla.value = true
-    try {
-        const url = '/' + props.empresa.industry_type + '/plantillas/cargar'
-        const res = await fetch(url, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': getCsrf(),
-                'X-XSRF-TOKEN': getCsrf()
+    router.post('/' + props.empresa.industry_type + '/plantillas/cargar',
+        { plantilla_id: plantillaDisponible.value.id },
+        {
+            onSuccess: () => {
+                plantillaCargada.value = plantillaDisponible.value
+                alert('✅ Medicamentos demo cargados correctamente')
+                cargandoPlantilla.value = false
             },
-            body: JSON.stringify({ plantilla_id: plantillaDisponible.value.id })
-        })
-        const data = await res.json()
-        if (res.ok) {
-            plantillaCargada.value = plantillaDisponible.value
-            alert(data.message || '✅ Plantilla cargada')
-        } else {
-            alert('❌ Error: ' + (data.error || data.message || 'Desconocido'))
+            onError: (e) => {
+                alert('❌ Error: ' + JSON.stringify(e))
+                cargandoPlantilla.value = false
+            }
         }
-    } catch(e) {
-        alert('❌ Error: ' + e.message)
-        console.error(e)
-    }
-    cargandoPlantilla.value = false
+    )
 }
 
-const limpiarDatos = async () => {
+const limpiarDatos = () => {
     if (!confirm('⚠️ ¿BORRAR TODOS los datos demo?\n\nProductos, categorías, ventas y cajas serán eliminados. No se puede deshacer.')) return
     const conf = prompt('Para confirmar, escribe: BORRAR TODO')
     if (conf !== 'BORRAR TODO') {
@@ -401,30 +389,24 @@ const limpiarDatos = async () => {
     }
 
     limpiando.value = true
-    try {
-        const url = '/' + props.empresa.industry_type + '/empresa/limpiar-datos'
-        const res = await fetch(url, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': getCsrf(),
-                'X-XSRF-TOKEN': getCsrf()
+    router.post('/' + props.empresa.industry_type + '/empresa/limpiar-datos',
+        { confirmacion: 'SI_BORRAR_TODO' },
+        {
+            onSuccess: (page) => {
+                alert('✅ Datos demo eliminados correctamente')
+                plantillaCargada.value = null
+                limpiando.value = false
+                location.reload()
             },
-            body: JSON.stringify({ confirmacion: 'SI_BORRAR_TODO' })
-        })
-        const data = await res.json()
-        if (res.ok) {
-            alert('✅ Eliminado:\n• Ventas: ' + data.detalles.ventas_borradas + '\n• Productos: ' + data.detalles.productos_borrados + '\n• Categorías: ' + data.detalles.categorias_borradas)
-            plantillaCargada.value = null
-            location.reload()
-        } else {
-            alert('❌ Error: ' + (data.error || data.message))
+            onError: (e) => {
+                alert('❌ Error: ' + JSON.stringify(e))
+                limpiando.value = false
+            }
         }
-    } catch(e) {
-        alert('❌ Error: ' + e.message)
+    )
+}
+const _limpiarDatosOld = () => {
+    if (false) {
         console.error(e)
     }
     limpiando.value = false
