@@ -19,6 +19,7 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
     Route::get('/pacientes/crear', [PacienteController::class, 'create'])->name('pacientes.create');
     Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
+    Route::get('/odontograma/{pacienteId}/pdf', [OdontogramaController::class, 'pdf'])->name('odontograma.pdf');
     Route::get('/odontograma/{pacienteId}', [OdontogramaController::class, 'show'])->name('odontograma.show');
     Route::put('/odontograma/{pacienteId}', [OdontogramaController::class, 'update'])->name('odontograma.update');
     Route::get('/pacientes/buscar', [PacienteController::class, 'buscar'])->name('pacientes.buscar');

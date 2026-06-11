@@ -10,6 +10,7 @@
         <div style="display:flex; gap:8px;">
           <span v-if="guardando" style="font-size:12px; color:#94A3B8; padding:8px;">Guardando...</span>
           <span v-if="guardado" style="font-size:12px; color:#16A34A; padding:8px;">✓ Guardado</span>
+          <a :href="`/odontologia/odontograma/${paciente.id}/pdf`" target="_blank" style="padding:9px 16px; background:#0F766E; color:white; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">📄 Imprimir ficha</a>
           <a :href="'/odontologia/pacientes'" style="padding:9px 16px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; color:#64748B; text-decoration:none;">← Pacientes</a>
         </div>
       </div>
