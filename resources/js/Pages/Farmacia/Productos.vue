@@ -8,11 +8,7 @@
                 <p style="font-size:14px; color:#94A3B8; margin:4px 0 0;">{{ productos.length }} productos registrados</p>
             </div>
             <div style="display:flex; gap:12px;">
-                <button v-if="props.user_rol === 'admin' && props.productos.length === 0" @click="cargarDemo"
-                    style="padding:10px 20px; background:linear-gradient(135deg,#F59E0B,#D97706); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
-                    🧪 Cargar medicamentos demo
-                </button>
-                <button @click="modalImportar = true"
+<button @click="modalImportar = true"
                     style="padding:10px 20px; background:linear-gradient(135deg,#8B5CF6,#7C3AED); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
                     📤 Importar Excel
                 </button>
