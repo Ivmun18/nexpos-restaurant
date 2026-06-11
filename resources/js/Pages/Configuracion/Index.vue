@@ -242,6 +242,33 @@
             </div>
         </div>
 
+        <!-- Datos Demo -->
+        <div v-if="props.empresa?.industry_type" style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.5rem; margin-top:1.5rem;">
+            <p style="font-size:15px; font-weight:700; color:#1E293B; margin:0 0 4px;">🧪 Datos de prueba</p>
+            <p style="font-size:13px; color:#64748B; margin:0 0 1.5rem;">Carga productos demo para explorar el sistema antes de ingresar tu catálogo real.</p>
+
+            <div v-if="cargandoPlantillas" style="font-size:13px; color:#94A3B8;">Buscando plantilla disponible...</div>
+
+            <div v-else-if="plantillaDisponible" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ plantillaDisponible.nombre }}</p>
+                    <p style="font-size:12px; color:#64748B; margin:4px 0 0;">{{ plantillaDisponible.total_productos }} productos · {{ plantillaDisponible.total_categorias }} categorías</p>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button @click="cargarPlantilla" :disabled="cargandoPlantilla"
+                        style="padding:10px 20px; background:linear-gradient(135deg,#F59E0B,#D97706); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
+                        {{ cargandoPlantilla ? '⏳ Cargando...' : '🧪 Cargar medicamentos demo' }}
+                    </button>
+                    <button @click="limpiarDatos" :disabled="limpiando"
+                        style="padding:10px 20px; background:linear-gradient(135deg,#EF4444,#DC2626); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
+                        {{ limpiando ? '⏳ Borrando...' : '🗑️ Limpiar datos demo' }}
+                    </button>
+                </div>
+            </div>
+
+            <div v-else style="font-size:13px; color:#94A3B8;">No hay plantilla disponible para esta industria.</div>
+        </div>
+
 
 
     </AppLayout>
