@@ -136,8 +136,7 @@ class CajaFarmaciaController extends Controller
         $hoy = now()->toDateString();
 
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->where('created_at', '>=', $caja->apertura_at)
-            ->where('created_at', '<=', now())
+            ->where('caja_id', $caja->id)
             ->get();
 
         $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
