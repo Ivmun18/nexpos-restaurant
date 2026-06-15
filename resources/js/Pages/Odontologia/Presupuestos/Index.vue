@@ -77,6 +77,13 @@
             <p style="margin:0; font-size:13px; font-weight:700;">Tratamientos</p>
             <button @click="agregarItem" style="padding:5px 12px; background:#EDE9FE; color:#7C3AED; border:none; border-radius:6px; font-size:12px; cursor:pointer;">+ Agregar</button>
           </div>
+          <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; margin-bottom:6px;">
+            <span style="font-size:11px; font-weight:600; color:#94A3B8;">DESCRIPCION</span>
+            <span style="font-size:11px; font-weight:600; color:#94A3B8;">N. PIEZA</span>
+            <span style="font-size:11px; font-weight:600; color:#94A3B8;">PRECIO S/</span>
+            <span style="font-size:11px; font-weight:600; color:#94A3B8;">CANT.</span>
+            <span></span>
+          </div>
           <div v-for="(item,i) in form.items" :key="i" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center;">
             <input v-model="item.descripcion" type="text" placeholder="Descripción" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
             <input v-model.number="item.numero_pieza" type="number" placeholder="Pieza" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
