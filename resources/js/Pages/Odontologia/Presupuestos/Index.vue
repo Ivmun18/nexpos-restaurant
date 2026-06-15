@@ -80,12 +80,12 @@
           <div v-for="(item,i) in form.items" :key="i" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center;">
             <input v-model="item.descripcion" type="text" placeholder="Descripción" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
             <input v-model.number="item.numero_pieza" type="number" placeholder="Pieza" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <input v-model.number="item.precio" type="number" step="0.01" placeholder="Precio" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <input v-model.number="item.cantidad" type="number" min="1" placeholder="Cant." style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <button @click="form.items.splice(i,1)" style="padding:7px; background:#FEF2F2; color:#B91C1C; border:none; border-radius:6px; cursor:pointer;">✕</button>
+            <input v-model.number="item.precio" @input="recalcularTotal" type="number" step="0.01" placeholder="Precio" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
+            <input v-model.number="item.cantidad" @input="recalcularTotal" type="number" min="1" placeholder="Cant." style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
+            <button @click="form.items.splice(i,1); recalcularTotal()" style="padding:7px; background:#FEF2F2; color:#B91C1C; border:none; border-radius:6px; cursor:pointer;">✕</button>
           </div>
           <div style="text-align:right; margin-top:8px; font-size:16px; font-weight:800; color:#10B981;">
-            Total: S/ {{ totalPresupuesto.toFixed(2) }}
+            Total: S/ {{ totalCalculado.toFixed(2) }}
           </div>
         </div>
 
@@ -116,9 +116,12 @@ const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
 const form = ref({ paciente_id:'', doctor_id:'', items:[], observaciones:'' })
 
-const totalPresupuesto = computed(() => form.value.items.reduce((s,i) => s + (Number(i.precio)||0) * (Number(i.cantidad)||1), 0))
+const totalCalculado = ref(0)
+const recalcularTotal = () => {
+  totalCalculado.value = form.value.items.reduce((s,i) => s + (Number(i.precio)||0) * (Number(i.cantidad)||1), 0)
+}
 
-const agregarItem = () => form.value.items.push({ descripcion:'', numero_pieza:'', precio:0, cantidad:1 })
+const agregarItem = () => { form.value.items.push({ descripcion:'', numero_pieza:'', precio:0, cantidad:1 }); recalcularTotal() }
 
 const searchPaciente = async () => {
   if (buscarPaciente.value.length < 2) { resultadosPaciente.value = []; return }
@@ -140,6 +143,7 @@ const cerrarModal = () => {
   form.value = { paciente_id:'', doctor_id:'', items:[], observaciones:'' }
   buscarPaciente.value = ''
   resultadosPaciente.value = []
+  recalcularTotal()
 }
 
 const editarPresupuesto = (p) => {
@@ -152,6 +156,7 @@ const editarPresupuesto = (p) => {
   }
   buscarPaciente.value = p.paciente.apellidos + ', ' + p.paciente.nombres
   modalNuevo.value = true
+  recalcularTotal()
 }
 
 const guardar = () => {
