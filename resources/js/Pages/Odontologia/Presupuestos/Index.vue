@@ -79,9 +79,9 @@
           </div>
           <div v-for="(item,i) in form.items" :key="i" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center;">
             <input v-model="item.descripcion" type="text" placeholder="Descripción" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <input v-model="item.numero_pieza" type="number" placeholder="Pieza" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <input v-model="item.precio" type="number" step="0.01" placeholder="Precio" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <input v-model="item.cantidad" type="number" min="1" placeholder="Cant." style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
+            <input v-model.number="item.numero_pieza" type="number" placeholder="Pieza" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
+            <input v-model.number="item.precio" type="number" step="0.01" placeholder="Precio" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
+            <input v-model.number="item.cantidad" type="number" min="1" placeholder="Cant." style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
             <button @click="form.items.splice(i,1)" style="padding:7px; background:#FEF2F2; color:#B91C1C; border:none; border-radius:6px; cursor:pointer;">✕</button>
           </div>
           <div style="text-align:right; margin-top:8px; font-size:16px; font-weight:800; color:#10B981;">
