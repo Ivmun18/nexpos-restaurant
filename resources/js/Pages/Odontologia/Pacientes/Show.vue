@@ -50,6 +50,23 @@
 
     <!-- Tab: Historia clínica -->
     <div v-if="tabActivo==='historia'">
+      <div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
+        <p style="margin:0 0 10px; font-size:13px; font-weight:600;">Nueva entrada</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <select v-model="formHistoria.doctor_id" style="padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;">
+            <option value="">Doctor...</option>
+            <option v-for="d in doctores" :key="d.id" :value="d.id">{{ d.nombre }}</option>
+          </select>
+          <input v-model="formHistoria.fecha" type="date" style="padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+        </div>
+        <textarea v-model="formHistoria.anamnesis" placeholder="Motivo / anamnesis" rows="2" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box; margin-bottom:8px;"></textarea>
+        <textarea v-model="formHistoria.diagnostico" placeholder="Diagnostico" rows="2" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box; margin-bottom:8px;"></textarea>
+        <textarea v-model="formHistoria.tratamiento_realizado" placeholder="Tratamiento realizado" rows="2" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box; margin-bottom:8px;"></textarea>
+        <textarea v-model="formHistoria.observaciones" placeholder="Observaciones" rows="2" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box; margin-bottom:10px;"></textarea>
+        <button @click="guardarHistoria" :disabled="guardandoHistoria" style="padding:9px 18px; background:#8B5CF6; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+          {{ guardandoHistoria ? 'Guardando...' : 'Guardar entrada' }}
+        </button>
+      </div>
       <div v-if="historias.length===0" style="text-align:center; padding:32px; color:#94A3B8;">Sin historia clínica registrada</div>
       <div v-for="h in historias" :key="h.id" style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
@@ -114,8 +131,9 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
+import { router } from '@inertiajs/vue3'
 
-const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array })
+const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array, doctores:Array })
 const tabActivo = ref('citas')
 const tabs = [
   { key:'citas', label:'Citas' },
@@ -135,5 +153,16 @@ const estadoStyle = (e) => {
 const estadoPresupuesto = (e) => {
   const m = { borrador:{background:'#F9FAFB',color:'#6B7280'}, aprobado:{background:'#F0FDF4',color:'#15803D'}, rechazado:{background:'#FEF2F2',color:'#B91C1C'}, completado:{background:'#EDE9FE',color:'#7C3AED'} }
   return { ...(m[e]||{}), padding:'3px 8px', borderRadius:'6px', fontSize:'11px', fontWeight:'600' }
+}
+
+const guardandoHistoria = ref(false)
+const vacioHistoria = () => ({ doctor_id:'', fecha: new Date().toISOString().slice(0,10), anamnesis:'', diagnostico:'', tratamiento_realizado:'', observaciones:'' })
+const formHistoria = ref(vacioHistoria())
+const guardarHistoria = () => {
+  guardandoHistoria.value = true
+  router.post('/odontologia/historia-clinica', { ...formHistoria.value, paciente_id: props.paciente.id }, {
+    onFinish: () => { guardandoHistoria.value = false },
+    onSuccess: () => { formHistoria.value = vacioHistoria() }
+  })
 }
 </script>
