@@ -35,6 +35,26 @@ class OdontologiaController extends Controller
             ->orderBy('fecha_hora')
             ->get();
 
-        return Inertia::render('Odontologia/Dashboard', compact('stats', 'citas_hoy'));
+        $proximas_citas = OdontoCita::with(['paciente','doctor'])
+            ->where('empresa_id', $empresaId)
+            ->whereDate('fecha_hora', '>', $hoy)
+            ->whereDate('fecha_hora', '<=', now()->addDays(7)->toDateString())
+            ->orderBy('fecha_hora')
+            ->limit(10)
+            ->get();
+
+        $mesesEs = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        $ingresosPorMes = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $f = now()->subMonths($i);
+            $total = OdontoPago::where('empresa_id', $empresaId)
+                ->whereMonth('fecha', $f->month)
+                ->whereYear('fecha', $f->year)
+                ->where('estado', '!=', 'anulado')
+                ->sum('monto_total');
+            $ingresosPorMes[] = ['mes' => $mesesEs[$f->month - 1] . ' ' . $f->format('y'), 'total' => (float) $total];
+        }
+
+        return Inertia::render('Odontologia/Dashboard', compact('stats', 'citas_hoy', 'proximas_citas', 'ingresosPorMes'));
     }
 }

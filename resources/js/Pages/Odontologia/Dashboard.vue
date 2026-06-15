@@ -14,6 +14,24 @@
       </div>
     </div>
 
+    <!-- Ingresos y proximas citas -->
+    <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:24px;">
+      <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
+        <h2 style="font-size:16px; font-weight:700; margin:0 0 16px;">Ingresos ultimos 6 meses</h2>
+        <canvas ref="chartIngresos" height="200"></canvas>
+      </div>
+      <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
+        <h2 style="font-size:16px; font-weight:700; margin:0 0 16px;">Proximas citas</h2>
+        <div v-if="proximas_citas.length === 0" style="text-align:center; padding:32px; color:#94A3B8; font-size:13px;">
+          Sin citas en los proximos dias
+        </div>
+        <div v-for="c in proximas_citas" :key="c.id" style="padding:8px 0; border-bottom:1px solid #F1F5F9;">
+          <p style="margin:0; font-size:13px; font-weight:600;">{{ c.paciente?.nombres }} {{ c.paciente?.apellidos }}</p>
+          <p style="margin:2px 0 0; font-size:12px; color:#64748B;">{{ formatFechaHora(c.fecha_hora) }} - {{ c.doctor?.nombre }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Citas de hoy -->
     <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; padding:20px;">
       <h2 style="font-size:16px; font-weight:700; margin:0 0 16px;">Citas de hoy</h2>
@@ -48,10 +66,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import Chart from 'chart.js/auto'
 
-const props = defineProps({ stats: Object, citas_hoy: Array })
+const props = defineProps({ stats: Object, citas_hoy: Array, proximas_citas: Array, ingresosPorMes: Array })
+const chartIngresos = ref(null)
 
 const fechaHoy = new Date().toLocaleDateString('es-PE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
 
@@ -76,4 +96,17 @@ const estadoStyle = (estado) => {
   }
   return map[estado] || {}
 }
+
+const formatFechaHora = (fecha) => new Date(fecha).toLocaleString('es-PE', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+
+onMounted(() => {
+  new Chart(chartIngresos.value, {
+    type: 'bar',
+    data: {
+      labels: props.ingresosPorMes.map(i => i.mes),
+      datasets: [{ label: 'Ingresos S/', data: props.ingresosPorMes.map(i => i.total), backgroundColor: '#8B5CF6', borderRadius: 6 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  })
+})
 </script>
