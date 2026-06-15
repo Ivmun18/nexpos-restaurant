@@ -86,7 +86,13 @@
           </div>
           <div v-for="(item,i) in form.items" :key="i" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center;">
             <input v-model="item.descripcion" type="text" placeholder="Descripción" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
-            <input v-model.number="item.numero_pieza" type="number" placeholder="Pieza" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
+            <select v-model.number="item.numero_pieza" @change="recalcularTotal" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;">
+              <option value="">-</option>
+              <optgroup label="Sup. derecho"><option v-for="n in [18,17,16,15,14,13,12,11]" :key="'a'+n" :value="n">{{ n }}</option></optgroup>
+              <optgroup label="Sup. izquierdo"><option v-for="n in [21,22,23,24,25,26,27,28]" :key="'b'+n" :value="n">{{ n }}</option></optgroup>
+              <optgroup label="Inf. izquierdo"><option v-for="n in [31,32,33,34,35,36,37,38]" :key="'c'+n" :value="n">{{ n }}</option></optgroup>
+              <optgroup label="Inf. derecho"><option v-for="n in [41,42,43,44,45,46,47,48]" :key="'d'+n" :value="n">{{ n }}</option></optgroup>
+            </select>
             <input v-model.number="item.precio" @input="recalcularTotal" type="number" step="0.01" placeholder="Precio" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
             <input v-model.number="item.cantidad" @input="recalcularTotal" type="number" min="1" placeholder="Cant." style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;" />
             <button @click="form.items.splice(i,1); recalcularTotal()" style="padding:7px; background:#FEF2F2; color:#B91C1C; border:none; border-radius:6px; cursor:pointer;">✕</button>
