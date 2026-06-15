@@ -59,6 +59,17 @@
         <p v-if="h.diagnostico" style="margin:0 0 4px; font-size:13px;"><strong>Diagnóstico:</strong> {{ h.diagnostico }}</p>
         <p v-if="h.tratamiento_realizado" style="margin:0; font-size:13px;"><strong>Tratamiento:</strong> {{ h.tratamiento_realizado }}</p>
       </div>
+
+      <div v-if="odontogramaEventos.length" style="margin-top:16px;">
+        <p style="font-size:12px; font-weight:700; color:#64748B; text-transform:uppercase; margin:0 0 8px;">Cambios en el odontograma</p>
+        <div v-for="ev in odontogramaEventos" :key="'odo-'+ev.diente" style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <p style="margin:0; font-weight:600; font-size:13px;">Pieza {{ ev.diente }} - {{ estadoOdontoLabel(ev.estado) }}</p>
+            <p v-if="ev.notas" style="margin:2px 0 0; font-size:12px; color:#64748B;">{{ ev.notas }}</p>
+          </div>
+          <span style="font-size:11px; color:#94A3B8;">{{ formatFecha(ev.updated_at) }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Tab: Presupuestos -->
@@ -104,7 +115,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 
-const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array })
+const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array })
 const tabActivo = ref('citas')
 const tabs = [
   { key:'citas', label:'Citas' },
@@ -113,6 +124,10 @@ const tabs = [
   { key:'pagos', label:'Pagos' },
 ]
 const formatFecha = (f) => new Date(f).toLocaleString('es-PE', { dateStyle:'short', timeStyle:'short' })
+const estadoOdontoLabel = (e) => {
+  const m = { sano:'Sano', caries:'Caries', tratamiento:'Tratamiento', extraccion:'Extraccion', ausente:'Ausente', corona:'Corona', implante:'Implante', sellante:'Sellante' }
+  return m[e] || e
+}
 const estadoStyle = (e) => {
   const m = { programada:{background:'#EFF6FF',color:'#1D4ED8'}, confirmada:{background:'#F0FDF4',color:'#15803D'}, completada:{background:'#F0FDF4',color:'#15803D'}, cancelada:{background:'#FEF2F2',color:'#B91C1C'} }
   return { ...(m[e]||{background:'#F9FAFB',color:'#6B7280'}), padding:'3px 8px', borderRadius:'6px', fontSize:'11px', fontWeight:'600' }

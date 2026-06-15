@@ -75,6 +75,16 @@
         </span>
       </div>
 
+      <!-- Resumen de observaciones -->
+      <div v-if="dientesConNotas.length" style="margin-top:12px; background:white; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
+        <p style="margin:0 0 10px; font-size:13px; font-weight:600;">Resumen de observaciones</p>
+        <div v-for="d in dientesConNotas" :key="d.fdi" style="display:flex; gap:10px; padding:8px 0; border-bottom:1px solid #F1F5F9; font-size:13px;">
+          <span style="font-weight:700; min-width:28px;">{{ d.fdi }}</span>
+          <span :style="`color:${d.color.stroke}; font-weight:600; min-width:100px;`">{{ d.label }}</span>
+          <span style="color:#64748B;">{{ d.notas }}</span>
+        </div>
+      </div>
+
       <!-- Panel de nota -->
       <div v-if="dienteSeleccionado" style="margin-top:14px; background:white; border:1px solid #E2E8F0; border-radius:12px; padding:16px;">
         <p style="margin:0 0 8px; font-size:13px; font-weight:600;">Diente {{ dienteSeleccionado }} — Notas</p>
@@ -130,6 +140,18 @@ const getColor = (fdi) => {
   const e = estados.find(x => x.key === getEstado(fdi))
   return e || estados[0]
 }
+
+const dientesConNotas = computed(() => {
+  return Object.entries(dienteStates.value)
+    .filter(([fdi, d]) => (d.notas || '').trim() !== '')
+    .map(([fdi, d]) => ({
+      fdi,
+      notas: d.notas,
+      label: estados.find(e => e.key === d.estado)?.label || d.estado,
+      color: getColor(fdi),
+    }))
+    .sort((a, b) => Number(a.fdi) - Number(b.fdi))
+})
 
 const cw = { molar:24, premolar:18, canino:14, incisivo:13 }
 const ch = 26
