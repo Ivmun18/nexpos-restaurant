@@ -66,6 +66,41 @@ class PresupuestoController extends Controller
 
     public function update(Request $request, $id) {
         $presupuesto = OdontoPresupuesto::where('empresa_id', $this->empresaId())->findOrFail($id);
+
+        if ($request->has('items')) {
+            $request->validate([
+                'paciente_id' => 'required|exists:odonto_pacientes,id',
+                'doctor_id'   => 'required|exists:odonto_doctores,id',
+                'items'       => 'required|array|min:1',
+                'items.*.descripcion' => 'required|string',
+                'items.*.precio'      => 'required|numeric|min:0',
+                'items.*.cantidad'    => 'required|integer|min:1',
+            ]);
+
+            $total = collect($request->items)->sum(fn($i) => $i['precio'] * $i['cantidad']);
+
+            $presupuesto->items()->delete();
+            foreach ($request->items as $item) {
+                $presupuesto->items()->create([
+                    'tratamiento_id' => $item['tratamiento_id'] ?? null,
+                    'numero_pieza'   => $item['numero_pieza'] ?? null,
+                    'descripcion'    => $item['descripcion'],
+                    'precio'         => $item['precio'],
+                    'cantidad'       => $item['cantidad'],
+                    'subtotal'       => $item['precio'] * $item['cantidad'],
+                    'estado_item'    => 'pendiente',
+                ]);
+            }
+
+            $presupuesto->update([
+                'paciente_id'   => $request->paciente_id,
+                'doctor_id'     => $request->doctor_id,
+                'total'         => $total,
+                'observaciones' => $request->observaciones,
+            ]);
+            return back()->with('success', 'Presupuesto actualizado.');
+        }
+
         $presupuesto->update($request->only(['estado','observaciones']));
         return back()->with('success', 'Presupuesto actualizado.');
     }

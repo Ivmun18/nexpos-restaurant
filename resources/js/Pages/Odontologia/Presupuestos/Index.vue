@@ -38,6 +38,7 @@
               </select>
             </td>
             <td style="padding:12px 16px;">
+              <button @click="editarPresupuesto(p)" style="color:#F59E0B; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; margin-right:8px;">Editar</button>
               <button @click="verDetalle(p)" style="color:#8B5CF6; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer;">Ver</button>
               <button @click="imprimirPDF(p.id)" style="color:#0F766E; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; margin-left:8px;">🖨️ PDF</button>
               <button @click="enviarWhatsApp(p)" style="color:#16A34A; font-size:13px; font-weight:600; background:none; border:none; cursor:pointer; margin-left:8px;">📲 WA</button>
@@ -50,7 +51,7 @@
     <!-- Modal nuevo presupuesto -->
     <div v-if="modalNuevo" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; overflow-y:auto;">
       <div style="background:white; border-radius:16px; padding:28px; width:700px; max-width:100%;">
-        <h2 style="margin:0 0 20px; font-size:18px;">Nuevo presupuesto</h2>
+        <h2 style="margin:0 0 20px; font-size:18px;">{{ editandoId ? 'Editar presupuesto #' + editandoId : 'Nuevo presupuesto' }}</h2>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
           <div>
@@ -94,7 +95,7 @@
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
-          <button @click="modalNuevo=false" style="padding:10px 20px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; cursor:pointer; background:white;">Cancelar</button>
+          <button @click="cerrarModal" style="padding:10px 20px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; cursor:pointer; background:white;">Cancelar</button>
           <button @click="guardar" style="padding:10px 24px; background:#8B5CF6; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">Guardar</button>
         </div>
       </div>
@@ -110,6 +111,7 @@ import { router } from '@inertiajs/vue3'
 
 const props = defineProps({ presupuestos: Object, doctores: Array, pacientes: Array })
 const modalNuevo = ref(false)
+const editandoId = ref(null)
 const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
 const form = ref({ paciente_id:'', doctor_id:'', items:[], observaciones:'' })
@@ -132,11 +134,38 @@ const seleccionarPaciente = (p) => {
 
 const cambiarEstado = (id, estado) => router.put(`/odontologia/presupuestos/${id}`, { estado }, { preserveState: true })
 
+const cerrarModal = () => {
+  modalNuevo.value = false
+  editandoId.value = null
+  form.value = { paciente_id:'', doctor_id:'', items:[], observaciones:'' }
+  buscarPaciente.value = ''
+  resultadosPaciente.value = []
+}
+
+const editarPresupuesto = (p) => {
+  editandoId.value = p.id
+  form.value = {
+    paciente_id: p.paciente_id,
+    doctor_id: p.doctor_id,
+    items: p.items.map(i => ({ descripcion: i.descripcion, numero_pieza: i.numero_pieza, precio: i.precio, cantidad: i.cantidad, tratamiento_id: i.tratamiento_id })),
+    observaciones: p.observaciones
+  }
+  buscarPaciente.value = p.paciente.apellidos + ', ' + p.paciente.nombres
+  modalNuevo.value = true
+}
+
 const guardar = () => {
-  router.post('/odontologia/presupuestos', form.value, {
-    onSuccess: () => { modalNuevo.value = false; form.value = { paciente_id:'', doctor_id:'', items:[], observaciones:'' } },
-    onError: (e) => { alert('Error: ' + JSON.stringify(e)) }
-  })
+  if (editandoId.value) {
+    router.put(`/odontologia/presupuestos/${editandoId.value}`, form.value, {
+      onSuccess: () => cerrarModal(),
+      onError: (e) => { alert('Error: ' + JSON.stringify(e)) }
+    })
+  } else {
+    router.post('/odontologia/presupuestos', form.value, {
+      onSuccess: () => cerrarModal(),
+      onError: (e) => { alert('Error: ' + JSON.stringify(e)) }
+    })
+  }
 }
 
 const verDetalle = (p) => router.get(`/odontologia/pacientes/${p.paciente_id}`)
