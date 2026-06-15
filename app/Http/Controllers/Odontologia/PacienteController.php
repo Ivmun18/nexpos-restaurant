@@ -9,6 +9,7 @@ use App\Models\Odontologia\OdontoPresupuesto;
 use App\Models\Odontologia\OdontoPago;
 use App\Models\Odontologia\OdontoOdontograma;
 use App\Models\Odontologia\OdontoDoctor;
+use App\Models\Odontologia\OdontoReceta;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -73,8 +74,9 @@ class PacienteController extends Controller
             ->get(['diente','estado','notas','updated_at']);
 
         $doctores = OdontoDoctor::where('empresa_id', $empresaId)->orderBy('nombre')->get(['id','nombre']);
+        $recetas = OdontoReceta::with('items')->where('paciente_id', $id)->orderByDesc('fecha')->get();
 
-        return Inertia::render('Odontologia/Pacientes/Show', compact('paciente','citas','historias','presupuestos','pagos','odontogramaEventos','doctores'));
+        return Inertia::render('Odontologia/Pacientes/Show', compact('paciente','citas','historias','presupuestos','pagos','odontogramaEventos','doctores','recetas'));
     }
 
     public function edit($id) {

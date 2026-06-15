@@ -7,6 +7,7 @@ use App\Http\Controllers\Odontologia\PresupuestoController;
 use App\Http\Controllers\Odontologia\PagoController;
 use App\Http\Controllers\Odontologia\OdontogramaController;
 use App\Http\Controllers\Odontologia\HistoriaClinicaController;
+use App\Http\Controllers\Odontologia\RecetaController;
 use App\Http\Controllers\Odontologia\LaboratorioController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,10 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     // Historia clínica
     Route::post('/historia-clinica', [HistoriaClinicaController::class, 'store'])->name('historia.store');
     Route::post('/odontograma', [HistoriaClinicaController::class, 'guardarOdontograma'])->name('odontograma.store');
+
+    // Recetas
+    Route::post('/recetas', [RecetaController::class, 'store'])->name('recetas.store');
+    Route::get('/recetas/{id}/pdf', [RecetaController::class, 'pdf'])->name('recetas.pdf');
 
     // Presupuestos
     Route::get('/presupuestos', [PresupuestoController::class, 'index'])->name('presupuestos.index');

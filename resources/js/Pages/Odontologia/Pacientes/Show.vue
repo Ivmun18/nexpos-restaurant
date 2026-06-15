@@ -67,6 +67,46 @@
           {{ guardandoHistoria ? 'Guardando...' : 'Guardar entrada' }}
         </button>
       </div>
+
+      <div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
+        <p style="margin:0 0 10px; font-size:13px; font-weight:600;">Nueva receta</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <select v-model="formReceta.doctor_id" style="padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;">
+            <option value="">Doctor...</option>
+            <option v-for="d in doctores" :key="d.id" :value="d.id">{{ d.nombre }}</option>
+          </select>
+          <input v-model="formReceta.fecha" type="date" style="padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+        </div>
+        <div v-for="(it,idx) in formReceta.items" :key="idx" style="border:1px solid #F1F5F9; border-radius:8px; padding:10px; margin-bottom:8px;">
+          <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px; margin-bottom:6px;">
+            <input v-model="it.medicamento" placeholder="Medicamento" style="padding:7px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+            <input v-model="it.dosis" placeholder="Dosis" style="padding:7px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+            <input v-model="it.frecuencia" placeholder="Frecuencia" style="padding:7px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+            <input v-model="it.duracion" placeholder="Duracion" style="padding:7px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input v-model="it.indicaciones" placeholder="Indicaciones (ej. tomar con alimentos)" style="flex:1; padding:7px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
+            <button v-if="formReceta.items.length>1" @click="quitarItemReceta(idx)" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:6px; background:white; cursor:pointer; font-size:12px;">x</button>
+          </div>
+        </div>
+        <button @click="agregarItemReceta" style="padding:7px 14px; border:1px solid #8B5CF6; color:#8B5CF6; border-radius:6px; background:white; font-size:12px; cursor:pointer; margin-bottom:10px;">+ Agregar medicamento</button>
+        <textarea v-model="formReceta.indicaciones" placeholder="Indicaciones generales" rows="2" style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box; margin-bottom:10px;"></textarea>
+        <button @click="guardarReceta" :disabled="guardandoReceta" style="padding:9px 18px; background:#8B5CF6; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+          {{ guardandoReceta ? 'Guardando...' : 'Guardar receta' }}
+        </button>
+      </div>
+
+      <div v-if="recetas.length" style="margin-bottom:16px;">
+        <p style="font-size:12px; font-weight:700; color:#64748B; text-transform:uppercase; margin:0 0 8px;">Recetas emitidas</p>
+        <div v-for="r in recetas" :key="'rec-'+r.id" style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <p style="margin:0; font-weight:600; font-size:13px;">{{ r.fecha }} - {{ r.items.length }} medicamento(s)</p>
+            <p style="margin:2px 0 0; font-size:12px; color:#64748B;">{{ r.items.map(it => it.medicamento).join(', ') }}</p>
+          </div>
+          <a :href="`/odontologia/recetas/${r.id}/pdf`" target="_blank" style="padding:7px 14px; background:#8B5CF6; color:white; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">Imprimir</a>
+        </div>
+      </div>
+
       <div v-if="historias.length===0" style="text-align:center; padding:32px; color:#94A3B8;">Sin historia clínica registrada</div>
       <div v-for="h in historias" :key="h.id" style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
@@ -133,7 +173,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
-const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array, doctores:Array })
+const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array, doctores:Array, recetas:Array })
 const tabActivo = ref('citas')
 const tabs = [
   { key:'citas', label:'Citas' },
@@ -163,6 +203,19 @@ const guardarHistoria = () => {
   router.post('/odontologia/historia-clinica', { ...formHistoria.value, paciente_id: props.paciente.id }, {
     onFinish: () => { guardandoHistoria.value = false },
     onSuccess: () => { formHistoria.value = vacioHistoria() }
+  })
+}
+
+const guardandoReceta = ref(false)
+const vacioReceta = () => ({ doctor_id:'', fecha: new Date().toISOString().slice(0,10), indicaciones:'', items:[{medicamento:'',dosis:'',frecuencia:'',duracion:'',indicaciones:''}] })
+const formReceta = ref(vacioReceta())
+const agregarItemReceta = () => { formReceta.value.items.push({medicamento:'',dosis:'',frecuencia:'',duracion:'',indicaciones:''}) }
+const quitarItemReceta = (i) => { formReceta.value.items.splice(i,1) }
+const guardarReceta = () => {
+  guardandoReceta.value = true
+  router.post('/odontologia/recetas', { ...formReceta.value, paciente_id: props.paciente.id }, {
+    onFinish: () => { guardandoReceta.value = false },
+    onSuccess: () => { formReceta.value = vacioReceta() }
   })
 }
 </script>
