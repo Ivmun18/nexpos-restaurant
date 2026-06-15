@@ -70,13 +70,6 @@
 
       <div style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:16px;">
         <p style="margin:0 0 10px; font-size:13px; font-weight:600;">Nueva receta</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-          <select v-model="formReceta.doctor_id" style="padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px;">
-            <option value="">Doctor...</option>
-            <option v-for="d in doctores" :key="d.id" :value="d.id">{{ d.nombre }}</option>
-          </select>
-          <input v-model="formReceta.fecha" type="date" style="padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
-        </div>
         <div v-for="(it,idx) in formReceta.items" :key="idx" style="border:1px solid #F1F5F9; border-radius:8px; padding:10px; margin-bottom:8px;">
           <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:8px; margin-bottom:6px;">
             <input v-model="it.medicamento" placeholder="Medicamento" style="padding:7px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; box-sizing:border-box;" />
@@ -207,13 +200,13 @@ const guardarHistoria = () => {
 }
 
 const guardandoReceta = ref(false)
-const vacioReceta = () => ({ doctor_id:'', fecha: new Date().toISOString().slice(0,10), indicaciones:'', items:[{medicamento:'',dosis:'',frecuencia:'',duracion:'',indicaciones:''}] })
+const vacioReceta = () => ({ indicaciones:'', items:[{medicamento:'',dosis:'',frecuencia:'',duracion:'',indicaciones:''}] })
 const formReceta = ref(vacioReceta())
 const agregarItemReceta = () => { formReceta.value.items.push({medicamento:'',dosis:'',frecuencia:'',duracion:'',indicaciones:''}) }
 const quitarItemReceta = (i) => { formReceta.value.items.splice(i,1) }
 const guardarReceta = () => {
   guardandoReceta.value = true
-  router.post('/odontologia/recetas', { ...formReceta.value, paciente_id: props.paciente.id }, {
+  router.post('/odontologia/recetas', { ...formReceta.value, doctor_id: formHistoria.value.doctor_id, fecha: formHistoria.value.fecha, paciente_id: props.paciente.id }, {
     onFinish: () => { guardandoReceta.value = false },
     onSuccess: () => { formReceta.value = vacioReceta() }
   })
