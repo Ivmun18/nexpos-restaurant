@@ -4,13 +4,13 @@
         <!-- ══ KPIs PRINCIPALES ══ -->
         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
 
-            <div style="background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:20px; padding:24px; color:white; box-shadow:0 8px 24px rgba(20,184,166,0.3);">
+            <div style="background:linear-gradient(135deg,#378ADD,#185FA5); border-radius:20px; padding:24px; color:white; box-shadow:0 8px 24px rgba(55,138,221,0.3);">
                 <p style="font-size:13px; font-weight:600; opacity:0.8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">💰 Ventas hoy</p>
                 <p style="font-size:36px; font-weight:800; margin:0; line-height:1;">S/ {{ Number(stats.ventas_hoy).toFixed(2) }}</p>
                 <p style="font-size:13px; opacity:0.7; margin:10px 0 0;">{{ stats.ventas_hoy_count }} transacciones</p>
             </div>
 
-            <div style="background:linear-gradient(135deg,#6366F1,#4F46E5); border-radius:20px; padding:24px; color:white; box-shadow:0 8px 24px rgba(99,102,241,0.3);">
+            <div style="background:linear-gradient(135deg,#639922,#3B6D11); border-radius:20px; padding:24px; color:white; box-shadow:0 8px 24px rgba(99,153,34,0.3);">
                 <p style="font-size:13px; font-weight:600; opacity:0.8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">📅 Ventas del mes</p>
                 <p style="font-size:36px; font-weight:800; margin:0; line-height:1;">S/ {{ Number(stats.ventas_mes).toFixed(2) }}</p>
                 <p style="font-size:13px; opacity:0.7; margin:10px 0 0;">Este mes</p>
