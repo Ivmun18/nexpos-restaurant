@@ -620,6 +620,7 @@ Route::post('/reset-password', [\App\Http\Controllers\Auth\PasswordResetControll
 Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/ventas', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'index'])->name('minimarket.ventas');
     Route::get('/minimarket/ventas/{id}', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'show'])->name('minimarket.ventas.show');
+    Route::get('/minimarket/ventas/{id}/recibo-ticket', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'reciboTicket'])->name('minimarket.ventas.recibo-ticket');
     Route::post('/minimarket/ventas/{id}/reintentar', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'reintentar'])->name('minimarket.ventas.reintentar');
     Route::post('/minimarket/ventas/{id}/anular', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'anular'])->name('minimarket.ventas.anular');
 });

@@ -47,7 +47,7 @@
                 <!-- Tipo comprobante -->
                 <div style="text-align:center; margin-bottom:16px;">
                     <span style="font-size:16px; font-weight:800; color:#1E293B; border:2px solid #1E293B; padding:4px 20px; border-radius:6px;">
-                        {{ venta.tipo_comprobante === '03' ? 'BOLETA DE VENTA' : 'FACTURA' }}
+                        {{ venta.tipo_comprobante === '03' ? 'BOLETA ELECTRÓNICA' : 'FACTURA ELECTRÓNICA' }}
                     </span>
                     <p style="font-size:15px; font-weight:700; color:#1E293B; margin:8px 0 0;">{{ venta.numero_completo }}</p>
 
@@ -208,87 +208,7 @@ const formatFecha = (fecha) => {
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
 const imprimir = () => {
-    const v = props.venta
-    const e = props.empresa
-    const items = (v.detalle || []).map(d => `
-        <tr>
-            <td style="padding:4px 0; font-size:11px;">${d.descripcion}</td>
-            <td style="padding:4px 0; text-align:center; font-size:11px;">${d.cantidad}</td>
-            <td style="padding:4px 0; text-align:right; font-size:11px;">S/ ${Number(d.precio_unitario).toFixed(2)}</td>
-            <td style="padding:4px 0; text-align:right; font-size:11px; font-weight:bold;">S/ ${Number(d.total).toFixed(2)}</td>
-        </tr>`).join('')
-    const contenido = `
-        <div style="text-align:center; margin-bottom:12px;">
-            <p style="font-size:14px; font-weight:bold; margin:0;">${e.nombre_comercial || e.razon_social}</p>
-            <p style="font-size:11px; margin:2px 0;">RUC: ${e.ruc}</p>
-            <p style="font-size:11px; margin:2px 0;">${e.direccion || ''}</p>
-        </div>
-        <div style="text-align:center; margin-bottom:8px;">
-            <span style="font-size:13px; font-weight:bold; border:1px solid #000; padding:2px 10px;">
-                ${v.tipo_comprobante === '03' ? 'BOLETA DE VENTA' : 'FACTURA'}
-            </span>
-            <p style="font-size:12px; font-weight:bold; margin:4px 0;">${v.numero_completo}</p>
-        </div>
-        ${ v.nubefact_estado === 'rechazado'
-            ? '<div style="text-align:center; border:2px solid #000; padding:6px; margin-bottom:8px; font-size:12px; font-weight:bold;">!ATENCION: COMPROBANTE NO ACEPTADO POR SUNAT<br>PENDIENTE DE REGULARIZAR</div>'
-            : (v.nubefact_estado && v.nubefact_estado !== 'aceptado'
-                ? '<div style="text-align:center; border:1px dashed #000; padding:6px; margin-bottom:8px; font-size:11px; font-weight:bold;">PENDIENTE DE ENVIO A SUNAT</div>'
-                : '') }
-        <div style="margin-bottom:8px; font-size:11px;">
-            <div style="display:flex; justify-content:space-between;"><span>Fecha:</span><span>${formatFecha(v.fecha_emision)}</span></div>
-            <div style="display:flex; justify-content:space-between;"><span>Hora:</span><span>${v.hora_emision}</span></div>
-            <div style="display:flex; justify-content:space-between;"><span>Pago:</span><span>${v.metodo_pago || 'efectivo'}</span></div>
-        </div>
-        <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
-            <thead>
-                <tr style="border-bottom:1px solid #000;">
-                    <th style="text-align:left; font-size:11px; padding:3px 0;">Producto</th>
-                    <th style="text-align:center; font-size:11px; padding:3px 0;">Cant.</th>
-                    <th style="text-align:right; font-size:11px; padding:3px 0;">P.U.</th>
-                    <th style="text-align:right; font-size:11px; padding:3px 0;">Total</th>
-                </tr>
-            </thead>
-            <tbody>${items}</tbody>
-        </table>
-        <div style="border-top:1px solid #000; padding-top:6px; font-size:11px;">
-            <div style="display:flex; justify-content:space-between;"><span>Op. Gravada:</span><span>S/ ${Number(v.total_gravado).toFixed(2)}</span></div>
-            <div style="display:flex; justify-content:space-between;"><span>IGV (18%):</span><span>S/ ${Number(v.total_igv).toFixed(2)}</span></div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:4px; border-top:1px solid #000; padding-top:4px;">
-                <span>TOTAL:</span><span>S/ ${Number(v.total || (Number(v.total_gravado)+Number(v.total_igv))).toFixed(2)}</span>
-            </div>
-        </div>
-        <div style="text-align:center; margin-top:12px; font-size:11px;">
-            <p style="margin:0;">¡Gracias por su compra!</p>
-        </div>`
-    const ventana = window.open('', '_blank')
-    ventana.document.write(`
-        <html>
-        <head>
-            <title>Ticket - ${props.venta.numero_completo}</title>
-            <style>
-                @media print {
-                    body { margin: 0; }
-                    @page { margin: 5mm; size: 80mm auto; }
-                }
-                body { 
-                    font-family: 'Courier New', monospace; 
-                    padding: 4px; 
-                    max-width: 80mm; 
-                    margin: 0 auto;
-                    font-size: 11px;
-                    line-height: 1.2;
-                }
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                table { width: 100%; border-collapse: collapse; }
-                p { margin: 1px 0; }
-                div { margin-bottom: 2px; }
-            </style>
-        </head>
-        <body>${contenido}</body>
-        </html>
-    `)
-    ventana.document.close()
-    setTimeout(() => ventana.print(), 500)
+    window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
 }
 
 const imprimirA4 = () => {
@@ -350,8 +270,6 @@ const enviarWhatsApp = async () => {
 
 
 onMounted(() => {
-    if (props.imprimir) {
-        setTimeout(() => imprimir(), 800)
-    }
+    // impresion automatica desactivada: el usuario imprime manualmente
 })
 </script>
