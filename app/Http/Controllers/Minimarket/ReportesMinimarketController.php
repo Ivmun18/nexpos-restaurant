@@ -40,12 +40,12 @@ class ReportesMinimarketController extends Controller
             ->get();
 
         // Top productos
-        $topProductos = VentaDetalle::selectRaw('descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
+        $topProductos = VentaDetalle::selectRaw('producto_id, MAX(descripcion) as descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
             ->whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId)
                 ->whereDate('fecha_emision', '>=', $desde)
                 ->whereDate('fecha_emision', '<=', $hasta)
                 ->where('estado', '!=', 'anulado'))
-            ->groupBy('descripcion')
+            ->groupBy('producto_id')
             ->orderByDesc('total_monto')
             ->limit(10)
             ->get();
