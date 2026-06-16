@@ -1,7 +1,7 @@
 <template>
     <AppLayout title="POS Minimarket" :subtitle="`Punto de venta — ${$page.props.auth.user.name}`">
 
-        <div style="display:grid; grid-template-columns:1.2fr min(480px, 42vw); gap:16px; min-height:calc(100vh - 140px); overflow-y:auto;">
+        <div style="display:grid; grid-template-columns:1.2fr min(480px, 42vw); gap:16px; height:calc(100vh - 140px); overflow:hidden;">
 
             <!-- ══ PANEL IZQUIERDO: Búsqueda + Catálogo ══ -->
             <div style="display:flex; flex-direction:column; gap:16px; overflow:hidden; min-height:0;">
