@@ -231,7 +231,7 @@ const props = defineProps({
     fecha:           { type: String, default: '' },
 })
 
-const montoInicial = ref('')
+const montoInicial = ref(0)
 const modalCierre  = ref(false)
 const formCierre   = ref({ monto_final: '', observaciones: '' })
 
@@ -259,18 +259,22 @@ const formatHora = (fecha) => {
 }
 
 const abrirCaja = () => {
+    if (montoInicial.value === '' || montoInicial.value === null || isNaN(Number(montoInicial.value)) || Number(montoInicial.value) < 0) {
+        alert('Ingresa un monto inicial valido (puede ser 0).')
+        return
+    }
     router.post('/minimarket/caja/abrir', {
-        monto_inicial: montoInicial.value,
+        monto_inicial: Number(montoInicial.value),
     }, {
         onSuccess: () => { window.location.replace('/minimarket/caja') },
-        onError: (e) => alert('Error: ' + JSON.stringify(e))
+        onError: (e) => alert('No se pudo abrir la caja: ' + Object.values(e).join(' '))
     })
 }
 
 const cerrarCaja = () => {
     router.post(`/minimarket/caja/${props.caja_abierta.id}/cerrar`, formCierre.value, {
         onSuccess: () => { window.location.replace('/minimarket/caja') },
-        onError: (e) => alert('Error: ' + JSON.stringify(e))
+        onError: (e) => alert('No se pudo cerrar la caja: ' + Object.values(e).join(' '))
     })
 }
 </script>
