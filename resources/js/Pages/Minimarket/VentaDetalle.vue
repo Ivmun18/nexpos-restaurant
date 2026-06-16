@@ -229,8 +229,13 @@ const imprimir = () => {
             </span>
             <p style="font-size:12px; font-weight:bold; margin:4px 0;">${v.numero_completo}</p>
         </div>
+        ${ v.nubefact_estado === 'rechazado'
+            ? '<div style="text-align:center; border:2px solid #000; padding:6px; margin-bottom:8px; font-size:12px; font-weight:bold;">!ATENCION: COMPROBANTE NO ACEPTADO POR SUNAT<br>PENDIENTE DE REGULARIZAR</div>'
+            : (v.nubefact_estado && v.nubefact_estado !== 'aceptado'
+                ? '<div style="text-align:center; border:1px dashed #000; padding:6px; margin-bottom:8px; font-size:11px; font-weight:bold;">PENDIENTE DE ENVIO A SUNAT</div>'
+                : '') }
         <div style="margin-bottom:8px; font-size:11px;">
-            <div style="display:flex; justify-content:space-between;"><span>Fecha:</span><span>${v.fecha_emision}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Fecha:</span><span>${formatFecha(v.fecha_emision)}</span></div>
             <div style="display:flex; justify-content:space-between;"><span>Hora:</span><span>${v.hora_emision}</span></div>
             <div style="display:flex; justify-content:space-between;"><span>Pago:</span><span>${v.metodo_pago || 'efectivo'}</span></div>
         </div>
