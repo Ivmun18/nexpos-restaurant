@@ -147,8 +147,12 @@
 
                     <!-- Comprobante -->
                     <div style="margin-bottom:12px;">
-                        <p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Comprobante</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+                        <button type="button" @click="mostrarComprobante = !mostrarComprobante"
+                            style="width:100%; display:flex; align-items:center; justify-content:space-between; background:none; border:none; padding:0; margin:0 0 8px; cursor:pointer;">
+                            <p style="font-size:12px; font-weight:600; color:#64748B; margin:0; text-transform:uppercase; letter-spacing:1px;">Comprobante {{ tipoComprobante !== 'ninguno' ? ('· ' + (tipoComprobante === 'boleta' ? 'Boleta' : 'Factura')) : '' }}</p>
+                            <span style="font-size:12px; color:#94A3B8;">{{ mostrarComprobante ? '▲' : '▼' }}</span>
+                        </button>
+                        <div v-if="mostrarComprobante" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
                             <button type="button" @click="tipoComprobante = 'ninguno'"
                                 :style="tipoComprobante === 'ninguno' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
                                 🚫 Ninguno
@@ -236,6 +240,7 @@ const productosFiltrados = computed(() => {
 })
 
 const tipoComprobante = ref('ninguno')
+const mostrarComprobante = ref(false)
 const clienteDni = ref('')
 const clienteRazonSocial = ref('')
 const clienteEmail = ref('')
