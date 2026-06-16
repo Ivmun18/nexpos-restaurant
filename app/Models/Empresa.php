@@ -8,6 +8,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Empresa extends Model
 {
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($empresa) {
+            if (empty($empresa->modules_enabled)) {
+                $defaults = [
+                    'restaurante'  => ['mesas','carta','cocina','comandas','turnos','pos_restaurante','mozos','reportes','facturacion','clientes','productos','proveedores','compras','caja','usuarios','insumos','recetas'],
+                    'minimarket'   => ['productos','inventario','pos_minimarket','pos_retail','proveedores','caja','reportes','facturacion'],
+                    'farmacia'     => ['productos','inventario','pos_farmacia','recetas','vencimientos','proveedores','caja','reportes','facturacion'],
+                    'ferreteria'   => ['productos','inventario','pos_ferreteria','proveedores','caja','reportes','facturacion'],
+                    'notaria'      => ['actos','expedientes','caja','comprobantes','clientes','usuarios','seguimiento'],
+                    'odontologia'  => ['odontologia','citas','pacientes','recetas','caja','reportes','facturacion'],
+                    'gimnasio'     => ['miembros','membresias','pagos','caja','reportes'],
+                    'hotel'        => ['habitaciones','reservas','huespedes','caja','reportes','facturacion'],
+                ];
+                $empresa->modules_enabled = $defaults[$empresa->industry_type] ?? [];
+            }
+        });
+    }
+
     use Auditable;
 
     protected $auditModulo = 'Empresas';
