@@ -371,7 +371,7 @@ const cargarPlantilla = () => {
         {
             onSuccess: () => {
                 plantillaCargada.value = plantillaDisponible.value
-                alert('✅ Medicamentos demo cargados correctamente')
+                alert('✅ Productos demo cargados correctamente')
                 cargandoPlantilla.value = false
             },
             onError: (e) => {
