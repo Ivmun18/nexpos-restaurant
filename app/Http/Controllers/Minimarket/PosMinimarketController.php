@@ -151,7 +151,7 @@ class PosMinimarketController extends Controller
                 $factorDescuento = 1;
                 if (!empty($item['presentacion_id'])) {
                     $pres = \App\Models\ProductoPresentacion::find($item['presentacion_id']);
-                    if ($pres) {
+                    if ($pres && $pres->producto_id === $producto->id) {
                         $factorDescuento = (float) $pres->factor_conversion;
                     }
                 }
