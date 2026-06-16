@@ -27,7 +27,7 @@ class PosMinimarketController extends Controller
 
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
-            ->with(['presentaciones' => fn($q) => $q->where('activo', true)])
+            ->with(['presentaciones' => fn($q) => $q->where('activo', true), 'categoria:id,nombre,icono,color'])
             ->orderBy('descripcion')
             ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'categoria_id', 'unidad_medida']);
 

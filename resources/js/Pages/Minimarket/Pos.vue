@@ -42,7 +42,7 @@
                             @mouseleave="e => { e.currentTarget.style.borderColor = p.stock_actual <= 0 ? '#FEE2E2' : '#E2E8F0'; e.currentTarget.style.boxShadow='none' }"
                         >
                             <div style="font-size:24px; text-align:center; margin-bottom:6px;">
-                                {{ iconProducto(p.categoria) }}
+                                {{ p.categoria?.icono || '📦' }}
                             </div>
                             <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0 0 4px; line-height:1.3;">{{ p.descripcion }}</p>
                             <p style="font-size:11px; color:#94A3B8; margin:0 0 6px;">{{ p.codigo_barras || 'Sin código' }}</p>
@@ -243,15 +243,6 @@ const clienteEmail = ref('')
 const total = computed(() =>
     carrito.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
 )
-
-const iconProducto = (categoria) => {
-    const map = {
-        bebidas: '🥤', lacteos: '🥛', panaderia: '🍞', carnes: '🥩',
-        frutas: '🍎', verduras: '🥦', limpieza: '🧼', snacks: '🍿',
-        conservas: '🥫', higiene: '🧴',
-    }
-    return map[categoria?.toLowerCase()] || '📦'
-}
 
 const inputBusqueda = ref(null)
 
