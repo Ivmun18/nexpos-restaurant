@@ -273,9 +273,9 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
     ];
 
     $response = \Illuminate\Support\Facades\Http::withHeaders([
-        'Authorization' => 'Bearer ' . $empresa->nubefact_token,
+        'Authorization' => 'Bearer ' . $empresa->apisunat_token,
         'Content-Type'  => 'application/json',
-    ])->post('https://api.apisunat.com/v1/personas/' . $empresa->ruc . '/documentos', $payload);
+    ])->post('https://api.apisunat.com/v1/personas/' . $empresa->apisunat_ruc . '/documentos', $payload);
 
     if ($response->successful()) {
         $data = $response->json();
