@@ -82,6 +82,12 @@
                         <div style="flex:1; min-width:0;">
                             <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.descripcion }}</p>
                             <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ Number(item.precio_venta).toFixed(2) }} c/u</p>
+                            <select v-if="item.presentaciones && item.presentaciones.length"
+                                :value="item.presentacion_id"
+                                @change="cambiarPresentacion(i, $event.target.value)"
+                                style="margin-top:4px; font-size:11px; padding:2px 4px; border-radius:6px; border:1px solid #E2E8F0; max-width:140px;">
+                                <option v-for="pr in item.presentaciones" :key="pr.id" :value="pr.id">{{ pr.nombre }}</option>
+                            </select>
                         </div>
                         <div style="display:flex; align-items:center; gap:6px;">
                             <button @click="decrementar(i)"
@@ -274,20 +280,49 @@ const escanearCodigo = () => {
     }
 }
 
+const presentacionPorDefecto = (p) => {
+    if (!p.presentaciones || !p.presentaciones.length) return null
+    return p.presentaciones.find(pr => pr.es_default) || p.presentaciones[0]
+}
+
 const agregarAlCarrito = (p) => {
     if (p.stock_actual <= 0) return
     const existe = carrito.value.find(i => i.id === p.id)
     if (existe) {
-        if (existe.cantidad < p.stock_actual) existe.cantidad++
+        existe.cantidad++
     } else {
-        carrito.value.push({ ...p, cantidad: 1 })
+        const pres = presentacionPorDefecto(p)
+        carrito.value.push({
+            ...p,
+            cantidad: 1,
+            presentacion_id: pres ? pres.id : null,
+            precio_venta: pres ? Number(pres.precio_venta) : p.precio_venta,
+            unidad_sunat: pres ? pres.unidad_sunat : 'NIU',
+        })
+    }
+}
+
+const cambiarPresentacion = (i, presentacionId) => {
+    const item = carrito.value[i]
+    const prod = props.productos.find(p => p.id === item.id)
+    if (!prod) return
+    if (!presentacionId) {
+        item.presentacion_id = null
+        item.precio_venta = prod.precio_venta
+        item.unidad_sunat = 'NIU'
+        return
+    }
+    const pres = prod.presentaciones.find(pr => pr.id == presentacionId)
+    if (pres) {
+        item.presentacion_id = pres.id
+        item.precio_venta = Number(pres.precio_venta)
+        item.unidad_sunat = pres.unidad_sunat
     }
 }
 
 const incrementar = (i) => {
     const item = carrito.value[i]
-    const prod = props.productos.find(p => p.id === item.id)
-    if (item.cantidad < (prod?.stock_actual ?? 999)) item.cantidad++
+    item.cantidad++
 }
 
 const decrementar = (i) => {
