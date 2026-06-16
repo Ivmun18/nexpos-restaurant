@@ -78,7 +78,7 @@
                     </div>
 
                     <div v-for="(item, i) in carrito" :key="item.id"
-                        style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #F1F5F9;">
+                        style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #F1F5F9;">
                         <div style="flex:1; min-width:0;">
                             <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.descripcion }}</p>
                             <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ Number(item.precio_venta).toFixed(2) }} c/u</p>
@@ -108,14 +108,14 @@
                 <div style="flex-shrink:0; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
 
                     <!-- Total -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 16px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:8px 14px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:10px;">
                         <p style="font-size:15px; font-weight:700; color:white; margin:0;">TOTAL</p>
                         <p style="font-size:28px; font-weight:900; color:white; margin:0;">S/ {{ total.toFixed(2) }}</p>
                     </div>
 
                     <!-- Método de pago -->
-                    <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 10px;">Método de pago</p>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+                    <p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 6px;">Método de pago</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
                         <button v-for="m in metodos" :key="m.valor" @click="metodoPago = m.valor"
                             :style="{
                                 padding: '10px',
