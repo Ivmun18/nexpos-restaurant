@@ -98,7 +98,7 @@ class PosMinimarketController extends Controller
         $venta = \App\Models\Venta::create([
             'empresa_id'          => $empresa->id,
             'usuario_id'          => auth()->id(),
-            'estado'              => $estadoVenta,
+            'estado'              => 'pendiente',
             'tipo_comprobante'    => $tipo,
             'serie'               => $serie,
             'correlativo'         => $correlativo,

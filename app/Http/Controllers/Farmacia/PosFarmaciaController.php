@@ -141,7 +141,7 @@ class PosFarmaciaController extends Controller
         'receta_numero'       => $request->receta_numero ?? null,
         'receta_fecha'        => $request->receta_fecha ?? null,
         'receta_observaciones'=> $request->receta_observaciones ?? null,
-        'estado'              => $estadoVenta,
+        'estado'              => 'pendiente',
         'tipo_comprobante'    => $tipo,
         'serie'               => $serie,
         'correlativo'         => $correlativo,
