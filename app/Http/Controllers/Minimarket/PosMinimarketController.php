@@ -27,8 +27,9 @@ class PosMinimarketController extends Controller
 
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
+            ->with(['presentaciones' => fn($q) => $q->where('activo', true)])
             ->orderBy('descripcion')
-            ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'categoria_id']);
+            ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'categoria_id', 'unidad_medida']);
 
         return Inertia::render('Minimarket/Pos', [
             'productos'    => $productos,
@@ -77,8 +78,20 @@ class PosMinimarketController extends Controller
             if (!$producto) {
                 throw new \Exception("Producto no encontrado o no pertenece a esta empresa (id: {$item['id']})");
             }
-            if ($producto->controla_stock && $producto->stock_actual < $item['cantidad']) {
-                throw new \Exception("Stock insuficiente para '{$producto->descripcion}'. Disponible: {$producto->stock_actual}, solicitado: {$item['cantidad']}");
+            $factor = 1;
+            if (!empty($item['presentacion_id'])) {
+                $presentacion = \App\Models\ProductoPresentacion::where('id', $item['presentacion_id'])
+                    ->where('producto_id', $producto->id)
+                    ->first();
+                if (!$presentacion) {
+                    throw new \Exception("Presentacion invalida para '{$producto->descripcion}'");
+                }
+                $factor = (float) $presentacion->factor_conversion;
+            }
+            $cantidadEnStock = $item['cantidad'] * $factor;
+
+            if ($producto->controla_stock && $producto->stock_actual < $cantidadEnStock) {
+                throw new \Exception("Stock insuficiente para '{$producto->descripcion}'. Disponible: {$producto->stock_actual}, solicitado: {$cantidadEnStock}");
             }
         }
 
@@ -115,7 +128,7 @@ class PosMinimarketController extends Controller
                 'linea'              => $index + 1,
                 'codigo_producto'    => $item['codigo_barras'] ?? $item['codigo'] ?? 'S/C',
                 'descripcion'        => $item['descripcion'],
-                'unidad_medida'      => 'NIU',
+                'unidad_medida'      => $item['unidad_sunat'] ?? 'NIU',
                 'cantidad'           => $item['cantidad'],
                 'precio_unitario'    => $item['precio_venta'],
                 'valor_unitario'     => $item['precio_venta'],
@@ -127,7 +140,14 @@ class PosMinimarketController extends Controller
             ]);
 
             if ($producto->controla_stock) {
-                $producto->decrement('stock_actual', $item['cantidad']);
+                $factorDescuento = 1;
+                if (!empty($item['presentacion_id'])) {
+                    $pres = \App\Models\ProductoPresentacion::find($item['presentacion_id']);
+                    if ($pres) {
+                        $factorDescuento = (float) $pres->factor_conversion;
+                    }
+                }
+                $producto->decrement('stock_actual', $item['cantidad'] * $factorDescuento);
             }
         }
 
