@@ -162,7 +162,7 @@ class PosMinimarketController extends Controller
         return $venta;
     });
 
-    if ($tipoComprobante !== 'ninguno' && $empresa->nubefact_token) {
+    if ($tipoComprobante !== 'ninguno' && $empresa->apisunat_token) {
         $this->emitirNubefact($venta, $empresa);
     }
 
@@ -244,52 +244,176 @@ private function emitirNubefact($venta, $empresa)
 
 private function emitirApisunat($venta, $empresa, $items, $esRus)
 {
-    $payload = [
-        'documento'                  => $venta->tipo_comprobante === '01' ? 'factura' : 'boleta',
-        'serie'                      => $venta->serie,
-        'numero'                     => $venta->correlativo,
-        'fecha_de_emision'           => now()->format('Y-m-d'),
-        'moneda'                     => 'PEN',
-        'tipo_operacion'             => '0101',
-        'cliente_tipo_de_documento'  => $venta->tipo_comprobante === '01' ? '6' : '1',
-        'cliente_numero_de_documento'=> $venta->cliente_num_doc ?? '',
-        'cliente_denominacion'       => $venta->cliente_razon_social ?? 'CLIENTES VARIOS',
-        'cliente_direccion'          => '',
-        'cliente_correo'             => $venta->cliente_email ?? '',
-        'total_gravada'              => $venta->total_gravado ?? 0,
-        'total_exonerada'            => $venta->total_exonerado ?? 0,
-        'total_inafecta'             => $venta->total_inafecto ?? 0,
-        'total_igv'                  => $venta->total_igv ?? 0,
-        'total'                      => $venta->total,
-        'items'                      => collect($items)->map(fn($i) => [
-            'unidad_de_medida'           => $i['unidad_de_medida'],
-            'descripcion'                => $i['descripcion'],
-            'cantidad'                   => $i['cantidad'],
-            'valor_unitario'             => $i['valor_unitario'],
-            'porcentaje_igv'             => $i['porcentaje_igv'],
-            'codigo_tipo_afectacion_igv' => $i['codigo_tipo_afectacion_igv'],
-            'nombre_tributo'             => $i['nombre_tributo'],
-        ])->toArray(),
+    if (empty($empresa->apisunat_token) || empty($empresa->apisunat_ruc)) {
+        \Log::warning('emitirApisunat minimarket: faltan credenciales apisunat para empresa ' . $empresa->id);
+        $venta->update(['observaciones' => 'No se emitio: faltan credenciales ApiSunat']);
+        return;
+    }
+
+    $exonerada     = $esRus;
+    $total         = round($venta->total, 2);
+    $igv           = round($venta->total_igv ?? 0, 2);
+    $baseImponible = $exonerada
+        ? round($venta->total_exonerado ?? $total, 2)
+        : round($venta->total_gravado ?? ($total - $igv), 2);
+
+    $tipoDoc  = $venta->tipo_comprobante === '01' ? '01' : '03';
+    $fileName = $empresa->apisunat_ruc . '-' . $tipoDoc . '-' . $venta->serie . '-' . str_pad($venta->correlativo, 8, '0', STR_PAD_LEFT);
+
+    $lineas = [];
+    foreach ($items as $idx => $i) {
+        $cantidad     = (float) $i['cantidad'];
+        $valorUnit    = (float) $i['valor_unitario'];
+        $valLinea     = round($valorUnit * $cantidad, 2);
+        $igvLinea     = $exonerada ? 0 : round($valLinea * ((float)$i['porcentaje_igv'] / 100), 2);
+
+        $lineas[] = [
+            'cbc:ID'                  => ['_text' => (string)($idx + 1)],
+            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => $i['unidad_de_medida'] ?? 'NIU'], '_text' => (string) $cantidad],
+            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valLinea],
+            'cac:PricingReference' => [
+                'cac:AlternativeConditionPrice' => [
+                    'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => round((float) $i['precio_unitario'], 2)],
+                    'cbc:PriceTypeCode' => ['_text' => '01'],
+                ],
+            ],
+            'cac:TaxTotal' => [
+                'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvLinea],
+                'cac:TaxSubtotal' => [[
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valLinea],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvLinea],
+                    'cac:TaxCategory'   => [
+                        'cbc:Percent'                => ['_text' => (string)(float) $i['porcentaje_igv']],
+                        'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
+                        'cac:TaxScheme' => [
+                            'cbc:ID'          => ['_text' => $i['codigo_tipo_afectacion_igv'] === '40' ? '9998' : ($exonerada ? '9997' : '1000')],
+                            'cbc:Name'        => ['_text' => $i['nombre_tributo']],
+                            'cbc:TaxTypeCode' => ['_text' => 'VAT'],
+                        ],
+                    ],
+                ]],
+            ],
+            'cac:Item' => [
+                'cbc:Description' => ['_text' => $i['descripcion']],
+                'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => $i['codigo'] ?? 'S/C']],
+            ],
+            'cac:Price' => [
+                'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valorUnit],
+            ],
+        ];
+    }
+
+    $documentBody = [
+        'cbc:UBLVersionID'         => ['_text' => '2.1'],
+        'cbc:CustomizationID'      => ['_text' => '2.0'],
+        'cbc:ID'                   => ['_text' => $venta->serie . '-' . str_pad($venta->correlativo, 8, '0', STR_PAD_LEFT)],
+        'cbc:IssueDate'            => ['_text' => $venta->fecha_emision ?? now()->format('Y-m-d')],
+        'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoDoc],
+        'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetrasMinimarket($total)],
+        'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+        'cac:PaymentTerms'         => [
+            'cbc:ID'             => ['_text' => 'FormaPago'],
+            'cbc:PaymentMeansID' => ['_text' => 'Contado'],
+        ],
+        'cac:AccountingSupplierParty' => [
+            'cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->apisunat_ruc]],
+                'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                'cac:PartyLegalEntity'    => [
+                    'cbc:RegistrationName' => ['_text' => $empresa->razon_social],
+                    'cac:RegistrationAddress' => [
+                        'cbc:AddressTypeCode' => ['_text' => '0000'],
+                        'cac:AddressLine'     => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']],
+                    ],
+                ],
+            ],
+        ],
+        'cac:AccountingCustomerParty' => [
+            'cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $venta->cliente_tipo_doc ?: '1'], '_text' => $venta->cliente_num_doc ?: '00000000']],
+                'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($venta->cliente_razon_social ?: 'CLIENTES VARIOS')]],
+            ],
+        ],
+        'cac:TaxTotal' => [
+            'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+            'cac:TaxSubtotal' => [[
+                'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                'cac:TaxCategory'   => ['cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
+            ]],
+        ],
+        'cac:LegalMonetaryTotal' => [
+            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+            'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+            'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+        ],
+        'cac:InvoiceLine' => $lineas,
     ];
 
-    $response = \Illuminate\Support\Facades\Http::withHeaders([
-        'Authorization' => 'Bearer ' . $empresa->apisunat_token,
-        'Content-Type'  => 'application/json',
-    ])->post('https://api.apisunat.com/v1/personas/' . $empresa->apisunat_ruc . '/documentos', $payload);
+    try {
+        $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+            ->timeout(60)
+            ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                'personaId'    => $empresa->apisunat_ruc,
+                'personaToken' => $empresa->apisunat_token,
+                'fileName'     => $fileName,
+                'documentBody' => $documentBody,
+            ]);
 
-    if ($response->successful()) {
         $data = $response->json();
+        \Log::info('ApiSunat minimarket response venta ' . $venta->id . ': ' . json_encode($data));
+
+        $aceptada = $response->successful() && isset($data['sunatResponse']);
+
         $venta->update([
-            'nubefact_id'     => $data['payload']['pdf'] ?? null,
-            'nubefact_estado' => 'aceptado',
+            'nubefact_id'     => $data['sunatResponse']['enlace_del_pdf'] ?? null,
+            'nubefact_estado' => $aceptada ? 'aceptado' : 'rechazado',
             'observaciones'   => json_encode($data),
         ]);
-    } else {
+    } catch (\Exception $e) {
+        \Log::error('ApiSunat minimarket error venta ' . $venta->id . ': ' . $e->getMessage());
         $venta->update([
             'nubefact_estado' => 'rechazado',
-            'observaciones'   => json_encode($response->json()),
+            'observaciones'   => 'Error al emitir: ' . $e->getMessage(),
         ]);
     }
+}
+
+private function numeroALetrasMinimarket($numero)
+{
+    $entero  = (int) floor($numero);
+    $decimal = (int) round(($numero - $entero) * 100);
+    return strtoupper($this->convertirNumeroALetrasMinimarket($entero)) . " CON {$decimal}/100 SOLES";
+}
+
+private function convertirNumeroALetrasMinimarket($num)
+{
+    if ($num == 0) return 'cero';
+    $unidades   = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+    $decenas    = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciseis', 'diecisiete', 'dieciocho', 'diecinueve'];
+    $decenasMul = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+    $centenas   = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+    if ($num < 10) return $unidades[$num];
+    if ($num < 20) return $decenas[$num - 10];
+    if ($num < 100) {
+        $d = intdiv($num, 10);
+        $u = $num % 10;
+        return $decenasMul[$d] . ($u > 0 ? ' y ' . $unidades[$u] : '');
+    }
+    if ($num < 1000) {
+        $c = intdiv($num, 100);
+        $r = $num % 100;
+        $texto = $num == 100 ? 'cien' : $centenas[$c];
+        return $texto . ($r > 0 ? ' ' . $this->convertirNumeroALetrasMinimarket($r) : '');
+    }
+    if ($num < 1000000) {
+        $m = intdiv($num, 1000);
+        $r = $num % 1000;
+        $prefijo = $m == 1 ? 'mil' : $this->convertirNumeroALetrasMinimarket($m) . ' mil';
+        return $prefijo . ($r > 0 ? ' ' . $this->convertirNumeroALetrasMinimarket($r) : '');
+    }
+    return (string) $num;
 }
 
 private function emitirNubefactApi($venta, $empresa, $items, $esRus)
