@@ -638,6 +638,11 @@ Route::middleware(['auth', 'solo_admin'])->group(function () {
     Route::post('/minimarket/categorias', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'store'])->name('minimarket.categorias.store');
     Route::put('/minimarket/categorias/{categoria}', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'update'])->name('minimarket.categorias.update');
     Route::delete('/minimarket/categorias/{categoria}', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'destroy'])->name('minimarket.categorias.destroy');
+
+    // ====== PLANTILLAS / DATOS DEMO ======
+    Route::get('/minimarket/plantillas', [\App\Http\Controllers\PlantillaController::class, 'index'])->name('minimarket.plantillas.index');
+    Route::post('/minimarket/plantillas/cargar', [\App\Http\Controllers\PlantillaController::class, 'cargar'])->name('minimarket.plantillas.cargar');
+    Route::post('/minimarket/empresa/limpiar-datos', [\App\Http\Controllers\PlantillaController::class, 'limpiarDatos'])->name('minimarket.empresa.limpiar');
 });
 
 // Reportes Minimarket (solo admin)
