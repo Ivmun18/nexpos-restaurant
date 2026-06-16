@@ -623,6 +623,14 @@ const menuItems = computed(() => {
             if (item.section === 'MINIMARKET') return false
         }
 
+        // En minimarket: Modalidad de cobro
+        //   'directo'  = vendedor cobra        -> mostrar Caja, ocultar Panel Cajero
+        //   'cajero'   = cajero centralizado   -> mostrar Panel Cajero, ocultar Caja
+        if (industry === 'minimarket') {
+            if (modalidadCobro.value === 'directo' && item.path === '/minimarket/cajero') return false
+            if (modalidadCobro.value === 'cajero' && item.path === '/minimarket/caja') return false
+        }
+
         // Ocultar módulos de ferretería si no es ferretería
         if (industry !== 'ferreteria') {
             if (item.section === 'FERRETERIA') return false
