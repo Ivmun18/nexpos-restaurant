@@ -78,6 +78,10 @@
                                     style="padding:6px 12px; background:#EFF6FF; color:#1D4ED8; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #BFDBFE; cursor:pointer;">
                                     📦 Stock
                                 </button>
+                                <button @click="abrirPresentaciones(p)"
+                                    style="padding:6px 12px; background:#FDF4FF; color:#A21CAF; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #F5D0FE; cursor:pointer;">
+                                    📐 Presentaciones
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -208,6 +212,85 @@
     </div>
 </Teleport>
 
+<!-- Modal Presentaciones -->
+<Teleport to="body">
+    <div v-if="modalPresentaciones" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:20px; padding:32px; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <p style="font-size:20px; font-weight:800; color:#1E293B; margin:0 0 4px;">📐 Presentaciones</p>
+            <p style="font-size:13px; color:#94A3B8; margin:0 0 20px;">{{ productoSeleccionado?.descripcion }} — stock base: {{ productoSeleccionado?.stock_actual }}</p>
+
+            <div v-if="productoSeleccionado?.presentaciones?.length" style="display:grid; gap:10px; margin-bottom:20px;">
+                <div v-for="pres in productoSeleccionado.presentaciones" :key="pres.id"
+                    style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:#F8FAFC; border-radius:10px; border:1px solid #E2E8F0;">
+                    <div>
+                        <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0;">
+                            {{ pres.nombre }}
+                            <span v-if="pres.es_default" style="font-size:10px; background:#DCFCE7; color:#166534; padding:2px 6px; border-radius:8px; margin-left:6px;">default</span>
+                        </p>
+                        <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">1 {{ pres.nombre }} = {{ pres.factor_conversion }} unidad base · S/ {{ Number(pres.precio_venta).toFixed(2) }}</p>
+                    </div>
+                    <button @click="eliminarPresentacion(pres)"
+                        style="padding:6px 10px; background:#FEF2F2; color:#991B1B; border-radius:8px; font-size:12px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+            <p v-else style="font-size:13px; color:#94A3B8; margin:0 0 20px;">Sin presentaciones adicionales. El producto se vende solo por unidad base.</p>
+
+            <div style="border-top:1px solid #E2E8F0; padding-top:16px;">
+                <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 12px;">+ Agregar presentación</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:13px; font-weight:600; color:#64748B;">Nombre</label>
+                        <input v-model="formPresentacion.nombre" placeholder="Ej: Saco 50kg"
+                            style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                    </div>
+                    <div>
+                        <label style="font-size:13px; font-weight:600; color:#64748B;">Unidad SUNAT</label>
+                        <select v-model="formPresentacion.unidad_sunat"
+                            style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;">
+                            <option value="NIU">Unidad (NIU)</option>
+                            <option value="KGM">Kilogramo (KGM)</option>
+                            <option value="SCO">Saco (SCO)</option>
+                            <option value="CJ">Caja (CJ)</option>
+                            <option value="DZN">Docena (DZN)</option>
+                            <option value="BG">Bolsa (BG)</option>
+                            <option value="LTR">Litro (LTR)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div>
+                        <label style="font-size:13px; font-weight:600; color:#64748B;">Equivale a (en unidad base)</label>
+                        <input v-model="formPresentacion.factor_conversion" type="number" step="0.0001" placeholder="Ej: 50"
+                            style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                    </div>
+                    <div>
+                        <label style="font-size:13px; font-weight:600; color:#64748B;">Precio de venta</label>
+                        <input v-model="formPresentacion.precio_venta" type="number" step="0.01" placeholder="0.00"
+                            style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                    </div>
+                </div>
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#64748B; margin-bottom:16px;">
+                    <input v-model="formPresentacion.es_default" type="checkbox" />
+                    Usar como presentacion por defecto en el POS
+                </label>
+                <button @click="guardarPresentacion"
+                    style="width:100%; padding:12px; background:linear-gradient(135deg,#A21CAF,#701A75); color:white; border-radius:10px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                    Agregar presentacion
+                </button>
+            </div>
+
+            <div style="display:flex; margin-top:20px;">
+                <button @click="modalPresentaciones = false"
+                    style="flex:1; padding:12px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</Teleport>
+
     </AppLayout>
 </template>
 
@@ -225,6 +308,8 @@ const busqueda    = ref('')
 const modalNuevo  = ref(false)
 const modalEditar = ref(false)
 const modalStock  = ref(false)
+const modalPresentaciones = ref(false)
+const formPresentacion = ref({ nombre: '', unidad_sunat: 'NIU', factor_conversion: 1, precio_venta: '', es_default: false })
 const productoSeleccionado = ref(null)
 
 const form = ref({
@@ -293,6 +378,36 @@ const ajustarStock = (p) => {
     productoSeleccionado.value = p
     formStock.value = { tipo: 'entrada', cantidad: 1 }
     modalStock.value = true
+}
+
+const abrirPresentaciones = (p) => {
+    productoSeleccionado.value = p
+    formPresentacion.value = { nombre: '', unidad_sunat: 'NIU', factor_conversion: 1, precio_venta: '', es_default: false }
+    modalPresentaciones.value = true
+}
+
+const guardarPresentacion = () => {
+    if (!formPresentacion.value.nombre || !formPresentacion.value.factor_conversion || formPresentacion.value.precio_venta === '') {
+        alert('Completa nombre, factor de conversion y precio de venta.')
+        return
+    }
+    router.post(`/minimarket/productos/${productoSeleccionado.value.id}/presentaciones`, formPresentacion.value, {
+        onSuccess: () => {
+            window.location.replace('/minimarket/productos')
+        },
+        onError: (errors) => {
+            alert('No se pudo guardar: ' + Object.values(errors).join(' '))
+        }
+    })
+}
+
+const eliminarPresentacion = (pres) => {
+    if (!confirm(`Eliminar la presentacion "${pres.nombre}"?`)) return
+    router.delete(`/minimarket/presentaciones/${pres.id}`, {
+        onSuccess: () => {
+            window.location.replace('/minimarket/productos')
+        }
+    })
 }
 
 const guardar = () => {
