@@ -25,11 +25,11 @@ class CajaMinimarketController extends Controller
             ->whereDate('created_at', $hoy)
             ->get();
 
-        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total_gravado');
-        $totalDia      = $ventasHoy->sum('total_gravado');
+        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalDia      = $ventasHoy->sum('total');
 
         // Ventas por hora
         $ventasPorHora = Venta::where('empresa_id', $empresaId)
@@ -110,11 +110,11 @@ class CajaMinimarketController extends Controller
         $ventasHoy = Venta::where('empresa_id', $empresaId)
             ->whereDate('created_at', $hoy)->get();
 
-        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total_gravado');
-        $totalVentas   = $ventasHoy->sum('total_gravado');
+        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalVentas   = $ventasHoy->sum('total');
 
         $efectivoEsperado = $caja->monto_inicial + $totalEfectivo;
         $diferencia = $request->monto_final - $efectivoEsperado;
