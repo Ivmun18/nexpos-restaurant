@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Hotel;
 
 use App\Http\Controllers\Controller;
-use App\Models\CajaMinimarket;
+use App\Models\CajaHotel;
 use App\Models\HotelPago;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,12 +15,12 @@ class CajaHotelController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
-        $cajaAbierta = CajaMinimarket::where('empresa_id', $empresaId)
+        $cajaAbierta = CajaHotel::where('empresa_id', $empresaId)
             ->where('estado', 'abierta')
             ->with('usuario')
             ->latest()->first();
 
-        $historial = CajaMinimarket::where('empresa_id', $empresaId)
+        $historial = CajaHotel::where('empresa_id', $empresaId)
             ->where('estado', 'cerrada')
             ->with('usuario')
             ->orderByDesc('created_at')
@@ -41,14 +41,14 @@ class CajaHotelController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
-        $cajaExistente = CajaMinimarket::where('empresa_id', $empresaId)
+        $cajaExistente = CajaHotel::where('empresa_id', $empresaId)
             ->where('estado', 'abierta')->first();
 
         if ($cajaExistente) {
             return back()->with('error', 'Ya hay una caja abierta.');
         }
 
-        CajaMinimarket::create([
+        CajaHotel::create([
             'empresa_id'    => $empresaId,
             'usuario_id'    => auth()->id(),
             'monto_inicial' => $request->monto_inicial ?? 0,
@@ -59,7 +59,7 @@ class CajaHotelController extends Controller
         return redirect()->route('hotel.caja')->with('success', 'Caja abierta correctamente.');
     }
 
-    public function cerrar(Request $request, CajaMinimarket $caja)
+    public function cerrar(Request $request, CajaHotel $caja)
     {
         $empresaId = auth()->user()->empresa_id;
 
