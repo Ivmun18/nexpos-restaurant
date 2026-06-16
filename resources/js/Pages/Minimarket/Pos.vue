@@ -144,48 +144,8 @@
                             <span style="font-size:16px; font-weight:800; color:#166534;">S/ {{ (montoPagado - total).toFixed(2) }}</span>
                         </div>
                     </div>
-
-                    <!-- Comprobante -->
-                    <div style="margin-bottom:12px;">
-                        <button type="button" @click="mostrarComprobante = !mostrarComprobante"
-                            style="width:100%; display:flex; align-items:center; justify-content:space-between; background:none; border:none; padding:0; margin:0 0 8px; cursor:pointer;">
-                            <p style="font-size:12px; font-weight:600; color:#64748B; margin:0; text-transform:uppercase; letter-spacing:1px;">Comprobante {{ tipoComprobante !== 'ninguno' ? ('· ' + (tipoComprobante === 'boleta' ? 'Boleta' : 'Factura')) : '' }}</p>
-                            <span style="font-size:12px; color:#94A3B8;">{{ mostrarComprobante ? '▲' : '▼' }}</span>
-                        </button>
-                        <div v-if="mostrarComprobante" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
-                            <button type="button" @click="tipoComprobante = 'ninguno'"
-                                :style="tipoComprobante === 'ninguno' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
-                                🚫 Ninguno
-                            </button>
-                            <button type="button" @click="tipoComprobante = 'boleta'"
-                                :style="tipoComprobante === 'boleta' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
-                                🧾 Boleta
-                            </button>
-                            <button type="button" @click="tipoComprobante = 'factura'"
-                                :style="tipoComprobante === 'factura' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
-                                📄 Factura
-                            </button>
-                        </div>
-
-                        <!-- Datos cliente para boleta/factura -->
-                        <div v-if="tipoComprobante !== 'ninguno'" style="display:flex; flex-direction:column; gap:8px;">
-                            <input v-model="clienteDni" type="text"
-                                :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
-                            <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
-                                placeholder="Razón social del cliente *"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
-                            <input v-model="clienteEmail" type="email"
-                                placeholder="Email (para enviar comprobante)"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
-                        </div>
-                    </div>
-
                     <!-- Botón cobrar -->
-                    <button @click="cobrar"
+                    <button @click="abrirModalCobro"
                         :disabled="!carrito.length || procesando"
                         :style="{
                             width: '100%',
@@ -206,6 +166,63 @@
         </div>
 
     </AppLayout>
+
+    <!-- Modal de confirmacion de cobro -->
+    <div v-if="mostrarModalCobro" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;">
+        <div style="background:white; border-radius:16px; padding:20px; max-width:400px; width:100%; max-height:90vh; overflow-y:auto;">
+            <p style="font-size:16px; font-weight:800; color:#0F172A; margin:0 0 4px;">Confirmar venta</p>
+            <p style="font-size:13px; color:#64748B; margin:0 0 16px;">Total: S/ {{ total.toFixed(2) }}</p>
+<p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Tipo de comprobante</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+                <button type="button" @click="tipoComprobante = 'ninguno'"
+                    :style="tipoComprobante === 'ninguno' ? 'padding:10px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:10px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                    🚫 Ninguno
+                </button>
+                <button type="button" @click="tipoComprobante = 'boleta'"
+                    :style="tipoComprobante === 'boleta' ? 'padding:10px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:10px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                    🧾 Boleta
+                </button>
+                <button type="button" @click="tipoComprobante = 'factura'"
+                    :style="tipoComprobante === 'factura' ? 'padding:10px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:10px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                    📄 Factura
+                </button>
+            </div>
+<div v-if="tipoComprobante !== 'ninguno'" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                <input v-model="clienteDni" type="text"
+                    :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                />
+                <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
+                    placeholder="Razón social del cliente *"
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                />
+                <input v-model="clienteEmail" type="email"
+                    placeholder="Email (para enviar comprobante)"
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                />
+            </div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button type="button" @click="mostrarModalCobro = false" :disabled="procesando"
+                    style="padding:12px; border-radius:10px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:14px; font-weight:700; cursor:pointer;">
+                    Cancelar
+                </button>
+                <button type="button" @click="confirmarCobro" :disabled="procesando"
+                    :style="{
+                        padding: '12px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg,#14B8A6,#0F766E)',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontWeight: '800',
+                        cursor: procesando ? 'not-allowed' : 'pointer',
+                    }">
+                    {{ procesando ? '⏳ Procesando...' : '✅ Confirmar y cobrar' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
@@ -240,7 +257,7 @@ const productosFiltrados = computed(() => {
 })
 
 const tipoComprobante = ref('ninguno')
-const mostrarComprobante = ref(false)
+const mostrarModalCobro = ref(false)
 const clienteDni = ref('')
 const clienteRazonSocial = ref('')
 const clienteEmail = ref('')
@@ -326,7 +343,12 @@ const decrementar = (i) => {
     else carrito.value.splice(i, 1)
 }
 
-const cobrar = () => {
+const abrirModalCobro = () => {
+    if (!carrito.value.length) return
+    mostrarModalCobro.value = true
+}
+
+const confirmarCobro = () => {
     if (!carrito.value.length || procesando.value) return
     procesando.value = true
 
@@ -348,6 +370,7 @@ const cobrar = () => {
             clienteDni.value     = ''
             clienteRazonSocial.value = ''
             clienteEmail.value   = ''
+            mostrarModalCobro.value = false
         },
         onError: () => { procesando.value = false }
     })
