@@ -95,6 +95,20 @@ class PosMinimarketController extends Controller
             }
         }
 
+        $esRus = $empresa->regimen_tributario === 'RUS';
+        $zonaExonerada = (bool) ($empresa->zona_exonerada ?? false);
+
+        if ($esRus || $zonaExonerada) {
+            $gravado = 0;
+            $exonerado = round($request->total, 2);
+            $igv = 0;
+        } else {
+            $gravado = round($request->total / 1.18, 2);
+            $exonerado = 0;
+            $igv = round($request->total - $gravado, 2);
+        }
+        $inafecto = 0;
+
         $venta = \App\Models\Venta::create([
             'empresa_id'          => $empresa->id,
             'usuario_id'          => auth()->id(),
@@ -107,8 +121,8 @@ class PosMinimarketController extends Controller
             'hora_emision'        => now()->toTimeString(),
             'moneda'              => 'PEN',
             'total_gravado'       => $gravado,
-            'total_exonerado'     => $exonerado ?? 0,
-            'total_inafecto'      => $inafecto ?? 0,
+            'total_exonerado'     => $exonerado,
+            'total_inafecto'      => $inafecto,
             'total_igv'           => $igv,
             'total'               => $request->total,
             'total_descuento'     => 0,
