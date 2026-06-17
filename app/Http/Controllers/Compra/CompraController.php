@@ -42,9 +42,11 @@ class CompraController extends Controller
             ->orderBy('descripcion')
             ->get(['id','codigo','codigo_barras','descripcion','unidad_medida','precio_compra','tipo_afectacion_igv']);
 
+        $empresa = \App\Models\Empresa::find(EmpresaHelper::id());
         return Inertia::render('Compras/Create', [
-            'proveedores' => $proveedores,
-            'productos'   => $productos,
+            'proveedores'  => $proveedores,
+            'productos'    => $productos,
+            'es_farmacia'  => $empresa ? $empresa->isFarmacia() : false,
         ]);
     }
 

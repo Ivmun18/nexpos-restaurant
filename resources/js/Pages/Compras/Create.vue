@@ -138,7 +138,7 @@
                                     style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; font-weight:600; color:#1E293B; background:#F8FAFC; outline:none; box-sizing:border-box;"/>
                             </div>
                         </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:8px; border-top:1px dashed #E2E8F0;">
+                        <div v-if="props.es_farmacia" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:8px; border-top:1px dashed #E2E8F0;">
                             <div>
                                 <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">🏷️ Lote (opcional)</label>
                                 <input v-model="item.lote" type="text" placeholder="Ej: L-2026-001"
@@ -287,6 +287,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
     proveedores: Array,
     productos:   Array,
+    es_farmacia: { type: Boolean, default: false },
 })
 
 const procesando = ref(false)
