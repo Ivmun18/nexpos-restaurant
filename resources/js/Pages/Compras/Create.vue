@@ -119,6 +119,35 @@
                                 </option>
                             </select>
                         </div>
+                        <div v-else style="margin-bottom:8px;">
+                            <button v-if="presInlineAbierta !== i" type="button" @click="abrirPresInline(i)"
+                                style="font-size:12px; color:#0E7490; background:#ECFEFF; border:1px solid #99F6E4; border-radius:6px; padding:6px 10px; cursor:pointer; font-weight:600;">
+                                + Definir presentacion (caja/saco/paquete)
+                            </button>
+                            <div v-else style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                                <div>
+                                    <label style="font-size:10px; color:#94A3B8; display:block; margin-bottom:3px;">Nombre</label>
+                                    <input v-model="presInlineForm.nombre" type="text" placeholder="Ej: Paquete x24"
+                                        style="width:100%; padding:6px; border:1px solid #E2E8F0; border-radius:6px; font-size:12px; outline:none; box-sizing:border-box;"/>
+                                </div>
+                                <div>
+                                    <label style="font-size:10px; color:#94A3B8; display:block; margin-bottom:3px;">Equivale a</label>
+                                    <input v-model="presInlineForm.factor_conversion" type="number" step="0.001" min="0" placeholder="Ej: 24"
+                                        style="width:100%; padding:6px; border:1px solid #E2E8F0; border-radius:6px; font-size:12px; outline:none; box-sizing:border-box;"/>
+                                </div>
+                                <div>
+                                    <label style="font-size:10px; color:#94A3B8; display:block; margin-bottom:3px;">Precio venta (S/)</label>
+                                    <input v-model="presInlineForm.precio_venta" type="number" step="0.01" min="0" placeholder="0.00"
+                                        style="width:100%; padding:6px; border:1px solid #E2E8F0; border-radius:6px; font-size:12px; outline:none; box-sizing:border-box;"/>
+                                </div>
+                                <div style="grid-column:1 / -1; display:flex; gap:8px; justify-content:flex-end;">
+                                    <button type="button" @click="cancelarPresInline"
+                                        style="padding:6px 12px; background:#F1F5F9; color:#64748B; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Cancelar</button>
+                                    <button type="button" @click="guardarPresInline(i)"
+                                        style="padding:6px 12px; background:#14B8A6; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
                                 <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">Cantidad</label>
@@ -311,6 +340,8 @@ const props = defineProps({
 
 const procesando = ref(false)
 const error      = ref('')
+const presInlineAbierta = ref(null)
+const presInlineForm = ref({ nombre: '', factor_conversion: '', precio_venta: '' })
 
 const hoy = new Date().toISOString().split('T')[0]
 
@@ -581,6 +612,54 @@ const aplicarPresentacionCompra = (i) => {
     if (pres) {
         item.precio_unitario = Number(pres.precio_venta)
         calcularItem(i)
+    }
+}
+
+const abrirPresInline = (i) => {
+    presInlineAbierta.value = i
+    presInlineForm.value = { nombre: '', factor_conversion: '', precio_venta: '' }
+}
+
+const cancelarPresInline = () => {
+    presInlineAbierta.value = null
+}
+
+const guardarPresInline = async (i) => {
+    const f = presInlineForm.value
+    if (!f.nombre || !f.factor_conversion || f.precio_venta === '') {
+        alert('Completa nombre, factor de conversion y precio de venta')
+        return
+    }
+    const item = form.value.items[i]
+    try {
+        const response = await fetch(`/minimarket/productos/${item.producto_id}/presentaciones`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre: f.nombre,
+                unidad_sunat: 'NIU',
+                factor_conversion: parseFloat(f.factor_conversion),
+                precio_venta: parseFloat(f.precio_venta),
+                es_default: false,
+            })
+        })
+        const data = await response.json()
+        if (data.presentacion) {
+            const p = props.productos.find(p => p.id === item.producto_id)
+            if (p) {
+                if (!p.presentaciones) p.presentaciones = []
+                p.presentaciones.push(data.presentacion)
+            }
+            presInlineAbierta.value = null
+        } else {
+            alert('No se pudo guardar la presentacion')
+        }
+    } catch (e) {
+        alert('Error al guardar la presentacion')
     }
 }
 
