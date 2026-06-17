@@ -109,6 +109,16 @@
                             <button type="button" @click="quitarItem(i)"
                                 style="background:#FEF2F2; color:#991B1B; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;">X</button>
                         </div>
+                        <div v-if="presentacionesDe(item.producto_id).length" style="margin-bottom:8px;">
+                            <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">Compra por</label>
+                            <select v-model="item.presentacion_id" @change="aplicarPresentacionCompra(i)"
+                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; background:white;">
+                                <option :value="null">Unidad base ({{ item.unidad_medida }})</option>
+                                <option v-for="pres in presentacionesDe(item.producto_id)" :key="pres.id" :value="pres.id">
+                                    {{ pres.nombre }} (1 = {{ pres.factor_conversion }} unidad base)
+                                </option>
+                            </select>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
                                 <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">Cantidad</label>
@@ -509,6 +519,22 @@ const escanearDesdeInput = (event) => {
     }
 }
 
+const presentacionesDe = (producto_id) => {
+    const p = props.productos.find(p => p.id === producto_id)
+    return p?.presentaciones || []
+}
+
+const aplicarPresentacionCompra = (i) => {
+    const item = form.value.items[i]
+    if (!item.presentacion_id) return
+    const p = props.productos.find(p => p.id === item.producto_id)
+    const pres = p?.presentaciones?.find(pr => pr.id === item.presentacion_id)
+    if (pres) {
+        item.precio_unitario = Number(pres.precio_venta)
+        calcularItem(i)
+    }
+}
+
 const agregarProducto = (event) => {
     const id = parseInt(event.target.value)
     if (!id) return
@@ -530,6 +556,7 @@ const agregarProducto = (event) => {
         valor_unitario:      valorUnitario,
         total_igv:           afecto ? round(valorUnitario * 0.18, 2) : 0,
         total:               round(precio, 2),
+        presentacion_id:     null,
     })
     event.target.value = ''
 }
