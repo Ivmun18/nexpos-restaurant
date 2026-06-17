@@ -173,10 +173,16 @@
                             <strong>{{ pres.nombre }}</strong> — 1 {{ pres.nombre }} = {{ pres.factor_conversion }} unidad base · S/ {{ Number(pres.precio_venta).toFixed(2) }}
                             <span v-if="pres.es_default" style="font-size:10px; background:#DCFCE7; color:#166534; padding:2px 6px; border-radius:8px; margin-left:6px;">default</span>
                         </p>
-                        <button type="button" @click="eliminarPresentacion(pres)"
-                            style="padding:4px 8px; background:#FEF2F2; color:#991B1B; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
-                            Eliminar
-                        </button>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" @click="editarPresentacionLocal(pres)"
+                                style="padding:4px 8px; background:#F0FDFA; color:#0F766E; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #CCFBF1; cursor:pointer;">
+                                Editar
+                            </button>
+                            <button type="button" @click="eliminarPresentacion(pres)"
+                                style="padding:4px 8px; background:#FEF2F2; color:#991B1B; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
+                                Eliminar
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div v-if="!modalEditar && form.presentaciones.length" style="display:grid; gap:8px; margin-bottom:14px;">
@@ -218,10 +224,16 @@
                     <input v-model="nuevaPresentacion.es_default" type="checkbox" />
                     Que se venda asi por defecto (en vez de por unidad)
                 </label>
-                <button type="button" @click="agregarPresentacionLocal"
-                    style="width:100%; padding:10px; background:linear-gradient(135deg,#A21CAF,#701A75); color:white; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;">
-                    + Agregar presentacion
-                </button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" @click="agregarPresentacionLocal"
+                        style="flex:1; padding:10px; background:linear-gradient(135deg,#A21CAF,#701A75); color:white; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;">
+                        {{ presentacionEditandoId ? 'Guardar cambios' : '+ Agregar presentacion' }}
+                    </button>
+                    <button v-if="presentacionEditandoId" type="button" @click="cancelarEdicionPresentacion"
+                        style="padding:10px 16px; background:white; color:#64748B; border-radius:8px; font-size:13px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
+                        Cancelar
+                    </button>
+                </div>
             </div>
 
             <div style="display:flex; gap:12px; margin-top:24px;">
@@ -382,6 +394,23 @@ const form = ref({
 })
 
 const nuevaPresentacion = ref({ nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false })
+const presentacionEditandoId = ref(null)
+
+const editarPresentacionLocal = (pres) => {
+    presentacionEditandoId.value = pres.id
+    nuevaPresentacion.value = {
+        nombre: pres.nombre,
+        unidad_sunat: pres.unidad_sunat,
+        factor_conversion: pres.factor_conversion,
+        precio_venta: pres.precio_venta,
+        es_default: pres.es_default,
+    }
+}
+
+const cancelarEdicionPresentacion = () => {
+    presentacionEditandoId.value = null
+    nuevaPresentacion.value = { nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false }
+}
 
 const agregarPresentacionLocal = () => {
     if (!nuevaPresentacion.value.nombre.trim()) {
@@ -399,6 +428,17 @@ const agregarPresentacionLocal = () => {
         return
     }
     if (modalEditar.value) {
+        if (presentacionEditandoId.value) {
+            router.put(`/minimarket/presentaciones/${presentacionEditandoId.value}`, nuevaPresentacion.value, {
+                onSuccess: () => {
+                    window.location.replace('/minimarket/productos')
+                },
+                onError: (errors) => {
+                    alert('No se pudo actualizar: ' + Object.values(errors).join(' '))
+                }
+            })
+            return
+        }
         router.post(`/minimarket/productos/${productoSeleccionado.value.id}/presentaciones`, nuevaPresentacion.value, {
             onSuccess: () => {
                 window.location.replace('/minimarket/productos')
@@ -458,6 +498,7 @@ const cerrarModales = () => {
     modalEditar.value = false
     form.value = { descripcion: '', codigo: '', codigo_barras: '', precio_compra: '', precio_venta: '', stock_actual: 0, stock_minimo: 0, categoria_id: '', presentaciones: [] }
     nuevaPresentacion.value = { nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false }
+    presentacionEditandoId.value = null
 }
 
 const editarProducto = (p) => {
