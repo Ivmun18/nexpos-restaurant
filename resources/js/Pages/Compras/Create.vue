@@ -248,6 +248,25 @@
                             <option value="LTR">Litro</option>
                         </select>
                     </div>
+                    <div style="grid-column:1 / -1; border-top:1px solid #E2E8F0; padding-top:10px; margin-top:4px;">
+                        <p style="font-size:12px; font-weight:700; color:#1E293B; margin:0 0 8px;">📐 Presentacion de compra (opcional)</p>
+                        <p style="font-size:11px; color:#94A3B8; margin:0 0 8px;">Si este producto viene en caja/saco/paquete, define aqui cuantas unidades base trae. Podras comprar por esa presentacion desde ahora.</p>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Nombre presentacion</label>
+                        <input v-model="modalProductoNuevo.pres_nombre" type="text" placeholder="Ej: Caja x12"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Equivale a (unidades base)</label>
+                        <input v-model="modalProductoNuevo.pres_factor_conversion" type="number" step="0.001" min="0" placeholder="Ej: 12"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Precio venta de esa presentacion (S/)</label>
+                        <input v-model="modalProductoNuevo.pres_precio_venta" type="number" step="0.01" min="0" placeholder="0.00"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+                    </div>
                     <div>
                         <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">🏷️ Lote</label>
                         <input v-model="modalProductoNuevo.lote" type="text" placeholder="Ej: L-2026-001"
@@ -319,6 +338,9 @@ const modalProductoNuevo = ref({
     fecha_vencimiento: '',
     unidad_medida: 'NIU',
     tipo_afectacion_igv: '10',
+    pres_nombre: '',
+    pres_factor_conversion: '',
+    pres_precio_venta: '',
 })
 
 const crearProductoYAgregar = async () => {
@@ -349,6 +371,32 @@ const crearProductoYAgregar = async () => {
         })
         const data = await response.json()
         if (data.success && data.producto) {
+            // Si se definio una presentacion, guardarla tambien
+            if (m.pres_nombre && m.pres_factor_conversion) {
+                try {
+                    const presResponse = await fetch(`/minimarket/productos/${data.producto.id}/presentaciones`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            nombre: m.pres_nombre,
+                            unidad_sunat: 'NIU',
+                            factor_conversion: parseFloat(m.pres_factor_conversion),
+                            precio_venta: parseFloat(m.pres_precio_venta || 0),
+                            es_default: false,
+                        })
+                    })
+                    const presData = await presResponse.json()
+                    if (presData.presentacion) {
+                        data.producto.presentaciones = [presData.presentacion]
+                    }
+                } catch (e) {
+                    console.error('No se pudo guardar la presentacion', e)
+                }
+            }
             // Agregar al inicio de productos disponibles
             props.productos.push(data.producto)
             // Agregar al carrito

@@ -179,7 +179,7 @@ class ProductosMinimarketController extends Controller
                 ->update(['es_default' => false]);
         }
 
-        \App\Models\ProductoPresentacion::create([
+        $nuevaPresentacion = \App\Models\ProductoPresentacion::create([
             'producto_id'        => $producto->id,
             'nombre'             => $request->nombre,
             'unidad_sunat'       => $request->unidad_sunat,
@@ -189,6 +189,10 @@ class ProductosMinimarketController extends Controller
             'es_default'         => $request->boolean('es_default'),
             'activo'             => true,
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['presentacion' => $nuevaPresentacion]);
+        }
 
         return redirect()->route('minimarket.productos')->with('success', 'Presentacion agregada correctamente');
     }
