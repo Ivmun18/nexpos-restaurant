@@ -83,9 +83,10 @@
                             <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.descripcion }}</p>
                             <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ Number(item.precio_venta).toFixed(2) }} c/u</p>
                             <select v-if="item.presentaciones && item.presentaciones.length"
-                                :value="item.presentacion_id"
+                                :value="item.presentacion_id || ''"
                                 @change="cambiarPresentacion(i, $event.target.value)"
                                 style="margin-top:4px; font-size:11px; padding:2px 4px; border-radius:6px; border:1px solid #E2E8F0; max-width:140px;">
+                                <option value="">Unidad</option>
                                 <option v-for="pr in item.presentaciones" :key="pr.id" :value="pr.id">{{ pr.nombre }}</option>
                             </select>
                         </div>
@@ -295,7 +296,7 @@ const escanearCodigo = () => {
 
 const presentacionPorDefecto = (p) => {
     if (!p.presentaciones || !p.presentaciones.length) return null
-    return p.presentaciones.find(pr => pr.es_default) || p.presentaciones[0]
+    return p.presentaciones.find(pr => pr.es_default) || null
 }
 
 const agregarAlCarrito = (p) => {
