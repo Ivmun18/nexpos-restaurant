@@ -164,7 +164,7 @@
 
             <div style="border-top:1px solid #E2E8F0; margin-top:16px; padding-top:16px;">
                 <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 4px;">📐 Presentaciones</p>
-                <p style="font-size:12px; color:#94A3B8; margin:0 0 12px;">Ej: vendes por unidad base (saco) pero tambien quieres vender por kilo. Deja vacio si solo vendes por unidad.</p>
+                <p style="font-size:12px; color:#94A3B8; margin:0 0 12px;">Para vender este producto tambien en paquetes, packs o cajas. Si solo lo vendes suelto, no agregues nada aqui.</p>
 
                 <div v-if="modalEditar && productoSeleccionado?.presentaciones?.length" style="display:grid; gap:8px; margin-bottom:14px;">
                     <div v-for="pres in productoSeleccionado.presentaciones" :key="pres.id"
@@ -194,7 +194,7 @@
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                    <input v-model="nuevaPresentacion.nombre" placeholder="Nombre (ej: Kilo)"
+                    <input v-model="nuevaPresentacion.nombre" placeholder="Nombre (ej: Pack x6, Saco 50kg)"
                         style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                     <select v-model="nuevaPresentacion.unidad_sunat"
                         style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
@@ -208,14 +208,15 @@
                     </select>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                    <input v-model="nuevaPresentacion.factor_conversion" type="number" step="0.0001" placeholder="Equivale a (ej: 0.02 si 1kg de saco de 50kg)"
+                    <input v-model="nuevaPresentacion.factor_conversion" type="number" step="0.0001" placeholder="Cuantas unidades trae (ej: 6)"
                         style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                     <input v-model="nuevaPresentacion.precio_venta" type="number" step="0.01" placeholder="Precio venta"
                         style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                 </div>
+                <p style="font-size:11px; color:#94A3B8; margin:0 0 10px;">Ejemplo: si vendes Coca Cola por unidad y quieres tambien venderla en pack de 6, escribe "Pack x6" y pon 6 aqui. Al vender 1 pack, se descontaran 6 unidades del stock.</p>
                 <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#64748B; margin-bottom:10px;">
                     <input v-model="nuevaPresentacion.es_default" type="checkbox" />
-                    Usar como presentacion por defecto en el POS
+                    Que se venda asi por defecto (en vez de por unidad)
                 </label>
                 <button type="button" @click="agregarPresentacionLocal"
                     style="width:100%; padding:10px; background:linear-gradient(135deg,#A21CAF,#701A75); color:white; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;">
