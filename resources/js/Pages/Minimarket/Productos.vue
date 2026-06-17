@@ -384,8 +384,18 @@ const form = ref({
 const nuevaPresentacion = ref({ nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false })
 
 const agregarPresentacionLocal = () => {
-    if (!nuevaPresentacion.value.nombre || !nuevaPresentacion.value.factor_conversion || nuevaPresentacion.value.precio_venta === '') {
-        alert('Completa nombre, factor de conversion y precio de venta de la presentacion')
+    if (!nuevaPresentacion.value.nombre.trim()) {
+        alert('Falta el nombre del paquete (ej: Pack x6)')
+        return
+    }
+    const cantidad = Number(nuevaPresentacion.value.factor_conversion)
+    if (!cantidad || cantidad <= 0) {
+        alert('Falta indicar cuantas unidades trae el paquete (debe ser mayor a 0)')
+        return
+    }
+    const precio = Number(nuevaPresentacion.value.precio_venta)
+    if (nuevaPresentacion.value.precio_venta === '' || isNaN(precio) || precio < 0) {
+        alert('Falta el precio de venta del paquete')
         return
     }
     if (modalEditar.value) {
@@ -477,8 +487,18 @@ const abrirPresentaciones = (p) => {
 }
 
 const guardarPresentacion = () => {
-    if (!formPresentacion.value.nombre || !formPresentacion.value.factor_conversion || formPresentacion.value.precio_venta === '') {
-        alert('Completa nombre, factor de conversion y precio de venta.')
+    if (!formPresentacion.value.nombre.trim()) {
+        alert('Falta el nombre del paquete (ej: Pack x6)')
+        return
+    }
+    const cantidad = Number(formPresentacion.value.factor_conversion)
+    if (!cantidad || cantidad <= 0) {
+        alert('Falta indicar cuantas unidades trae el paquete (debe ser mayor a 0)')
+        return
+    }
+    const precio = Number(formPresentacion.value.precio_venta)
+    if (formPresentacion.value.precio_venta === '' || isNaN(precio) || precio < 0) {
+        alert('Falta el precio de venta del paquete')
         return
     }
     router.post(`/minimarket/productos/${productoSeleccionado.value.id}/presentaciones`, formPresentacion.value, {
