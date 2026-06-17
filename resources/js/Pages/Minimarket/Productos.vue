@@ -162,6 +162,67 @@
                 </div>
             </div>
 
+            <div style="border-top:1px solid #E2E8F0; margin-top:16px; padding-top:16px;">
+                <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 4px;">📐 Presentaciones</p>
+                <p style="font-size:12px; color:#94A3B8; margin:0 0 12px;">Ej: vendes por unidad base (saco) pero tambien quieres vender por kilo. Deja vacio si solo vendes por unidad.</p>
+
+                <div v-if="modalEditar && productoSeleccionado?.presentaciones?.length" style="display:grid; gap:8px; margin-bottom:14px;">
+                    <div v-for="pres in productoSeleccionado.presentaciones" :key="pres.id"
+                        style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #E2E8F0;">
+                        <p style="font-size:13px; color:#1E293B; margin:0;">
+                            <strong>{{ pres.nombre }}</strong> — 1 {{ pres.nombre }} = {{ pres.factor_conversion }} unidad base · S/ {{ Number(pres.precio_venta).toFixed(2) }}
+                            <span v-if="pres.es_default" style="font-size:10px; background:#DCFCE7; color:#166534; padding:2px 6px; border-radius:8px; margin-left:6px;">default</span>
+                        </p>
+                        <button type="button" @click="eliminarPresentacion(pres)"
+                            style="padding:4px 8px; background:#FEF2F2; color:#991B1B; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+                <div v-if="!modalEditar && form.presentaciones.length" style="display:grid; gap:8px; margin-bottom:14px;">
+                    <div v-for="(p, idx) in form.presentaciones" :key="idx"
+                        style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #E2E8F0;">
+                        <p style="font-size:13px; color:#1E293B; margin:0;">
+                            <strong>{{ p.nombre }}</strong> — 1 {{ p.nombre }} = {{ p.factor_conversion }} unidad base · S/ {{ Number(p.precio_venta).toFixed(2) }}
+                            <span v-if="p.es_default" style="font-size:10px; background:#DCFCE7; color:#166534; padding:2px 6px; border-radius:8px; margin-left:6px;">default</span>
+                        </p>
+                        <button type="button" @click="quitarPresentacionLocal(idx)"
+                            style="padding:4px 8px; background:#FEF2F2; color:#991B1B; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
+                            Quitar
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <input v-model="nuevaPresentacion.nombre" placeholder="Nombre (ej: Kilo)"
+                        style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    <select v-model="nuevaPresentacion.unidad_sunat"
+                        style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+                        <option value="NIU">Unidad (NIU)</option>
+                        <option value="KGM">Kilogramo (KGM)</option>
+                        <option value="SCO">Saco (SCO)</option>
+                        <option value="CJ">Caja (CJ)</option>
+                        <option value="DZN">Docena (DZN)</option>
+                        <option value="BG">Bolsa (BG)</option>
+                        <option value="LTR">Litro (LTR)</option>
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <input v-model="nuevaPresentacion.factor_conversion" type="number" step="0.0001" placeholder="Equivale a (ej: 0.02 si 1kg de saco de 50kg)"
+                        style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    <input v-model="nuevaPresentacion.precio_venta" type="number" step="0.01" placeholder="Precio venta"
+                        style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                </div>
+                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#64748B; margin-bottom:10px;">
+                    <input v-model="nuevaPresentacion.es_default" type="checkbox" />
+                    Usar como presentacion por defecto en el POS
+                </label>
+                <button type="button" @click="agregarPresentacionLocal"
+                    style="width:100%; padding:10px; background:linear-gradient(135deg,#A21CAF,#701A75); color:white; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;">
+                    + Agregar presentacion
+                </button>
+            </div>
+
             <div style="display:flex; gap:12px; margin-top:24px;">
                 <button @click="cerrarModales"
                     style="flex:1; padding:12px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
@@ -316,7 +377,34 @@ const form = ref({
     descripcion: '', codigo: '', codigo_barras: '',
     precio_compra: '', precio_venta: '',
     stock_actual: 0, stock_minimo: 0,
+    presentaciones: [],
 })
+
+const nuevaPresentacion = ref({ nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false })
+
+const agregarPresentacionLocal = () => {
+    if (!nuevaPresentacion.value.nombre || !nuevaPresentacion.value.factor_conversion || nuevaPresentacion.value.precio_venta === '') {
+        alert('Completa nombre, factor de conversion y precio de venta de la presentacion')
+        return
+    }
+    if (modalEditar.value) {
+        router.post(`/minimarket/productos/${productoSeleccionado.value.id}/presentaciones`, nuevaPresentacion.value, {
+            onSuccess: () => {
+                window.location.replace('/minimarket/productos')
+            },
+            onError: (errors) => {
+                alert('No se pudo guardar: ' + Object.values(errors).join(' '))
+            }
+        })
+        return
+    }
+    form.value.presentaciones.push({ ...nuevaPresentacion.value })
+    nuevaPresentacion.value = { nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false }
+}
+
+const quitarPresentacionLocal = (index) => {
+    form.value.presentaciones.splice(index, 1)
+}
 
 const formStock = ref({ tipo: 'entrada', cantidad: 1 })
 const escaneando = ref(false)
@@ -357,7 +445,8 @@ const stockBajo = computed(() =>
 const cerrarModales = () => {
     modalNuevo.value  = false
     modalEditar.value = false
-    form.value = { descripcion: '', codigo: '', codigo_barras: '', precio_compra: '', precio_venta: '', stock_actual: 0, stock_minimo: 0, categoria_id: '' }
+    form.value = { descripcion: '', codigo: '', codigo_barras: '', precio_compra: '', precio_venta: '', stock_actual: 0, stock_minimo: 0, categoria_id: '', presentaciones: [] }
+    nuevaPresentacion.value = { nombre: '', unidad_sunat: 'NIU', factor_conversion: '', precio_venta: '', es_default: false }
 }
 
 const editarProducto = (p) => {
@@ -440,6 +529,7 @@ const guardar = () => {
             stock_actual:  form.value.stock_actual,
             stock_minimo:  form.value.stock_minimo,
             categoria_id:  form.value.categoria_id,
+            presentaciones: form.value.presentaciones,
         }, {
             onSuccess: () => {
                 modalNuevo.value = false

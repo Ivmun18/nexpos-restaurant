@@ -46,7 +46,7 @@ class ProductosMinimarketController extends Controller
             'categoria_id' => 'nullable|exists:categorias_minimarket,id',
         ]);
 
-        Producto::create([
+        $producto = Producto::create([
             'empresa_id'    => $empresa_id,
             'categoria_id'  => $request->categoria_id,
             'descripcion'   => $request->descripcion,
@@ -59,6 +59,27 @@ class ProductosMinimarketController extends Controller
             'activo'        => true,
             'controla_stock'=> true,
         ]);
+
+        if ($request->has('presentaciones') && is_array($request->presentaciones)) {
+            $tieneDefault = false;
+            foreach ($request->presentaciones as $p) {
+                if (empty($p['nombre']) || empty($p['factor_conversion']) || !isset($p['precio_venta'])) {
+                    continue;
+                }
+                $esDefault = !empty($p['es_default']) && !$tieneDefault;
+                if ($esDefault) $tieneDefault = true;
+
+                \App\Models\ProductoPresentacion::create([
+                    'producto_id'        => $producto->id,
+                    'nombre'             => $p['nombre'],
+                    'unidad_sunat'       => $p['unidad_sunat'] ?? 'NIU',
+                    'factor_conversion'  => $p['factor_conversion'],
+                    'precio_venta'       => $p['precio_venta'],
+                    'codigo_barras'      => $p['codigo_barras'] ?? null,
+                    'es_default'         => $esDefault,
+                ]);
+            }
+        }
 
         return redirect()->route('minimarket.productos')->with('success', 'Producto creado correctamente');
     }
