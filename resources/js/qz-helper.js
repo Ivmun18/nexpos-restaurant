@@ -6,13 +6,9 @@ export async function imprimirTicketQZ(venta, empresa) {
         window.qz.security.setSignaturePromise(() => Promise.resolve(''))
         if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
         const impresoras = await window.qz.printers.find()
-        const impresora = impresoras.find(p =>
-            p.toLowerCase().includes('xprinter') ||
-            p.toLowerCase().includes('xp-') ||
-            p.toLowerCase().includes('thermal') ||
-            p.toLowerCase().includes('pos')
-        ) || impresoras[0]
-        if (!impresora) return
+        alert('Impresoras encontradas: ' + JSON.stringify(impresoras))
+        const impresora = Array.isArray(impresoras) ? impresoras[0] : impresoras
+        if (!impresora) { alert('No se encontro ninguna impresora'); return }
         const config = window.qz.configs.create(impresora, { encoding: 'ISO-8859-1' })
         const sep = '-'.repeat(42) + String.fromCharCode(10)
         const ESC = String.fromCharCode(27)
