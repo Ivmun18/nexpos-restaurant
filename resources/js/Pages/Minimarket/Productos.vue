@@ -162,9 +162,9 @@
                 </div>
             </div>
 
-            <div style="border-top:1px solid #E2E8F0; margin-top:16px; padding-top:16px;">
-                <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 4px;">📐 Presentaciones</p>
-                <p style="font-size:12px; color:#94A3B8; margin:0 0 12px;">Para vender este producto tambien en paquetes, packs o cajas. Si solo lo vendes suelto, no agregues nada aqui.</p>
+            <div style="border:2px solid #F3E8FF; background:#FAF5FF; border-radius:12px; margin-top:16px; padding:16px;">
+                <p style="font-size:14px; font-weight:700; color:#1E293B; margin:0 0 4px;">📐 Presentaciones (paquetes/packs)</p>
+                <p style="font-size:12px; color:#94A3B8; margin:0 0 12px;">Para vender este producto tambien en paquetes, packs o cajas. Si solo lo vendes suelto, no agregues nada aqui. Esta seccion tiene su propio boton de guardado, separado del boton "Actualizar" del producto.</p>
 
                 <div v-if="modalEditar && productoSeleccionado?.presentaciones?.length" style="display:grid; gap:8px; margin-bottom:14px;">
                     <div v-for="pres in productoSeleccionado.presentaciones" :key="pres.id"
@@ -224,10 +224,13 @@
                     <input v-model="nuevaPresentacion.es_default" type="checkbox" />
                     Que se venda asi por defecto (en vez de por unidad)
                 </label>
+                <p v-if="presentacionEditandoId" style="font-size:11px; color:#A21CAF; font-weight:700; margin:0 0 6px; background:#F3E8FF; padding:6px 10px; border-radius:6px;">
+                    ✏️ Editando "{{ nuevaPresentacion.nombre }}" — usa este boton morado para guardar el cambio (no el boton "Actualizar" de abajo)
+                </p>
                 <div style="display:flex; gap:8px;">
                     <button type="button" @click="agregarPresentacionLocal"
                         style="flex:1; padding:10px; background:linear-gradient(135deg,#A21CAF,#701A75); color:white; border-radius:8px; font-size:13px; font-weight:600; border:none; cursor:pointer;">
-                        {{ presentacionEditandoId ? 'Guardar cambios' : '+ Agregar presentacion' }}
+                        {{ presentacionEditandoId ? 'Guardar cambios del paquete' : '+ Agregar presentacion' }}
                     </button>
                     <button v-if="presentacionEditandoId" type="button" @click="cancelarEdicionPresentacion"
                         style="padding:10px 16px; background:white; color:#64748B; border-radius:8px; font-size:13px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
