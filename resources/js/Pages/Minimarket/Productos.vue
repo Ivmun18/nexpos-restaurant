@@ -263,15 +263,21 @@
                 <div>
                     <label style="font-size:13px; font-weight:600; color:#64748B;">Tipo de movimiento</label>
                     <select v-model="formStock.tipo" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;">
-                        <option value="entrada">📥 Entrada (sumar)</option>
-                        <option value="salida">📤 Salida (restar)</option>
-                        <option value="ajuste">🔧 Ajuste (establecer)</option>
+                        <option value="entrada">📥 Entrada (ej: compra nueva, devolucion de cliente)</option>
+                        <option value="salida">📤 Salida (ej: traslado a otro local, producto dañado o vencido)</option>
+                        <option value="ajuste">🔧 Ajuste (corregir el stock a un numero exacto)</option>
                     </select>
                 </div>
                 <div>
                     <label style="font-size:13px; font-weight:600; color:#64748B;">Cantidad</label>
                     <input v-model="formStock.cantidad" type="number" min="1"
                         style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                </div>
+                <div>
+                    <label style="font-size:13px; font-weight:600; color:#64748B;">Motivo (recomendado)</label>
+                    <input v-model="formStock.observaciones" type="text" placeholder="Ej: Traslado a Local Centro, Producto vencido, etc."
+                        style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                    <p style="font-size:11px; color:#94A3B8; margin:4px 0 0;">Esto queda guardado en el historial para que puedas explicarle a tu jefe o socio por que cambio el stock.</p>
                 </div>
             </div>
 
@@ -460,7 +466,7 @@ const quitarPresentacionLocal = (index) => {
     form.value.presentaciones.splice(index, 1)
 }
 
-const formStock = ref({ tipo: 'entrada', cantidad: 1 })
+const formStock = ref({ tipo: 'entrada', cantidad: 1, observaciones: '' })
 const escaneando = ref(false)
 const inputCodigoBarras = ref(null)
 
