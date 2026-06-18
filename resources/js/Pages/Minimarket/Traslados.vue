@@ -12,6 +12,25 @@
             </button>
         </div>
 
+        <!-- Filtros de fecha -->
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="font-size:13px; font-weight:600; color:#64748B;">Desde</label>
+                <input v-model="filtroDesde" type="date"
+                    style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label style="font-size:13px; font-weight:600; color:#64748B;">Hasta</label>
+                <input v-model="filtroHasta" type="date"
+                    style="padding:8px 12px; border:2px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
+            </div>
+            <button @click="limpiarFiltros"
+                style="padding:8px 14px; background:white; color:#64748B; border-radius:8px; font-size:13px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
+                Ver todo
+            </button>
+            <span style="font-size:13px; color:#94A3B8;">{{ trasladosFiltrados.length }} traslado(s)</span>
+        </div>
+
         <div style="background:white; border-radius:16px; border:1px solid #E2E8F0; overflow:hidden;">
             <table style="width:100%; border-collapse:collapse;">
                 <thead>
@@ -26,7 +45,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="t in traslados" :key="t.id" style="border-bottom:1px solid #F1F5F9;">
+                    <tr v-for="t in trasladosFiltrados" :key="t.id" style="border-bottom:1px solid #F1F5F9;">
                         <td style="padding:12px 16px; font-size:13px; color:#1E293B;">{{ formatearFecha(t.created_at) }}</td>
                         <td style="padding:12px 16px; font-size:13px; color:#1E293B; font-weight:600;">{{ t.local_destino }}</td>
                         <td style="padding:12px 16px; font-size:13px; color:#64748B;">{{ t.usuario?.name || '-' }}</td>
@@ -42,7 +61,7 @@
                             </button>
                         </td>
                     </tr>
-                    <tr v-if="!traslados.length">
+                    <tr v-if="!trasladosFiltrados.length">
                         <td colspan="7" style="padding:24px; text-align:center; color:#94A3B8; font-size:13px;">
                             Aun no se han registrado traslados.
                         </td>
@@ -176,6 +195,29 @@ const props = defineProps({
 })
 
 const modalNuevo = ref(false)
+
+const primerDiaMes = () => {
+    const d = new Date()
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]
+}
+const hoy = () => new Date().toISOString().split('T')[0]
+
+const filtroDesde = ref(primerDiaMes())
+const filtroHasta = ref(hoy())
+
+const trasladosFiltrados = computed(() => {
+    return props.traslados.filter(t => {
+        const fecha = t.created_at ? t.created_at.split('T')[0].split(' ')[0] : ''
+        if (filtroDesde.value && fecha < filtroDesde.value) return false
+        if (filtroHasta.value && fecha > filtroHasta.value) return false
+        return true
+    })
+})
+
+const limpiarFiltros = () => {
+    filtroDesde.value = ''
+    filtroHasta.value = ''
+}
 const busqueda = ref('')
 const trasladoDetalle = ref(null)
 
