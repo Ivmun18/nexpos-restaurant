@@ -208,8 +208,14 @@ const formatFecha = (fecha) => {
 
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
-const imprimir = () => {
-    window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
+const imprimir = async () => {
+    if (typeof window.qz !== 'undefined' && window.qz) {
+        alert('QZ detectado, intentando imprimir...')
+        await imprimirTicketQZ(props.venta, props.empresa)
+    } else {
+        alert('QZ NO detectado, abriendo visor...')
+        window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
+    }
 }
 
 const imprimirA4 = () => {
