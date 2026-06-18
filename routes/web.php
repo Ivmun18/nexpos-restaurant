@@ -635,6 +635,10 @@ Route::middleware(['auth', 'solo_admin'])->group(function () {
     Route::post('/minimarket/productos/{producto}/presentaciones', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'storePresentacion'])->name('minimarket.presentaciones.store');
     Route::get('/minimarket/traslados', [\App\Http\Controllers\Minimarket\TrasladosMinimarketController::class, 'index'])->name('minimarket.traslados');
     Route::post('/minimarket/traslados', [\App\Http\Controllers\Minimarket\TrasladosMinimarketController::class, 'store'])->name('minimarket.traslados.store');
+    Route::get('/minimarket/instituciones', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'index'])->name('minimarket.instituciones');
+    Route::post('/minimarket/instituciones', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'store'])->name('minimarket.instituciones.store');
+    Route::put('/minimarket/instituciones/{institucion}', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'update'])->name('minimarket.instituciones.update');
+    Route::delete('/minimarket/instituciones/{institucion}', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'destroy'])->name('minimarket.instituciones.destroy');
     Route::put('/minimarket/presentaciones/{presentacion}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'updatePresentacion'])->name('minimarket.presentaciones.update');
     Route::delete('/minimarket/presentaciones/{presentacion}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'destroyPresentacion'])->name('minimarket.presentaciones.destroy');
     Route::get('/minimarket/categorias', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'index'])->name('minimarket.categorias');
