@@ -268,7 +268,7 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         : round($venta->total_gravado ?? ($total - $igv), 2);
 
     $tipoDoc  = $venta->tipo_comprobante === '01' ? '01' : '03';
-    $fileName = $empresa->apisunat_ruc . '-' . $tipoDoc . '-' . $venta->serie . '-' . str_pad($venta->correlativo, 8, '0', STR_PAD_LEFT);
+    $fileName = $empresa->ruc . '-' . $tipoDoc . '-' . $venta->serie . '-' . str_pad($venta->correlativo, 8, '0', STR_PAD_LEFT);
 
     $lineas = [];
     foreach ($items as $idx => $i) {
@@ -373,11 +373,20 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         $data = $response->json();
         \Log::info('ApiSunat minimarket response venta ' . $venta->id . ': ' . json_encode($data));
 
-        $aceptada = $response->successful() && isset($data['sunatResponse']);
+        $aceptada = $response->successful() && (
+            isset($data['sunatResponse']) ||
+            (isset($data['pdf']) && isset($data['documentId']))
+        );
+
+        $pdfUrl = $data['sunatResponse']['enlace_del_pdf']
+            ?? $data['pdf']['80mm']
+            ?? $data['pdf']['A4']
+            ?? null;
 
         $venta->update([
-            'nubefact_id'     => $data['sunatResponse']['enlace_del_pdf'] ?? null,
+            'nubefact_id'     => $pdfUrl,
             'nubefact_estado' => $aceptada ? 'aceptado' : 'rechazado',
+            'estado'          => $aceptada ? 'emitido' : 'pendiente',
             'observaciones'   => json_encode($data),
         ]);
     } catch (\Exception $e) {
