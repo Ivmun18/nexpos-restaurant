@@ -81,7 +81,7 @@
                         style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #F1F5F9;">
                         <div style="flex:1; min-width:0;">
                             <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.descripcion }}</p>
-                            <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ Number(item.precio_venta).toFixed(2) }} c/u</p>
+                            <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ precioConRecargo(item).toFixed(2) }} c/u</p>
                             <select v-if="item.presentaciones && item.presentaciones.length"
                                 :value="item.presentacion_id || ''"
                                 @change="cambiarPresentacion(i, $event.target.value)"
@@ -98,7 +98,7 @@
                                 style="width:26px; height:26px; border-radius:8px; border:1px solid #14B8A6; background:#F0FDFA; cursor:pointer; font-size:14px; font-weight:700; color:#14B8A6;">+</button>
                         </div>
                         <div style="text-align:right; min-width:60px;">
-                            <p style="font-size:14px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ (item.precio_venta * item.cantidad).toFixed(2) }}</p>
+                            <p style="font-size:14px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ (precioConRecargo(item) * item.cantidad).toFixed(2) }}</p>
                         </div>
                         <button @click="carrito.splice(i, 1)"
                             style="color:#CBD5E1; background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
@@ -293,6 +293,14 @@ const recargoMonto = computed(() => {
     if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) return 0
     return Math.round(subtotal.value * (institucionSeleccionada.value.porcentaje_recargo / 100) * 100) / 100
 })
+
+const precioConRecargo = (item) => {
+    if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) {
+        return Number(item.precio_venta)
+    }
+    const factor = 1 + (institucionSeleccionada.value.porcentaje_recargo / 100)
+    return Math.round(item.precio_venta * factor * 100) / 100
+}
 
 const itemsParaEnviar = computed(() => {
     if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) {
