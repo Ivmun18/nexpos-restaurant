@@ -208,8 +208,12 @@ const formatFecha = (fecha) => {
 
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
-const imprimir = () => {
-    window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
+const imprimir = async () => {
+    if (typeof qz !== 'undefined') {
+        await imprimirTicketQZ(props.venta, props.empresa)
+    } else {
+        window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
+    }
 }
 
 const imprimirA4 = () => {
