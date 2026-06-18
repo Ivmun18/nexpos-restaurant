@@ -31,9 +31,15 @@ class PosMinimarketController extends Controller
             ->orderBy('descripcion')
             ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'categoria_id', 'unidad_medida']);
 
+        $instituciones = \App\Models\InstitucionMinimarket::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'porcentaje_recargo']);
+
         return Inertia::render('Minimarket/Pos', [
-            'productos'    => $productos,
-            'caja_abierta' => $cajaAbierta,
+            'productos'     => $productos,
+            'caja_abierta'  => $cajaAbierta,
+            'instituciones' => $instituciones,
         ]);
     }
 
@@ -46,6 +52,8 @@ class PosMinimarketController extends Controller
         'metodo_pago'       => 'required|string',
         'total'             => 'required|numeric',
         'monto_pagado'      => 'nullable|numeric',
+        'institucion_id'    => 'nullable|exists:instituciones_minimarket,id',
+        'recargo_monto'     => 'nullable|numeric',
     ]);
 
     $empresa = auth()->user()->empresa;
@@ -120,6 +128,8 @@ class PosMinimarketController extends Controller
             'total_igv'           => $igv,
             'total'               => $request->total,
             'total_descuento'     => 0,
+            'institucion_id'      => $request->institucion_id,
+            'recargo_monto'       => $request->recargo_monto ?? 0,
             'metodo_pago'         => $request->metodo_pago,
             'cliente_tipo_doc'    => $tipoComprobante === 'factura' ? '6' : '1',
             'cliente_num_doc'     => $request->cliente_dni ?? '',
