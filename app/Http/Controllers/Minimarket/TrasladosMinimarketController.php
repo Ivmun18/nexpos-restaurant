@@ -18,6 +18,7 @@ class TrasladosMinimarketController extends Controller
         $empresa_id = auth()->user()->empresa_id;
 
         $productos = Producto::where('empresa_id', $empresa_id)
+            ->with(['presentaciones' => fn($q) => $q->where('activo', true)])
             ->orderBy('descripcion')
             ->get(['id', 'descripcion', 'codigo', 'codigo_barras', 'stock_actual']);
 
@@ -42,8 +43,9 @@ class TrasladosMinimarketController extends Controller
             'placa_vehiculo'  => 'nullable|string|max:20',
             'observaciones'   => 'nullable|string|max:255',
             'items'           => 'required|array|min:1',
-            'items.*.producto_id' => 'required|exists:productos,id',
-            'items.*.cantidad'    => 'required|numeric|min:0.01',
+            'items.*.producto_id'     => 'required|exists:productos,id',
+            'items.*.cantidad'        => 'required|numeric|min:0.01',
+            'items.*.presentacion_id' => 'nullable|exists:producto_presentaciones,id',
         ]);
 
         DB::transaction(function () use ($request, $empresa_id) {
@@ -64,20 +66,30 @@ class TrasladosMinimarketController extends Controller
 
                 abort_if(!$producto, 403);
 
-                $stockAnterior = $producto->stock_actual;
-                $cantidad = $item['cantidad'];
-
-                if ($stockAnterior < $cantidad) {
-                    throw new \Exception("Stock insuficiente para {$producto->descripcion}. Disponible: {$stockAnterior}, solicitado: {$cantidad}");
+                $factor = 1;
+                if (!empty($item['presentacion_id'])) {
+                    $presentacion = \App\Models\ProductoPresentacion::where('id', $item['presentacion_id'])
+                        ->where('producto_id', $producto->id)
+                        ->first();
+                    if ($presentacion) {
+                        $factor = $presentacion->factor_conversion;
+                    }
                 }
 
-                $stockNuevo = $stockAnterior - $cantidad;
+                $stockAnterior = $producto->stock_actual;
+                $cantidadReal = $item['cantidad'] * $factor;
+
+                if ($stockAnterior < $cantidadReal) {
+                    throw new \Exception("Stock insuficiente para {$producto->descripcion}. Disponible: {$stockAnterior}, solicitado: {$cantidadReal}");
+                }
+
+                $stockNuevo = $stockAnterior - $cantidadReal;
                 $producto->update(['stock_actual' => $stockNuevo]);
 
                 TrasladoMercaderiaDetalle::create([
                     'traslado_id'    => $traslado->id,
                     'producto_id'    => $producto->id,
-                    'cantidad'       => $cantidad,
+                    'cantidad'       => $cantidadReal,
                     'stock_anterior' => $stockAnterior,
                     'stock_nuevo'    => $stockNuevo,
                 ]);
