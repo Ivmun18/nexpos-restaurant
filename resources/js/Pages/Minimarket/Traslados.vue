@@ -99,14 +99,22 @@
 
                     <div v-if="form.items.length" style="display:grid; gap:8px; margin-bottom:10px;">
                         <div v-for="(item, idx) in form.items" :key="item.producto_id"
-                            style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #E2E8F0;">
-                            <p style="font-size:13px; color:#1E293B; margin:0; flex:1;">{{ item.descripcion }}</p>
-                            <input v-model.number="item.cantidad" type="number" min="0.01" step="0.01"
-                                style="width:80px; padding:6px 8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; outline:none; margin-right:8px;" />
-                            <button type="button" @click="quitarItem(idx)"
-                                style="padding:4px 8px; background:#FEF2F2; color:#991B1B; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
-                                Quitar
-                            </button>
+                            style="padding:10px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #E2E8F0;">
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                <p style="font-size:13px; color:#1E293B; margin:0; flex:1;">{{ item.descripcion }}</p>
+                                <input v-model.number="item.cantidad" type="number" min="0.01" step="0.01"
+                                    style="width:70px; padding:6px 8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; outline:none; margin-right:8px;" />
+                                <button type="button" @click="quitarItem(idx)"
+                                    style="padding:4px 8px; background:#FEF2F2; color:#991B1B; border-radius:6px; font-size:11px; font-weight:600; border:1px solid #FECACA; cursor:pointer;">
+                                    Quitar
+                                </button>
+                            </div>
+                            <select v-if="item.presentaciones && item.presentaciones.length"
+                                v-model="item.presentacion_id"
+                                style="margin-top:6px; font-size:11px; padding:4px 6px; border-radius:6px; border:1px solid #E2E8F0; width:160px;">
+                                <option :value="null">Unidad suelta</option>
+                                <option v-for="pr in item.presentaciones" :key="pr.id" :value="pr.id">{{ pr.nombre }} (x{{ pr.factor_conversion }})</option>
+                            </select>
                         </div>
                     </div>
                     <p v-else style="font-size:12px; color:#94A3B8; margin:0 0 10px;">Busca y agrega los productos que vas a trasladar.</p>
@@ -197,6 +205,8 @@ const agregarItem = (p) => {
         producto_id: p.id,
         descripcion: p.descripcion,
         cantidad: 1,
+        presentacion_id: null,
+        presentaciones: p.presentaciones || [],
     })
     busqueda.value = ''
 }
