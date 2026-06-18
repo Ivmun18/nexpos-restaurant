@@ -209,9 +209,10 @@ const formatFecha = (fecha) => {
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
 const imprimir = async () => {
-    if (typeof qz !== 'undefined') {
+    if (typeof window.qz !== 'undefined') {
         await imprimirTicketQZ(props.venta, props.empresa)
     } else {
+        alert('QZ Tray no detectado. Abriendo visor...')
         window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
     }
 }
@@ -275,7 +276,7 @@ const enviarWhatsApp = async () => {
 
 
 onMounted(() => {
-    if (typeof qz !== 'undefined') {
+    if (typeof window.qz !== 'undefined') {
         imprimirTicketQZ(props.venta, props.empresa)
     }
 })

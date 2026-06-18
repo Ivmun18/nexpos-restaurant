@@ -1,11 +1,11 @@
 export async function imprimirTicketQZ(venta, empresa) {
-    if (typeof qz === 'undefined' || !qz) return
+    if (typeof window.qz === 'undefined' || !qz) return
     try {
-        qz.security.setCertificatePromise(() => Promise.resolve(''))
-        qz.security.setSignatureAlgorithm('SHA512')
-        qz.security.setSignaturePromise(() => Promise.resolve(''))
-        if (!qz.websocket.isActive()) { await qz.websocket.connect() }
-        const impresoras = await qz.printers.find()
+        window.qz.security.setCertificatePromise(() => Promise.resolve(''))
+        window.qz.security.setSignatureAlgorithm('SHA512')
+        window.qz.security.setSignaturePromise(() => Promise.resolve(''))
+        if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
+        const impresoras = await window.qz.printers.find()
         const impresora = impresoras.find(p =>
             p.toLowerCase().includes('xprinter') ||
             p.toLowerCase().includes('xp-') ||
@@ -13,7 +13,7 @@ export async function imprimirTicketQZ(venta, empresa) {
             p.toLowerCase().includes('pos')
         ) || impresoras[0]
         if (!impresora) return
-        const config = qz.configs.create(impresora, { encoding: 'ISO-8859-1' })
+        const config = window.qz.configs.create(impresora, { encoding: 'ISO-8859-1' })
         const sep = '-'.repeat(42) + String.fromCharCode(10)
         const ESC = String.fromCharCode(27)
         const GS = String.fromCharCode(29)
@@ -54,7 +54,7 @@ export async function imprimirTicketQZ(venta, empresa) {
             GS + String.fromCharCode(86,66,0),
             ESC + String.fromCharCode(112,0,25,250),
         ]
-        await qz.print(config, data)
-        await qz.websocket.disconnect()
+        await window.qz.print(config, data)
+        await window.qz.websocket.disconnect()
     } catch (e) { console.warn('QZ Tray no disponible:', e) }
 }
