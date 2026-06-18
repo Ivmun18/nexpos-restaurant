@@ -525,6 +525,8 @@ const allMenuItems = [
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/ventas',     icon: 'ventas',     label: 'Ventas',        module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/productos',  icon: 'cesta',      label: 'Productos',     module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/traslados',  icon: 'compras',    label: 'Traslados',     module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/instituciones', icon: 'cliente', label: 'Instituciones', module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/categorias', icon: 'categoria',  label: 'Categorías',    module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/caja',       icon: 'caja',       label: 'Caja',          module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/reportes',   icon: 'reporte',    label: 'Reportes',      module: 'pos_minimarket', section: 'MINIMARKET' },
