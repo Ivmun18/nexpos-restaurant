@@ -209,13 +209,7 @@ const formatFecha = (fecha) => {
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
 const imprimir = () => {
-    const ventana = window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
-    if (ventana) {
-        ventana.onload = () => {
-            ventana.focus()
-            ventana.print()
-        }
-    }
+    window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
 }
 
 const imprimirA4 = () => {
