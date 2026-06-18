@@ -132,6 +132,20 @@
                         </button>
                     </div>
 
+                    <!-- Institucion (solo vale) -->
+                    <div v-if="metodoPago === 'vale'" style="margin-bottom:14px;">
+                        <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 6px;">Institucion</p>
+                        <select v-model="institucionId"
+                            style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;">
+                            <option value="">Selecciona una institucion</option>
+                            <option v-for="inst in instituciones" :key="inst.id" :value="inst.id">{{ inst.nombre }} (+{{ inst.porcentaje_recargo }}%)</option>
+                        </select>
+                        <div v-if="recargoMonto > 0" style="margin-top:8px; padding:8px 12px; background:#FFFBEB; border-radius:8px; display:flex; justify-content:space-between; font-size:13px;">
+                            <span style="color:#92400E;">Recargo por vale</span>
+                            <span style="color:#92400E; font-weight:700;">+S/ {{ recargoMonto.toFixed(2) }}</span>
+                        </div>
+                    </div>
+
                     <!-- Monto pagado (solo efectivo) -->
                     <div v-if="metodoPago === 'efectivo'" style="margin-bottom:14px;">
                         <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 6px;">Monto recibido</p>
@@ -233,6 +247,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
     productos: { type: Array, default: () => [] },
+    instituciones: { type: Array, default: () => [] },
 })
 
 const busqueda   = ref('')
@@ -246,7 +261,14 @@ const metodos = [
     { valor: 'yape',     label: 'Yape',     icon: '📱' },
     { valor: 'plin',     label: 'Plin',     icon: '📲' },
     { valor: 'tarjeta',  label: 'Tarjeta',  icon: '💳' },
+    { valor: 'vale',     label: 'Vale Institucion', icon: '🏢' },
 ]
+
+const institucionId = ref('')
+
+const institucionSeleccionada = computed(() =>
+    props.instituciones?.find(i => i.id == institucionId.value) || null
+)
 
 const productosFiltrados = computed(() => {
     if (!busqueda.value) return props.productos
@@ -263,9 +285,16 @@ const clienteDni = ref('')
 const clienteRazonSocial = ref('')
 const clienteEmail = ref('')
 
-const total = computed(() =>
+const subtotal = computed(() =>
     carrito.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
 )
+
+const recargoMonto = computed(() => {
+    if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) return 0
+    return Math.round(subtotal.value * (institucionSeleccionada.value.porcentaje_recargo / 100) * 100) / 100
+})
+
+const total = computed(() => subtotal.value + recargoMonto.value)
 
 const inputBusqueda = ref(null)
 
@@ -346,6 +375,10 @@ const decrementar = (i) => {
 
 const abrirModalCobro = () => {
     if (!carrito.value.length) return
+    if (metodoPago.value === 'vale' && !institucionId.value) {
+        alert('Selecciona la institucion del vale antes de cobrar')
+        return
+    }
     mostrarModalCobro.value = true
 }
 
@@ -358,6 +391,8 @@ const confirmarCobro = () => {
         metodo_pago:        metodoPago.value,
         total:              total.value,
         monto_pagado:       montoPagado.value || null,
+        institucion_id:     metodoPago.value === 'vale' ? (institucionId.value || null) : null,
+        recargo_monto:      recargoMonto.value,
         tipo_comprobante:   tipoComprobante.value,
         cliente_dni:        clienteDni.value,
         cliente_razon_social: clienteRazonSocial.value,
