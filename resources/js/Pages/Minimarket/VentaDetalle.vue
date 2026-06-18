@@ -208,12 +208,13 @@ const formatFecha = (fecha) => {
 
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
 
-const imprimir = async () => {
-    if (typeof window.qz !== 'undefined') {
-        await imprimirTicketQZ(props.venta, props.empresa)
-    } else {
-        alert('QZ Tray no detectado. Abriendo visor...')
-        window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
+const imprimir = () => {
+    const ventana = window.open(`/minimarket/ventas/${props.venta.id}/recibo-ticket`, '_blank')
+    if (ventana) {
+        ventana.onload = () => {
+            ventana.focus()
+            ventana.print()
+        }
     }
 }
 

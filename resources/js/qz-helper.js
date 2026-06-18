@@ -1,5 +1,5 @@
 export async function imprimirTicketQZ(venta, empresa) {
-    if (typeof window.qz === 'undefined' || !qz) return
+    if (typeof window.qz === 'undefined' || !window.qz) return
     try {
         window.qz.security.setCertificatePromise(() => Promise.resolve(''))
         window.qz.security.setSignatureAlgorithm('SHA512')
