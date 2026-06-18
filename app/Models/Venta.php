@@ -70,6 +70,11 @@ class Venta extends Model
         return $this->belongsTo(Cliente::class);
     }
 
+    public function empresa()
+    {
+        return $this->belongsTo(\App\Models\Empresa::class, 'empresa_id');
+    }
+
     public function detalle()
     {
         return $this->hasMany(VentaDetalle::class);
