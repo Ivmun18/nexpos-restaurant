@@ -294,7 +294,20 @@ const recargoMonto = computed(() => {
     return Math.round(subtotal.value * (institucionSeleccionada.value.porcentaje_recargo / 100) * 100) / 100
 })
 
-const total = computed(() => subtotal.value + recargoMonto.value)
+const itemsParaEnviar = computed(() => {
+    if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) {
+        return carrito.value
+    }
+    const factor = 1 + (institucionSeleccionada.value.porcentaje_recargo / 100)
+    return carrito.value.map(item => ({
+        ...item,
+        precio_venta: Math.round(item.precio_venta * factor * 100) / 100,
+    }))
+})
+
+const total = computed(() =>
+    itemsParaEnviar.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
+)
 
 const inputBusqueda = ref(null)
 
@@ -387,7 +400,7 @@ const confirmarCobro = () => {
     procesando.value = true
 
     router.post('/minimarket/pos', {
-        items:              carrito.value,
+        items:              itemsParaEnviar.value,
         metodo_pago:        metodoPago.value,
         total:              total.value,
         monto_pagado:       montoPagado.value || null,
