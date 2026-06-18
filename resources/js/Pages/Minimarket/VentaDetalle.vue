@@ -179,6 +179,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { imprimirTicketQZ } from '@/qz-helper.js'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -270,6 +271,8 @@ const enviarWhatsApp = async () => {
 
 
 onMounted(() => {
-    // impresion automatica desactivada: el usuario imprime manualmente
+    if (typeof qz !== 'undefined') {
+        imprimirTicketQZ(props.venta, props.empresa)
+    }
 })
 </script>
