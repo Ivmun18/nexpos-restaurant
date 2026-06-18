@@ -56,5 +56,5 @@ export async function imprimirTicketQZ(venta, empresa) {
         ]
         await window.qz.print(config, data)
         await window.qz.websocket.disconnect()
-    } catch (e) { console.warn('QZ Tray no disponible:', e) }
+    } catch (e) { alert('ERROR QZ: ' + (e.message || JSON.stringify(e))) }
 }
