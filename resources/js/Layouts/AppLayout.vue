@@ -700,6 +700,9 @@ const menuItems = computed(() => {
         if (industry !== 'optica') {
             if (item.section === 'OPTICA') return false
         }
+        if (industry === 'optica') {
+            if (item.path === '/dashboard') return false
+        }
 
         // En notaría ocultar caja general y reportes de otros módulos
         if (industry === 'notaria') {
