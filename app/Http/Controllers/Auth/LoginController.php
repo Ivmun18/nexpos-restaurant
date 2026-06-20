@@ -70,6 +70,18 @@ class LoginController extends Controller
         'Inicio de sesión exitoso'
     );
     
+    $empresa = \DB::table('empresas')->where('id', auth()->user()->empresa_id)->first();
+    $industryRedirects = [
+        'gimnasio'    => '/gimnasio/dashboard',
+        'hotel'       => '/hotel/dashboard',
+        'notaria'     => '/notaria/actos',
+        'odontologia' => '/odontologia/dashboard',
+        'optica'      => '/optica/dashboard',
+    ];
+    if ($empresa && isset($industryRedirects[$empresa->industry_type])) {
+        return redirect()->intended($industryRedirects[$empresa->industry_type]);
+    }
+
     return redirect()->intended('/dashboard');
 }
 

@@ -520,6 +520,15 @@ const allMenuItems = [
     { path: '/hotel/huespedes',     icon: 'huesped',    label: 'Huéspedes',     module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/caja',          icon: 'caja',       label: 'Caja',          module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/productos',    icon: 'box',        label: 'Productos',     module: 'hotel', section: 'HOTEL' },
+    { path: '/optica/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'optica', section: 'OPTICA' },
+    { path: '/optica/pacientes',   icon: 'cliente',    label: 'Pacientes',     module: 'optica', section: 'OPTICA' },
+    { path: '/optica/fichas',      icon: 'inventario', label: 'Fichas',        module: 'optica', section: 'OPTICA' },
+    { path: '/optica/recetas',     icon: 'receta',     label: 'Recetas',       module: 'optica', section: 'OPTICA' },
+    { path: '/optica/productos',   icon: 'paquete',    label: 'Inventario',    module: 'optica', section: 'OPTICA' },
+    { path: '/optica/ventas/pos',  icon: 'pos',        label: 'POS',           module: 'optica', section: 'OPTICA' },
+    { path: '/optica/ventas',      icon: 'ventas',     label: 'Ventas',        module: 'optica', section: 'OPTICA' },
+    { path: '/optica/caja',        icon: 'caja',       label: 'Caja',          module: 'optica', section: 'OPTICA' },
+    { path: '/optica/reportes',    icon: 'reporte',    label: 'Reportes',      module: 'optica', section: 'OPTICA' },
 
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
@@ -687,6 +696,10 @@ const menuItems = computed(() => {
         if (industry !== 'hotel') {
             if (item.section === 'HOTEL') return false
         }
+        // Ocultar módulos de óptica si no es óptica
+        if (industry !== 'optica') {
+            if (item.section === 'OPTICA') return false
+        }
 
         // En notaría ocultar caja general y reportes de otros módulos
         if (industry === 'notaria') {
@@ -702,13 +715,14 @@ const menuItems = computed(() => {
         if (!item.module) return true
         if (item.module === 'gimnasio') return industry === 'gimnasio'
         if (item.module === 'hotel') return industry === 'hotel'
+        if (item.module === 'optica') return industry === 'optica'
         if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
         return modulesEnabled.value.includes(item.module)
     })
 })
 
 const menuSections = computed(() => {
-    const orden = ['ODONTOLOGIA', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'PRINCIPAL', '_default_', 'AJUSTES']
+    const orden = ['ODONTOLOGIA', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'OPTICA', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'PRINCIPAL', '_default_', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {

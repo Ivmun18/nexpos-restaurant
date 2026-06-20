@@ -1122,3 +1122,55 @@ Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::get('/notaria/servicios/lista', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'lista'])->name('notaria.servicios.lista');
 });
 
+
+// ============================================================
+// ÓPTICA
+// ============================================================
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [App\Http\Controllers\Optica\OpticaDashboardController::class, 'index'])->name('dashboard');
+
+    // Pacientes
+    Route::get('/pacientes', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'index'])->name('pacientes.index');
+    Route::post('/pacientes', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'store'])->name('pacientes.store');
+    Route::get('/pacientes/{paciente}', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'show'])->name('pacientes.show');
+    Route::put('/pacientes/{paciente}', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'update'])->name('pacientes.update');
+    Route::delete('/pacientes/{paciente}', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'destroy'])->name('pacientes.destroy');
+
+    // Fichas oftalmológicas
+    Route::get('/fichas', [App\Http\Controllers\Optica\OpticaFichasController::class, 'index'])->name('fichas.index');
+    Route::post('/fichas', [App\Http\Controllers\Optica\OpticaFichasController::class, 'store'])->name('fichas.store');
+    Route::get('/fichas/{ficha}', [App\Http\Controllers\Optica\OpticaFichasController::class, 'show'])->name('fichas.show');
+    Route::put('/fichas/{ficha}', [App\Http\Controllers\Optica\OpticaFichasController::class, 'update'])->name('fichas.update');
+    Route::delete('/fichas/{ficha}', [App\Http\Controllers\Optica\OpticaFichasController::class, 'destroy'])->name('fichas.destroy');
+    Route::get('/fichas/{ficha}/pdf', [App\Http\Controllers\Optica\OpticaFichasController::class, 'pdf'])->name('fichas.pdf');
+
+    // Recetas
+    Route::get('/recetas', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'index'])->name('recetas.index');
+    Route::post('/recetas', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'store'])->name('recetas.store');
+    Route::get('/recetas/{receta}/pdf', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'pdf'])->name('recetas.pdf');
+    Route::delete('/recetas/{receta}', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'destroy'])->name('recetas.destroy');
+
+    // Productos / Inventario
+    Route::get('/productos', [App\Http\Controllers\Optica\OpticaProductosController::class, 'index'])->name('productos.index');
+    Route::post('/productos', [App\Http\Controllers\Optica\OpticaProductosController::class, 'store'])->name('productos.store');
+    Route::put('/productos/{producto}', [App\Http\Controllers\Optica\OpticaProductosController::class, 'update'])->name('productos.update');
+    Route::delete('/productos/{producto}', [App\Http\Controllers\Optica\OpticaProductosController::class, 'destroy'])->name('productos.destroy');
+
+    // POS / Ventas
+    Route::get('/ventas', [App\Http\Controllers\Optica\OpticaVentasController::class, 'index'])->name('ventas.index');
+    Route::get('/ventas/pos', [App\Http\Controllers\Optica\OpticaVentasController::class, 'pos'])->name('ventas.pos');
+    Route::post('/ventas', [App\Http\Controllers\Optica\OpticaVentasController::class, 'store'])->name('ventas.store');
+    Route::get('/ventas/{venta}/comprobante', [App\Http\Controllers\Optica\OpticaVentasController::class, 'comprobante'])->name('ventas.comprobante');
+    Route::post('/ventas/{venta}/anular', [App\Http\Controllers\Optica\OpticaVentasController::class, 'anular'])->name('ventas.anular');
+
+    // Caja
+    Route::get('/caja', [App\Http\Controllers\Optica\OpticaCajaController::class, 'index'])->name('caja.index');
+    Route::post('/caja/abrir', [App\Http\Controllers\Optica\OpticaCajaController::class, 'abrir'])->name('caja.abrir');
+    Route::post('/caja/cerrar', [App\Http\Controllers\Optica\OpticaCajaController::class, 'cerrar'])->name('caja.cerrar');
+    Route::post('/caja/movimiento', [App\Http\Controllers\Optica\OpticaCajaController::class, 'movimiento'])->name('caja.movimiento');
+
+    // Reportes
+    Route::get('/reportes', [App\Http\Controllers\Optica\OpticaReportesController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/export', [App\Http\Controllers\Optica\OpticaReportesController::class, 'export'])->name('reportes.export');
+});
