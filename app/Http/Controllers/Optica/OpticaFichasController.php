@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OpticaFicha;
 use App\Models\OpticaPaciente;
+use App\Models\OpticaDoctor;
 use App\Models\OpticaReceta;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -18,7 +19,8 @@ class OpticaFichasController extends Controller
             ->with('paciente')->latest()->paginate(20);
         $pacientes = OpticaPaciente::where('empresa_id',$empresa_id)
             ->orderBy('apellidos')->get(['id','nombre','apellidos','dni']);
-        return Inertia::render('Optica/Fichas/Index', compact('fichas','pacientes'));
+        $doctores = OpticaDoctor::where('empresa_id',$empresa_id)->where('activo',true)->orderBy('nombre')->get(['id','nombre','especialidad']);
+        return Inertia::render('Optica/Fichas/Index', compact('fichas','pacientes','doctores'));
     }
 
     public function store(Request $request)

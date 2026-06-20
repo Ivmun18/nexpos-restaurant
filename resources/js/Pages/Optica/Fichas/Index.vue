@@ -70,6 +70,14 @@
         </div>
 
         <div class="mb-4">
+          <label class="text-xs text-gray-500">Doctor / Optometrista</label>
+          <select v-model="form.doctor_id" class="w-full border rounded-lg px-3 py-2 text-sm mt-1">
+            <option value="">— Sin asignar —</option>
+            <option v-for="d in doctores" :key="d.id" :value="d.id">{{ d.nombre }} {{ d.especialidad ? '('+d.especialidad+')' : '' }}</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
           <label class="text-xs text-gray-500">Fecha *</label>
           <input v-model="form.fecha" type="date" class="w-full border rounded-lg px-3 py-2 text-sm mt-1"/>
         </div>
@@ -138,14 +146,14 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 
-const props = defineProps({ fichas: Object, pacientes: Array })
+const props = defineProps({ fichas: Object, pacientes: Array, doctores: Array })
 
 const showModal = ref(false)
 const editando = ref(null)
 const guardando = ref(false)
 
 const form = reactive({
-  paciente_id: '', fecha: new Date().toISOString().slice(0,10),
+  paciente_id: '', doctor_id: '', fecha: new Date().toISOString().slice(0,10),
   od_esfera: '', od_cilindro: '', od_eje: '', od_adicion: '', od_av: '',
   oi_esfera: '', oi_cilindro: '', oi_eje: '', oi_adicion: '', oi_av: '',
   div: '', observaciones: ''

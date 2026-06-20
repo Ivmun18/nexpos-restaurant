@@ -1182,3 +1182,11 @@ Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function (
     Route::put('/categorias/{categoria}', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'update'])->name('categorias.update');
     Route::delete('/categorias/{categoria}', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'destroy'])->name('categorias.destroy');
 });
+
+// Óptica - Doctores
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    Route::get('/doctores', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'index'])->name('doctores.index');
+    Route::post('/doctores', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'store'])->name('doctores.store');
+    Route::put('/doctores/{doctor}', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'update'])->name('doctores.update');
+    Route::delete('/doctores/{doctor}', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'destroy'])->name('doctores.destroy');
+});
