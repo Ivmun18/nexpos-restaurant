@@ -37,8 +37,8 @@ class OpticaReportesController extends Controller
             ->where('optica_ventas.empresa_id',$empresa_id)
             ->where('optica_ventas.estado','pagado')
             ->whereBetween('optica_ventas.fecha',[$desde,$hasta])
-            ->selectRaw('descripcion, SUM(cantidad) as cantidad, SUM(subtotal) as total')
-            ->groupBy('descripcion')->orderByDesc('total')->take(10)->get();
+            ->selectRaw('optica_venta_items.descripcion, SUM(optica_venta_items.cantidad) as cantidad, SUM(optica_venta_items.subtotal) as total')
+            ->groupBy('optica_venta_items.descripcion')->orderByDesc('total')->take(10)->get();
 
         $stockBajo = OpticaProducto::where('empresa_id',$empresa_id)
             ->whereColumn('stock','<=','stock_minimo')->where('activo',true)->get();
