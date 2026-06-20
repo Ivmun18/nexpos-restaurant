@@ -22,7 +22,7 @@
             <tr v-for="r in recetas.data" :key="r.id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3 font-mono text-blue-600 font-semibold">{{ r.numero_receta }}</td>
               <td class="px-4 py-3 text-gray-800">{{ r.paciente ? r.paciente.nombre+' '+r.paciente.apellidos : '—' }}</td>
-              <td class="px-4 py-3 text-gray-600">{{ r.fecha }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ fmtFecha(r.fecha) }}</td>
               <td class="px-4 py-3 text-center">
                 <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="{'bg-blue-100 text-blue-700':r.tipo==='lejos','bg-purple-100 text-purple-700':r.tipo==='progresivo','bg-green-100 text-green-700':r.tipo==='cerca','bg-yellow-100 text-yellow-700':r.tipo==='bifocal'}">{{ r.tipo }}</span>
               </td>
@@ -43,6 +43,7 @@
   </AppLayout>
 </template>
 <script setup>
+const fmtFecha = (f) => { if (!f) return "—"; const d = new Date(f); return d.toLocaleDateString("es-PE",{year:"numeric",month:"short",day:"numeric"}) }
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { router } from '@inertiajs/vue3'
 const props = defineProps({ recetas: Object })

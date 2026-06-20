@@ -104,7 +104,7 @@
           </thead>
           <tbody>
             <tr v-for="c in historial" :key="c.id" class="border-b last:border-0">
-              <td class="py-2 text-gray-600">{{ c.fecha }}</td>
+              <td class="py-2 text-gray-600">{{ fmtFecha(c.fecha) }}</td>
               <td class="py-2 text-right">S/ {{ fmt(c.monto_inicial) }}</td>
               <td class="py-2 text-right text-green-600">S/ {{ fmt(c.total_ventas) }}</td>
               <td class="py-2 text-right text-red-500">S/ {{ fmt(c.total_egresos) }}</td>
@@ -148,6 +148,7 @@
 </template>
 
 <script setup>
+const fmtFecha = (f) => { if (!f) return "—"; const d = new Date(f); return d.toLocaleDateString("es-PE",{year:"numeric",month:"short",day:"numeric"}) }
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, reactive } from 'vue'
 import { router } from '@inertiajs/vue3'

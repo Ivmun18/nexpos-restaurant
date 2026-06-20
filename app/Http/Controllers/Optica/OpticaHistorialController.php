@@ -5,7 +5,6 @@ use Illuminate\Http\Request;
 use App\Models\OpticaHistorial;
 use App\Models\OpticaPaciente;
 use App\Models\OpticaDoctor;
-use App\Models\OpticaFicha;
 use Inertia\Inertia;
 
 class OpticaHistorialController extends Controller
@@ -33,15 +32,21 @@ class OpticaHistorialController extends Controller
             'ficha_id'=>'nullable|integer',
             'fecha'=>'required|date',
             'motivo_consulta'=>'nullable|string',
+            'datos_clinicos'=>'nullable|array',
             'antecedentes'=>'nullable|string',
             'diagnostico'=>'nullable|string',
             'tratamiento'=>'nullable|string',
+            'indicaciones'=>'nullable|string',
+            'pronostico'=>'nullable|string',
             'observaciones'=>'nullable|string',
             'proxima_cita'=>'nullable|date',
         ]);
-        $data['empresa_id'] = auth()->user()->empresa_id;
+        $empresa_id = auth()->user()->empresa_id;
+        $data['empresa_id'] = $empresa_id;
+        $count = OpticaHistorial::where('empresa_id',$empresa_id)->count();
+        $data['numero_historia'] = 'HC-'.str_pad($count+1,5,'0',STR_PAD_LEFT);
         OpticaHistorial::create($data);
-        return back()->with('success','Historial registrado.');
+        return back()->with('success','Historia clínica registrada.');
     }
 
     public function show($id)
@@ -59,20 +64,23 @@ class OpticaHistorialController extends Controller
             'doctor_id'=>'nullable|integer',
             'fecha'=>'required|date',
             'motivo_consulta'=>'nullable|string',
+            'datos_clinicos'=>'nullable|array',
             'antecedentes'=>'nullable|string',
             'diagnostico'=>'nullable|string',
             'tratamiento'=>'nullable|string',
+            'indicaciones'=>'nullable|string',
+            'pronostico'=>'nullable|string',
             'observaciones'=>'nullable|string',
             'proxima_cita'=>'nullable|date',
         ]);
         $h->update($data);
-        return back()->with('success','Historial actualizado.');
+        return back()->with('success','Historia actualizada.');
     }
 
     public function destroy($id)
     {
         $empresa_id = auth()->user()->empresa_id;
         OpticaHistorial::where('empresa_id',$empresa_id)->findOrFail($id)->delete();
-        return back()->with('success','Historial eliminado.');
+        return back()->with('success','Historia eliminada.');
     }
 }

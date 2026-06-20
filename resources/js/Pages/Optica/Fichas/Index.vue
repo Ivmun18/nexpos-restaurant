@@ -30,7 +30,7 @@
               <td class="px-4 py-3 font-semibold text-gray-800">
                 {{ f.paciente ? f.paciente.nombre+' '+f.paciente.apellidos : '—' }}
               </td>
-              <td class="px-4 py-3 text-gray-600">{{ f.fecha }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ fmtFecha(f.fecha) }}</td>
               <td class="px-4 py-3 text-center font-mono text-blue-700">{{ signo(f.od_esfera) }}</td>
               <td class="px-4 py-3 text-center font-mono text-blue-700">{{ signo(f.oi_esfera) }}</td>
               <td class="px-4 py-3 text-center text-gray-600">{{ f.div || '—' }}</td>
@@ -142,6 +142,7 @@
 </template>
 
 <script setup>
+const fmtFecha = (f) => { if (!f) return "—"; const d = new Date(f); return d.toLocaleDateString("es-PE",{year:"numeric",month:"short",day:"numeric"}) }
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'

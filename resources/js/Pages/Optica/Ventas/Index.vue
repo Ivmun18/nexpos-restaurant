@@ -29,7 +29,7 @@
             <tr v-for="v in ventas.data" :key="v.id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3 font-mono text-blue-600 font-semibold">{{ v.numero_venta }}</td>
               <td class="px-4 py-3 text-gray-700">{{ v.paciente ? v.paciente.nombre+' '+v.paciente.apellidos : '—' }}</td>
-              <td class="px-4 py-3 text-gray-500">{{ v.fecha }}</td>
+              <td class="px-4 py-3 text-gray-500">{{ fmtFecha(v.fecha) }}</td>
               <td class="px-4 py-3 text-center capitalize text-gray-600">{{ v.tipo_comprobante }}</td>
               <td class="px-4 py-3 text-center capitalize text-gray-600">{{ v.metodo_pago }}</td>
               <td class="px-4 py-3 text-right font-bold text-gray-800">S/ {{ fmt(v.total) }}</td>
@@ -63,6 +63,7 @@
 </template>
 
 <script setup>
+const fmtFecha = (f) => { if (!f) return "—"; const d = new Date(f); return d.toLocaleDateString("es-PE",{year:"numeric",month:"short",day:"numeric"}) }
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { Link, router } from '@inertiajs/vue3'
 const props = defineProps({ ventas: Object })

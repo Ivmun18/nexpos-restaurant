@@ -3,6 +3,8 @@ namespace App\Http\Controllers\Optica;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OpticaPaciente;
+use App\Models\OpticaHistorial;
+use App\Models\OpticaDoctor;
 use Inertia\Inertia;
 
 class OpticaPacientesController extends Controller
@@ -29,7 +31,9 @@ class OpticaPacientesController extends Controller
         $fichas = $paciente->fichas()->latest()->get();
         $recetas = $paciente->recetas()->latest()->get();
         $ventas = $paciente->ventas()->latest()->take(10)->get();
-        return Inertia::render('Optica/Pacientes/Show', compact('paciente','fichas','recetas','ventas'));
+        $historial = OpticaHistorial::where('empresa_id',$empresa_id)->where('paciente_id',$id)->with('doctor')->latest()->get();
+        $doctores = OpticaDoctor::where('empresa_id',$empresa_id)->where('activo',true)->orderBy('nombre')->get(['id','nombre']);
+        return Inertia::render('Optica/Pacientes/Show', compact('paciente','fichas','recetas','ventas','historial','doctores'));
     }
 
     public function store(Request $request)

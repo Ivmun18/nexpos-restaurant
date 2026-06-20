@@ -25,7 +25,7 @@
           <tbody>
             <tr v-if="historiales.data.length===0"><td colspan="7" class="text-center text-gray-400 py-8">Sin registros</td></tr>
             <tr v-for="h in historiales.data" :key="h.id" class="border-t hover:bg-gray-50">
-              <td class="px-4 py-3 text-gray-600">{{ h.fecha }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ fmtFecha(h.fecha) }}</td>
               <td class="px-4 py-3 font-semibold text-gray-800">{{ h.paciente ? h.paciente.nombre+' '+h.paciente.apellidos : '—' }}</td>
               <td class="px-4 py-3 text-gray-600">{{ h.doctor ? h.doctor.nombre : '—' }}</td>
               <td class="px-4 py-3 text-gray-600 text-xs max-w-[200px] truncate">{{ h.motivo_consulta || '—' }}</td>
@@ -100,6 +100,7 @@
   </AppLayout>
 </template>
 <script setup>
+const fmtFecha = (f) => { if (!f) return "—"; const d = new Date(f); return d.toLocaleDateString("es-PE",{year:"numeric",month:"short",day:"numeric"}) }
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref, reactive } from 'vue'
 import { router } from '@inertiajs/vue3'
