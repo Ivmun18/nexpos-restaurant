@@ -30,7 +30,7 @@ class OpticaVentasController extends Controller
         $productos = OpticaProducto::where('empresa_id',$empresa_id)->where('activo',true)->where('stock','>',0)->get();
         $pacientes = OpticaPaciente::where('empresa_id',$empresa_id)->orderBy('apellidos')->get(['id','nombre','apellidos','dni']);
         $cajaAbierta = OpticaCaja::where('empresa_id',$empresa_id)->where('estado','abierta')->latest()->first();
-        \$categorias = OpticaCategoria::where('empresa_id',\$empresa_id)->where('activo',true)->orderBy('nombre')->get();
+        $categorias = OpticaCategoria::where('empresa_id',$empresa_id)->where('activo',true)->orderBy('nombre')->get();
         return Inertia::render('Optica/Ventas/POS', compact('productos','pacientes','cajaAbierta','categorias'));
     }
 
