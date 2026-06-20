@@ -1174,3 +1174,11 @@ Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function (
     Route::get('/reportes', [App\Http\Controllers\Optica\OpticaReportesController::class, 'index'])->name('reportes.index');
     Route::get('/reportes/export', [App\Http\Controllers\Optica\OpticaReportesController::class, 'export'])->name('reportes.export');
 });
+
+// Óptica - Categorías
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    Route::get('/categorias', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'index'])->name('categorias.index');
+    Route::post('/categorias', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'store'])->name('categorias.store');
+    Route::put('/categorias/{categoria}', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'update'])->name('categorias.update');
+    Route::delete('/categorias/{categoria}', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'destroy'])->name('categorias.destroy');
+});

@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Models\OpticaVenta;
 use App\Models\OpticaVentaItem;
 use App\Models\OpticaProducto;
+use App\Models\OpticaCategoria;
 use App\Models\OpticaPaciente;
 use App\Models\OpticaCaja;
 use App\Models\OpticaCajaMovimiento;
@@ -29,7 +30,8 @@ class OpticaVentasController extends Controller
         $productos = OpticaProducto::where('empresa_id',$empresa_id)->where('activo',true)->where('stock','>',0)->get();
         $pacientes = OpticaPaciente::where('empresa_id',$empresa_id)->orderBy('apellidos')->get(['id','nombre','apellidos','dni']);
         $cajaAbierta = OpticaCaja::where('empresa_id',$empresa_id)->where('estado','abierta')->latest()->first();
-        return Inertia::render('Optica/Ventas/POS', compact('productos','pacientes','cajaAbierta'));
+        \$categorias = OpticaCategoria::where('empresa_id',\$empresa_id)->where('activo',true)->orderBy('nombre')->get();
+        return Inertia::render('Optica/Ventas/POS', compact('productos','pacientes','cajaAbierta','categorias'));
     }
 
     public function store(Request $request)

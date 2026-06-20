@@ -529,6 +529,7 @@ const allMenuItems = [
     { path: '/optica/ventas',      icon: 'ventas',     label: 'Ventas',        module: 'optica', section: 'OPTICA' },
     { path: '/optica/caja',        icon: 'caja',       label: 'Caja',          module: 'optica', section: 'OPTICA' },
     { path: '/optica/reportes',    icon: 'reporte',    label: 'Reportes',      module: 'optica', section: 'OPTICA' },
+    { path: '/optica/categorias',  icon: 'categoria',  label: 'Categorías',    module: 'optica', section: 'OPTICA' },
 
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
