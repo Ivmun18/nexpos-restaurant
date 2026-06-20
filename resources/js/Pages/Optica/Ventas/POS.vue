@@ -162,7 +162,7 @@
         <p class="text-gray-500 text-sm mb-1">{{ ventaExito.numero }}</p>
         <p class="text-2xl font-bold text-green-600 mb-1">Vuelto: S/ {{ fmt(ventaExito.vuelto) }}</p>
         <div class="flex gap-2 mt-4">
-          <a :href="`/optica/ventas/${ventaExito.id}/comprobante`" target="_blank"
+          <a :href="`/optica/ventas/${ventaExito.venta_id}/comprobante`" target="_blank"
             class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold">🖨️ Imprimir</a>
           <button @click="nuevaVenta"
             class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold">+ Nueva Venta</button>

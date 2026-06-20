@@ -1190,3 +1190,12 @@ Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function (
     Route::put('/doctores/{doctor}', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'update'])->name('doctores.update');
     Route::delete('/doctores/{doctor}', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'destroy'])->name('doctores.destroy');
 });
+
+// Óptica - Historial Clínico
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    Route::get('/historial', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'index'])->name('historial.index');
+    Route::post('/historial', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'store'])->name('historial.store');
+    Route::get('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'show'])->name('historial.show');
+    Route::put('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'update'])->name('historial.update');
+    Route::delete('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'destroy'])->name('historial.destroy');
+});

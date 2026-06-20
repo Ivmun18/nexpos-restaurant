@@ -523,6 +523,7 @@ const allMenuItems = [
     { path: '/optica/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'optica', section: 'OPTICA' },
     { path: '/optica/pacientes',   icon: 'cliente',    label: 'Pacientes',     module: 'optica', section: 'OPTICA' },
     { path: '/optica/fichas',      icon: 'inventario', label: 'Fichas',        module: 'optica', section: 'OPTICA' },
+    { path: '/optica/historial',   icon: 'receta',     label: 'Historial',     module: 'optica', section: 'OPTICA' },
     { path: '/optica/recetas',     icon: 'receta',     label: 'Recetas',       module: 'optica', section: 'OPTICA' },
     { path: '/optica/productos',   icon: 'paquete',    label: 'Inventario',    module: 'optica', section: 'OPTICA' },
     { path: '/optica/ventas/pos',  icon: 'pos',        label: 'POS',           module: 'optica', section: 'OPTICA' },
