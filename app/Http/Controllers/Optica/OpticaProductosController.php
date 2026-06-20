@@ -20,7 +20,7 @@ class OpticaProductosController extends Controller
             ->when($categoria, fn($query) => $query->where('categoria',$categoria))
             ->orderBy('categoria')->orderBy('nombre')
             ->paginate(25)->withQueryString();
-        \$categorias = OpticaCategoria::where('empresa_id',\$empresa_id)->where('activo',true)->orderBy('nombre')->get();
+        $categorias = OpticaCategoria::where('empresa_id',$empresa_id)->where('activo',true)->orderBy('nombre')->get();
         return Inertia::render('Optica/Productos/Index', compact('productos','q','categoria','categorias'));
     }
 
