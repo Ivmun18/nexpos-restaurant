@@ -108,6 +108,12 @@
                             <button @click="carrito.splice(i, 1)"
                                 style="color:#CBD5E1; background:none; border:none; cursor:pointer; font-size:18px; line-height:1; flex-shrink:0;">✕</button>
                         </div>
+                        <div v-if="item.presentaciones && item.presentaciones.length" style="margin-bottom:4px;">
+                            <select @change="cambiarPresentacion(i, $event)" style="width:100%; font-size:11px; padding:3px 6px; border-radius:6px; border:1px solid #CBD5E1; color:#475569; background:#F8FAFC;">
+                                <option value="">Unidad suelta</option>
+                                <option v-for="p in item.presentaciones" :key="p.id" :value="p.id" :selected="item.presentacion_id === p.id">{{ p.nombre }} (x{{ p.factor }}) — S/ {{ (item.precio_base * p.factor).toFixed(2) }}</option>
+                            </select>
+                        </div>
                         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <button @click="decrementar(i)"
@@ -621,20 +627,39 @@ const agregarAlCarrito = (p) => {
 }
 
 const confirmarAgregar = (p) => {
-    const existe = carrito.value.find(i => i.id === p.id)
+    const existe = carrito.value.find(i => i.id === p.id && !i.presentacion_id)
     if (existe) {
         if (existe.cantidad < p.stock_actual) existe.cantidad++
     } else {
-        carrito.value.push({ ...p, cantidad: 1 })
+        carrito.value.push({ ...p, cantidad: 1, precio_base: p.precio_venta, presentacion_id: null, factor: 1 })
     }
     productoAlerta.value = null
     alertasProducto.value = []
 }
 
+const cambiarPresentacion = (i, event) => {
+    const item = carrito.value[i]
+    const pid = parseInt(event.target.value) || null
+    if (!pid) {
+        item.presentacion_id = null
+        item.factor = 1
+        item.precio_venta = item.precio_base
+    } else {
+        const pres = item.presentaciones.find(p => p.id === pid)
+        if (pres) {
+            item.presentacion_id = pres.id
+            item.factor = pres.factor
+            item.precio_venta = item.precio_base * pres.factor
+        }
+    }
+}
+
 const incrementar = (i) => {
     const item = carrito.value[i]
     const prod = props.productos.find(p => p.id === item.id)
-    if (item.cantidad < prod.stock_actual) item.cantidad++
+    const factor = item.factor || 1
+    const maxCantidad = Math.floor(prod.stock_actual / factor)
+    if (item.cantidad < maxCantidad) item.cantidad++
 }
 
 const decrementar = (i) => {
