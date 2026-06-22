@@ -17,7 +17,7 @@ class PosFarmaciaController extends Controller
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
             ->orderBy('descripcion')
-            ->with('presentaciones')
+            ->with(['presentaciones' => fn($q) => $q->where('activo', true)])
             ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'stock_minimo', 'categoria_id', 'fecha_vencimiento', 'lote', 'laboratorio', 'principio_activo', 'presentacion', 'concentracion', 'requiere_receta']);
 
         // Calcular estado de vencimiento de cada producto
