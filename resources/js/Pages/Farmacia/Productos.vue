@@ -215,6 +215,34 @@
                 </div>
             </div>
 
+            <!-- Presentaciones / Paquetes -->
+            <div v-if="modalEditar" style="margin-top:20px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:12px; padding:16px;">
+                <p style="font-size:13px; font-weight:700; color:#15803D; margin:0 0 12px;">📦 Presentaciones de venta (caja, blíster, frasco, etc.)</p>
+                <div v-if="form.presentaciones && form.presentaciones.length" style="margin-bottom:12px;">
+                    <div v-for="(pres, idx) in form.presentaciones" :key="pres.id" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:white; border-radius:8px; margin-bottom:6px; border:1px solid #D1FAE5;">
+                        <div>
+                            <span style="font-size:13px; font-weight:600; color:#1E293B;">{{ pres.nombre }}</span>
+                            <span style="font-size:11px; color:#64748B; margin-left:8px;">x{{ pres.factor_conversion }} unid. — S/ {{ Number(pres.precio_venta).toFixed(2) }}</span>
+                        </div>
+                        <button @click="eliminarPresentacion(pres, idx)" style="background:none; border:none; color:#EF4444; cursor:pointer; font-size:16px;">✕</button>
+                    </div>
+                </div>
+                <p v-else style="font-size:12px; color:#94A3B8; margin:0 0 10px;">Sin presentaciones. El producto se vende por unidad.</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <input v-model="nuevaPres.nombre" placeholder="Nombre (ej: Caja x10)" style="padding:8px; border:1px solid #D1FAE5; border-radius:6px; font-size:12px; outline:none;"/>
+                    <input v-model="nuevaPres.factor_conversion" type="number" min="1" placeholder="Cuántas unidades trae" style="padding:8px; border:1px solid #D1FAE5; border-radius:6px; font-size:12px; outline:none;"/>
+                    <input v-model="nuevaPres.precio_venta" type="number" step="0.01" placeholder="Precio de venta" style="padding:8px; border:1px solid #D1FAE5; border-radius:6px; font-size:12px; outline:none;"/>
+                    <select v-model="nuevaPres.unidad_sunat" style="padding:8px; border:1px solid #D1FAE5; border-radius:6px; font-size:12px; outline:none;">
+                        <option value="NIU">NIU - Unidad</option>
+                        <option value="BX">BX - Caja</option>
+                        <option value="BL">BL - Blíster</option>
+                        <option value="BO">BO - Frasco</option>
+                        <option value="PK">PK - Paquete</option>
+                    </select>
+                </div>
+                <button @click="agregarPresentacion" style="width:100%; padding:8px; background:#16A34A; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">+ Agregar presentación</button>
+            </div>
+
             <div style="display:flex; gap:12px; margin-top:24px;">
                 <button @click="cerrarModales"
                     style="flex:1; padding:12px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
@@ -566,6 +594,34 @@ const stockBajo = computed(() =>
     props.productos.filter(p => p.stock_actual <= (p.stock_minimo || 3))
 )
 
+const nuevaPres = ref({ nombre: '', factor_conversion: '', precio_venta: '', unidad_sunat: 'NIU' })
+
+const agregarPresentacion = () => {
+    const prod = productoSeleccionado.value
+    router.post('/farmacia/productos/' + prod.id + '/presentaciones', {
+        nombre: nuevaPres.value.nombre,
+        factor_conversion: parseFloat(nuevaPres.value.factor_conversion),
+        precio_venta: parseFloat(nuevaPres.value.precio_venta),
+        unidad_sunat: nuevaPres.value.unidad_sunat,
+        es_default: false,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.value.presentaciones = props.productos.find(p => p.id === prod.id)?.presentaciones || []
+            nuevaPres.value = { nombre: '', factor_conversion: '', precio_venta: '', unidad_sunat: 'NIU' }
+        }
+    })
+}
+
+const eliminarPresentacion = (pres) => {
+    router.delete('/farmacia/presentaciones/' + pres.id, {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.value.presentaciones = form.value.presentaciones.filter(p => p.id !== pres.id)
+        }
+    })
+}
+
 const cerrarModales = () => {
     modalNuevo.value  = false
     modalEditar.value = false
@@ -589,6 +645,7 @@ const editarProducto = (p) => {
         presentacion:      p.presentacion || '',
         concentracion:     p.concentracion || '',
         requiere_receta:   p.requiere_receta || false,
+        presentaciones:    p.presentaciones || [],
     }
     modalEditar.value = true
 }

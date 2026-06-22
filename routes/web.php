@@ -781,6 +781,11 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
     Route::get('/productos/{producto}/historial', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'historial'])->name('productos.historial');
     Route::get('/productos/{producto}/kardex',   [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'kardex'])->name('productos.kardex');
 
+    // Presentaciones (paquetes/cajas/blisteres) farmacia
+    Route::post('/productos/{producto}/presentaciones', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'storePresentacion'])->name('farmacia.presentaciones.store');
+    Route::put('/presentaciones/{presentacion}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'updatePresentacion'])->name('farmacia.presentaciones.update');
+    Route::delete('/presentaciones/{presentacion}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroyPresentacion'])->name('farmacia.presentaciones.destroy');
+
     // Recetas médicas farmacia
     Route::get('/recetas',          [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'index'])->name('recetas.index');
     Route::post('/recetas',         [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'store'])->name('recetas.store');

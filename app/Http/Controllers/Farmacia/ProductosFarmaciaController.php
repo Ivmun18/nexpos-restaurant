@@ -17,7 +17,7 @@ class ProductosFarmaciaController extends Controller
         $empresa_id = auth()->user()->empresa_id;
         $productos  = Producto::where('empresa_id', $empresa_id)
             ->where('activo', true)
-            ->with('categoria')
+            ->with(['categoria', 'presentaciones' => fn($q) => $q->where('activo', true)])
             ->orderBy('descripcion')
             ->get();
         $categorias = Categoria::where('empresa_id', $empresa_id)->orderBy('nombre')->get();
@@ -274,6 +274,55 @@ class ProductosFarmaciaController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
+    }
+    public function storePresentacion(Request $request, Producto $producto)
+    {
+        abort_if($producto->empresa_id !== auth()->user()->empresa_id, 403);
+        $request->validate([
+            'nombre'            => 'required|string|max:100',
+            'unidad_sunat'      => 'required|string|max:10',
+            'factor_conversion' => 'required|numeric|min:0.0001',
+            'precio_venta'      => 'required|numeric|min:0',
+            'codigo_barras'     => 'nullable|string|max:100',
+            'es_default'        => 'nullable|boolean',
+        ]);
+        if ($request->boolean('es_default')) {
+            \App\Models\ProductoPresentacion::where('producto_id', $producto->id)->update(['es_default' => false]);
+        }
+        $pres = \App\Models\ProductoPresentacion::create([
+            'producto_id'       => $producto->id,
+            'nombre'            => $request->nombre,
+            'unidad_sunat'      => $request->unidad_sunat,
+            'factor_conversion' => $request->factor_conversion,
+            'precio_venta'      => $request->precio_venta,
+            'codigo_barras'     => $request->codigo_barras,
+            'es_default'        => $request->boolean('es_default'),
+            'activo'            => true,
+        ]);
+        if ($request->wantsJson()) return response()->json(['presentacion' => $pres]);
+        return redirect()->route('farmacia.productos')->with('success', 'Presentacion agregada.');
+    }
+
+    public function updatePresentacion(Request $request, \App\Models\ProductoPresentacion $presentacion)
+    {
+        abort_if($presentacion->producto->empresa_id !== auth()->user()->empresa_id, 403);
+        $request->validate([
+            'nombre'            => 'required|string|max:100',
+            'unidad_sunat'      => 'required|string|max:10',
+            'factor_conversion' => 'required|numeric|min:0.0001',
+            'precio_venta'      => 'required|numeric|min:0',
+            'codigo_barras'     => 'nullable|string|max:100',
+        ]);
+        $presentacion->update($request->only(['nombre','unidad_sunat','factor_conversion','precio_venta','codigo_barras']));
+        if ($request->wantsJson()) return response()->json(['presentacion' => $presentacion]);
+        return redirect()->route('farmacia.productos')->with('success', 'Presentacion actualizada.');
+    }
+
+    public function destroyPresentacion(\App\Models\ProductoPresentacion $presentacion)
+    {
+        abort_if($presentacion->producto->empresa_id !== auth()->user()->empresa_id, 403);
+        $presentacion->delete();
+        return redirect()->route('farmacia.productos')->with('success', 'Presentacion eliminada.');
     }
 
 }
