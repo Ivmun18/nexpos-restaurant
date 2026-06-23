@@ -88,6 +88,8 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
 
     Route::patch('/presupuesto-items/{id}', [\App\Http\Controllers\Odontologia\PresupuestoController::class, 'updateItem'])->name('odontologia.presupuesto-items.update');
 
+    Route::get('/doctores/estadisticas', [\App\Http\Controllers\Odontologia\DoctorController::class, 'estadisticas'])->name('odontologia.doctores.estadisticas');
+
     // Configuración clínica
     Route::get('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'index'])->name('odontologia.configuracion');
     Route::put('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'update'])->name('odontologia.configuracion.update');

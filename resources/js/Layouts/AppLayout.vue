@@ -502,6 +502,7 @@ const allMenuItems = [
     { path: '/odontologia/pacientes',  icon: 'users',      label: 'Pacientes',        module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/citas',      icon: 'calendar',   label: 'Citas',            module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/doctores',   icon: 'doctor',     label: 'Doctores',         module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/doctores/estadisticas', icon: 'chart', label: 'Estadísticas',   module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/presupuestos', icon: 'reporte',  label: 'Presupuestos',     module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/pagos/caja', icon: 'caja',       label: 'Caja',             module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/pagos',      icon: 'caja',       label: 'Pagos',            module: 'odontologia', section: 'ODONTOLOGIA' },
