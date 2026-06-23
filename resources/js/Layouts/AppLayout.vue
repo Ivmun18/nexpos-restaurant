@@ -695,6 +695,8 @@ const menuItems = computed(() => {
         if (industry !== 'odontologia') {
             if (item.section === 'ODONTOLOGIA') return false
         }
+        // Odontología usa su propia configuración
+        if (industry === 'odontologia' && item.path === '/configuracion') return false
 
         // Ocultar módulos de hotel si no es hotel
         if (industry !== 'hotel') {
