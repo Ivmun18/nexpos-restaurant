@@ -1210,3 +1210,8 @@ Route::get('/portal/{token}/doctores', [\App\Http\Controllers\Odontologia\Portal
 Route::get('/portal/{token}/horas', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'horasDisponibles']);
 Route::post('/portal/{token}/agendar', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'agendarCita']);
 Route::get('/portal/{token}', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'show'])->name('portal.paciente');
+
+// Página pública de reservas odontología
+Route::get('/reservar/{slug}', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'show'])->name('reserva.publica');
+Route::get('/reservar/{slug}/horas', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'horas']);
+Route::post('/reservar/{slug}/agendar', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'agendar']);
