@@ -125,6 +125,14 @@
               </button>
             </div>
           </div>
+          <!-- Recordatorio WhatsApp -->
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9;">
+            <button @click="enviarRecordatorio(citaSeleccionada)"
+              style="width:100%;padding:9px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <span style="font-size:16px;">📱</span> Enviar recordatorio WhatsApp
+            </button>
+            <div v-if="recordatorioEnviado" style="margin-top:6px;text-align:center;font-size:11px;color:#16a34a;">✓ WhatsApp abierto — mensaje listo para enviar</div>
+          </div>
         </div>
       </div>
     </div>
@@ -192,6 +200,26 @@ const citaSeleccionada = ref(null)
 const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
 const nuevaCita = ref({ paciente_id:'', doctor_id:'', fecha_hora:'', duracion_min:30, motivo:'' })
+
+const recordatorioEnviado = ref(false)
+const enviarRecordatorio = async (cita) => {
+  try {
+    const res = await fetch(`/odontologia/citas/${cita.id}/recordatorio`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '', 'Accept': 'application/json' }
+    })
+    const data = await res.json()
+    if (data.url) {
+      window.open(data.url, '_blank')
+      recordatorioEnviado.value = true
+      setTimeout(() => { recordatorioEnviado.value = false }, 4000)
+    } else {
+      alert(data.error || 'El paciente no tiene teléfono registrado')
+    }
+  } catch(e) {
+    alert('Error al generar recordatorio')
+  }
+}
 
 const estados = [
   { key:'programada',  label:'Programada',  color:'#8B5CF6', bg:'#F5F3FF', border:'#8B5CF6' },

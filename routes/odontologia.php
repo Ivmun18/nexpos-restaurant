@@ -79,6 +79,7 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
 
     // Tratamientos catálogo
     // Radiografías
+    Route::post('/citas/{id}/recordatorio', [\App\Http\Controllers\Odontologia\CitaController::class, 'recordatorio'])->name('odontologia.citas.recordatorio');
     Route::post('/radiografias', [\App\Http\Controllers\Odontologia\RadiografiasController::class, 'store'])->name('odontologia.radiografias.store');
     Route::delete('/radiografias/{id}', [\App\Http\Controllers\Odontologia\RadiografiasController::class, 'destroy'])->name('odontologia.radiografias.destroy');
 
