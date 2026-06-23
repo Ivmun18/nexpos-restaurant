@@ -1204,3 +1204,6 @@ Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function (
     Route::put('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'update'])->name('historial.update');
     Route::delete('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'destroy'])->name('historial.destroy');
 });
+
+// Portal público paciente odontología
+Route::get('/portal/{token}', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'show'])->name('portal.paciente');
