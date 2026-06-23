@@ -38,6 +38,127 @@
     </div>
 
     <!-- Tab: Citas -->
+    <!-- Tab: Expediente completo -->
+    <div v-if="tabActivo==='expediente'" style="padding:20px;display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Datos clínicos -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+        <div style="font-size:12px;font-weight:600;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;">🏥 Datos clínicos</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div>
+            <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;">Alergias</div>
+            <div style="font-size:13px;color:#1e293b;">{{ paciente.alergias || 'Ninguna conocida' }}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;">Antecedentes</div>
+            <div style="font-size:13px;color:#1e293b;">{{ paciente.antecedentes || '—' }}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;">Grupo sanguíneo</div>
+            <div style="font-size:13px;color:#1e293b;">{{ paciente.grupo_sanguineo || '—' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Odontograma -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+        <div style="font-size:12px;font-weight:600;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;">🦷 Odontograma</div>
+        <div v-if="!odontogramaEventos || odontogramaEventos.length===0" style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Sin registro en odontograma</div>
+        <div v-else>
+          <!-- Superiores -->
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;text-align:center;">SUPERIOR</div>
+          <div style="display:flex;justify-content:center;gap:3px;margin-bottom:4px;">
+            <div v-for="n in [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28]" :key="n"
+              :style="dienteStyle(n)"
+              style="width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;border:1px solid #c7d2fe;cursor:default;"
+              :title="dienteNota(n)">{{ n }}</div>
+          </div>
+          <div style="border-top:2px dashed #e2e8f0;margin:6px 0;"></div>
+          <!-- Inferiores -->
+          <div style="display:flex;justify-content:center;gap:3px;margin-bottom:4px;">
+            <div v-for="n in [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38]" :key="n"
+              :style="dienteStyle(n)"
+              style="width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;border:1px solid #c7d2fe;cursor:default;"
+              :title="dienteNota(n)">{{ n }}</div>
+          </div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:4px;text-align:center;">INFERIOR</div>
+          <!-- Leyenda -->
+          <div style="display:flex;gap:14px;justify-content:center;margin-top:10px;font-size:11px;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#fee2e2;border:1px solid #fca5a5;border-radius:2px;display:inline-block;"></span>Caries</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#dcfce7;border:1px solid #86efac;border-radius:2px;display:inline-block;"></span>Tratado</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#fef3c7;border:1px solid #fcd34d;border-radius:2px;display:inline-block;"></span>Corona</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#f3f4f6;border:1px solid #9ca3af;border-radius:2px;display:inline-block;"></span>Extracción</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historia clínica -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+        <div style="font-size:12px;font-weight:600;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;">📝 Historia clínica</div>
+        <div v-if="!historias || historias.length===0" style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Sin registros</div>
+        <div v-for="h in historias" :key="'exp-h-'+h.id"
+          style="border-left:3px solid #4338ca;padding:10px 14px;margin-bottom:10px;background:#f8fafc;border-radius:0 8px 8px 0;">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">{{ h.fecha }} · Dr. {{ h.doctor?.nombre || '—' }}</div>
+          <div style="font-size:13px;color:#374151;line-height:1.6;">{{ h.notas }}</div>
+        </div>
+      </div>
+
+      <!-- Radiografías -->
+      <div v-if="radiografias && radiografias.length > 0" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+        <div style="font-size:12px;font-weight:600;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;">🩻 Radiografías e imágenes</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
+          <a v-for="r in radiografias" :key="'exp-r-'+r.id" :href="'/storage/'+r.archivo_url" target="_blank"
+            style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;text-decoration:none;">
+            <img v-if="!r.archivo_url.endsWith('.pdf')" :src="'/storage/'+r.archivo_url" style="width:100%;height:100px;object-fit:cover;display:block;" />
+            <div v-else style="height:100px;display:flex;align-items:center;justify-content:center;background:#f8fafc;font-size:24px;">📄</div>
+            <div style="padding:6px 8px;">
+              <div style="font-size:11px;font-weight:500;color:#374151;">{{ r.tipo }}</div>
+              <div style="font-size:10px;color:#94a3b8;">{{ r.fecha }}</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Presupuestos -->
+      <div v-if="presupuestos && presupuestos.length > 0" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+        <div style="font-size:12px;font-weight:600;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;">💰 Presupuestos</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="border-bottom:1px solid #f1f5f9;">
+            <th style="padding:6px 0;text-align:left;color:#94a3b8;font-weight:500;">Fecha</th>
+            <th style="padding:6px;text-align:left;color:#94a3b8;font-weight:500;">Tratamientos</th>
+            <th style="padding:6px;text-align:center;color:#94a3b8;font-weight:500;">Estado</th>
+            <th style="padding:6px 0;text-align:right;color:#94a3b8;font-weight:500;">Total S/</th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="p in presupuestos" :key="'exp-p-'+p.id" style="border-bottom:1px solid #f8fafc;">
+              <td style="padding:8px 0;color:#64748b;">{{ p.fecha }}</td>
+              <td style="padding:8px 6px;color:#374151;">{{ p.items?.map(i=>i.descripcion).join(', ') }}</td>
+              <td style="padding:8px;text-align:center;">
+                <span :style="{background:p.estado==='aprobado'?'#dcfce7':p.estado==='borrador'?'#fef3c7':'#dbeafe',color:p.estado==='aprobado'?'#166534':p.estado==='borrador'?'#92400e':'#1e40af'}"
+                  style="font-size:11px;padding:2px 8px;border-radius:20px;">{{ p.estado }}</span>
+              </td>
+              <td style="padding:8px 0;text-align:right;font-weight:600;color:#8B5CF6;">{{ Number(p.total).toFixed(2) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recetas -->
+      <div v-if="recetas && recetas.length > 0" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
+        <div style="font-size:12px;font-weight:600;color:#4338ca;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;border-bottom:2px solid #e0e7ff;padding-bottom:6px;">💊 Recetas emitidas</div>
+        <div v-for="r in recetas" :key="'exp-rec-'+r.id"
+          style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+          <div>
+            <div style="font-size:13px;color:#374151;">{{ r.items?.map(i=>i.medicamento).join(', ') }}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">{{ r.fecha }}</div>
+          </div>
+          <a :href="`/odontologia/recetas/${r.id}/pdf`" target="_blank"
+            style="padding:5px 12px;background:#8B5CF6;color:#fff;border-radius:6px;font-size:11px;font-weight:500;text-decoration:none;">PDF</a>
+        </div>
+      </div>
+
+    </div>
+
     <div v-if="tabActivo==='citas'">
       <div v-if="citas.length===0" style="text-align:center; padding:32px; color:#94A3B8;">Sin citas registradas</div>
       <div v-for="c in citas" :key="c.id" style="background:white; border:1px solid #E2E8F0; border-radius:10px; padding:16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
@@ -297,12 +418,13 @@
 
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array, doctores:Array, recetas:Array, radiografias:Array })
-const tabActivo = ref('citas')
+const tabActivo = ref('expediente')
 const tabs = [
+  { key:'expediente', label:'📋 Expediente' },
   { key:'citas', label:'Citas' },
   { key:'historia', label:'Historia clínica' },
   { key:'presupuestos', label:'Presupuestos' },
@@ -346,6 +468,22 @@ const guardarReceta = () => {
     onSuccess: () => { formReceta.value = vacioReceta() }
   })
 }
+
+// Odontograma helpers para expediente
+const odontogramaMap = computed(() => {
+  const map = {}
+  if (props.odontogramaEventos) props.odontogramaEventos.forEach(e => { map[e.diente] = e })
+  return map
+})
+const dienteStyle = (n) => {
+  const e = odontogramaMap.value[n]?.estado
+  if (e === 'caries')    return { background:'#fee2e2', borderColor:'#fca5a5', color:'#991b1b' }
+  if (e === 'tratado')   return { background:'#dcfce7', borderColor:'#86efac', color:'#166534' }
+  if (e === 'corona')    return { background:'#fef3c7', borderColor:'#fcd34d', color:'#92400e' }
+  if (e === 'extraccion')return { background:'#f3f4f6', borderColor:'#9ca3af', color:'#6b7280' }
+  return { background:'#f8f9ff', borderColor:'#c7d2fe', color:'#4338ca' }
+}
+const dienteNota = (n) => odontogramaMap.value[n]?.notas || ''
 
 const formRadio = ref({ tipo:'panorámica', descripcion:'', archivo:null })
 const radioInput = ref(null)
