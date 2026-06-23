@@ -509,6 +509,7 @@ const allMenuItems = [
     { path: '/odontologia/proveedores',icon: 'proveedor',  label: 'Proveedores',      module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/tratamientos', icon: 'stethoscope', label: 'Tratamientos',    module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/insumos',    icon: 'cesta',      label: 'Insumos',          module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/reportes',      icon: 'chart',     label: 'Reportes',         module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/configuracion', icon: 'settings',  label: 'Configuración',    module: 'odontologia', section: 'ODONTOLOGIA' },
 
     // HOTEL
