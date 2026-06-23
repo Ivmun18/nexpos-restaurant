@@ -10,6 +10,12 @@
       </div>
       <a :href="`/odontologia/pacientes/${paciente.id}/editar`" style="padding:8px 16px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; text-decoration:none; color:#374151;">Editar</a>
       <a :href="`/odontologia/pacientes/${paciente.id}/ficha-pdf`" target="_blank" style="padding:8px 16px;background:#1e1b4b;color:#fff;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">📄 Ficha PDF</a>
+      <button @click="generarPortal" style="padding:8px 16px;background:#0ea5e9;color:#fff;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;">🔗 Portal paciente</button>
+      <div v-if="portalUrl" style="margin-top:8px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:#166534;flex:1;word-break:break-all;">{{ portalUrl }}</span>
+        <button @click="copiarPortal" style="padding:4px 12px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">{{ copiado?'✓ Copiado':'Copiar' }}</button>
+        <a :href="portalWa" target="_blank" style="padding:4px 12px;background:#25D366;color:#fff;border-radius:6px;font-size:12px;text-decoration:none;">📱 WhatsApp</a>
+      </div>
     </div>
 
     <!-- Info básica -->
@@ -484,6 +490,26 @@ const dienteStyle = (n) => {
   return { background:'#f8f9ff', borderColor:'#c7d2fe', color:'#4338ca' }
 }
 const dienteNota = (n) => odontogramaMap.value[n]?.notas || ''
+
+const portalUrl = ref('')
+const portalWa  = ref('')
+const copiado   = ref(false)
+const generarPortal = async () => {
+  const res = await fetch(`/odontologia/pacientes/${props.paciente.id}/portal-token`, {
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '', 'Accept': 'application/json' }
+  })
+  const data = await res.json()
+  portalUrl.value = data.url
+  const tel = (props.paciente.telefono || '').replace(/[^0-9]/g, '')
+  const msg = encodeURIComponent('Hola ' + props.paciente.nombres + ' 👋, aquí puede ver sus citas, presupuestos e imágenes: ' + data.url)
+  portalWa.value = `https://wa.me/51${tel}?text=${msg}`
+}
+const copiarPortal = () => {
+  navigator.clipboard.writeText(portalUrl.value)
+  copiado.value = true
+  setTimeout(() => copiado.value = false, 2000)
+}
 
 const formRadio = ref({ tipo:'panorámica', descripcion:'', archivo:null })
 const radioInput = ref(null)

@@ -90,6 +90,8 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
 
     Route::get('/doctores/estadisticas', [\App\Http\Controllers\Odontologia\DoctorController::class, 'estadisticas'])->name('odontologia.doctores.estadisticas');
 
+    Route::post('/pacientes/{id}/portal-token', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'generarToken'])->name('odontologia.portal.token');
+
     // Configuración clínica
     Route::get('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'index'])->name('odontologia.configuracion');
     Route::put('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'update'])->name('odontologia.configuracion.update');
