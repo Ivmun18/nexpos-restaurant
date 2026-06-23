@@ -78,6 +78,11 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::post('/facturacion/emitir', [\App\Http\Controllers\Odontologia\ComprobanteController::class, 'emitir'])->name('facturacion.emitir');
 
     // Tratamientos catálogo
+    // Configuración clínica
+    Route::get('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'index'])->name('odontologia.configuracion');
+    Route::put('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'update'])->name('odontologia.configuracion.update');
+    Route::post('/configuracion/logo', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'uploadLogo'])->name('odontologia.configuracion.logo');
+
     Route::get('/tratamientos', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'index'])->name('tratamientos.index');
     Route::post('/tratamientos', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'store'])->name('tratamientos.store');
     Route::put('/tratamientos/{id}', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'update'])->name('tratamientos.update');
