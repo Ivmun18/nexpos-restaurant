@@ -77,6 +77,13 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::get('/comprobantes', [\App\Http\Controllers\Odontologia\ComprobanteController::class, 'index'])->name('facturacion.index');
     Route::post('/facturacion/emitir', [\App\Http\Controllers\Odontologia\ComprobanteController::class, 'emitir'])->name('facturacion.emitir');
 
+    // Tratamientos catálogo
+    Route::get('/tratamientos', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'index'])->name('tratamientos.index');
+    Route::post('/tratamientos', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'store'])->name('tratamientos.store');
+    Route::put('/tratamientos/{id}', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'update'])->name('tratamientos.update');
+    Route::delete('/tratamientos/{id}', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'destroy'])->name('tratamientos.destroy');
+    Route::get('/tratamientos/lista', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'lista'])->name('tratamientos.lista');
+
     Route::get('/insumos', [LaboratorioController::class, 'insumos'])->name('insumos.index');
     Route::post('/insumos', [LaboratorioController::class, 'storeInsumo'])->name('insumos.store');
     Route::put('/insumos/{id}', [LaboratorioController::class, 'updateInsumo'])->name('insumos.update');

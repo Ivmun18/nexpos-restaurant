@@ -507,6 +507,7 @@ const allMenuItems = [
     { path: '/odontologia/pagos',      icon: 'caja',       label: 'Pagos',            module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/laboratorio',icon: 'lab',        label: 'Laboratorio',      module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/proveedores',icon: 'proveedor',  label: 'Proveedores',      module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/tratamientos', icon: 'stethoscope', label: 'Tratamientos',    module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/insumos',    icon: 'cesta',      label: 'Insumos',          module: 'odontologia', section: 'ODONTOLOGIA' },
 
     // HOTEL
@@ -721,7 +722,7 @@ const menuItems = computed(() => {
         if (item.module === 'gimnasio') return industry === 'gimnasio'
         if (item.module === 'hotel') return industry === 'hotel'
         if (item.module === 'optica') return industry === 'optica'
-        if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
+        if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin' || rol === 'admin_optica'
         return modulesEnabled.value.includes(item.module)
     })
 })
