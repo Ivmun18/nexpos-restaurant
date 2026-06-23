@@ -175,6 +175,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 const props = defineProps({ paciente:Object, empresa:Object, citas:Array, presupuestos:Array, radiografias:Array })
 
 // Agendamiento
@@ -223,7 +224,6 @@ const confirmarCita = async () => {
 const resetForm = () => { selDoctor.value=null; selFecha.value=''; selHora.value=''; horasDisp.value=[]; motivo.value='' }
 const formatFechaResumen = (f) => new Date(f+'T12:00:00').toLocaleDateString('es-PE', { weekday:'long', day:'2-digit', month:'long' })
 
-import { onMounted } from 'vue'
 onMounted(cargarDoctores)
 
 const formatFecha = (f) => new Date(f).toLocaleDateString('es-PE', { weekday:'short', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
