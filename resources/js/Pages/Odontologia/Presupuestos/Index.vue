@@ -114,7 +114,79 @@
       </div>
     </div>
   </div>
-  </AppLayout>
+  
+    <!-- Modal seguimiento de tratamientos -->
+    <div v-if="modalSeguimiento && presupuestoDetalle" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;">
+      <div style="background:#fff;border-radius:16px;padding:28px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <h2 style="margin:0;font-size:18px;font-weight:700;color:#1e293b;">Seguimiento #{{ presupuestoDetalle.id }}</h2>
+            <p style="margin:4px 0 0;font-size:13px;color:#64748b;">{{ presupuestoDetalle.paciente?.apellidos }}, {{ presupuestoDetalle.paciente?.nombres }}</p>
+          </div>
+          <button @click="modalSeguimiento=false" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+        </div>
+
+        <!-- Barra de progreso general -->
+        <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:500;color:#374151;">Progreso del tratamiento</span>
+            <span style="font-size:13px;font-weight:600;color:#8B5CF6;">{{ itemsCompletados(presupuestoDetalle) }}/{{ presupuestoDetalle.items?.length }} tratamientos</span>
+          </div>
+          <div style="background:#e2e8f0;border-radius:20px;height:10px;overflow:hidden;">
+            <div :style="{width: pctProgreso(presupuestoDetalle)+'%', background: pctProgreso(presupuestoDetalle)===100 ? '#10b981' : '#8B5CF6'}"
+              style="height:100%;border-radius:20px;transition:width .4s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#94a3b8;">
+            <span>S/ {{ montoCompletado(presupuestoDetalle).toFixed(2) }} completado</span>
+            <span>S/ {{ Number(presupuestoDetalle.total).toFixed(2) }} total</span>
+          </div>
+        </div>
+
+        <!-- Lista de items -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+          <div v-for="item in presupuestoDetalle.items" :key="item.id"
+            :style="{background: item.estado_item==='completado' ? '#f0fdf4' : '#fafafa', borderColor: item.estado_item==='completado' ? '#86efac' : '#e2e8f0'}"
+            style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+
+            <!-- Checkbox -->
+            <div @click="toggleItem(item)"
+              :style="{background: item.estado_item==='completado' ? '#10b981' : '#fff', borderColor: item.estado_item==='completado' ? '#10b981' : '#cbd5e1'}"
+              style="width:22px;height:22px;border:2px solid #cbd5e1;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .2s;">
+              <span v-if="item.estado_item==='completado'" style="color:#fff;font-size:13px;">✓</span>
+            </div>
+
+            <!-- Info -->
+            <div style="flex:1;">
+              <div :style="{textDecoration: item.estado_item==='completado' ? 'line-through' : 'none', color: item.estado_item==='completado' ? '#94a3b8' : '#1e293b'}"
+                style="font-size:13px;font-weight:500;">{{ item.descripcion }}</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+                <span v-if="item.numero_pieza">Pieza {{ item.numero_pieza }} · </span>
+                x{{ item.cantidad }}
+              </div>
+            </div>
+
+            <!-- Precio -->
+            <div style="text-align:right;">
+              <div style="font-size:13px;font-weight:600;color:#8B5CF6;">S/ {{ (item.precio * item.cantidad).toFixed(2) }}</div>
+              <span :style="{background: item.estado_item==='completado' ? '#dcfce7' : '#fef3c7', color: item.estado_item==='completado' ? '#166534' : '#92400e'}"
+                style="font-size:10px;padding:1px 8px;border-radius:20px;">{{ item.estado_item || 'pendiente' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button @click="router.get(`/odontologia/pacientes/${presupuestoDetalle.paciente_id}`)"
+            style="padding:9px 18px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;">Ver paciente</button>
+          <button @click="modalSeguimiento=false"
+            style="padding:9px 18px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+</AppLayout>
 </template>
 
 <script setup>
@@ -186,9 +258,31 @@ const guardar = () => {
   }
 }
 
-const verDetalle = (p) => router.get(`/odontologia/pacientes/${p.paciente_id}`)
+const modalSeguimiento = ref(false)
+const presupuestoDetalle = ref(null)
+const verDetalle = (p) => { presupuestoDetalle.value = p; modalSeguimiento.value = true }
+const marcarItem = (itemId, estado) => {
+  router.patch(`/odontologia/presupuesto-items/${itemId}`, { estado_item: estado }, {
+    preserveState: false,
+    onSuccess: () => {
+      // refrescar el presupuesto en el detalle
+    }
+  })
+}
 
 const imprimirPDF = (id) => window.open(`/odontologia/presupuestos/${id}/pdf`, '_blank')
+
+const itemsCompletados = (p) => p.items?.filter(i => i.estado_item === 'completado').length || 0
+const pctProgreso     = (p) => p.items?.length ? Math.round((itemsCompletados(p) / p.items.length) * 100) : 0
+const montoCompletado = (p) => p.items?.filter(i => i.estado_item === 'completado').reduce((s,i) => s + (i.precio * i.cantidad), 0) || 0
+
+const toggleItem = (item) => {
+  const nuevoEstado = item.estado_item === 'completado' ? 'pendiente' : 'completado'
+  router.patch(`/odontologia/presupuesto-items/${item.id}`, { estado_item: nuevoEstado }, {
+    preserveScroll: true,
+    onSuccess: () => { item.estado_item = nuevoEstado }
+  })
+}
 
 const enviarWhatsApp = (p) => {
   const paciente = p.paciente?.apellidos + ', ' + p.paciente?.nombres

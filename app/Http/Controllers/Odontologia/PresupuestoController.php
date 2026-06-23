@@ -189,4 +189,16 @@ class PresupuestoController extends Controller
         </body></html>";
     }
 
+
+    public function updateItem(Request $request, $id) {
+        $item = \App\Models\Odontologia\OdontoPresupuestoItem::findOrFail($id);
+        $item->update(['estado_item' => $request->estado_item]);
+
+        // Si todos los items están completados, marcar presupuesto como completado
+        $presupuesto = $item->presupuesto;
+        $todosCompletados = $presupuesto->items()->where('estado_item','!=','completado')->doesntExist();
+        if ($todosCompletados) $presupuesto->update(['estado' => 'completado']);
+
+        return back()->with('success', 'Item actualizado');
+    }
 }
