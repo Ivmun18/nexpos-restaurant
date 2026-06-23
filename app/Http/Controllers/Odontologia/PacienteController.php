@@ -75,8 +75,9 @@ class PacienteController extends Controller
 
         $doctores = OdontoDoctor::where('empresa_id', $empresaId)->orderBy('nombre')->get(['id','nombre']);
         $recetas = OdontoReceta::with('items')->where('paciente_id', $id)->orderByDesc('fecha')->get();
+        $radiografias = \App\Models\Odontologia\OdontoRadiografia::where('paciente_id', $id)->orderByDesc('fecha')->get();
 
-        return Inertia::render('Odontologia/Pacientes/Show', compact('paciente','citas','historias','presupuestos','pagos','odontogramaEventos','doctores','recetas'));
+        return Inertia::render('Odontologia/Pacientes/Show', compact('paciente','citas','historias','presupuestos','pagos','odontogramaEventos','doctores','recetas','radiografias'));
     }
 
     public function edit($id) {

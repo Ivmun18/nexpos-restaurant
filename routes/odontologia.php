@@ -78,6 +78,10 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::post('/facturacion/emitir', [\App\Http\Controllers\Odontologia\ComprobanteController::class, 'emitir'])->name('facturacion.emitir');
 
     // Tratamientos catálogo
+    // Radiografías
+    Route::post('/radiografias', [\App\Http\Controllers\Odontologia\RadiografiasController::class, 'store'])->name('odontologia.radiografias.store');
+    Route::delete('/radiografias/{id}', [\App\Http\Controllers\Odontologia\RadiografiasController::class, 'destroy'])->name('odontologia.radiografias.destroy');
+
     // Reportes
     Route::get('/reportes', [\App\Http\Controllers\Odontologia\ReporteController::class, 'index'])->name('odontologia.reportes');
 

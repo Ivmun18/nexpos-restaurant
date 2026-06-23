@@ -158,6 +158,52 @@
       </div>
     </div>
   </div>
+
+    <!-- Tab: Radiografías -->
+    <div v-if="tabActivo==='radiografias'" style="padding:16px;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px;">
+        <p style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151;">Subir imagen / radiografía</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Tipo</label>
+            <select v-model="formRadio.tipo" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;">
+              <option value="panorámica">Panorámica</option>
+              <option value="periapical">Periapical</option>
+              <option value="bitewing">Bitewing</option>
+              <option value="oclusal">Oclusal</option>
+              <option value="foto clínica">Foto clínica</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Descripción</label>
+            <input v-model="formRadio.descripcion" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;" placeholder="Opcional" />
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Archivo (JPG, PNG, PDF — máx 5MB)</label>
+          <input type="file" ref="radioInput" accept="image/*,.pdf" @change="onArchivoChange" style="font-size:12px;" />
+        </div>
+        <button @click="subirRadiografia" :disabled="!formRadio.archivo" style="padding:8px 20px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;opacity:1;" :style="{opacity: formRadio.archivo ? 1 : 0.5}">Guardar</button>
+      </div>
+
+      <div v-if="!radiografias || radiografias.length===0" style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;">Sin imágenes registradas</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
+        <div v-for="r in radiografias" :key="r.id" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+          <a :href="'/storage/'+r.archivo_url" target="_blank">
+            <img v-if="!r.archivo_url.endsWith('.pdf')" :src="'/storage/'+r.archivo_url" style="width:100%;height:120px;object-fit:cover;display:block;" />
+            <div v-else style="height:120px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;font-size:28px;">📄</div>
+          </a>
+          <div style="padding:8px 10px;">
+            <div style="font-size:12px;font-weight:500;color:#374151;">{{ r.tipo }}</div>
+            <div style="font-size:11px;color:#94a3b8;">{{ r.fecha }}</div>
+            <div v-if="r.descripcion" style="font-size:11px;color:#64748b;margin-top:2px;">{{ r.descripcion }}</div>
+            <button @click="eliminarRadio(r.id)" style="margin-top:6px;font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;padding:0;">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </AppLayout>
 </template>
 
@@ -166,13 +212,14 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 
-const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array, doctores:Array, recetas:Array })
+const props = defineProps({ paciente:Object, citas:Array, historias:Array, presupuestos:Array, pagos:Array, odontogramaEventos:Array, doctores:Array, recetas:Array, radiografias:Array })
 const tabActivo = ref('citas')
 const tabs = [
   { key:'citas', label:'Citas' },
   { key:'historia', label:'Historia clínica' },
   { key:'presupuestos', label:'Presupuestos' },
   { key:'pagos', label:'Pagos' },
+  { key:'radiografias', label:'Radiografías' },
 ]
 const formatFecha = (f) => new Date(f).toLocaleString('es-PE', { dateStyle:'short', timeStyle:'short' })
 const estadoOdontoLabel = (e) => {
@@ -210,5 +257,23 @@ const guardarReceta = () => {
     onFinish: () => { guardandoReceta.value = false },
     onSuccess: () => { formReceta.value = vacioReceta() }
   })
+}
+
+const formRadio = ref({ tipo:'panorámica', descripcion:'', archivo:null })
+const radioInput = ref(null)
+const onArchivoChange = (e) => { formRadio.value.archivo = e.target.files[0] || null }
+const subirRadiografia = () => {
+  if (!formRadio.value.archivo) return
+  const data = new FormData()
+  data.append('paciente_id', props.paciente.id)
+  data.append('tipo', formRadio.value.tipo)
+  data.append('descripcion', formRadio.value.descripcion)
+  data.append('archivo', formRadio.value.archivo)
+  router.post('/odontologia/radiografias', data, {
+    onSuccess: () => { formRadio.value = { tipo:'panorámica', descripcion:'', archivo:null }; if(radioInput.value) radioInput.value.value='' }
+  })
+}
+const eliminarRadio = (id) => {
+  if (confirm('¿Eliminar esta imagen?')) router.delete(`/odontologia/radiografias/${id}`)
 }
 </script>
