@@ -506,9 +506,26 @@ const generarPortal = async () => {
   portalWa.value = `https://wa.me/51${tel}?text=${msg}`
 }
 const copiarPortal = () => {
-  navigator.clipboard.writeText(portalUrl.value)
-  copiado.value = true
-  setTimeout(() => copiado.value = false, 2000)
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(portalUrl.value)
+    } else {
+      // Fallback para HTTP
+      const ta = document.createElement('textarea')
+      ta.value = portalUrl.value
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    copiado.value = true
+    setTimeout(() => copiado.value = false, 2000)
+  } catch(e) {
+    alert('Link: ' + portalUrl.value)
+  }
 }
 
 const formRadio = ref({ tipo:'panorámica', descripcion:'', archivo:null })
