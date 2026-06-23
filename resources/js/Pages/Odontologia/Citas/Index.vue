@@ -222,6 +222,7 @@ const enviarRecordatorio = async (cita) => {
 }
 
 const estados = [
+  { key:'pendiente_confirmacion', label:'⏳ Por confirmar', color:'#f59e0b', bg:'#fffbeb', border:'#f59e0b' },
   { key:'programada',  label:'Programada',  color:'#8B5CF6', bg:'#F5F3FF', border:'#8B5CF6' },
   { key:'confirmada',  label:'Confirmada',  color:'#2563EB', bg:'#EFF6FF', border:'#2563EB' },
   { key:'en_curso',    label:'En curso',    color:'#D97706', bg:'#FFFBEB', border:'#D97706' },

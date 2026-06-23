@@ -1206,4 +1206,7 @@ Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function (
 });
 
 // Portal público paciente odontología
+Route::get('/portal/{token}/doctores', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'doctores']);
+Route::get('/portal/{token}/horas', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'horasDisponibles']);
+Route::post('/portal/{token}/agendar', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'agendarCita']);
 Route::get('/portal/{token}', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'show'])->name('portal.paciente');
