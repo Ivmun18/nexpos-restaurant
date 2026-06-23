@@ -31,8 +31,7 @@
   .historia-item { border-left:3px solid #4338ca; padding:8px 12px; margin-bottom:8px; background:#f8fafc; border-radius:0 6px 6px 0; }
   .historia-fecha { font-size:9px; color:#94a3b8; margin-bottom:3px; }
   .historia-nota { font-size:11px; color:#374151; line-height:1.5; }
-  .odonto-grid { display:grid; grid-template-columns:repeat(16,1fr); gap:2px; margin:8px 0; }
-  .diente { width:100%; aspect-ratio:1; border:1px solid #c7d2fe; border-radius:3px; background:#fff; text-align:center; font-size:7px; line-height:2.2; color:#4338ca; }
+  .diente { width:28px; height:28px; border:1px solid #c7d2fe; border-radius:3px; background:#fff; text-align:center; font-size:7px; line-height:28px; color:#4338ca; display:inline-block; margin:1px; }
   .diente.caries { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
   .diente.tratado { background:#dcfce7; border-color:#86efac; color:#166534; }
   .diente.corona { background:#fef3c7; border-color:#fcd34d; color:#92400e; }
@@ -107,17 +106,45 @@
   @if($odontograma->count() > 0)
   <div class="section">
     <div class="section-title">Odontograma</div>
-    <div class="odonto-grid">
-      @foreach($odontograma as $pieza)
-        <div class="diente {{ $pieza->estado !== 'sano' ? $pieza->estado : '' }}" title="{{ $pieza->notas }}">{{ $pieza->diente }}</div>
-      @endforeach
-    </div>
-    <div style="display:flex;gap:12px;margin-top:6px;font-size:9px;">
-      <span><span style="background:#fee2e2;padding:1px 6px;border-radius:3px;">■</span> Caries</span>
-      <span><span style="background:#dcfce7;padding:1px 6px;border-radius:3px;">■</span> Tratado</span>
-      <span><span style="background:#fef3c7;padding:1px 6px;border-radius:3px;">■</span> Corona</span>
-      <span><span style="background:#f3f4f6;padding:1px 6px;border-radius:3px;">■</span> Extracción</span>
-    </div>
+    @php
+      $piezasSuperiores = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+      $piezasInferiores = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+      $estadoMap = $odontograma->keyBy('diente');
+    @endphp
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:4px;">
+      <tr>
+        @foreach($piezasSuperiores as $num)
+          @php $e = $estadoMap[$num]->estado ?? 'sano'; @endphp
+          <td style="width:6.25%;padding:1px;text-align:center;">
+            <div style="border:1px solid {{ $e==='caries'?'#fca5a5':($e==='tratado'?'#86efac':($e==='corona'?'#fcd34d':'#c7d2fe')) }};
+                        background:{{ $e==='caries'?'#fee2e2':($e==='tratado'?'#dcfce7':($e==='corona'?'#fef3c7':'#f8f9ff')) }};
+                        color:{{ $e==='caries'?'#991b1b':($e==='tratado'?'#166534':($e==='corona'?'#92400e':'#4338ca')) }};
+                        font-size:7px;text-align:center;padding:3px 0;border-radius:3px;">{{ $num }}</div>
+          </td>
+        @endforeach
+      </tr>
+      <tr><td colspan="16" style="height:6px;border-bottom:1px dashed #e2e8f0;"></td></tr>
+      <tr>
+        @foreach($piezasInferiores as $num)
+          @php $e = $estadoMap[$num]->estado ?? 'sano'; @endphp
+          <td style="width:6.25%;padding:1px;text-align:center;">
+            <div style="border:1px solid {{ $e==='caries'?'#fca5a5':($e==='tratado'?'#86efac':($e==='corona'?'#fcd34d':'#c7d2fe')) }};
+                        background:{{ $e==='caries'?'#fee2e2':($e==='tratado'?'#dcfce7':($e==='corona'?'#fef3c7':'#f8f9ff')) }};
+                        color:{{ $e==='caries'?'#991b1b':($e==='tratado'?'#166534':($e==='corona'?'#92400e':'#4338ca')) }};
+                        font-size:7px;text-align:center;padding:3px 0;border-radius:3px;">{{ $num }}</div>
+          </td>
+        @endforeach
+      </tr>
+    </table>
+    <table style="border-collapse:collapse;font-size:9px;margin-top:4px;">
+      <tr>
+        <td style="padding:0 8px 0 0;"><span style="background:#fee2e2;padding:1px 6px;border-radius:3px;font-size:8px;">■</span> Caries</td>
+        <td style="padding:0 8px 0 0;"><span style="background:#dcfce7;padding:1px 6px;border-radius:3px;font-size:8px;">■</span> Tratado</td>
+        <td style="padding:0 8px 0 0;"><span style="background:#fef3c7;padding:1px 6px;border-radius:3px;font-size:8px;">■</span> Corona</td>
+        <td><span style="background:#f3f4f6;padding:1px 6px;border-radius:3px;font-size:8px;">■</span> Extracción</td>
+      </tr>
+    </table>
   </div>
   @endif
 
