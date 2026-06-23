@@ -181,26 +181,50 @@
           </div>
         </div>
         <input type="file" ref="radioInput" accept="image/*,.pdf" @change="onArchivoChange" style="display:none;" />
-        <div @click="radioInput.click()" @dragover.prevent @drop.prevent="onDrop"
-          :style="{borderColor: formRadio.archivo ? '#8B5CF6' : '#e2e8f0', background: formRadio.archivo ? '#f5f3ff' : '#f8fafc'}"
-          style="border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .2s;">
-          <div v-if="!formRadio.archivo" style="color:#94a3b8;">
-            <div style="font-size:28px;margin-bottom:6px;">📎</div>
-            <div style="font-size:13px;font-weight:500;color:#64748b;">Haz clic o arrastra un archivo aquí</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">JPG, PNG, PDF — máx 5MB</div>
+
+        <!-- Zona upload o preview cámara -->
+        <div v-if="!camaraActiva">
+          <div @click="radioInput.click()" @dragover.prevent @drop.prevent="onDrop"
+            :style="{borderColor: formRadio.archivo ? '#8B5CF6' : '#e2e8f0', background: formRadio.archivo ? '#f5f3ff' : '#f8fafc'}"
+            style="border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .2s;">
+            <div v-if="!formRadio.archivo">
+              <div style="font-size:28px;margin-bottom:6px;">📎</div>
+              <div style="font-size:13px;font-weight:500;color:#64748b;">Haz clic o arrastra un archivo aquí</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:3px;">JPG, PNG, PDF — máx 5MB</div>
+            </div>
+            <div v-else style="color:#6d28d9;">
+              <div style="font-size:24px;margin-bottom:4px;">✓</div>
+              <div style="font-size:13px;font-weight:500;">{{ formRadio.archivo.name }}</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">{{ (formRadio.archivo.size/1024/1024).toFixed(2) }} MB</div>
+            </div>
           </div>
-          <div v-else style="color:#6d28d9;">
-            <div style="font-size:24px;margin-bottom:4px;">✓</div>
-            <div style="font-size:13px;font-weight:500;">{{ formRadio.archivo.name }}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">{{ (formRadio.archivo.size/1024/1024).toFixed(2) }} MB</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button @click="subirRadiografia" :disabled="!formRadio.archivo"
+              style="padding:8px 20px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;"
+              :style="{opacity: formRadio.archivo ? 1 : 0.4}">Subir archivo</button>
+            <button @click="abrirCamara"
+              style="padding:8px 16px;background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              📷 Tomar foto
+            </button>
+            <button v-if="formRadio.archivo" @click="formRadio.archivo=null;radioInput.value=''"
+              style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#64748b;">Cancelar</button>
           </div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button @click="subirRadiografia" :disabled="!formRadio.archivo"
-            style="padding:8px 20px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;"
-            :style="{opacity: formRadio.archivo ? 1 : 0.4}">Subir archivo</button>
-          <button v-if="formRadio.archivo" @click="formRadio.archivo=null;radioInput.value=''"
-            style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#64748b;">Cancelar</button>
+
+        <!-- Vista de cámara -->
+        <div v-if="camaraActiva" style="margin-bottom:12px;">
+          <video ref="videoEl" autoplay playsinline style="width:100%;border-radius:10px;background:#000;max-height:300px;object-fit:cover;"></video>
+          <canvas ref="canvasEl" style="display:none;"></canvas>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button @click="capturarFoto"
+              style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;">
+              📸 Capturar
+            </button>
+            <button @click="cerrarCamara"
+              style="padding:10px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#64748b;">
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -280,6 +304,40 @@ const formRadio = ref({ tipo:'panorámica', descripcion:'', archivo:null })
 const radioInput = ref(null)
 const onArchivoChange = (e) => { formRadio.value.archivo = e.target.files[0] || null }
 const onDrop = (e) => { const file = e.dataTransfer.files[0]; if(file) formRadio.value.archivo = file }
+
+const camaraActiva = ref(false)
+const videoEl      = ref(null)
+const canvasEl     = ref(null)
+let streamActivo   = null
+
+const abrirCamara = async () => {
+  try {
+    streamActivo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    camaraActiva.value = true
+    await new Promise(r => setTimeout(r, 100))
+    if (videoEl.value) videoEl.value.srcObject = streamActivo
+  } catch(e) {
+    alert('No se pudo acceder a la cámara. Verifica los permisos del navegador.')
+  }
+}
+
+const cerrarCamara = () => {
+  if (streamActivo) { streamActivo.getTracks().forEach(t => t.stop()); streamActivo = null }
+  camaraActiva.value = false
+}
+
+const capturarFoto = () => {
+  const video  = videoEl.value
+  const canvas = canvasEl.value
+  canvas.width  = video.videoWidth
+  canvas.height = video.videoHeight
+  canvas.getContext('2d').drawImage(video, 0, 0)
+  canvas.toBlob(blob => {
+    const file = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' })
+    formRadio.value.archivo = file
+    cerrarCamara()
+  }, 'image/jpeg', 0.92)
+}
 const subirRadiografia = () => {
   if (!formRadio.value.archivo) return
   const data = new FormData()
