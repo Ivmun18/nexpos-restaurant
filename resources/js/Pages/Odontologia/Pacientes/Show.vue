@@ -180,11 +180,28 @@
             <input v-model="formRadio.descripcion" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;" placeholder="Opcional" />
           </div>
         </div>
-        <div style="margin-bottom:10px;">
-          <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Archivo (JPG, PNG, PDF — máx 5MB)</label>
-          <input type="file" ref="radioInput" accept="image/*,.pdf" @change="onArchivoChange" style="font-size:12px;" />
+        <input type="file" ref="radioInput" accept="image/*,.pdf" @change="onArchivoChange" style="display:none;" />
+        <div @click="radioInput.click()" @dragover.prevent @drop.prevent="onDrop"
+          :style="{borderColor: formRadio.archivo ? '#8B5CF6' : '#e2e8f0', background: formRadio.archivo ? '#f5f3ff' : '#f8fafc'}"
+          style="border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .2s;">
+          <div v-if="!formRadio.archivo" style="color:#94a3b8;">
+            <div style="font-size:28px;margin-bottom:6px;">📎</div>
+            <div style="font-size:13px;font-weight:500;color:#64748b;">Haz clic o arrastra un archivo aquí</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">JPG, PNG, PDF — máx 5MB</div>
+          </div>
+          <div v-else style="color:#6d28d9;">
+            <div style="font-size:24px;margin-bottom:4px;">✓</div>
+            <div style="font-size:13px;font-weight:500;">{{ formRadio.archivo.name }}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">{{ (formRadio.archivo.size/1024/1024).toFixed(2) }} MB</div>
+          </div>
         </div>
-        <button @click="subirRadiografia" :disabled="!formRadio.archivo" style="padding:8px 20px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;opacity:1;" :style="{opacity: formRadio.archivo ? 1 : 0.5}">Guardar</button>
+        <div style="display:flex;gap:8px;">
+          <button @click="subirRadiografia" :disabled="!formRadio.archivo"
+            style="padding:8px 20px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;"
+            :style="{opacity: formRadio.archivo ? 1 : 0.4}">Subir archivo</button>
+          <button v-if="formRadio.archivo" @click="formRadio.archivo=null;radioInput.value=''"
+            style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#64748b;">Cancelar</button>
+        </div>
       </div>
 
       <div v-if="!radiografias || radiografias.length===0" style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;">Sin imágenes registradas</div>
@@ -262,6 +279,7 @@ const guardarReceta = () => {
 const formRadio = ref({ tipo:'panorámica', descripcion:'', archivo:null })
 const radioInput = ref(null)
 const onArchivoChange = (e) => { formRadio.value.archivo = e.target.files[0] || null }
+const onDrop = (e) => { const file = e.dataTransfer.files[0]; if(file) formRadio.value.archivo = file }
 const subirRadiografia = () => {
   if (!formRadio.value.archivo) return
   const data = new FormData()
