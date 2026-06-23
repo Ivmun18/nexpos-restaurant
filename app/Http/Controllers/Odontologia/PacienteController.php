@@ -85,6 +85,20 @@ class PacienteController extends Controller
         return Inertia::render('Odontologia/Pacientes/Edit', compact('paciente'));
     }
 
+    public function fichaPdf($id) {
+        $empresaId  = $this->empresaId();
+        $paciente   = \App\Models\Odontologia\OdontoPaciente::where('empresa_id', $empresaId)->findOrFail($id);
+        $empresa    = \App\Models\Empresa::findOrFail($empresaId);
+        $historias  = \App\Models\Odontologia\OdontoHistoriaClinica::with('doctor')->where('paciente_id', $id)->orderByDesc('fecha')->get();
+        $presupuestos = \App\Models\Odontologia\OdontoPresupuesto::with('items')->where('paciente_id', $id)->orderByDesc('fecha')->get();
+        $odontograma  = \App\Models\Odontologia\OdontoOdontograma::where('paciente_id', $id)->where('empresa_id', $empresaId)->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('odontologia.ficha-clinica-pdf', compact('paciente','empresa','historias','presupuestos','odontograma'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream("ficha-{$paciente->apellidos}-{$paciente->nombres}.pdf");
+    }
+
     public function update(Request $request, $id) {
         $paciente = OdontoPaciente::where('empresa_id', $this->empresaId())->findOrFail($id);
         $request->validate([

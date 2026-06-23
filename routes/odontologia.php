@@ -90,6 +90,7 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
     Route::put('/configuracion', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'update'])->name('odontologia.configuracion.update');
     Route::post('/configuracion/logo', [\App\Http\Controllers\Odontologia\ConfiguracionController::class, 'uploadLogo'])->name('odontologia.configuracion.logo');
 
+    Route::get('/pacientes/{id}/ficha-pdf', [\App\Http\Controllers\Odontologia\PacienteController::class, 'fichaPdf'])->name('odontologia.pacientes.ficha-pdf');
     Route::get('/tratamientos', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'index'])->name('tratamientos.index');
     Route::post('/tratamientos', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'store'])->name('tratamientos.store');
     Route::put('/tratamientos/{id}', [\App\Http\Controllers\Odontologia\TratamientoController::class, 'update'])->name('tratamientos.update');

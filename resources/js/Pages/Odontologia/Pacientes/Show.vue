@@ -9,6 +9,7 @@
         <span style="background:#EDE9FE; color:#7C3AED; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600;">{{ paciente.dni || 'Sin DNI' }}</span>
       </div>
       <a :href="`/odontologia/pacientes/${paciente.id}/editar`" style="padding:8px 16px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; text-decoration:none; color:#374151;">Editar</a>
+      <a :href="`/odontologia/pacientes/${paciente.id}/ficha-pdf`" target="_blank" style="padding:8px 16px;background:#1e1b4b;color:#fff;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">📄 Ficha PDF</a>
     </div>
 
     <!-- Info básica -->

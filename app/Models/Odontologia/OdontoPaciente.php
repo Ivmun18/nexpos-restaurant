@@ -10,5 +10,7 @@ class OdontoPaciente extends Model {
     public function odontogramas() { return $this->hasMany(OdontoOdontograma::class, 'paciente_id'); }
     public function presupuestos() { return $this->hasMany(OdontoPresupuesto::class, 'paciente_id'); }
     public function pagos() { return $this->hasMany(OdontoPago::class, 'paciente_id'); }
+    public function recetas() { return $this->hasMany(\App\Models\Odontologia\OdontoReceta::class, 'paciente_id'); }
+    public function radiografias() { return $this->hasMany(\App\Models\Odontologia\OdontoRadiografia::class, 'paciente_id'); }
     public function getNombreCompletoAttribute() { return $this->nombres . ' ' . $this->apellidos; }
 }
