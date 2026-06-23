@@ -181,44 +181,90 @@
           </div>
         </div>
         <input type="file" ref="radioInput" accept="image/*,.pdf" @change="onArchivoChange" style="display:none;" />
+        <input type="file" ref="multiInput" accept="image/*,.pdf" multiple @change="onMultiChange" style="display:none;" />
 
-        <!-- Zona upload o preview cámara -->
+        <!-- Opciones de captura -->
         <div v-if="!camaraActiva">
-          <div @click="radioInput.click()" @dragover.prevent @drop.prevent="onDrop"
-            :style="{borderColor: formRadio.archivo ? '#8B5CF6' : '#e2e8f0', background: formRadio.archivo ? '#f5f3ff' : '#f8fafc'}"
-            style="border:2px dashed #e2e8f0;border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .2s;">
-            <div v-if="!formRadio.archivo">
-              <div style="font-size:28px;margin-bottom:6px;">📎</div>
-              <div style="font-size:13px;font-weight:500;color:#64748b;">Haz clic o arrastra un archivo aquí</div>
-              <div style="font-size:11px;color:#94a3b8;margin-top:3px;">JPG, PNG, PDF — máx 5MB</div>
-            </div>
-            <div v-else style="color:#6d28d9;">
-              <div style="font-size:24px;margin-bottom:4px;">✓</div>
-              <div style="font-size:13px;font-weight:500;">{{ formRadio.archivo.name }}</div>
-              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">{{ (formRadio.archivo.size/1024/1024).toFixed(2) }} MB</div>
+
+          <!-- Botones de método -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+            <button @click="radioInput.click()"
+              style="padding:10px 6px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;text-align:center;">
+              <div style="font-size:22px;">📁</div>
+              <div style="font-size:11px;color:#64748b;margin-top:4px;font-weight:500;">Desde PC</div>
+            </button>
+            <button @click="abrirCamara"
+              style="padding:10px 6px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;text-align:center;">
+              <div style="font-size:22px;">📷</div>
+              <div style="font-size:11px;color:#64748b;margin-top:4px;font-weight:500;">Cámara web</div>
+            </button>
+            <button @click="mostrarQR=!mostrarQR"
+              style="padding:10px 6px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;text-align:center;">
+              <div style="font-size:22px;">📱</div>
+              <div style="font-size:11px;color:#64748b;margin-top:4px;font-weight:500;">Celular</div>
+            </button>
+            <button @click="multiInput.click()"
+              style="padding:10px 6px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;text-align:center;">
+              <div style="font-size:22px;">🗂️</div>
+              <div style="font-size:11px;color:#64748b;margin-top:4px;font-weight:500;">Múltiples</div>
+            </button>
+          </div>
+
+          <!-- QR para celular -->
+          <div v-if="mostrarQR" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:16px;">
+            <img :src="qrUrl" style="width:80px;height:80px;border-radius:6px;" />
+            <div>
+              <div style="font-size:13px;font-weight:500;color:#166534;margin-bottom:4px;">Escanea con tu celular</div>
+              <div style="font-size:11px;color:#15803d;">Abre la cámara del celular y sube la foto directamente a este paciente</div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:4px;word-break:break-all;">{{ uploadUrl }}</div>
             </div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button @click="subirRadiografia" :disabled="!formRadio.archivo"
-              style="padding:8px 20px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;"
-              :style="{opacity: formRadio.archivo ? 1 : 0.4}">Subir archivo</button>
-            <button @click="abrirCamara"
-              style="padding:8px 16px;background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
-              📷 Tomar foto
+
+          <!-- Cola de archivos múltiples -->
+          <div v-if="colaArchivos.length > 0" style="margin-bottom:12px;">
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;">{{ colaArchivos.length }} archivo(s) seleccionado(s):</div>
+            <div v-for="(a,i) in colaArchivos" :key="i" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border-radius:6px;margin-bottom:4px;">
+              <span style="font-size:12px;flex:1;color:#374151;">{{ a.name }}</span>
+              <span style="font-size:11px;color:#94a3b8;">{{ (a.size/1024/1024).toFixed(2) }}MB</span>
+              <button @click="colaArchivos.splice(i,1)" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:14px;">✕</button>
+            </div>
+          </div>
+
+          <!-- Archivo único seleccionado -->
+          <div v-if="formRadio.archivo && colaArchivos.length===0"
+            style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+            <div style="font-size:20px;">✓</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:500;color:#6d28d9;">{{ formRadio.archivo.name }}</div>
+              <div style="font-size:11px;color:#94a3b8;">{{ (formRadio.archivo.size/1024/1024).toFixed(2) }} MB</div>
+            </div>
+            <button @click="formRadio.archivo=null" style="color:#94a3b8;background:none;border:none;cursor:pointer;">✕</button>
+          </div>
+
+          <!-- Zona drag & drop general -->
+          <div @dragover.prevent @drop.prevent="onDrop"
+            style="border:2px dashed #e2e8f0;border-radius:10px;padding:12px;text-align:center;margin-bottom:12px;color:#94a3b8;font-size:12px;">
+            También puedes arrastrar archivos aquí
+          </div>
+
+          <div style="display:flex;gap:8px;">
+            <button @click="colaArchivos.length>0 ? subirMultiples() : subirRadiografia()"
+              :disabled="!formRadio.archivo && colaArchivos.length===0"
+              style="padding:9px 22px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;"
+              :style="{opacity: (formRadio.archivo || colaArchivos.length>0) ? 1 : 0.4}">
+              {{ colaArchivos.length>0 ? `Subir ${colaArchivos.length} archivos` : 'Subir archivo' }}
             </button>
-            <button v-if="formRadio.archivo" @click="formRadio.archivo=null;radioInput.value=''"
-              style="padding:8px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#64748b;">Cancelar</button>
           </div>
         </div>
 
         <!-- Vista de cámara -->
         <div v-if="camaraActiva" style="margin-bottom:12px;">
-          <video ref="videoEl" autoplay playsinline style="width:100%;border-radius:10px;background:#000;max-height:300px;object-fit:cover;"></video>
+          <video ref="videoEl" autoplay playsinline style="width:100%;border-radius:10px;background:#000;max-height:280px;object-fit:cover;"></video>
           <canvas ref="canvasEl" style="display:none;"></canvas>
           <div style="display:flex;gap:8px;margin-top:10px;">
             <button @click="capturarFoto"
               style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;">
-              📸 Capturar
+              📸 Capturar foto
             </button>
             <button @click="cerrarCamara"
               style="padding:10px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#64748b;">
@@ -308,7 +354,31 @@ const onDrop = (e) => { const file = e.dataTransfer.files[0]; if(file) formRadio
 const camaraActiva = ref(false)
 const videoEl      = ref(null)
 const canvasEl     = ref(null)
+const mostrarQR    = ref(false)
+const colaArchivos = ref([])
 let streamActivo   = null
+
+const uploadUrl = `${window.location.origin}/odontologia/pacientes/${props.paciente.id}?tab=radiografias`
+const qrUrl     = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(uploadUrl)}`
+
+const onMultiChange = (e) => {
+  colaArchivos.value = Array.from(e.target.files)
+  formRadio.value.archivo = null
+}
+
+const subirMultiples = async () => {
+  for (const archivo of colaArchivos.value) {
+    const data = new FormData()
+    data.append('paciente_id', props.paciente.id)
+    data.append('tipo', formRadio.value.tipo)
+    data.append('descripcion', formRadio.value.descripcion)
+    data.append('archivo', archivo)
+    await new Promise(resolve => {
+      router.post('/odontologia/radiografias', data, { onFinish: resolve })
+    })
+  }
+  colaArchivos.value = []
+}
 
 const abrirCamara = async () => {
   try {
