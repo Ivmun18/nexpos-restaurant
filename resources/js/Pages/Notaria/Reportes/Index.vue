@@ -100,7 +100,7 @@
                                     </button>
                                     <span v-if="c.estado === 'aceptado'" style="color:#16A34A; font-size:11px;">✅</span>
                                     <span v-if="c.estado === 'anulado'" style="color:#DC2626; font-size:11px;">❌ Anulado</span>
-                                    <a :href="'https://wa.me/?text=' + encodeURIComponent('Estimado cliente, adjuntamos su comprobante ' + c.serie + '-' + String(c.numero).padStart(8,'0') + ' por S/ ' + c.total + '. Puede verlo en: ' + window.location.origin + '/notaria/comprobantes/' + c.id + '/recibo-ticket')" target="_blank"
+                                    <a :href="'https://wa.me/?text=' + encodeURIComponent('Estimado cliente, adjuntamos su comprobante ' + c.serie + '-' + String(c.numero).padStart(8,'0') + ' por S/ ' + c.total + '. Descargue su ticket en: http://161.35.5.40/notaria/comprobantes/' + c.id + '/recibo-ticket')" target="_blank"
                                         style="background:#25D366; color:white; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; margin-left:4px;">
                                         💬 WhatsApp
                                     </a>
