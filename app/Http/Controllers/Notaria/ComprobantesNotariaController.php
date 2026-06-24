@@ -169,6 +169,7 @@ class ComprobantesNotariaController extends Controller
                 'total_gravada'            => $baseImponible,
                 'total_igv'                => $igv,
                 'total'                    => $total,
+                'items_json'               => json_encode($request->items),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
@@ -383,6 +384,7 @@ class ComprobantesNotariaController extends Controller
                 'total_gravada'            => $gravada,
                 'total_igv'                => $igv,
                 'total'                    => $total,
+                'items_json'               => json_encode($request->items),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
@@ -590,40 +592,33 @@ class ComprobantesNotariaController extends Controller
         $subtotal  = $exonerada ? $total : (float) $comp->total_gravada;
         $igv       = $exonerada ? 0 : (float) $comp->total_igv;
 
-        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10)
-        $huella = $total >= 10 ? 1.50 : 0;
-        $montoServicio = round($total - $huella, 2);
-
-        // Obtener asunto del acto si existe
-        $asunto = 'Servicio notarial';
-        if ($comp->acto_id) {
-            $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
-            if ($acto) $asunto = $acto->asunto;
-        } elseif ($comp->enlace_cdr) {
-            $asunto = $comp->enlace_cdr;
-        }
-
-        $items = array_filter([
-            [
-                'descripcion'    => $asunto,
-                'cantidad'       => 1,
-                'precio_unitario'=> $montoServicio,
-                'total'          => $montoServicio,
-            ],
-            ...($huella > 0 ? [[
-                'descripcion'    => 'Uso biométrico',
-                'cantidad'       => 1,
-                'precio_unitario'=> $huella,
-                'total'          => $huella,
-            ]] : []),
-        ], fn($item) => $item['precio_unitario'] > 0);
-        if (empty($items)) {
-            $items = [[
-                'descripcion'    => $asunto,
-                'cantidad'       => 1,
-                'precio_unitario'=> $total,
-                'total'          => $total,
-            ]];
+        // Leer items reales o reconstruir como fallback
+        $itemsGuardados = !empty($comp->items_json) ? json_decode($comp->items_json, true) : null;
+        if ($itemsGuardados && count($itemsGuardados) > 0) {
+            $items = array_map(fn($i) => [
+                'descripcion'    => $i['descripcion'] ?? ($i['tipo_servicio'] ?? 'Servicio notarial'),
+                'cantidad'       => intval($i['cantidad'] ?? 1),
+                'precio_unitario'=> floatval($i['precio'] ?? $i['precio_unitario'] ?? 0),
+                'total'          => floatval($i['precio'] ?? $i['precio_unitario'] ?? 0) * intval($i['cantidad'] ?? 1),
+            ], $itemsGuardados);
+        } else {
+            // Fallback para comprobantes anteriores sin items_json
+            $huella = $total >= 10 ? 1.50 : 0;
+            $montoServicio = round($total - $huella, 2);
+            $asunto = 'Servicio notarial';
+            if ($comp->acto_id) {
+                $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
+                if ($acto) $asunto = $acto->asunto;
+            } elseif ($comp->enlace_cdr) {
+                $asunto = $comp->enlace_cdr;
+            }
+            $items = array_filter([
+                ['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $montoServicio, 'total' => $montoServicio],
+                ...($huella > 0 ? [['descripcion' => 'Uso biométrico', 'cantidad' => 1, 'precio_unitario' => $huella, 'total' => $huella]] : []),
+            ], fn($item) => $item['precio_unitario'] > 0);
+            if (empty($items)) {
+                $items = [['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $total, 'total' => $total]];
+            }
         }
 
         $tipoDoc = $comp->tipo_comprobante === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA ELECTRÓNICA';
