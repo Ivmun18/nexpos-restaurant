@@ -33,7 +33,7 @@
             }
         @endphp
         @if($logoSrc)
-        <img src="{{ $logoSrc }}" style="max-width:55mm; max-height:18mm; margin-bottom:4px;" />
+        <img src="{{ $logoSrc }}" style="max-width:68mm; max-height:25mm; margin-bottom:4px; display:block; margin-left:auto; margin-right:auto;" />
         @endif
         <p class="bold" style="font-size:13px; margin:0;">{{ $empresa->razon_social }}</p>
         <p style="margin:2px 0;">RUC: {{ $empresa->ruc }}</p>
