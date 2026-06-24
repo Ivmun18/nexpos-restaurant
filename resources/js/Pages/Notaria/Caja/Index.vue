@@ -614,10 +614,12 @@ function seleccionarServicio(nombre) {
 }
 
 function agregarItem() {
-    if (!itemActual.value.tipo_servicio || !itemActual.value.precio_unitario) return
-    itemsRapido.value.push({ ...itemActual.value })
+    if (!itemActual.value.tipo_servicio) { alert('Seleccione un servicio'); return }
+    if (!itemActual.value.precio_unitario || Number(itemActual.value.precio_unitario) <= 0) { alert('Ingrese el precio unitario'); return }
+    itemsRapido.value.push({ ...itemActual.value, precio_unitario: Number(itemActual.value.precio_unitario), cantidad: Number(itemActual.value.cantidad) || 1 })
     itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
     servicioQuery.value = ''
+    mostrarSugerencias.value = false
 }
 function quitarItem(i) { itemsRapido.value.splice(i, 1) }
 
