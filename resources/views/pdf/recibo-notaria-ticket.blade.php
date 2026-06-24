@@ -58,17 +58,15 @@
     <table class="table">
         <thead>
             <tr>
-                <th style="width:8%">#</th>
-                <th style="width:42%">PRODUCTO</th>
-                <th style="width:12%" class="right">CANT</th>
-                <th style="width:18%" class="right">P/U</th>
-                <th style="width:20%" class="right">TOTAL</th>
+                <th style="width:44%">PRODUCTO</th>
+                <th style="width:10%" class="right">CANT</th>
+                <th style="width:23%" class="right">P/U</th>
+                <th style="width:23%" class="right">TOTAL</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($items as $i => $item)
+            @foreach($items as $item)
             <tr>
-                <td>{{ $i + 1 }}</td>
                 <td>{{ $item['descripcion'] }}</td>
                 <td class="right">{{ $item['cantidad'] }}</td>
                 <td class="right">{{ number_format($item['precio_unitario'], 2) }}</td>
