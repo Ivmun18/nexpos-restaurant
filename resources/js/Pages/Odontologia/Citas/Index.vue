@@ -8,7 +8,32 @@
           <h1 style="margin:0; font-size:22px; font-weight:700; color:#1E293B;">Agenda de citas</h1>
           <p style="margin:4px 0 0; font-size:13px; color:#94A3B8;">{{ fechaLabel }}</p>
         </div>
-        <button @click="abrirModalNueva()" style="background:#8B5CF6; color:white; border:none; border-radius:10px; padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer;">+ Nueva cita</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button @click="mostrarLinkReserva=!mostrarLinkReserva"
+            style="background:#0ea5e9;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+            🔗 Link de reservas
+          </button>
+          <button @click="abrirModalNueva()" style="background:#8B5CF6; color:white; border:none; border-radius:10px; padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer;">+ Nueva cita</button>
+        </div>
+        <!-- Panel link reservas -->
+        <div v-if="mostrarLinkReserva" style="position:absolute;top:60px;right:24px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;width:380px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;">
+          <div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:8px;">🔗 Link público de reservas</div>
+          <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Comparte este link para que los pacientes agenden sus citas sin llamar.</div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;color:#374151;word-break:break-all;margin-bottom:10px;">
+            {{ linkReserva }}
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button @click="copiarLink" style="flex:1;padding:8px;background:#4338ca;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;">
+              {{ linkCopiado ? '✓ Copiado' : 'Copiar link' }}
+            </button>
+            <a :href="linkWA" target="_blank" style="flex:1;padding:8px;background:#25D366;color:#fff;border-radius:8px;font-size:12px;font-weight:500;text-decoration:none;text-align:center;">
+              📱 WhatsApp
+            </a>
+            <a :href="linkReserva" target="_blank" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer;background:#fff;color:#374151;text-decoration:none;">
+              Ver
+            </a>
+          </div>
+        </div>
       </div>
 
       <!-- Flash -->
@@ -200,6 +225,30 @@ const citaSeleccionada = ref(null)
 const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
 const nuevaCita = ref({ paciente_id:'', doctor_id:'', fecha_hora:'', duracion_min:30, motivo:'' })
+
+const mostrarLinkReserva = ref(false)
+const linkCopiado = ref(false)
+const empresaId = window.__inertia?.props?.auth?.user?.empresa_id || ''
+const linkReserva = `${window.location.origin}/reservar/${empresaId}`
+const linkWA = `https://wa.me/?text=${encodeURIComponent('Agenda tu cita en nuestra clínica: ' + window.location.origin + '/reservar/' + empresaId)}`
+const copiarLink = () => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(linkReserva)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = linkReserva
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.focus(); ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    linkCopiado.value = true
+    setTimeout(() => linkCopiado.value = false, 2000)
+  } catch(e) { alert('Link: ' + linkReserva) }
+}
 
 const recordatorioEnviado = ref(false)
 const enviarRecordatorio = async (cita) => {
