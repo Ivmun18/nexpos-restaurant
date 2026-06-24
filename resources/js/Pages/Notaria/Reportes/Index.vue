@@ -105,6 +105,10 @@
                                             style="background:#25D366; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
                                             💬 WhatsApp
                                         </a>
+                                        <a :href="'/notaria/comprobantes/' + c.id + '/recibo-ticket'" target="_blank"
+                                            style="background:#6366F1; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
+                                            🖨️ Imprimir
+                                        </a>
                                         <a v-if="c.enlace_xml" :href="c.enlace_xml" target="_blank"
                                             style="background:#F59E0B; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
                                             📄 XML
