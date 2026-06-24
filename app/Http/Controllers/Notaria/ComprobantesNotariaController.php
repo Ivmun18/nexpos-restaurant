@@ -41,8 +41,10 @@ class ComprobantesNotariaController extends Controller
         $baseImponible = $exonerada ? $total : $gravada;
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10)
-        $huella       = $total >= 10 ? 1.50 : 0;
+        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10, excepto trámite registral)
+        $esTramiteRegistral = stripos($acto->asunto ?? '', 'tramite registral') !== false
+                           || stripos($acto->asunto ?? '', 'trámite registral') !== false;
+        $huella       = (!$esTramiteRegistral && $total >= 10) ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
