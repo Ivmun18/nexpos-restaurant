@@ -250,7 +250,7 @@ class ComprobantesNotariaController extends Controller
         }
 
         // Totales
-        $total      = round(collect($request->items)->sum('precio'), 2);
+        $total      = round(collect($request->items)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
         $exonerada  = $empresa->zona_exonerada;
         if ($exonerada) {
             $gravada = 0;
@@ -267,16 +267,19 @@ class ComprobantesNotariaController extends Controller
         // Construir items UBL
         $lineas = [];
         foreach ($request->items as $idx => $item) {
-            $precioItem = round(floatval($item['precio']), 2);
-            $valUnit    = $exonerada ? $precioItem : round($precioItem / 1.18, 4);
-            $igvItem    = $exonerada ? 0 : round($precioItem - $valUnit, 2);
+            $cantidad   = intval($item['cantidad'] ?? 1);
+            $precioUnit = round(floatval($item['precio']), 4);
+            $precioItem = round($precioUnit * $cantidad, 2);
+            $valUnit    = $exonerada ? $precioUnit : round($precioUnit / 1.18, 4);
+            $igvItem    = $exonerada ? 0 : round(($precioItem) - round($precioItem / 1.18, 2), 2);
+            $lineaBase  = $exonerada ? round($precioUnit * $cantidad, 2) : round($precioItem / 1.18, 2);
             $lineas[] = [
                 'cbc:ID'                  => ['_text' => (string)($idx + 1)],
-                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
-                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => (string)$cantidad],
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $lineaBase],
                 'cac:PricingReference' => [
                     'cac:AlternativeConditionPrice' => [
-                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioUnit],
                         'cbc:PriceTypeCode' => ['_text' => '01'],
                     ],
                 ],
