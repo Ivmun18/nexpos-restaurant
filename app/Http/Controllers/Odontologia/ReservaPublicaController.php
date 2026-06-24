@@ -85,6 +85,43 @@ class ReservaPublicaController extends Controller {
             'motivo'       => $request->motivo ?? 'Solicitada por portal público',
         ]);
 
-        return response()->json(['ok' => true, 'mensaje' => 'Cita solicitada. La clínica le confirmará pronto.']);
+        // Notificación WhatsApp al doctor
+        $doctor = OdontoDoctor::find($request->doctor_id);
+        if ($doctor && $doctor->telefono) {
+            $tel = preg_replace('/[^0-9]/', '', $doctor->telefono);
+            if (strlen($tel) === 9) $tel = '51' . $tel;
+            $fecha    = \Carbon\Carbon::parse($request->fecha . ' ' . $request->hora)->locale('es')->isoFormat('dddd D [de] MMMM [a las] H:mm');
+            $mensaje  = "🦷 *Nueva cita solicitada*\n\n"
+                . "👤 *Paciente:* {$paciente->nombres} {$paciente->apellidos}\n"
+                . "📞 *Teléfono:* {$paciente->telefono}\n"
+                . "📅 *Fecha:* {$fecha}\n"
+                . "📝 *Motivo:* " . ($request->motivo ?? 'Sin motivo') . "\n\n"
+                . "_Solicitud recibida por portal web. Por favor confirme la cita._";
+            $waUrl = "https://wa.me/{$tel}?text=" . urlencode($mensaje);
+            // Guardamos la URL en observaciones para que la recepcionista pueda notificar
+            \App\Models\Odontologia\OdontoCita::where('paciente_id', $paciente->id)
+                ->latest()->first()
+                ?->update(['observaciones' => "WA_DOCTOR:{$waUrl}"]);
+        }
+
+        // Notificación a la clínica (admin)
+        $adminTel = preg_replace('/[^0-9]/', '', $empresa->telefono ?? '');
+        $notifUrl = null;
+        if (strlen($adminTel) === 9) $adminTel = '51' . $adminTel;
+        if ($adminTel) {
+            $msgAdmin = "🦷 *Nueva solicitud de cita*\n\n"
+                . "👤 {$paciente->nombres} {$paciente->apellidos}\n"
+                . "📞 {$paciente->telefono}\n"
+                . "👨‍⚕️ Dr. " . ($doctor->nombre ?? '—') . "\n"
+                . "📅 {$request->fecha} {$request->hora}\n"
+                . "📝 " . ($request->motivo ?? 'Sin motivo');
+            $notifUrl = "https://wa.me/{$adminTel}?text=" . urlencode($msgAdmin);
+        }
+
+        return response()->json([
+            'ok'      => true,
+            'mensaje' => 'Cita solicitada. La clínica le confirmará pronto.',
+            'notif_url' => $notifUrl
+        ]);
     }
 }

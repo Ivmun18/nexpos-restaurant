@@ -155,7 +155,13 @@ const confirmar = async () => {
   })
   const data = await res.json()
   enviando.value = false
-  if (data.ok) citaConfirmada.value = true
+  if (data.ok) {
+    citaConfirmada.value = true
+    if (data.notif_url) {
+      // Abrir WhatsApp para notificar a la clínica
+      setTimeout(() => window.open(data.notif_url, '_blank'), 1000)
+    }
+  }
 }
 
 const resetear = () => {
