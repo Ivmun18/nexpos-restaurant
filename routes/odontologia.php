@@ -92,6 +92,12 @@ Route::middleware(['auth'])->prefix('odontologia')->name('odontologia.')->group(
 
     Route::post('/pacientes/{id}/portal-token', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'generarToken'])->name('odontologia.portal.token');
 
+    // Consultorios
+    Route::get('/consultorios', [\App\Http\Controllers\Odontologia\ConsultorioController::class, 'index'])->name('odontologia.consultorios');
+    Route::post('/consultorios', [\App\Http\Controllers\Odontologia\ConsultorioController::class, 'store'])->name('odontologia.consultorios.store');
+    Route::put('/consultorios/{id}', [\App\Http\Controllers\Odontologia\ConsultorioController::class, 'update'])->name('odontologia.consultorios.update');
+    Route::delete('/consultorios/{id}', [\App\Http\Controllers\Odontologia\ConsultorioController::class, 'destroy'])->name('odontologia.consultorios.destroy');
+
     // Galería antes/después
     Route::get('/galeria', [\App\Http\Controllers\Odontologia\GaleriaController::class, 'index'])->name('odontologia.galeria');
     Route::post('/galeria', [\App\Http\Controllers\Odontologia\GaleriaController::class, 'store'])->name('odontologia.galeria.store');

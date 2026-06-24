@@ -500,6 +500,7 @@ const allMenuItems = [
     // ODONTOLOGIA
     { path: '/odontologia/dashboard',  icon: 'dashboard',  label: 'Dashboard',        module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/pacientes',  icon: 'users',      label: 'Pacientes',        module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/consultorios', icon: 'consultorio', label: 'Consultorios',   module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/citas',      icon: 'calendar',   label: 'Citas',            module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/doctores',   icon: 'doctor',     label: 'Doctores',         module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/doctores/estadisticas', icon: 'chart', label: 'Estadísticas',   module: 'odontologia', section: 'ODONTOLOGIA' },
