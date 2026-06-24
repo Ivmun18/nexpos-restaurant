@@ -73,7 +73,7 @@
                             <tr v-for="(c, i) in comprobantes" :key="c.id" style="border-top:1px solid #F1F5F9;">
                                 <td style="padding:10px 16px; color:#64748B;">{{ i + 1 }}</td>
                                 <td style="padding:10px 16px; color:#374151;">{{ formatFecha(c.fecha_emision) }}</td>
-                                <td style="padding:10px 16px; font-weight:600; color:#1E293B;">{{ c.cliente_nombre || '-' }}</td>
+                                <td style="padding:6px 8px; font-weight:600; color:#1E293B; font-size:12px;">{{ c.cliente_nombre || '-' }}</td>
                                 <td style="padding:10px 16px;">
                                     <span :style="{ background: c.tipo_comprobante==='01' ? '#DBEAFE' : '#D1FAE5', color: c.tipo_comprobante==='01' ? '#1D4ED8' : '#065F46', padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700' }">
                                         {{ c.tipo_comprobante === '01' ? 'Factura' : 'Boleta' }}
@@ -87,23 +87,25 @@
                                         {{ c.estado }}
                                     </span>
                                 </td>
-                                <td style="padding:10px 16px;">
-                                    <button v-if="c.estado !== 'aceptado' && c.estado !== 'anulado'" @click="reenviar(c)"
-                                        :disabled="reenviando === c.id"
-                                        style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
-                                        {{ reenviando === c.id ? '⏳...' : '🔄 Reenviar' }}
-                                    </button>
-                                    <button v-if="c.estado === 'emitido' || c.estado === 'aceptado'" @click="anular(c)"
-                                        :disabled="anulando === c.id"
-                                        style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; margin-left:4px;">
-                                        {{ anulando === c.id ? '⏳...' : '🚫 Anular' }}
-                                    </button>
-                                    <span v-if="c.estado === 'aceptado'" style="color:#16A34A; font-size:11px;">✅</span>
-                                    <span v-if="c.estado === 'anulado'" style="color:#DC2626; font-size:11px;">❌ Anulado</span>
-                                    <a :href="'https://wa.me/?text=' + encodeURIComponent('Estimado cliente, adjuntamos su comprobante ' + c.serie + '-' + String(c.numero).padStart(8,'0') + ' por S/ ' + c.total + '. Descargue su ticket en: http://161.35.5.40/notaria/comprobantes/' + c.id + '/recibo-ticket')" target="_blank"
-                                        style="background:#25D366; color:white; border:none; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; margin-left:4px;">
-                                        💬 WhatsApp
-                                    </a>
+                                <td style="padding:6px 8px;">
+                                    <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                                        <button v-if="c.estado !== 'aceptado' && c.estado !== 'anulado'" @click="reenviar(c)"
+                                            :disabled="reenviando === c.id"
+                                            style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                            {{ reenviando === c.id ? '⏳...' : '🔄 Reenviar' }}
+                                        </button>
+                                        <button v-if="c.estado === 'emitido' || c.estado === 'aceptado'" @click="anular(c)"
+                                            :disabled="anulando === c.id"
+                                            style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                            {{ anulando === c.id ? '⏳...' : '🚫 Anular' }}
+                                        </button>
+                                        <span v-if="c.estado === 'aceptado'" style="color:#16A34A; font-size:11px;">✅</span>
+                                        <span v-if="c.estado === 'anulado'" style="color:#DC2626; font-size:11px;">❌ Anulado</span>
+                                        <a :href="'https://wa.me/?text=' + encodeURIComponent('Estimado cliente, adjuntamos su comprobante ' + c.serie + '-' + String(c.numero).padStart(8,'0') + ' por S/ ' + c.total + '. Descargue su ticket en: http://161.35.5.40/notaria/comprobantes/' + c.id + '/recibo-ticket')" target="_blank"
+                                            style="background:#25D366; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
+                                            💬 WhatsApp
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="comprobantes.length === 0">
