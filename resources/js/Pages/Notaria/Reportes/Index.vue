@@ -88,7 +88,7 @@
                                     </span>
                                 </td>
                                 <td style="padding:6px 8px;">
-                                    <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                                    <div style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:4px; align-items:center;">
                                         <button v-if="c.estado !== 'aceptado' && c.estado !== 'anulado'" @click="reenviar(c)"
                                             :disabled="reenviando === c.id"
                                             style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;">
