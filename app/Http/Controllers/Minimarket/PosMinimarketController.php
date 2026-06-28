@@ -386,7 +386,7 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         $venta->update([
             'nubefact_id'     => $pdfUrl,
             'nubefact_estado' => $aceptada ? 'aceptado' : 'rechazado',
-            'estado'          => $aceptada ? 'emitido' : 'pendiente',
+            'estado'          => $aceptada ? 'aceptado' : 'pendiente',
             'observaciones'   => json_encode($data),
         ]);
     } catch (\Exception $e) {
