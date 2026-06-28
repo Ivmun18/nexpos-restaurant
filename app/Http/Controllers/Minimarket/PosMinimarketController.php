@@ -327,7 +327,7 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         ],
         'cac:AccountingSupplierParty' => [
             'cac:Party' => [
-                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->apisunat_ruc]],
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
                 'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
                 'cac:PartyLegalEntity'    => [
                     'cbc:RegistrationName' => ['_text' => $empresa->razon_social],
