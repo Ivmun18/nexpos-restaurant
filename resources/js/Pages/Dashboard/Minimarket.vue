@@ -65,10 +65,15 @@
                 <div v-for="v in ultimas_ventas" :key="v.id"
                     style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #F1F5F9;">
                     <div>
-                        <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ v.numero_completo }}</p>
+                        <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ v.serie }}-{{ String(v.correlativo).padStart(8,'0') }}</p>
                         <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">{{ formatFecha(v.fecha_emision) }}</p>
+                        <span :style="{fontSize:'11px', fontWeight:'600', padding:'2px 8px', borderRadius:'20px',
+                            background: v.nubefact_estado==='aceptado'?'#DCFCE7': v.nubefact_estado==='pendiente'?'#FEF9C3':'#FEE2E2',
+                            color: v.nubefact_estado==='aceptado'?'#166534': v.nubefact_estado==='pendiente'?'#854D0E':'#991B1B'}">
+                            {{ v.nubefact_estado ?? 'sin enviar' }}
+                        </span>
                     </div>
-                    <span style="font-size:15px; font-weight:800; color:#14B8A6;">S/ {{ Number(v.total_gravado).toFixed(2) }}</span>
+                    <span style="font-size:15px; font-weight:800; color:#14B8A6;">S/ {{ Number(v.total).toFixed(2) }}</span>
                 </div>
             </div>
         </div>
