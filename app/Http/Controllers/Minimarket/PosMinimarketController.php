@@ -317,7 +317,7 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         'cbc:UBLVersionID'         => ['_text' => '2.1'],
         'cbc:CustomizationID'      => ['_text' => '2.0'],
         'cbc:ID'                   => ['_text' => $venta->serie . '-' . str_pad($venta->correlativo, 8, '0', STR_PAD_LEFT)],
-        'cbc:IssueDate'            => ['_text' => $venta->fecha_emision ?? now()->format('Y-m-d')],
+        'cbc:IssueDate'            => ['_text' => \Carbon\Carbon::parse($venta->fecha_emision ?? now())->format('Y-m-d')],
         'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoDoc],
         'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetrasMinimarket($total)],
         'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
