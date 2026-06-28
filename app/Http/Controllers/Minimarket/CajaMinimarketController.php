@@ -22,7 +22,8 @@ class CajaMinimarketController extends Controller
 
         // Ventas del día
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
+            ->whereDate('fecha_emision', $hoy)
+            ->where('estado', '!=', 'anulado')
             ->get();
 
         $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
@@ -33,15 +34,17 @@ class CajaMinimarketController extends Controller
 
         // Ventas por hora
         $ventasPorHora = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
-            ->selectRaw('HOUR(created_at) as hora, COUNT(*) as cantidad, SUM(total_gravado) as total')
+            ->whereDate('fecha_emision', $hoy)
+            ->where('estado', '!=', 'anulado')
+            ->selectRaw('HOUR(created_at) as hora, COUNT(*) as cantidad, SUM(total) as total')
             ->groupBy('hora')
             ->orderBy('hora')
             ->get();
 
         // Últimas ventas
         $ultimasVentas = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
+            ->whereDate('fecha_emision', $hoy)
+            ->where('estado', '!=', 'anulado')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -108,7 +111,8 @@ class CajaMinimarketController extends Controller
         $hoy = now()->toDateString();
 
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->get();
+            ->whereDate('fecha_emision', $hoy)
+            ->where('estado', '!=', 'anulado')->get();
 
         $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
         $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
