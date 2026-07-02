@@ -75,9 +75,10 @@ class CajaMinimarketController extends Controller
 
     public function corregir(Request $request)
     {
+        $request->validate(['monto_final' => 'required|numeric|min:0']);
+
         $empresaId = auth()->user()->empresa_id;
 
-        // Tomar la última caja cerrada
         $caja = CajaMinimarket::where('empresa_id', $empresaId)
             ->where('estado', 'cerrada')
             ->latest('cierre_at')
@@ -87,7 +88,7 @@ class CajaMinimarketController extends Controller
             return back()->with('error', 'No hay caja cerrada para corregir');
         }
 
-        // Recalcular ventas del período de la caja
+        // Recalcular ventas del período
         $ventas = Venta::where('empresa_id', $empresaId)
             ->where('fecha_emision', '>=', $caja->apertura_at)
             ->where('fecha_emision', '<=', $caja->cierre_at)
@@ -99,8 +100,8 @@ class CajaMinimarketController extends Controller
         $totalPlin     = $ventas->where('metodo_pago', 'plin')->sum('total');
         $totalTarjeta  = $ventas->where('metodo_pago', 'tarjeta')->sum('total');
         $totalVentas   = $ventas->sum('total');
-        $efectivoEsperado = $caja->monto_inicial + $totalEfectivo;
-        $diferencia = $caja->monto_final - $efectivoEsperado;
+        $montoFinal    = floatval($request->monto_final);
+        $diferencia    = $montoFinal - ($caja->monto_inicial + $totalEfectivo);
 
         $caja->update([
             'total_efectivo'  => $totalEfectivo,
@@ -109,10 +110,11 @@ class CajaMinimarketController extends Controller
             'total_tarjeta'   => $totalTarjeta,
             'total_ventas'    => $totalVentas,
             'cantidad_ventas' => $ventas->count(),
+            'monto_final'     => $montoFinal,
             'diferencia'      => $diferencia,
         ]);
 
-        return redirect()->route('minimarket.caja')->with('success', 'Caja corregida: ' . $ventas->count() . ' ventas · S/ ' . number_format($totalVentas, 2));
+        return redirect()->route('minimarket.caja')->with('success', 'Caja corregida correctamente');
     }
 
     public function abrir(Request $request)

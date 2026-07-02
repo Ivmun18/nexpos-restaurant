@@ -220,6 +220,55 @@
             </div>
         </Teleport>
 
+        <!-- Modal Corregir última caja -->
+        <Teleport to="body">
+            <div v-if="modalCorregir" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:center; justify-content:center;">
+                <div style="background:white; border-radius:20px; padding:28px; width:380px; max-width:90vw;">
+                    <h3 style="font-size:18px; font-weight:800; margin:0 0 4px;">🔧 Corregir última caja</h3>
+                    <p style="font-size:13px; color:#94A3B8; margin:0 0 20px;">Ingresa el monto físico que tenías en caja al cierre</p>
+
+                    <div style="background:#F8FAFC; border-radius:12px; padding:14px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="font-size:13px; color:#64748B;">Total ventas registradas</span>
+                            <span style="font-size:13px; font-weight:700; color:#10B981;">S/ {{ Number(historial_cajas[0]?.total_ventas || 0).toFixed(2) }}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="font-size:13px; color:#64748B;">Efectivo en ventas</span>
+                            <span style="font-size:13px; font-weight:700; color:#1E293B;">S/ {{ Number(historial_cajas[0]?.total_efectivo || 0).toFixed(2) }}</span>
+                        </div>
+                    </div>
+
+                    <label style="font-size:13px; font-weight:600; color:#64748B; display:block; margin-bottom:6px;">MONTO FÍSICO EN CAJA (S/)</label>
+                    <input v-model.number="formCorregir.monto_final" type="number" step="0.01" min="0"
+                        style="width:100%; padding:14px; border:2px solid #E2E8F0; border-radius:10px; font-size:22px; font-weight:800; text-align:center; outline:none; box-sizing:border-box; margin-bottom:12px;" />
+
+                    <div v-if="formCorregir.monto_final !== ''" :style="{
+                        padding:'12px 16px', borderRadius:'10px', marginBottom:'16px',
+                        background: diferenciaCorregir >= 0 ? '#F0FDF4' : '#FEF2F2',
+                        border: '1px solid ' + (diferenciaCorregir >= 0 ? '#DCFCE7' : '#FECACA'),
+                    }">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="font-size:13px; font-weight:600;">Diferencia</span>
+                            <span :style="{ fontSize:'16px', fontWeight:'800', color: diferenciaCorregir >= 0 ? '#166534' : '#991B1B' }">
+                                {{ diferenciaCorregir >= 0 ? '+' : '' }}S/ {{ Number(diferenciaCorregir).toFixed(2) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:12px;">
+                        <button @click="modalCorregir = false"
+                            style="flex:1; padding:12px; background:white; color:#64748B; border-radius:10px; font-size:14px; font-weight:600; border:2px solid #E2E8F0; cursor:pointer;">
+                            Cancelar
+                        </button>
+                        <button @click="confirmarCorreccion"
+                            style="flex:1; padding:12px; background:#F59E0B; color:white; border-radius:10px; font-size:14px; font-weight:700; border:none; cursor:pointer;">
+                            ✅ Guardar corrección
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
     </AppLayout>
 </template>
 
@@ -238,8 +287,10 @@ const props = defineProps({
 })
 
 const montoInicial = ref(0)
-const modalCierre  = ref(false)
-const formCierre   = ref({ monto_final: '', observaciones: '' })
+const modalCierre   = ref(false)
+const formCierre    = ref({ monto_final: '', observaciones: '' })
+const modalCorregir = ref(false)
+const formCorregir  = ref({ monto_final: '' })
 
 const maxHora = computed(() => {
     if (!props.ventas_por_hora.length) return 1
@@ -250,6 +301,14 @@ const diferenciaCierre = computed(() => {
     if (!formCierre.value.monto_final || !props.caja_abierta) return 0
     const esperado = Number(props.caja_abierta.monto_inicial) + Number(props.resumen.total_efectivo)
     return Number(formCierre.value.monto_final) - esperado
+})
+
+const diferenciaCorregir = computed(() => {
+    if (formCorregir.value.monto_final === '') return 0
+    const caja = props.historial_cajas[0]
+    if (!caja) return 0
+    const esperado = Number(caja.monto_inicial) + Number(caja.total_efectivo)
+    return Number(formCorregir.value.monto_final) - esperado
 })
 
 const iconMetodo = (m) => ({ efectivo: '💵', yape: '📱', plin: '📲', tarjeta: '💳' })[m] || '💵'
@@ -285,9 +344,14 @@ const cerrarCaja = () => {
 }
 
 const corregirCaja = () => {
-    if (!confirm('¿Recalcular los totales de la última caja cerrada con las ventas reales?')) return
-    router.post('/minimarket/caja/corregir', {}, {
-        onSuccess: () => { alert('✅ Caja corregida correctamente'); window.location.replace('/minimarket/caja') },
+    formCorregir.value = { monto_final: '' }
+    modalCorregir.value = true
+}
+
+const confirmarCorreccion = () => {
+    if (formCorregir.value.monto_final === '') { alert('Ingresa el monto físico en caja'); return }
+    router.post('/minimarket/caja/corregir', { monto_final: formCorregir.value.monto_final }, {
+        onSuccess: () => { modalCorregir.value = false },
         onError: (e) => alert('Error: ' + Object.values(e).join(' '))
     })
 }
