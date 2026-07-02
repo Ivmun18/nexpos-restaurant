@@ -246,10 +246,13 @@ Route::get('/dashboard', function () {
         // Ingresos expedientes
         $ingresosHoyExp = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereDate('created_at', $hoy)->sum('monto');
-        // Ingresos venta directa
+        // Ingresos venta directa (excluir crédito - solo contado)
         $ingresosHoyVD = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->whereIn('estado', ['emitido','aceptado'])->sum('total');
-        $ingresosHoy = $ingresosHoyExp + $ingresosHoyVD;
+            ->whereDate('created_at', $hoy)->whereIn('estado', ['emitido','aceptado'])->where('forma_pago', '!=', 'Credito')->sum('total');
+        // Sumar también pagos de cuotas de hoy
+        $ingresosHoyCuotas = \DB::table('cuotas_credito')->where('empresa_id', $empresaId)
+            ->whereDate('fecha_pago', $hoy)->where('estado', 'pagada')->sum('monto_pagado');
+        $ingresosHoy = $ingresosHoyExp + $ingresosHoyVD + $ingresosHoyCuotas;
 
         $ingresosHoyCount = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereDate('created_at', $hoy)->count();
@@ -260,8 +263,10 @@ Route::get('/dashboard', function () {
         $ingresosHoyExpMes = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('monto');
         $ingresosVDMes = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->whereIn('estado', ['emitido','aceptado'])->sum('total');
-        $ingresosMes = $ingresosHoyExpMes + $ingresosVDMes;
+            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->whereIn('estado', ['emitido','aceptado'])->where('forma_pago', '!=', 'Credito')->sum('total');
+        $ingresosCuotasMes = \DB::table('cuotas_credito')->where('empresa_id', $empresaId)
+            ->whereMonth('fecha_pago', $mes)->whereYear('fecha_pago', $anio)->where('estado', 'pagada')->sum('monto_pagado');
+        $ingresosMes = $ingresosHoyExpMes + $ingresosVDMes + $ingresosCuotasMes;
         
         $actosProceso = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
             ->where('estado', 'proceso')->count();
@@ -273,10 +278,12 @@ Route::get('/dashboard', function () {
             $totalExp = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
                 ->whereDate('created_at', $fecha->toDateString())->sum('monto');
             $totalVD = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-                ->whereDate('created_at', $fecha->toDateString())->whereIn('estado', ['emitido','aceptado'])->sum('total');
+                ->whereDate('created_at', $fecha->toDateString())->whereIn('estado', ['emitido','aceptado'])->where('forma_pago', '!=', 'Credito')->sum('total');
+            $totalCuotas = \DB::table('cuotas_credito')->where('empresa_id', $empresaId)
+                ->whereDate('fecha_pago', $fecha->toDateString())->where('estado', 'pagada')->sum('monto_pagado');
             $ingresosPorDia[] = [
                 'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
-                'total' => round($totalExp + $totalVD, 2),
+                'total' => round($totalExp + $totalVD + $totalCuotas, 2),
             ];
         }
 
