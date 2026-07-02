@@ -96,6 +96,31 @@ class ComprobantesNotariaController extends Controller
             ];
         }
 
+        // Forma de pago ventaDirecta (Credito solo para facturas)
+        $formaPagoVD = ($request->tipo_comprobante === '01' && $request->forma_pago === 'Credito')
+            ? 'Credito' : 'Contado';
+
+        if ($formaPagoVD === 'Credito') {
+            $paymentTermsVD = [
+                [
+                    'cbc:ID'             => ['_text' => 'FormaPago'],
+                    'cbc:PaymentMeansID' => ['_text' => 'Credito'],
+                    'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
+                ],
+                [
+                    'cbc:ID'             => ['_text' => 'FormaPago'],
+                    'cbc:PaymentMeansID' => ['_text' => 'Cuota001'],
+                    'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
+                    'cbc:PaymentDueDate' => ['_text' => $request->fecha_vencimiento],
+                ],
+            ];
+        } else {
+            $paymentTermsVD = [
+                'cbc:ID'             => ['_text' => 'FormaPago'],
+                'cbc:PaymentMeansID' => ['_text' => 'Contado'],
+            ];
+        }
+
         $documentBody = [
             'cbc:UBLVersionID'         => ['_text' => '2.1'],
             'cbc:CustomizationID'      => ['_text' => '2.0'],
@@ -104,10 +129,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-            'cac:PaymentTerms'         => [
-                'cbc:ID'                => ['_text' => 'FormaPago'],
-                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
-            ],
+            'cac:PaymentTerms' => $paymentTermsVD,
             'cac:PaymentTerms'         => [
                 'cbc:ID'                => ['_text' => 'FormaPago'],
                 'cbc:PaymentMeansID'    => ['_text' => 'Contado'],

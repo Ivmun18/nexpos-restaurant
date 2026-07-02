@@ -296,6 +296,25 @@
                                     </button>
                                 </div>
                             </div>
+                            <!-- Forma de pago: solo si parece factura (RUC 11 dígitos) -->
+                            <div v-if="(formRapido.cliente_documento||'').replace(/\D/g,'').length === 11" style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;">
+                                <label style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Forma de pago</label>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                    <button v-for="fp in [{value:'Contado',icon:'💵'},{value:'Credito',icon:'📅'}]" :key="fp.value"
+                                        @click="formRapido.forma_pago = fp.value" type="button"
+                                        :style="{
+                                            padding:'8px', border:'2px solid', borderRadius:'8px', cursor:'pointer', textAlign:'center',
+                                            borderColor: formRapido.forma_pago === fp.value ? '#0F766E' : '#E2E8F0',
+                                            background: formRapido.forma_pago === fp.value ? '#F0FDFA' : 'white',
+                                            color: formRapido.forma_pago === fp.value ? '#0F766E' : '#64748B',
+                                            fontWeight:'700', fontSize:'12px',
+                                        }">
+                                        {{ fp.icon }} {{ fp.value }}
+                                    </button>
+                                </div>
+                                <input v-if="formRapido.forma_pago === 'Credito'" v-model="formRapido.fecha_vencimiento" type="date"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                            </div>
                             <button @click="cobrarServicioRapido" :disabled="!itemsRapido.length || procesandoRapido"
                                 style="width:100%; padding:12px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
                                 {{ procesandoRapido ? '⏳ Procesando...' : '💰 Cobrar S/ ' + totalRapido.toFixed(2) }}
@@ -611,6 +630,8 @@ const formRapido = ref({
     cliente_nombre: 'CLIENTES VARIOS',
     cliente_documento: '00000000',
     metodo_pago: 'efectivo',
+    forma_pago: 'Contado',
+    fecha_vencimiento: '',
 })
 const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
 const itemsRapido = ref([])
