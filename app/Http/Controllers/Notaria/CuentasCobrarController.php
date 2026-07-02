@@ -71,6 +71,18 @@ class CuentasCobrarController extends Controller
         ]);
 
         $empresa = auth()->user()->empresa;
+
+        // Verificar que la caja esté abierta
+        $sesion = DB::table('sesiones_caja')
+            ->join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')
+            ->where('sesiones_caja.estado', 'abierta')
+            ->where('caja.empresa_id', $empresa->id)
+            ->select('sesiones_caja.*')->first();
+
+        if (!$sesion) {
+            return back()->with('error', 'Debe abrir la caja antes de registrar un pago');
+        }
+
         $cuota = DB::table('cuotas_credito')->where('id', $cuotaId)->where('empresa_id', $empresa->id)->first();
 
         if (!$cuota || $cuota->estado === 'pagada') {
@@ -86,16 +98,9 @@ class CuentasCobrarController extends Controller
             'updated_at'   => now(),
         ]);
 
-        // Registrar ingreso en caja si hay sesión abierta
-        $sesion = DB::table('sesiones_caja')
-            ->join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')
-            ->where('sesiones_caja.estado', 'abierta')
-            ->where('caja.empresa_id', $empresa->id)
-            ->select('sesiones_caja.*')->first();
-
-        if ($sesion) {
-            $comp = DB::table('comprobantes_sunat')->find($cuota->comprobante_id);
-            DB::table('caja_movimientos')->insert([
+        // Registrar ingreso en caja
+        $comp = DB::table('comprobantes_sunat')->find($cuota->comprobante_id);
+        DB::table('caja_movimientos')->insert([
                 'sesion_id'  => $sesion->id,
                 'usuario_id' => auth()->id(),
                 'tipo'       => 'ingreso',
@@ -104,7 +109,6 @@ class CuentasCobrarController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        }
 
         return back()->with('success', 'Pago registrado correctamente');
     }
