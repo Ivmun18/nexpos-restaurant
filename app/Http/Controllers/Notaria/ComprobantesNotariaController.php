@@ -21,7 +21,9 @@ class ComprobantesNotariaController extends Controller
             'cliente_nombre'           => 'required|string',
             'cliente_email'            => 'nullable|email',
             'forma_pago'               => 'nullable|in:Contado,Credito',
-            'fecha_vencimiento'        => 'nullable|date',
+            'cuotas'                   => 'nullable|array',
+            'cuotas.*.monto'           => 'required_with:cuotas|numeric|min:0.01',
+            'cuotas.*.fecha'           => 'required_with:cuotas|date',
         ]);
 
         $empresa   = Empresa::find($acto->empresa_id);
@@ -96,26 +98,29 @@ class ComprobantesNotariaController extends Controller
             ];
         }
 
-        // Forma de pago ventaDirecta (Credito solo para facturas)
-        $formaPagoVD = ($request->tipo_comprobante === '01' && $request->forma_pago === 'Credito')
+        // Forma de pago (Credito solo para facturas)
+        $formaPago = ($request->tipo_comprobante === '01' && $request->forma_pago === 'Credito')
             ? 'Credito' : 'Contado';
 
-        if ($formaPagoVD === 'Credito') {
-            $paymentTermsVD = [
+        if ($formaPago === 'Credito') {
+            $cuotas = $request->cuotas ?? [];
+            $paymentTerms = [
                 [
                     'cbc:ID'             => ['_text' => 'FormaPago'],
                     'cbc:PaymentMeansID' => ['_text' => 'Credito'],
                     'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
                 ],
-                [
-                    'cbc:ID'             => ['_text' => 'FormaPago'],
-                    'cbc:PaymentMeansID' => ['_text' => 'Cuota001'],
-                    'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
-                    'cbc:PaymentDueDate' => ['_text' => $request->fecha_vencimiento],
-                ],
             ];
+            foreach ($cuotas as $i => $cuota) {
+                $paymentTerms[] = [
+                    'cbc:ID'             => ['_text' => 'FormaPago'],
+                    'cbc:PaymentMeansID' => ['_text' => 'Cuota' . str_pad($i + 1, 3, '0', STR_PAD_LEFT)],
+                    'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format(floatval($cuota['monto']), 2, '.', '')],
+                    'cbc:PaymentDueDate' => ['_text' => $cuota['fecha']],
+                ];
+            }
         } else {
-            $paymentTermsVD = [
+            $paymentTerms = [
                 'cbc:ID'             => ['_text' => 'FormaPago'],
                 'cbc:PaymentMeansID' => ['_text' => 'Contado'],
             ];
@@ -129,11 +134,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-            'cac:PaymentTerms' => $paymentTermsVD,
-            'cac:PaymentTerms'         => [
-                'cbc:ID'                => ['_text' => 'FormaPago'],
-                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
-            ],
+            'cac:PaymentTerms' => $paymentTerms,
             'cac:AccountingSupplierParty' => ['cac:Party' => [
                 'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
                 'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
@@ -332,6 +333,19 @@ class ComprobantesNotariaController extends Controller
             ];
         }
 
+        // Forma de pago ventaDirecta
+        $formaPagoVD = ($request->tipo_comprobante === '01' && $request->forma_pago === 'Credito')
+            ? 'Credito' : 'Contado';
+        if ($formaPagoVD === 'Credito') {
+            $cuotasVD = $request->cuotas ?? [];
+            $paymentTermsVD = [['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Credito'], 'cbc:Amount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')]]];
+            foreach ($cuotasVD as $i => $cuota) {
+                $paymentTermsVD[] = ['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Cuota' . str_pad($i + 1, 3, '0', STR_PAD_LEFT)], 'cbc:Amount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format(floatval($cuota['monto']), 2, '.', '')], 'cbc:PaymentDueDate' => ['_text' => $cuota['fecha']]];
+            }
+        } else {
+            $paymentTermsVD = ['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Contado']];
+        }
+
         $documentBody = [
             'cbc:UBLVersionID'         => ['_text' => '2.1'],
             'cbc:CustomizationID'      => ['_text' => '2.0'],
@@ -340,10 +354,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-            'cac:PaymentTerms'         => [
-                'cbc:ID'                => ['_text' => 'FormaPago'],
-                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
-            ],
+            'cac:PaymentTerms'         => $paymentTermsVD,
             'cac:AccountingSupplierParty' => [
                 'cac:Party' => [
                     'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],

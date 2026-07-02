@@ -312,8 +312,30 @@
                                         {{ fp.icon }} {{ fp.value }}
                                     </button>
                                 </div>
-                                <input v-if="formRapido.forma_pago === 'Credito'" v-model="formRapido.fecha_vencimiento" type="date" title="Fecha de vencimiento del pago"
-                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                <div v-if="formRapido.forma_pago === 'Credito'" style="display:flex; flex-direction:column; gap:8px;">
+                                    <div v-for="(cuota, ci) in formRapido.cuotas" :key="ci" style="display:flex; gap:6px; align-items:end;">
+                                        <div style="flex:1;">
+                                            <label style="font-size:10px; font-weight:600; color:#64748B;">MONTO CUOTA {{ ci+1 }}</label>
+                                            <input v-model.number="cuota.monto" type="number" step="0.01" min="0.01"
+                                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                        </div>
+                                        <div style="flex:1;">
+                                            <label style="font-size:10px; font-weight:600; color:#64748B;">VENCIMIENTO</label>
+                                            <input v-model="cuota.fecha" type="date"
+                                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                        </div>
+                                        <button @click="formRapido.cuotas.splice(ci, 1)" type="button"
+                                            style="padding:8px 10px; background:#FEF2F2; border:none; color:#EF4444; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+                                    </div>
+                                    <div v-if="formRapido.cuotas.length" style="font-size:11px; color:#64748B; text-align:right;">
+                                        Asignado: S/ {{ formRapido.cuotas.reduce((s,c) => s + Number(c.monto||0), 0).toFixed(2) }}
+                                        / S/ {{ totalRapido.toFixed(2) }}
+                                    </div>
+                                    <button @click="agregarCuotaRapido()" type="button"
+                                        style="padding:8px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px; font-size:12px; font-weight:600; color:#0F766E; cursor:pointer;">
+                                        ➕ Agregar cuota
+                                    </button>
+                                </div>
                             </div>
                             <button @click="cobrarServicioRapido" :disabled="!itemsRapido.length || procesandoRapido"
                                 style="width:100%; padding:12px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
@@ -442,10 +464,29 @@
                                                 {{ fp.icon }} {{ fp.value }}
                                             </button>
                                         </div>
-                                        <div v-if="formComp.forma_pago === 'Credito'">
-                                            <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">FECHA DE VENCIMIENTO DEL PAGO</label>
-                                            <input v-model="formComp.fecha_vencimiento" type="date"
-                                                style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                        <div v-if="formComp.forma_pago === 'Credito'" style="display:flex; flex-direction:column; gap:8px;">
+                                            <div v-for="(cuota, ci) in formComp.cuotas" :key="ci" style="display:flex; gap:6px; align-items:end;">
+                                                <div style="flex:1;">
+                                                    <label style="font-size:10px; font-weight:600; color:#64748B;">MONTO CUOTA {{ ci+1 }}</label>
+                                                    <input v-model.number="cuota.monto" type="number" step="0.01" min="0.01"
+                                                        style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                                </div>
+                                                <div style="flex:1;">
+                                                    <label style="font-size:10px; font-weight:600; color:#64748B;">VENCIMIENTO</label>
+                                                    <input v-model="cuota.fecha" type="date"
+                                                        style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                                </div>
+                                                <button @click="formComp.cuotas.splice(ci, 1)" type="button"
+                                                    style="padding:8px 10px; background:#FEF2F2; border:none; color:#EF4444; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+                                            </div>
+                                            <div v-if="formComp.cuotas.length" style="font-size:11px; color:#64748B; text-align:right;">
+                                                Asignado: S/ {{ formComp.cuotas.reduce((s,c) => s + Number(c.monto||0), 0).toFixed(2) }}
+                                                / S/ {{ Number(formCobro.monto||0).toFixed(2) }}
+                                            </div>
+                                            <button @click="agregarCuotaComp()" type="button"
+                                                style="padding:8px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px; font-size:12px; font-weight:600; color:#0F766E; cursor:pointer;">
+                                                ➕ Agregar cuota
+                                            </button>
                                         </div>
                                     </div>
                                     <div v-if="errorComp" style="background:#FEF2F2; border-radius:8px; padding:8px 12px; font-size:12px; color:#991B1B;">❌ {{ errorComp }}</div>
@@ -634,7 +675,7 @@ const formRapido = ref({
     cliente_documento: '00000000',
     metodo_pago: 'efectivo',
     forma_pago: 'Contado',
-    fecha_vencimiento: '',
+    cuotas: [],
 })
 const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
 const itemsRapido = ref([])
@@ -666,6 +707,19 @@ function agregarItem() {
 }
 function quitarItem(i) { itemsRapido.value.splice(i, 1) }
 
+function agregarCuotaComp() {
+    const totalCobro = Number(formCobro.value.monto) || 0
+    const asignado = formComp.value.cuotas.reduce((s, c) => s + Number(c.monto || 0), 0)
+    const restante = Math.max(0, totalCobro - asignado)
+    formComp.value.cuotas.push({ monto: Number(restante.toFixed(2)), fecha: '' })
+}
+
+function agregarCuotaRapido() {
+    const asignado = formRapido.value.cuotas.reduce((s, c) => s + Number(c.monto || 0), 0)
+    const restante = Math.max(0, totalRapido.value - asignado)
+    formRapido.value.cuotas.push({ monto: Number(restante.toFixed(2)), fecha: '' })
+}
+
 async function cobrarServicioRapido() {
     if (!itemsRapido.value.length) return
     procesandoRapido.value = true
@@ -696,7 +750,7 @@ async function cobrarServicioRapido() {
             alert('✅ ' + data.mensaje)
             if (data.pdf) window.open(data.pdf, '_blank')
             modalServicioRapido.value = false
-            formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo' }
+            formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', forma_pago: 'Contado', cuotas: [] }
             itemsRapido.value = []
             itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
             router.reload({ only: ['resumenCaja'] })
@@ -715,7 +769,7 @@ const errorComp              = ref('')
 const pdfComp                = ref('')
 
 const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' })
-const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '', forma_pago: 'Contado', fecha_vencimiento: '' })
+const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '', forma_pago: 'Contado', cuotas: [] })
 const buscandoCliente = ref(false)
 const buscandoRapido = ref(false)
 
