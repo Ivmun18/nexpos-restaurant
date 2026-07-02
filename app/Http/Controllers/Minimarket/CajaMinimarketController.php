@@ -73,6 +73,48 @@ class CajaMinimarketController extends Controller
         ]);
     }
 
+    public function corregir(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+
+        // Tomar la última caja cerrada
+        $caja = CajaMinimarket::where('empresa_id', $empresaId)
+            ->where('estado', 'cerrada')
+            ->latest('cierre_at')
+            ->first();
+
+        if (!$caja) {
+            return back()->with('error', 'No hay caja cerrada para corregir');
+        }
+
+        // Recalcular ventas del período de la caja
+        $ventas = Venta::where('empresa_id', $empresaId)
+            ->where('fecha_emision', '>=', $caja->apertura_at)
+            ->where('fecha_emision', '<=', $caja->cierre_at)
+            ->where('estado', '!=', 'anulado')
+            ->get();
+
+        $totalEfectivo = $ventas->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventas->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventas->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventas->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalVentas   = $ventas->sum('total');
+        $efectivoEsperado = $caja->monto_inicial + $totalEfectivo;
+        $diferencia = $caja->monto_final - $efectivoEsperado;
+
+        $caja->update([
+            'total_efectivo'  => $totalEfectivo,
+            'total_yape'      => $totalYape,
+            'total_plin'      => $totalPlin,
+            'total_tarjeta'   => $totalTarjeta,
+            'total_ventas'    => $totalVentas,
+            'cantidad_ventas' => $ventas->count(),
+            'diferencia'      => $diferencia,
+        ]);
+
+        return redirect()->route('minimarket.caja')->with('success', 'Caja corregida: ' . $ventas->count() . ' ventas · S/ ' . number_format($totalVentas, 2));
+    }
+
     public function abrir(Request $request)
     {
         $request->validate([

@@ -684,6 +684,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/caja', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'index'])->name('minimarket.caja');
     Route::post('/minimarket/caja/abrir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'abrir'])->name('minimarket.caja.abrir');
     Route::post('/minimarket/caja/{caja}/cerrar', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'cerrar'])->name('minimarket.caja.cerrar');
+    Route::post('/minimarket/caja/corregir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'corregir'])->name('minimarket.caja.corregir');
 });
 
 // Reportes Minimarket
