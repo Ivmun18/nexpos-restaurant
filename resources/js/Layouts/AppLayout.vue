@@ -482,6 +482,7 @@ const allMenuItems = [
     { path: '/notaria/actos',       icon: 'notaria',      label: 'Expedientes',      module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/indice',      icon: 'book',         label: 'Índice Notarial',  module: 'indice',   section: 'NOTARIA' },
     { path: '/notaria/seguimiento', icon: 'seguimiento',  label: 'Seguimiento',      module: 'actos',    section: 'NOTARIA' },
+    { path: '/notaria/cuentas-cobrar', icon: 'seguimiento',  label: 'Cuentas x Cobrar', module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/caja',        icon: 'caja',         label: 'Caja notarial',    module: 'caja',     section: 'NOTARIA' },
     { path: '/notaria/clientes',    icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
     { path: '/notaria/reportes',    icon: 'reporte',      label: 'Reportes',         module: 'actos',    section: 'NOTARIA' },

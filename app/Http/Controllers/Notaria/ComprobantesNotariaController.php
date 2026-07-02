@@ -209,6 +209,23 @@ class ComprobantesNotariaController extends Controller
 
             $comprobanteId = \DB::getPdo()->lastInsertId();
 
+            // Guardar forma de pago y cuotas si es crédito
+            if ($formaPago === 'Credito' && $request->cuotas) {
+                \DB::table('comprobantes_sunat')->where('id', $comprobanteId)->update(['forma_pago' => 'Credito']);
+                foreach ($request->cuotas as $i => $cuota) {
+                    \DB::table('cuotas_credito')->insert([
+                        'comprobante_id'   => $comprobanteId,
+                        'empresa_id'       => $empresa->id,
+                        'numero_cuota'     => $i + 1,
+                        'monto'            => floatval($cuota['monto']),
+                        'fecha_vencimiento'=> $cuota['fecha'],
+                        'estado'           => 'pendiente',
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
+
             // Guardar cliente automáticamente si no existe
             if ($request->cliente_numero_documento && $request->cliente_numero_documento !== '00000000') {
                 \DB::table('clientes')->updateOrInsert(
@@ -432,6 +449,23 @@ class ComprobantesNotariaController extends Controller
                 'updated_at'               => now(),
             ]);
             $comprobanteId = \DB::getPdo()->lastInsertId();
+
+            // Guardar forma de pago y cuotas si es crédito
+            if ($formaPagoVD === 'Credito' && $request->cuotas) {
+                \DB::table('comprobantes_sunat')->where('id', $comprobanteId)->update(['forma_pago' => 'Credito']);
+                foreach ($request->cuotas as $i => $cuota) {
+                    \DB::table('cuotas_credito')->insert([
+                        'comprobante_id'   => $comprobanteId,
+                        'empresa_id'       => $empresa->id,
+                        'numero_cuota'     => $i + 1,
+                        'monto'            => floatval($cuota['monto']),
+                        'fecha_vencimiento'=> $cuota['fecha'],
+                        'estado'           => 'pendiente',
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
 
             // Guardar cliente automáticamente si no existe
             if ($request->cliente_numero_documento && $request->cliente_numero_documento !== '00000000') {

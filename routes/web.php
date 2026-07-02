@@ -944,6 +944,8 @@ Route::middleware(['auth'])->get('/reportes/reporte-contador-pdf', [App\Http\Con
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/reportes/actos-pdf', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'exportarActosPdf'])->name('notaria.reportes.actos.pdf');
 Route::middleware(['auth', 'notaria.rol'])->post('/notaria/caja/servicio-rapido', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'servicioRapido'])->name('notaria.caja.servicio-rapido');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes', [App\Http\Controllers\Notaria\ClienteNotariaController::class, 'index'])->name('notaria.clientes.index');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/cuentas-cobrar', [App\Http\Controllers\Notaria\CuentasCobrarController::class, 'index'])->name('notaria.cuentas-cobrar.index');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/cuentas-cobrar/{cuota}/pagar', [App\Http\Controllers\Notaria\CuentasCobrarController::class, 'registrarPago'])->name('notaria.cuentas-cobrar.pagar');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes/{id}', [App\Http\Controllers\Notaria\ClienteNotariaController::class, 'show'])->name('notaria.clientes.show');
 
 
