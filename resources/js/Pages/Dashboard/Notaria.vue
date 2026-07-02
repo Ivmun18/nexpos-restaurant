@@ -12,26 +12,26 @@
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:12px;">
 
                 <!-- Actos hoy -->
-                <div style="background:white; border:1px solid #E0F2FE; border-radius:14px; padding:1.1rem 1.25rem;">
+                <div style="background:#BFDBFE; border:1px solid #93C5FD; border-radius:14px; padding:1.1rem 1.25rem;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                         <div style="width:36px; height:36px; background:#EFF6FF; border-radius:10px; display:flex; align-items:center; justify-content:center;">
-                            <svg width="18" height="18" fill="none" stroke="#3B82F6" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <svg width="18" height="18" fill="none" stroke="#1D4ED8" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                         </div>
-                        <span style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.5px;">Actos hoy</span>
+                        <span style="font-size:12px; font-weight:600; color:#1E40AF; text-transform:uppercase; letter-spacing:.5px;">Actos hoy</span>
                     </div>
-                    <p style="font-size:32px; font-weight:800; color:#3B82F6; margin:0; line-height:1;">{{ stats.actos_hoy || 0 }}</p>
+                    <p style="font-size:32px; font-weight:800; color:#1E3A8A; margin:0; line-height:1;">{{ stats.actos_hoy || 0 }}</p>
                 </div>
 
                 <!-- Ingresos hoy -->
-                <div style="background:white; border:1px solid #D1FAE5; border-radius:14px; padding:1.1rem 1.25rem;">
+                <div style="background:#A7F3D0; border:1px solid #6EE7B7; border-radius:14px; padding:1.1rem 1.25rem;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                         <div style="width:36px; height:36px; background:#ECFDF5; border-radius:10px; display:flex; align-items:center; justify-content:center;">
-                            <svg width="18" height="18" fill="none" stroke="#10B981" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            <svg width="18" height="18" fill="none" stroke="#065F46" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                         </div>
-                        <span style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.5px;">Ingresos hoy</span>
+                        <span style="font-size:12px; font-weight:600; color:#065F46; text-transform:uppercase; letter-spacing:.5px;">Ingresos hoy</span>
                     </div>
-                    <p style="font-size:24px; font-weight:800; color:#10B981; margin:0 0 4px; line-height:1;">S/ {{ Number(stats.ingresos_hoy || 0).toFixed(2) }}</p>
-                    <p style="font-size:11px; color:#6EE7B7; margin:0;">{{ stats.ingresos_hoy_count || 0 }} transacciones · solo contado</p>
+                    <p style="font-size:24px; font-weight:800; color:#064E3B; margin:0 0 4px; line-height:1;">S/ {{ Number(stats.ingresos_hoy || 0).toFixed(2) }}</p>
+                    <p style="font-size:11px; color:#047857; margin:0;">{{ stats.ingresos_hoy_count || 0 }} transacciones · solo contado</p>
                 </div>
 
                 <!-- Mes actual -->
@@ -46,14 +46,14 @@
                 </div>
 
                 <!-- En proceso -->
-                <div style="background:white; border:1px solid #FEF3C7; border-radius:14px; padding:1.1rem 1.25rem;">
+                <div style="background:#FDE68A; border:1px solid #FCD34D; border-radius:14px; padding:1.1rem 1.25rem;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                         <div style="width:36px; height:36px; background:#FFFBEB; border-radius:10px; display:flex; align-items:center; justify-content:center;">
-                            <svg width="18" height="18" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <svg width="18" height="18" fill="none" stroke="#92400E" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
-                        <span style="font-size:12px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.5px;">En proceso</span>
+                        <span style="font-size:12px; font-weight:600; color:#92400E; text-transform:uppercase; letter-spacing:.5px;">En proceso</span>
                     </div>
-                    <p style="font-size:32px; font-weight:800; color:#F59E0B; margin:0; line-height:1;">{{ stats.actos_proceso || 0 }}</p>
+                    <p style="font-size:32px; font-weight:800; color:#78350F; margin:0; line-height:1;">{{ stats.actos_proceso || 0 }}</p>
                 </div>
             </div>
 
