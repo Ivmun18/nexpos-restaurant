@@ -443,9 +443,10 @@
                                             </button>
                                         </div>
                                         <div v-if="formComp.forma_pago === 'Credito'">
-                                        <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">FECHA DE VENCIMIENTO DEL PAGO</label>
-                                        <input v-model="formComp.fecha_vencimiento" type="date"
-                                            style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                            <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">FECHA DE VENCIMIENTO DEL PAGO</label>
+                                            <input v-model="formComp.fecha_vencimiento" type="date"
+                                                style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                        </div>
                                     </div>
                                     <div v-if="errorComp" style="background:#FEF2F2; border-radius:8px; padding:8px 12px; font-size:12px; color:#991B1B;">❌ {{ errorComp }}</div>
                                     <div v-if="pdfComp" style="background:#F0FDF4; border-radius:8px; padding:8px 12px; font-size:12px; color:#166534;">
