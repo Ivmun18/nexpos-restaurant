@@ -407,25 +407,6 @@
                                         style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                                     <input v-model="formComp.cliente_email" type="email" placeholder="Email (opcional)"
                                         style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                                    <!-- Forma de pago: solo para Factura -->
-                                    <div v-if="formComp.tipo_comprobante === '01'" style="display:flex; flex-direction:column; gap:8px;">
-                                        <p style="font-size:11px; font-weight:700; color:#64748B; margin:0; text-transform:uppercase;">Forma de pago</p>
-                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                            <button v-for="fp in [{value:'Contado',icon:'💵'},{value:'Credito',icon:'📅'}]" :key="fp.value"
-                                                @click="formComp.forma_pago = fp.value" type="button"
-                                                :style="{
-                                                    padding:'10px', border:'2px solid', borderRadius:'8px', cursor:'pointer', textAlign:'center',
-                                                    borderColor: formComp.forma_pago === fp.value ? '#0F766E' : '#E2E8F0',
-                                                    background: formComp.forma_pago === fp.value ? '#F0FDFA' : 'white',
-                                                    color: formComp.forma_pago === fp.value ? '#0F766E' : '#64748B',
-                                                    fontWeight:'700', fontSize:'13px',
-                                                }">
-                                                {{ fp.icon }} {{ fp.value }}
-                                            </button>
-                                        </div>
-                                        <input v-if="formComp.forma_pago === 'Credito'" v-model="formComp.fecha_vencimiento" type="date"
-                                            style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                                    </div>
                                     <div v-if="errorComp" style="background:#FEF2F2; border-radius:8px; padding:8px 12px; font-size:12px; color:#991B1B;">❌ {{ errorComp }}</div>
                                     <div v-if="pdfComp" style="background:#F0FDF4; border-radius:8px; padding:8px 12px; font-size:12px; color:#166534;">
                                         ✅ Comprobante emitido.
@@ -691,7 +672,7 @@ const errorComp              = ref('')
 const pdfComp                = ref('')
 
 const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' })
-const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '', forma_pago: 'Contado', fecha_vencimiento: '' })
+const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
 const buscandoCliente = ref(false)
 const buscandoRapido = ref(false)
 

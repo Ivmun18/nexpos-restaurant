@@ -20,8 +20,6 @@ class ComprobantesNotariaController extends Controller
             'cliente_numero_documento' => 'required|string',
             'cliente_nombre'           => 'required|string',
             'cliente_email'            => 'nullable|email',
-            'forma_pago'               => 'nullable|in:Contado,Credito',
-            'fecha_vencimiento'        => 'nullable|date',
         ]);
 
         $empresa   = Empresa::find($acto->empresa_id);
