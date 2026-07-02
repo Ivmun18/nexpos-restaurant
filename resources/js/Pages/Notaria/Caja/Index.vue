@@ -312,7 +312,7 @@
                                         {{ fp.icon }} {{ fp.value }}
                                     </button>
                                 </div>
-                                <input v-if="formRapido.forma_pago === 'Credito'" v-model="formRapido.fecha_vencimiento" type="date"
+                                <input v-if="formRapido.forma_pago === 'Credito'" v-model="formRapido.fecha_vencimiento" type="date" title="Fecha de vencimiento del pago"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                             </div>
                             <button @click="cobrarServicioRapido" :disabled="!itemsRapido.length || procesandoRapido"
@@ -442,7 +442,9 @@
                                                 {{ fp.icon }} {{ fp.value }}
                                             </button>
                                         </div>
-                                        <input v-if="formComp.forma_pago === 'Credito'" v-model="formComp.fecha_vencimiento" type="date"
+                                        <div v-if="formComp.forma_pago === 'Credito'">
+                                        <label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">FECHA DE VENCIMIENTO DEL PAGO</label>
+                                        <input v-model="formComp.fecha_vencimiento" type="date"
                                             style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                                     </div>
                                     <div v-if="errorComp" style="background:#FEF2F2; border-radius:8px; padding:8px 12px; font-size:12px; color:#991B1B;">❌ {{ errorComp }}</div>
