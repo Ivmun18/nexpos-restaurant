@@ -329,6 +329,15 @@ Route::get('/dashboard', function () {
                 return $acto;
             });
 
+        // Cuentas por cobrar (cuotas pendientes)
+        $cuotasPendientes = \DB::table('cuotas_credito')
+            ->where('empresa_id', $empresaId)
+            ->where('estado', 'pendiente')
+            ->get();
+        $totalPorCobrar = $cuotasPendientes->sum('monto');
+        $facturasCreditoActivas = $cuotasPendientes->pluck('comprobante_id')->unique()->count();
+        $proximaVencimiento = $cuotasPendientes->sortBy('fecha_vencimiento')->first();
+
         return Inertia::render('Dashboard/Notaria', [
             'industry_name' => 'Notaría',
             'stats' => [
@@ -337,6 +346,12 @@ Route::get('/dashboard', function () {
                 'ingresos_hoy_count' => $ingresosHoyCount,
                 'ingresos_mes'       => $ingresosMes,
                 'actos_proceso'      => $actosProceso,
+            ],
+            'creditos' => [
+                'total_por_cobrar'       => round($totalPorCobrar, 2),
+                'facturas_activas'       => $facturasCreditoActivas,
+                'proxima_fecha'          => $proximaVencimiento?->fecha_vencimiento,
+                'proxima_monto'          => $proximaVencimiento?->monto,
             ],
             'ingresos_por_dia' => $ingresosPorDia,
             'top_actos'        => $topActos,
