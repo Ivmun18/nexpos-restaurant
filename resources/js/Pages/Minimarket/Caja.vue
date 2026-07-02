@@ -28,6 +28,12 @@
             </div>
 
             <!-- Historial -->
+            <div v-if="historial_cajas.length" style="margin-top:16px; text-align:right;">
+                <button @click="corregirCaja"
+                    style="padding:10px 20px; background:#F59E0B; color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
+                    🔧 Corregir última caja
+                </button>
+            </div>
             <div v-if="historial_cajas.length" style="margin-top:24px; background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0;">
                 <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">📋 Historial de cajas</p>
                 <div v-for="c in historial_cajas" :key="c.id"
@@ -275,6 +281,14 @@ const cerrarCaja = () => {
     router.post(`/minimarket/caja/${props.caja_abierta.id}/cerrar`, formCierre.value, {
         onSuccess: () => { window.location.replace('/minimarket/caja') },
         onError: (e) => alert('No se pudo cerrar la caja: ' + Object.values(e).join(' '))
+    })
+}
+
+const corregirCaja = () => {
+    if (!confirm('¿Recalcular los totales de la última caja cerrada con las ventas reales?')) return
+    router.post('/minimarket/caja/corregir', {}, {
+        onSuccess: () => { alert('✅ Caja corregida correctamente'); window.location.replace('/minimarket/caja') },
+        onError: (e) => alert('Error: ' + Object.values(e).join(' '))
     })
 }
 </script>
