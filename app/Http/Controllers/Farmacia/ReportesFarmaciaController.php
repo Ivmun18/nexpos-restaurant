@@ -34,7 +34,7 @@ class ReportesFarmaciaController extends Controller
             ->whereDate('fecha_emision', '>=', $desde)
             ->whereDate('fecha_emision', '<=', $hasta)
             ->where('estado', '!=', 'anulado')
-            ->selectRaw('DATE(created_at) as fecha, COUNT(*) as cantidad, SUM(total) as total')
+            ->selectRaw('DATE(fecha_emision) as fecha, COUNT(*) as cantidad, SUM(total) as total')
             ->groupBy('fecha')
             ->orderBy('fecha')
             ->get();
