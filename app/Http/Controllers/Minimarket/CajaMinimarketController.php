@@ -20,9 +20,9 @@ class CajaMinimarketController extends Controller
             ->where('estado', 'abierta')
             ->latest()->first();
 
-        // Ventas del día
+        // Ventas desde apertura de caja
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('fecha_emision', $hoy)
+            ->where('fecha_emision', '>=', $cajaAbierta ? $cajaAbierta->apertura_at : $hoy)
             ->where('estado', '!=', 'anulado')
             ->get();
 
@@ -110,8 +110,9 @@ class CajaMinimarketController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $hoy = now()->toDateString();
 
+        // Calcular ventas desde la apertura de la caja (no solo hoy)
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('fecha_emision', $hoy)
+            ->where('fecha_emision', '>=', $caja->apertura_at)
             ->where('estado', '!=', 'anulado')->get();
 
         $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
