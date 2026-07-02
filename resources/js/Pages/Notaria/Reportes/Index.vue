@@ -30,12 +30,13 @@
                     <p style="font-size:28px; font-weight:800; color:#4F46E5; margin:0;">{{ comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').length }}</p>
                 </div>
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
-                    <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">TOTAL VENTAS</p>
+                    <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">TOTAL FACTURADO</p>
                     <p style="font-size:28px; font-weight:800; color:#10B981; margin:0;">S/ {{ totalVentas.toFixed(2) }}</p>
                 </div>
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
                     <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">INGRESOS HOY</p>
                     <p style="font-size:28px; font-weight:800; color:#F59E0B; margin:0;">S/ {{ ingresosHoy.toFixed(2) }}</p>
+                    <p style="font-size:10px; color:#94A3B8; margin:4px 0 0;">Solo contado (sin crédito)</p>
                 </div>
             </div>
 
@@ -65,6 +66,7 @@
                                 <th style="padding:12px 16px; text-align:left;">Serie-Número</th>
 
                                 <th style="padding:12px 16px; text-align:right;">Total</th>
+                                <th style="padding:12px 16px; text-align:center;">Pago</th>
                                 <th style="padding:12px 16px; text-align:left;">Estado</th>
                                 <th style="padding:12px 16px; text-align:left;">Acciones</th>
                             </tr>
@@ -82,6 +84,13 @@
                                 <td style="padding:10px 16px; color:#374151; font-family:monospace;">{{ c.serie }}-{{ String(c.numero).padStart(8, '0') }}</td>
 
                                 <td style="padding:10px 16px; text-align:right; font-weight:700; color:#1E293B;">S/ {{ Number(c.total).toFixed(2) }}</td>
+                                <td style="padding:10px 16px; text-align:center;">
+                                    <span :style="{
+                                        padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700',
+                                        background: c.forma_pago === 'Credito' ? '#FEF3C7' : '#D1FAE5',
+                                        color: c.forma_pago === 'Credito' ? '#92400E' : '#065F46',
+                                    }">{{ c.forma_pago === 'Credito' ? '📅 Crédito' : '💵 Contado' }}</span>
+                                </td>
                                 <td style="padding:10px 16px;">
                                     <span :style="{ background: c.estado==='aceptado' ? '#D1FAE5' : c.estado==='emitido' ? '#FEF3C7' : '#FEE2E2', color: c.estado==='aceptado' ? '#065F46' : c.estado==='emitido' ? '#92400E' : '#991B1B', padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700' }">
                                         {{ c.estado }}
@@ -211,7 +220,7 @@ const totalVentas  = computed(() => props.comprobantes.filter(c => c.estado === 
 const ingresosHoy  = computed(() => {
     const now = new Date()
     const hoy = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
-    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision && c.fecha_emision.startsWith(hoy)).reduce((s,c) => s + Number(c.total), 0)
+    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision && c.fecha_emision.startsWith(hoy) && c.forma_pago !== 'Credito').reduce((s,c) => s + Number(c.total), 0)
 })
 const totalIgv     = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_igv), 0))
 const totalGravada = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_gravada), 0))
