@@ -914,6 +914,7 @@ Route::middleware(['auth', 'notaria.rol'])->prefix('notaria')->group(function ()
     Route::get('/actos/{acto}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'show'])->name('notaria.actos.show');
     Route::post('/actos/{acto}/estado', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'cambiarEstado'])->name('notaria.actos.estado');
     Route::post('/actos/{acto}/pago', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'registrarPago'])->name('notaria.actos.pago');
+    Route::post('/actos/{acto}/minuta-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarMinutaCompraventa'])->name('notaria.actos.minuta');
 });
 
 // Caja Notaría

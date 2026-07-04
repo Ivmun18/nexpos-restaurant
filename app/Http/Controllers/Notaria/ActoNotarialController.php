@@ -242,4 +242,26 @@ class ActoNotarialController extends Controller
 
         return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado.');
     }
+    public function generarMinutaCompraventa(Request $request, ActoNotarial $acto)
+    {
+        $empresa = auth()->user()->empresa;
+
+        // Datos del formulario
+        $d = $request->all();
+
+        // Generar HTML de la minuta
+        $html = view('notaria.minuta-compraventa', [
+            'acto'    => $acto,
+            'empresa' => $empresa,
+            'd'       => $d,
+        ])->render();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'Minuta-CompraVenta-' . ($acto->numero_expediente ?? $acto->id) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
 }
