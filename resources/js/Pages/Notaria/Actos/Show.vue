@@ -71,7 +71,7 @@
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                         <div>
-                            <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Requisitos y documentos</p>
+                            <p v-if="acto.tipo_acto !== 'escritura_publica'" style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Requisitos y documentos</p>
                             <p style="font-size:11px; color:#94A3B8; margin:2px 0 0;">
                                 {{ acto.requisitos?.filter(r => r.entregado).length || 0 }} de {{ acto.requisitos?.length || 0 }} entregados
                             </p>
@@ -256,7 +256,7 @@
 
 
             <!-- Partes Intervinientes -->
-            <PartesIntervinientes :acto="acto" :partes="acto.partes || []" />
+            <PartesIntervinientes v-if="acto.tipo_acto !== 'escritura_publica'" :acto="acto" :partes="acto.partes || []" />
 
                 <!-- SEGUIMIENTO -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
