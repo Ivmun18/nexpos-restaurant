@@ -7,7 +7,7 @@
                     <span style="font-size:28px;">⚡</span>
                 </div>
                 <p style="font-size:22px; font-weight:900; color:#3B5998; margin:0; letter-spacing:1px;">NEXPOS</p>
-                <p style="font-size:11px; color:#6B7280; letter-spacing:3px; margin:4px 0 0; text-transform:uppercase;">Notaría Herrera</p>
+                <p style="font-size:11px; color:#6B7280; letter-spacing:3px; margin:4px 0 0; text-transform:uppercase;">Sistema Notarial</p>
             </div>
             <div style="margin-bottom:1rem;">
                 <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">Correo electrónico</label>
