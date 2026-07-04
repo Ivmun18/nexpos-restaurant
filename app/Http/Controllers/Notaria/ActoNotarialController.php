@@ -305,12 +305,15 @@ class ActoNotarialController extends Controller
 
         // Guardar datos específicos
         if (!empty($datos)) {
-            \DB::table('acto_datos')->insert([
-                'acto_id'    => $actoId,
-                'datos_json' => json_encode($datos),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            foreach ($datos as $campo => $valor) {
+                \DB::table('acto_datos')->insert([
+                    'acto_id'    => $actoId,
+                    'campo'      => $campo,
+                    'valor'      => is_array($valor) ? json_encode($valor) : (string)$valor,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         $acto = \DB::table('actos_notariales')->where('id', $actoId)->first();
