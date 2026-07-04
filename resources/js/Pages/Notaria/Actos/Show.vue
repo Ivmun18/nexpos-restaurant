@@ -482,7 +482,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PartesIntervinientes from '@/Components/Notaria/PartesIntervinientes.vue'
@@ -540,6 +540,28 @@ async function generarMinuta() {
 const props = defineProps({
     acto:  { type: Object, default: () => ({}) },
     datos: { type: Object, default: () => ({}) },
+})
+
+onMounted(() => {
+    if (props.acto.tipo_acto === 'escritura_publica') {
+        formMinuta.value = {
+            vendedor_tipo: 'empresa',
+            vendedor_razon_social: '', vendedor_ruc: '', vendedor_domicilio: '', vendedor_partida_registral: '',
+            representante_cargo: 'Gerente General', representante_nombre: '', representante_dni: '',
+            representante_estado_civil: 'soltero', representante_profesion: '', representante_domicilio: '',
+            vendedor_nombre: '', vendedor_dni: '', vendedor_estado_civil: '',
+            comprador_nombre: '', comprador_dni: '', comprador_estado_civil: '', comprador_profesion: '', comprador_domicilio: '',
+            es_bien_futuro: false,
+            predio_descripcion: '', predio_partida: '', ciudad: 'Huánuco',
+            proyecto_descripcion: '', proyecto_municipalidad: 'Municipalidad Distrital de Amarilis',
+            proyecto_expediente: '', proyecto_fecha: '', proyecto_arquitecto: '', plazo_anos: 'tres',
+            lote_descripcion: '', lote_area: '', lote_area_letras: '',
+            lindero_frente: '', medida_frente: '', lindero_derecha: '', medida_derecha: '',
+            lindero_izquierda: '', medida_izquierda: '', lindero_fondo: '', medida_fondo: '',
+            precio_total: String(props.acto.monto_cobrar || ''),
+            precio_total_letras: '', forma_pago_detalle: '', fecha_minuta: '',
+        }
+    }
 })
 
 // Plantillas por tipo de acto
