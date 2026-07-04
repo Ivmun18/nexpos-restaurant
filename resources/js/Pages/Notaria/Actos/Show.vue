@@ -487,6 +487,11 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PartesIntervinientes from '@/Components/Notaria/PartesIntervinientes.vue'
 
+const props = defineProps({
+    acto:  { type: Object, default: () => ({}) },
+    datos: { type: Object, default: () => ({}) },
+})
+
 const modalMinuta     = ref(false)
 const generandoMinuta = ref(false)
 const formMinuta      = ref({
@@ -536,11 +541,6 @@ async function generarMinuta() {
     }
     generandoMinuta.value = false
 }
-
-const props = defineProps({
-    acto:  { type: Object, default: () => ({}) },
-    datos: { type: Object, default: () => ({}) },
-})
 
 onMounted(() => {
     if (props.acto.tipo_acto === 'escritura_publica') {
