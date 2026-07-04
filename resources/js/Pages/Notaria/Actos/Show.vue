@@ -581,11 +581,7 @@ onMounted(() => {
             lindero_fondo: 'lote 20', medida_fondo: '8.71',
             precio_total: '75000',
             precio_total_letras: 'setenta y cinco mil y 00/100 soles',
-            forma_pago_detalle: '1) Mediante transferencia bancaria de fecha 13 de agosto de 2025 por S/ 3,000.00
-2) Mediante transferencia bancaria de fecha 23 de agosto de 2025 por S/ 10,000.00
-3) Mediante transferencia bancaria de fecha 22 de agosto de 2025 por S/ 60,000.00
-4) Mediante depósito de fecha 23 de agosto de 2025 por S/ 2,000.00
-Todas al BCP CCI N° 002-365-009919023018-57 de titularidad de LA VENDEDORA.',
+            forma_pago_detalle: '1) Mediante transferencia bancaria de fecha 13 de agosto de 2025 por S/ 3,000.00. 2) Mediante transferencia bancaria de fecha 23 de agosto de 2025 por S/ 10,000.00. 3) Mediante transferencia bancaria de fecha 22 de agosto de 2025 por S/ 60,000.00. 4) Mediante deposito de fecha 23 de agosto de 2025 por S/ 2,000.00. Todas al BCP CCI N 002-365-009919023018-57 de titularidad de LA VENDEDORA.',
             fecha_minuta: '25 de agosto de 2025',
         }
     }
