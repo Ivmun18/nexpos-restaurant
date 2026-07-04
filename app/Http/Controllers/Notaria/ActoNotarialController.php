@@ -275,4 +275,111 @@ class ActoNotarialController extends Controller
         return $pdf->download($filename);
     }
 
+    public function crearConMinuta(Request $request)
+    {
+        $empresa = auth()->user()->empresa;
+        $datos = $request->input('datos', []);
+
+        // Crear expediente
+        $numeroExpediente = 'EXP-' . date('Y') . '-' . str_pad(
+            (\DB::table('actos_notariales')->where('empresa_id', $empresa->id)->count() + 1),
+            5, '0', STR_PAD_LEFT
+        );
+
+        $actoId = \DB::table('actos_notariales')->insertGetId([
+            'empresa_id'            => $empresa->id,
+            'usuario_id'            => auth()->id(),
+            'numero_expediente'     => $numeroExpediente,
+            'tipo_acto'             => $request->tipo_acto,
+            'asunto'                => $request->asunto,
+            'partes_intervinientes' => ($datos['comprador_nombre'] ?? '') . ' / ' . ($empresa->minuta_vendedor_razon_social ?? $empresa->razon_social),
+            'monto_cobrar'          => $request->monto_cobrar,
+            'fecha_ingreso'         => $request->fecha_ingreso ?? now()->toDateString(),
+            'fecha_entrega'         => $request->fecha_entrega ?? null,
+            'estado'                => 'pendiente',
+            'estado_pago'           => 'pendiente',
+            'observaciones'         => $request->observaciones ?? null,
+            'created_at'            => now(),
+            'updated_at'            => now(),
+        ]);
+
+        // Guardar datos específicos
+        if (!empty($datos)) {
+            \DB::table('acto_datos')->insert([
+                'acto_id'    => $actoId,
+                'datos_json' => json_encode($datos),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $acto = \DB::table('actos_notariales')->where('id', $actoId)->first();
+
+        // Construir datos para la minuta usando config de empresa + datos del formulario
+        $d = [
+            'vendedor_tipo'              => $empresa->minuta_vendedor_tipo ?? 'empresa',
+            'vendedor_razon_social'      => $empresa->minuta_vendedor_razon_social ?? $empresa->razon_social,
+            'vendedor_ruc'               => $empresa->minuta_vendedor_ruc ?? $empresa->ruc,
+            'vendedor_domicilio'         => $empresa->minuta_vendedor_domicilio ?? $empresa->direccion,
+            'vendedor_partida_registral' => $empresa->minuta_vendedor_partida ?? '',
+            'representante_cargo'        => $empresa->minuta_representante_cargo ?? 'Gerente General',
+            'representante_nombre'       => $empresa->minuta_representante_nombre ?? '',
+            'representante_dni'          => $empresa->minuta_representante_dni ?? '',
+            'representante_estado_civil' => $empresa->minuta_representante_estado_civil ?? 'soltero',
+            'representante_profesion'    => $empresa->minuta_representante_profesion ?? '',
+            'representante_domicilio'    => $empresa->minuta_representante_domicilio ?? '',
+            'comprador_nombre'           => $datos['comprador_nombre'] ?? '',
+            'comprador_dni'              => $datos['comprador_dni'] ?? '',
+            'comprador_estado_civil'     => $datos['comprador_estado_civil'] ?? 'soltero',
+            'comprador_profesion'        => $datos['comprador_profesion'] ?? '',
+            'comprador_domicilio'        => $datos['comprador_domicilio'] ?? '',
+            'es_bien_futuro'             => !empty($datos['es_bien_futuro']),
+            'predio_descripcion'         => $datos['predio_descripcion'] ?? '',
+            'predio_partida'             => $datos['predio_partida'] ?? '',
+            'ciudad'                     => $empresa->minuta_ciudad ?? 'Huánuco',
+            'proyecto_descripcion'       => $datos['proyecto_descripcion'] ?? '',
+            'proyecto_municipalidad'     => $datos['proyecto_municipalidad'] ?? '',
+            'proyecto_expediente'        => $datos['proyecto_expediente'] ?? '',
+            'proyecto_fecha'             => $datos['proyecto_fecha'] ?? '',
+            'proyecto_arquitecto'        => $datos['proyecto_arquitecto'] ?? '',
+            'plazo_anos'                 => $datos['plazo_anos'] ?? 'tres',
+            'lote_descripcion'           => $datos['lote_descripcion'] ?? '',
+            'lote_area'                  => $datos['lote_area'] ?? '',
+            'lote_area_letras'           => $datos['lote_area_letras'] ?? '',
+            'lindero_frente'             => $datos['lindero_frente'] ?? '',
+            'medida_frente'              => $datos['medida_frente'] ?? '',
+            'lindero_derecha'            => $datos['lindero_derecha'] ?? '',
+            'medida_derecha'             => $datos['medida_derecha'] ?? '',
+            'lindero_izquierda'          => $datos['lindero_izquierda'] ?? '',
+            'medida_izquierda'           => $datos['medida_izquierda'] ?? '',
+            'lindero_fondo'              => $datos['lindero_fondo'] ?? '',
+            'medida_fondo'               => $datos['medida_fondo'] ?? '',
+            'precio_total'               => $datos['precio_total'] ?? $request->monto_cobrar,
+            'precio_total_letras'        => $datos['precio_total_letras'] ?? '',
+            'forma_pago_detalle'         => $datos['forma_pago_detalle'] ?? '',
+            'fecha_minuta'               => $datos['fecha_minuta'] ?? now()->format('d \d\e F \d\e Y'),
+        ];
+
+        $html = view('notaria.minuta-compraventa', [
+            'acto'    => $acto,
+            'empresa' => $empresa,
+            'd'       => $d,
+        ])->render();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'defaultFont'      => 'Verdana',
+                'isRemoteEnabled'  => false,
+                'dpi'              => 96,
+                'margin_top'       => 113.4,
+                'margin_right'     => 85.05,
+                'margin_bottom'    => 70.87,
+                'margin_left'      => 85.05,
+            ]);
+
+        $filename = 'Minuta-CompraVenta-' . $numeroExpediente . '.pdf';
+        return $pdf->download($filename);
+    }
+
 }

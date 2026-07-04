@@ -167,7 +167,16 @@
                         </p>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                             <template v-for="campo in camposPlantillaNuevo" :key="campo.key">
-                                <div :style="campo.full ? 'grid-column:1/-1' : ''">
+                                <div v-if="campo.tipo === 'seccion'" style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:10px; margin-top:4px;">
+                                    <p style="font-size:11px; font-weight:700; color:#0F766E; margin:0; text-transform:uppercase; letter-spacing:.04em;">{{ campo.label }}</p>
+                                </div>
+                                <div v-else-if="campo.tipo === 'checkbox'" style="grid-column:1/-1;">
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#374151;">
+                                        <input type="checkbox" v-model="formDatosNuevo[campo.key]" style="width:16px; height:16px;">
+                                        {{ campo.label }}
+                                    </label>
+                                </div>
+                                <div v-else :style="campo.full ? 'grid-column:1/-1' : ''">
                                     <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600; text-transform:uppercase;">{{ campo.label }}</label>
                                     <textarea v-if="campo.tipo === 'textarea'" v-model="formDatosNuevo[campo.key]" :rows="campo.rows || 2"
                                         style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
@@ -528,11 +537,42 @@ function buscar() {
     router.visit('/notaria/actos?' + params.toString(), { preserveScroll: true })
 }
 
-function guardarNuevo() {
+async function guardarNuevo() {
     if (!formNuevo.value.tipo_acto || !formNuevo.value.asunto || !formNuevo.value.monto_cobrar) {
         alert('Completa los campos obligatorios')
         return
     }
+
+    const esEscritura = formNuevo.value.tipo_acto === 'escritura_publica'
+
+    // Si es escritura pública, guardar y generar minuta en un solo paso
+    if (esEscritura) {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/actos/crear-con-minuta', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ ...formNuevo.value, datos: formDatosNuevo.value })
+        })
+        if (res.status === 419) { alert('Sesión expirada, recarga'); window.location.reload(); return }
+        if (res.ok) {
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'Minuta-CompraVenta.pdf'
+            a.click()
+            URL.revokeObjectURL(url)
+            modalNuevo.value = false
+            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' }
+            formDatosNuevo.value = {}
+            router.reload({ preserveScroll: true })
+        } else {
+            const err = await res.json().catch(() => ({}))
+            alert('❌ Error: ' + (err.mensaje || 'No se pudo crear el expediente'))
+        }
+        return
+    }
+
     router.post('/notaria/actos', { ...formNuevo.value, datos: formDatosNuevo.value }, {
         preserveScroll: true,
         onSuccess: () => {
@@ -622,13 +662,32 @@ const formDatosNuevo = ref({})
 
 const plantillas = {
     escritura_publica: [
-        { key: 'vendedor',         label: 'Vendedor(es)',          tipo: 'text',     full: true },
-        { key: 'comprador',        label: 'Comprador(es)',         tipo: 'text',     full: true },
-        { key: 'bien_inmueble',    label: 'Descripción del bien',  tipo: 'textarea', full: true, rows: 3 },
-        { key: 'partida_registral',label: 'Partida registral',     tipo: 'text' },
-        { key: 'valor_venta',      label: 'Valor de venta (S/)',   tipo: 'number' },
-        { key: 'forma_pago',       label: 'Forma de pago',         tipo: 'select', opciones: ['Contado','Crédito','Mixto'] },
-        { key: 'cargas',           label: 'Cargas y gravámenes',   tipo: 'textarea', full: true, rows: 2 },
+        { key: 'seccion', label: '👤 DATOS DEL COMPRADOR', tipo: 'seccion' },
+        { key: 'comprador_nombre',      label: 'Nombre completo comprador *',  tipo: 'text', full: true },
+        { key: 'comprador_dni',         label: 'DNI comprador *',              tipo: 'text' },
+        { key: 'comprador_estado_civil',label: 'Estado civil',                 tipo: 'select', opciones: ['soltero','casado','viudo','divorciado'] },
+        { key: 'comprador_profesion',   label: 'Profesión',                    tipo: 'text' },
+        { key: 'comprador_domicilio',   label: 'Domicilio comprador *',        tipo: 'text', full: true },
+        { key: 'seccion2', label: '🏠 DATOS DEL PREDIO', tipo: 'seccion' },
+        { key: 'es_bien_futuro',        label: '¿Es bien futuro? (hab. urbana en trámite)', tipo: 'checkbox' },
+        { key: 'predio_descripcion',    label: 'Descripción del predio *',     tipo: 'textarea', full: true, rows: 2 },
+        { key: 'predio_partida',        label: 'Partida registral predio *',   tipo: 'text' },
+        { key: 'lote_descripcion',      label: 'Descripción del lote *',       tipo: 'text', full: true },
+        { key: 'lote_area',             label: 'Área (ej: 100.01 m2)',         tipo: 'text' },
+        { key: 'lote_area_letras',      label: 'Área en letras',               tipo: 'text', full: true },
+        { key: 'lindero_frente',        label: 'Frente colinda con',           tipo: 'text' },
+        { key: 'medida_frente',         label: 'Medida frente (ml)',           tipo: 'text' },
+        { key: 'lindero_derecha',       label: 'Derecha colinda con',          tipo: 'text' },
+        { key: 'medida_derecha',        label: 'Medida derecha (ml)',          tipo: 'text' },
+        { key: 'lindero_izquierda',     label: 'Izquierda colinda con',        tipo: 'text' },
+        { key: 'medida_izquierda',      label: 'Medida izquierda (ml)',        tipo: 'text' },
+        { key: 'lindero_fondo',         label: 'Fondo colinda con',            tipo: 'text' },
+        { key: 'medida_fondo',          label: 'Medida fondo (ml)',            tipo: 'text' },
+        { key: 'seccion3', label: '💰 PRECIO Y PAGO', tipo: 'seccion' },
+        { key: 'precio_total',          label: 'Precio total (S/) *',          tipo: 'number' },
+        { key: 'precio_total_letras',   label: 'Precio en letras *',           tipo: 'text', full: true },
+        { key: 'forma_pago_detalle',    label: 'Detalle de forma de pago *',   tipo: 'textarea', full: true, rows: 3 },
+        { key: 'fecha_minuta',          label: 'Fecha de la minuta *',         tipo: 'text' },
     ],
     poder: [
         { key: 'poderdante',       label: 'Poderdante',            tipo: 'text',     full: true },
