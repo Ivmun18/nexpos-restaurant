@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\ShareEmpresaData::class,
             \App\Http\Middleware\NotariaSubdominio::class,
+            \App\Http\Middleware\MinimarketSubdominio::class,
         ]);
         $middleware->alias([
             'only.admin' => \App\Http\Middleware\OnlyAdmin::class,

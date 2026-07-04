@@ -10,8 +10,12 @@ use Inertia\Inertia;
 
 class LoginController extends Controller
 {
-    public function show()
+    public function show(Request $request)
     {
+        $host = $request->getHost();
+        if ($host === 'minimarket.nexposolution.com') {
+            return Inertia::render('Auth/LoginMinimarket');
+        }
         return Inertia::render('Auth/Login');
     }
 
@@ -75,6 +79,7 @@ class LoginController extends Controller
         'gimnasio'    => '/gimnasio/dashboard',
         'hotel'       => '/hotel/dashboard',
         'notaria'     => '/notaria/actos',
+        'minimarket'  => '/minimarket/pos',
         'odontologia' => '/odontologia/dashboard',
         'optica'      => '/optica/dashboard',
     ];
