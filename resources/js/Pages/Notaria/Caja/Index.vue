@@ -140,7 +140,7 @@
                     </div>
 
                     <!-- SERVICIO RÁPIDO -->
-                    <div v-if="modalServicioRapido" style="background:white; border-radius:12px; border:2px solid #10B981; overflow:hidden;">
+                    <div v-if="modalServicioRapido" class="modal-servicio-rapido" style="background:white; border-radius:12px; border:2px solid #10B981; overflow:hidden;">
                         <div style="padding:1rem 1.25rem; background:linear-gradient(135deg,#ECFDF5,#D1FAE5); border-bottom:1px solid #A7F3D0;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <p style="font-size:14px; font-weight:800; color:#065F46; margin:0;">⚡ Servicio Rápido</p>
@@ -740,11 +740,21 @@ async function cobrarServicioRapido() {
         const payload = { ...formRapido.value, items, monto: totalMonto }
         const docLen = (payload.cliente_documento || '').replace(/\D/g, '').length
         payload.tipo_comprobante = docLen === 11 ? '01' : '03'
+        // Obtener token fresco antes de enviar
+        const csrfFresh = await fetch('/sanctum/csrf-cookie').then(() =>
+            document.querySelector('meta[name="csrf-token"]')?.content
+        ).catch(() => csrf)
+
         const res = await fetch('/notaria/caja/servicio-rapido', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfFresh },
             body: JSON.stringify(payload)
         })
+        if (res.status === 419) {
+            alert('⚠️ La sesión expiró. Recargando página...')
+            window.location.reload()
+            return
+        }
         const data = await res.json()
         if (data.success) {
             alert('✅ ' + data.mensaje)
@@ -758,7 +768,7 @@ async function cobrarServicioRapido() {
             alert('❌ ' + data.mensaje)
         }
     } catch(e) {
-        alert('❌ Error de conexión')
+        alert('❌ Error de conexión: ' + e.message)
     }
     procesandoRapido.value = false
 }
@@ -914,11 +924,19 @@ async function confirmarCobro(boletaSimple = false) {
 
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const csrfFreshCobro = await fetch('/sanctum/csrf-cookie').then(() =>
+            document.querySelector('meta[name="csrf-token"]')?.content
+        ).catch(() => csrf)
         const res  = await fetch('/notaria/caja/' + actoId + '/cobrar', {
             method:  'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfFreshCobro },
             body:    JSON.stringify({ ...formCobro.value, ...compData })
         })
+        if (res.status === 419) {
+            alert('⚠️ La sesión expiró. Recargando página...')
+            window.location.reload()
+            return
+        }
         const data = await res.json()
         if (data.pdf) {
             pdfComp.value = data.pdf
@@ -968,3 +986,20 @@ function formatFecha(f) {
     return new Date(f).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
 }
 </script>
+
+<style scoped>
+@media (max-width: 768px) {
+    .modal-servicio-rapido {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 9999 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        overflow-y: auto !important;
+        max-width: 100% !important;
+    }
+}
+</style>

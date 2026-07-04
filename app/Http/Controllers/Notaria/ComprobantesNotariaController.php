@@ -297,6 +297,28 @@ class ComprobantesNotariaController extends Controller
         // Totales
         $total      = round(collect($request->items)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
         $exonerada  = $empresa->zona_exonerada;
+
+        // Agregar biométrico automáticamente si aplica (>= S/10 y no es trámite registral)
+        $esTramiteRegistralVD = false;
+        foreach ($request->items as $itm) {
+            $desc = strtolower($itm['descripcion'] ?? '');
+            if (str_contains($desc, 'tramite registral') || str_contains($desc, 'trámite registral')) {
+                $esTramiteRegistralVD = true; break;
+            }
+        }
+        $huellaVD = (!$esTramiteRegistralVD && $total >= 10) ? 1.50 : 0;
+        $itemsConHuella = $request->items;
+        if ($huellaVD > 0) {
+            $itemsConHuella = array_merge((array)$request->items, [[
+                'tipo_servicio' => 'Uso biométrico',
+                'descripcion'   => 'Uso biométrico',
+                'cantidad'      => 1,
+                'precio_unitario'=> 1.50,
+                'precio'        => 1.50,
+                'monto'         => 1.50,
+            ]]);
+            $total = round($total + 1.50, 2);
+        }
         if ($exonerada) {
             $gravada = 0;
             $igv     = 0;
@@ -309,9 +331,19 @@ class ComprobantesNotariaController extends Controller
 
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
+        // Recalcular gravada/igv con total ya incluido biométrico
+        if ($exonerada) {
+            $gravada = 0; $igv = 0; $baseImponible = $total;
+        } else {
+            $gravada = round($total / 1.18, 2);
+            $igv     = round($total - $gravada, 2);
+            $baseImponible = $gravada;
+        }
+
+        // También guardar items con huella en items_json
         // Construir items UBL
         $lineas = [];
-        foreach ($request->items as $idx => $item) {
+        foreach ($itemsConHuella as $idx => $item) {
             $cantidad   = intval($item['cantidad'] ?? 1);
             $precioUnit = round(floatval($item['precio']), 4);
             $precioItem = round($precioUnit * $cantidad, 2);
@@ -438,12 +470,12 @@ class ComprobantesNotariaController extends Controller
                 'total_gravada'            => $gravada,
                 'total_igv'                => $igv,
                 'total'                    => $total,
-                'items_json'               => json_encode($request->items),
+                'items_json'               => json_encode($itemsConHuella),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'enlace_cdr'               => isset($request->items[0]['descripcion']) ? $request->items[0]['descripcion'] : null,
+                'enlace_cdr'               => isset($itemsConHuella[0]['descripcion']) ? $itemsConHuella[0]['descripcion'] : null,
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
