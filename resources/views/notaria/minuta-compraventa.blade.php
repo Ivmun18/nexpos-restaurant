@@ -77,7 +77,11 @@ En tal sentido, LA COMPRADORA declara conocer que, a la fecha de la suscripción
 @endif
 
 <p class="parrafo"><span class="clausula">{{ !empty($d['es_bien_futuro']) ? 'TERCERO' : 'SEGUNDO' }}:</span>
-@if(!empty($d['es_bien_futuro']))En tales condiciones, dentro del proyecto señalado, se encuentra el@else El predio materia de la presente compraventa es el@endif
+@if(!empty($d['es_bien_futuro']))
+En tales condiciones, dentro del proyecto señalado, se encuentra el
+@else
+El predio materia de la presente compraventa es el
+@endif
 {{ $d['lote_descripcion'] }}, de {{ $d['lote_area'] }} ({{ $d['lote_area_letras'] }}), con linderos y medidas perimétricas siguientes:</p>
 
 <table width="100%" style="margin-bottom:14px; font-size:12px;">
