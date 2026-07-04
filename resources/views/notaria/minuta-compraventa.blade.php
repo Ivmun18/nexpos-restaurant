@@ -45,21 +45,21 @@
 
 <p class="parrafo">Sírvase Ud. extender en su Registro de Escrituras Públicas una de <strong>COMPRA VENTA DE PREDIO</strong> que celebran de una parte
 @if($d['vendedor_tipo'] === 'empresa')
-<strong>{{ strtoupper($d['vendedor_razon_social']) }}</strong>, con RUC N° {{ $d['vendedor_ruc'] }}, con domicilio en {{ $d['vendedor_domicilio'] }},
+<strong><u>{{ strtoupper($d['vendedor_razon_social']) }}</u></strong>, con RUC N° {{ $d['vendedor_ruc'] }}, con domicilio en {{ $d['vendedor_domicilio'] }},
 inscrito en la partida registral N° {{ $d['vendedor_partida_registral'] ?? '___________' }} del Registro de Personas Jurídicas de {{ $d['ciudad'] ?? 'Huánuco' }},
-a quien en adelante se le denominará <strong>LA VENDEDORA</strong> debidamente representada por su {{ $d['representante_cargo'] ?? 'Gerente General' }},
+a quien en adelante se le denominará <strong><u>LA VENDEDORA</u></strong> debidamente representada por su {{ $d['representante_cargo'] ?? 'Gerente General' }},
 <strong>{{ strtoupper($d['representante_nombre']) }}</strong>, de nacionalidad peruana, identificado con DNI N° {{ $d['representante_dni'] }},
 de estado civil {{ $d['representante_estado_civil'] ?? 'soltero' }}, de profesión {{ $d['representante_profesion'] ?? '___________' }},
 con domicilio en {{ $d['representante_domicilio'] }};
 @else
-<strong>{{ strtoupper($d['vendedor_nombre']) }}</strong>, identificado con DNI N° {{ $d['vendedor_dni'] }},
+<strong><u>{{ strtoupper($d['vendedor_nombre']) }}</u></strong>, identificado con DNI N° {{ $d['vendedor_dni'] }},
 de estado civil {{ $d['vendedor_estado_civil'] ?? 'soltero' }}, con domicilio en {{ $d['vendedor_domicilio'] }},
-a quien en adelante se le denominará <strong>EL VENDEDOR</strong>;
+a quien en adelante se le denominará <strong><u>EL VENDEDOR</u></strong>;
 @endif
-y de otra parte <strong>{{ strtoupper($d['comprador_nombre']) }}</strong>, identificado(a) con Documento Nacional de Identidad N° {{ $d['comprador_dni'] }},
+y de otra parte <strong><u>{{ strtoupper($d['comprador_nombre']) }}</u></strong>, identificado(a) con Documento Nacional de Identidad N° {{ $d['comprador_dni'] }},
 {{ $d['comprador_nacionalidad'] ?? 'peruano(a)' }}, de estado civil {{ $d['comprador_estado_civil'] }},
 de profesión {{ $d['comprador_profesion'] }}, con domicilio en {{ $d['comprador_domicilio'] }},
-a quien en adelante se le denominará <strong>LA COMPRADORA</strong>; en los términos y condiciones siguientes:</p>
+a quien en adelante se le denominará <strong><u>LA COMPRADORA</u></strong>; en los términos y condiciones siguientes:</p>
 
 <p class="parrafo"><span class="clausula">PRIMERO:</span> LA VENDEDORA es propietario del predio signado como {{ $d['predio_descripcion'] }},
 con Partida Registral N° {{ $d['predio_partida'] }} de la Oficina Registral de {{ $d['ciudad'] ?? 'Huánuco' }},
