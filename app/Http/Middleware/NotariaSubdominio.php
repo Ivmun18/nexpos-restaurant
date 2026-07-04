@@ -9,6 +9,12 @@ class NotariaSubdominio
 {
     public function handle(Request $request, Closure $next)
     {
+        // Si entra por IP directa, nunca redirigir
+        $host = $request->getHost();
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return $next($request);
+        }
+
         $user = auth()->user();
 
         if ($user && $user->empresa && $user->empresa->industry_type === 'notaria') {
