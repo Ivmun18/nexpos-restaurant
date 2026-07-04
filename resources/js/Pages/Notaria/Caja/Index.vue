@@ -273,12 +273,16 @@
                                 <div style="background:#F8FAFC; padding:6px 10px; font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Ítems agregados</div>
                                 <div v-for="(it, idx) in itemsRapido" :key="idx" style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-top:1px solid #F1F5F9;">
                                     <div style="flex:1;">
-                                        <p style="margin:0; font-size:12px; font-weight:600; color:#1E293B;">{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</p>
+                                        <p style="margin:0; font-size:12px; font-weight:600;" :style="{color: it._esHuella ? '#D97706' : '#1E293B'}">
+                                            <span v-if="it._esHuella">🖐 Uso biométrico</span>
+                                            <span v-else>{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</span>
+                                        </p>
                                         <p style="margin:0; font-size:11px; color:#64748B;">{{ it.cantidad }} × S/ {{ Number(it.precio_unitario).toFixed(2) }}</p>
                                     </div>
                                     <div style="display:flex; align-items:center; gap:8px;">
-                                        <span style="font-size:13px; font-weight:800; color:#059669;">S/ {{ (it.cantidad * it.precio_unitario).toFixed(2) }}</span>
-                                        <button @click="quitarItem(idx)" style="background:#FEF2F2; border:none; color:#EF4444; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:13px; font-weight:700;">✕</button>
+                                        <span style="font-size:13px; font-weight:800;" :style="{color: it._esHuella ? '#D97706' : '#059669'}">S/ {{ (it.cantidad * it.precio_unitario).toFixed(2) }}</span>
+                                        <button v-if="!it._esHuella" @click="quitarItem(idx)" style="background:#FEF2F2; border:none; color:#EF4444; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:13px; font-weight:700;">✕</button>
+                                        <span v-else style="font-size:10px; color:#D97706; font-weight:700; background:#FFF7ED; padding:2px 6px; border-radius:4px;">AUTO</span>
                                     </div>
                                 </div>
                             </div>
@@ -697,6 +701,28 @@ function seleccionarServicio(nombre) {
     if (sv && sv.precio > 0) itemActual.value.precio_unitario = sv.precio
 }
 
+function recalcularBiometrico() {
+    // Quitar biométrico existente
+    itemsRapido.value = itemsRapido.value.filter(i => i.tipo_servicio !== '__biometrico__')
+    // Calcular total sin biométrico
+    const totalSinHuella = itemsRapido.value.reduce((s, i) => s + (Number(i.precio_unitario) * (Number(i.cantidad) || 1)), 0)
+    // Verificar si algún item es trámite registral
+    const esTramite = itemsRapido.value.some(i => {
+        const d = (i.tipo_servicio || '').toLowerCase()
+        return d.includes('tramite registral') || d.includes('trámite registral')
+    })
+    // Agregar biométrico si aplica
+    if (!esTramite && totalSinHuella >= 10) {
+        itemsRapido.value.push({
+            tipo_servicio: '__biometrico__',
+            tipo_servicio_custom: '',
+            cantidad: 1,
+            precio_unitario: 1.50,
+            _esHuella: true
+        })
+    }
+}
+
 function agregarItem() {
     if (!itemActual.value.tipo_servicio) { alert('Seleccione un servicio'); return }
     if (!itemActual.value.precio_unitario || Number(itemActual.value.precio_unitario) <= 0) { alert('Ingrese el precio unitario'); return }
@@ -704,8 +730,13 @@ function agregarItem() {
     itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
     servicioQuery.value = ''
     mostrarSugerencias.value = false
+    recalcularBiometrico()
 }
-function quitarItem(i) { itemsRapido.value.splice(i, 1) }
+function quitarItem(i) {
+    if (itemsRapido.value[i]?._esHuella) return // no se puede quitar el biométrico manualmente
+    itemsRapido.value.splice(i, 1)
+    recalcularBiometrico()
+}
 
 function agregarCuotaComp() {
     const totalCobro = Number(formCobro.value.monto) || 0
