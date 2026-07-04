@@ -112,7 +112,22 @@ class ActoNotarialController extends Controller
     {
         $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos', 'requisitos.user', 'partes']);
         $datosMapa = $acto->datos->pluck('valor', 'campo');
-        return Inertia::render('Notaria/Actos/Show', ['acto' => $acto, 'datos' => $datosMapa]);
+        $empresa = auth()->user()->empresa;
+        $vendedor = [
+            'vendedor_tipo'              => $empresa->minuta_vendedor_tipo ?? 'empresa',
+            'vendedor_razon_social'      => $empresa->minuta_vendedor_razon_social ?? '',
+            'vendedor_ruc'               => $empresa->minuta_vendedor_ruc ?? '',
+            'vendedor_domicilio'         => $empresa->minuta_vendedor_domicilio ?? '',
+            'vendedor_partida_registral' => $empresa->minuta_vendedor_partida ?? '',
+            'representante_cargo'        => $empresa->minuta_representante_cargo ?? 'Gerente General',
+            'representante_nombre'       => $empresa->minuta_representante_nombre ?? '',
+            'representante_dni'          => $empresa->minuta_representante_dni ?? '',
+            'representante_estado_civil' => $empresa->minuta_representante_estado_civil ?? 'soltero',
+            'representante_profesion'    => $empresa->minuta_representante_profesion ?? '',
+            'representante_domicilio'    => $empresa->minuta_representante_domicilio ?? '',
+            'ciudad'                     => $empresa->minuta_ciudad ?? 'Huánuco',
+        ];
+        return Inertia::render('Notaria/Actos/Show', ['acto' => $acto, 'datos' => $datosMapa, 'vendedor' => $vendedor]);
     }
 
     public function seguimiento(Request $request)
