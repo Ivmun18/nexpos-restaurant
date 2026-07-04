@@ -522,8 +522,9 @@ async function generarMinuta() {
         const res = await fetch('/notaria/actos/' + props.acto.id + '/minuta-compraventa', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify(formMinuta.value)
+            body: JSON.stringify({ ...formMinuta.value, guardar_datos: true })
         })
+        if (res.status === 419) { alert('Sesión expirada, recarga'); window.location.reload(); return }
         if (res.ok) {
             const blob = await res.blob()
             const url = URL.createObjectURL(blob)
@@ -544,45 +545,45 @@ async function generarMinuta() {
 
 onMounted(() => {
     if (props.acto.tipo_acto === 'escritura_publica') {
+        const d = props.datos || {}
         formMinuta.value = {
             vendedor_tipo: 'empresa',
-            vendedor_razon_social: 'GRUPO RAIZ A&A S.A.C.',
-            vendedor_ruc: '20609932130',
-            vendedor_domicilio: 'Jr. 2 de Mayo N° 1321, Huánuco',
-            vendedor_partida_registral: '11182149',
-            representante_cargo: 'Gerente General',
-            representante_nombre: 'ARTURO ABUNO VALDERRAMA',
-            representante_dni: '61289476',
-            representante_estado_civil: 'soltero',
-            representante_profesion: 'contador público',
-            representante_domicilio: 'Pasaje Cuculiza, Centro Poblado Marabamba, lote 08-A, Pillco Marca, Huánuco',
-            vendedor_nombre: '', vendedor_dni: '', vendedor_estado_civil: '',
-            comprador_nombre: 'MARSHORY YAJHAYRA FABIAN ORTEGA',
-            comprador_dni: '72134102',
-            comprador_estado_civil: 'soltera',
-            comprador_profesion: 'obstetra',
-            comprador_domicilio: 'Jr. Comercio N° 528, La Unión, Dos de Mayo, Huánuco',
-            es_bien_futuro: true,
-            predio_descripcion: 'Lote Nº 1 en el plano de lotización del fundo rústico esperanza, distrito de Amarilis',
-            predio_partida: '11035536',
-            ciudad: 'Huánuco',
-            proyecto_descripcion: 'Habilitación Urbana, Modalidad B, denominado "Portales de la Esperanza 2"',
-            proyecto_municipalidad: 'Municipalidad Distrital de Amarilis',
-            proyecto_expediente: '012449',
-            proyecto_fecha: '23 de junio de 2025',
-            proyecto_arquitecto: 'Joao Paulo Torres Manzano',
-            plazo_anos: 'tres',
-            lote_descripcion: 'Lote 4 de la Manzana "B"',
-            lote_area: '100.01 m2',
-            lote_area_letras: 'cien punto cero uno metros cuadrados',
-            lindero_frente: 'calle 4', medida_frente: '8.71',
-            lindero_derecha: 'lote 3', medida_derecha: '11.48',
-            lindero_izquierda: 'lote 5', medida_izquierda: '11.48',
-            lindero_fondo: 'lote 20', medida_fondo: '8.71',
-            precio_total: '75000',
-            precio_total_letras: 'setenta y cinco mil y 00/100 soles',
-            forma_pago_detalle: '1) Mediante transferencia bancaria de fecha 13 de agosto de 2025 por S/ 3,000.00. 2) Mediante transferencia bancaria de fecha 23 de agosto de 2025 por S/ 10,000.00. 3) Mediante transferencia bancaria de fecha 22 de agosto de 2025 por S/ 60,000.00. 4) Mediante deposito de fecha 23 de agosto de 2025 por S/ 2,000.00. Todas al BCP CCI N 002-365-009919023018-57 de titularidad de LA VENDEDORA.',
-            fecha_minuta: '25 de agosto de 2025',
+            vendedor_razon_social: '', vendedor_ruc: '', vendedor_domicilio: '',
+            vendedor_partida_registral: '', representante_cargo: 'Gerente General',
+            representante_nombre: '', representante_dni: '',
+            representante_estado_civil: 'soltero', representante_profesion: '',
+            representante_domicilio: '', vendedor_nombre: '', vendedor_dni: '',
+            vendedor_estado_civil: '',
+            comprador_nombre:       d.comprador_nombre || '',
+            comprador_dni:          d.comprador_dni || '',
+            comprador_estado_civil: d.comprador_estado_civil || 'soltero',
+            comprador_profesion:    d.comprador_profesion || '',
+            comprador_domicilio:    d.comprador_domicilio || '',
+            es_bien_futuro:         d.es_bien_futuro === 'true' || d.es_bien_futuro === true,
+            predio_descripcion:     d.predio_descripcion || '',
+            predio_partida:         d.predio_partida || '',
+            ciudad:                 d.ciudad || 'Huánuco',
+            proyecto_descripcion:   d.proyecto_descripcion || '',
+            proyecto_municipalidad: d.proyecto_municipalidad || 'Municipalidad Distrital de Amarilis',
+            proyecto_expediente:    d.proyecto_expediente || '',
+            proyecto_fecha:         d.proyecto_fecha || '',
+            proyecto_arquitecto:    d.proyecto_arquitecto || '',
+            plazo_anos:             d.plazo_anos || 'tres',
+            lote_descripcion:       d.lote_descripcion || '',
+            lote_area:              d.lote_area || '',
+            lote_area_letras:       d.lote_area_letras || '',
+            lindero_frente:         d.lindero_frente || '',
+            medida_frente:          d.medida_frente || '',
+            lindero_derecha:        d.lindero_derecha || '',
+            medida_derecha:         d.medida_derecha || '',
+            lindero_izquierda:      d.lindero_izquierda || '',
+            medida_izquierda:       d.medida_izquierda || '',
+            lindero_fondo:          d.lindero_fondo || '',
+            medida_fondo:           d.medida_fondo || '',
+            precio_total:           d.precio_total || String(props.acto.monto_cobrar || ''),
+            precio_total_letras:    d.precio_total_letras || '',
+            forma_pago_detalle:     d.forma_pago_detalle || '',
+            fecha_minuta:           d.fecha_minuta || '',
         }
     }
 })

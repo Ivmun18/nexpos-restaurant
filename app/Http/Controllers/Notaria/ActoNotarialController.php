@@ -249,6 +249,18 @@ class ActoNotarialController extends Controller
         // Datos del formulario
         $d = $request->all();
 
+        // Guardar/actualizar datos si se solicita
+        if ($request->input('guardar_datos')) {
+            $camposMinuta = ['comprador_nombre','comprador_dni','comprador_estado_civil','comprador_profesion','comprador_domicilio','es_bien_futuro','predio_descripcion','predio_partida','ciudad','proyecto_descripcion','proyecto_municipalidad','proyecto_expediente','proyecto_fecha','proyecto_arquitecto','plazo_anos','lote_descripcion','lote_area','lote_area_letras','lindero_frente','medida_frente','lindero_derecha','medida_derecha','lindero_izquierda','medida_izquierda','lindero_fondo','medida_fondo','precio_total','precio_total_letras','forma_pago_detalle','fecha_minuta'];
+            foreach ($camposMinuta as $campo) {
+                $valor = $request->input($campo, '');
+                \DB::table('acto_datos')->updateOrInsert(
+                    ['acto_id' => $acto->id, 'campo' => $campo],
+                    ['valor' => is_array($valor) ? json_encode($valor) : (string)$valor, 'updated_at' => now(), 'created_at' => now()]
+                );
+            }
+        }
+
         // Generar HTML de la minuta
         $html = view('notaria.minuta-compraventa', [
             'acto'    => $acto,
