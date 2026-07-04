@@ -16,6 +16,10 @@
                 style="background:#F97316; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📄 Generar Minuta
             </button>
+            <button v-if="tieneMinuta" @click="imprimirMinutaDirecto"
+                style="background:#7C3AED; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                🖨️ Imprimir Minuta
+            </button>
             <div>
                 <h2 style="font-size:20px; font-weight:800; color:#1E293B; margin:0;">{{ acto.numero_expediente }}</h2>
                 <p style="font-size:13px; color:#94A3B8; margin:2px 0 0;">{{ labelTipo(acto.tipo_acto) }} · Ingresado {{ formatFecha(acto.fecha_ingreso) }}</p>
@@ -515,6 +519,27 @@ const tieneMinuta = computed(() => {
     const tipos = ['escritura_publica', 'otro']
     return tipos.includes(props.acto.tipo_acto)
 })
+
+async function imprimirMinutaDirecto() {
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/actos/' + props.acto.id + '/minuta-compraventa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ ...formMinuta.value, guardar_datos: false })
+        })
+        if (res.ok) {
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const win = window.open(url, '_blank')
+            if (win) win.print()
+        } else {
+            alert('❌ Error al generar la minuta')
+        }
+    } catch(e) {
+        alert('❌ Error: ' + e.message)
+    }
+}
 
 async function generarMinuta() {
     generandoMinuta.value = true
