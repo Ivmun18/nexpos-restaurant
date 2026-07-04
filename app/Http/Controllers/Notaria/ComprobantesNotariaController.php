@@ -309,10 +309,19 @@ class ComprobantesNotariaController extends Controller
         }
         $huellaVD = (!$esTramiteRegistralVD && $total >= 10) ? 1.50 : 0;
         $itemsConHuella = (array)$request->items;
-        if ($huellaVD > 0) {
-            // Descontar 1.50 del primer item (el frontend ya lo hace visualmente)
-            // pero si el frontend ya envió el primer item descontado, usarlo tal cual
-            // Solo agregar la línea de biométrico al items_json
+
+        // Limpiar items: quitar el item interno __biometrico__ del frontend
+        $itemsConHuella = array_values(array_filter($itemsConHuella, function($i) {
+            return ($i['descripcion'] ?? '') !== '__biometrico__';
+        }));
+
+        // Verificar si el frontend ya envió el biométrico como "Uso biométrico"
+        $yaHuella = collect($itemsConHuella)->contains(function($i) {
+            return strtolower($i['descripcion'] ?? '') === 'uso biométrico' ||
+                   strtolower($i['descripcion'] ?? '') === 'uso biometrico';
+        });
+
+        if ($huellaVD > 0 && !$yaHuella) {
             $itemsConHuella = array_merge($itemsConHuella, [[
                 'tipo_servicio'  => 'Uso biométrico',
                 'descripcion'    => 'Uso biométrico',
@@ -321,7 +330,6 @@ class ComprobantesNotariaController extends Controller
                 'precio'         => 1.50,
                 'monto'          => 1.50,
             ]]);
-            // Total no cambia — el biométrico ya estaba incluido en el precio del servicio
         }
         if ($exonerada) {
             $gravada = 0;
