@@ -259,15 +259,15 @@ class ActoNotarialController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
             ->setPaper('a4', 'portrait')
             ->setOptions([
-                'defaultFont'     => 'Verdana',
-                'isRemoteEnabled' => false,
-                'dpi'             => 96,
-                'defaultMediaType'=> 'print',
-                'isFontSubsettingEnabled' => true,
-                'margin_top'    => 56.69, // 4cm en puntos (1cm = 28.35pt) - hojas impares
-                'margin_right'  => 42.52, // 3cm
-                'margin_bottom' => 35.43, // 2.5cm
-                'margin_left'   => 42.52, // 3cm
+                'defaultFont'      => 'Verdana',
+                'isRemoteEnabled'  => false,
+                'dpi'              => 96,
+                'defaultMediaType' => 'print',
+                'isPhpEnabled'     => true,
+                'margin_top'       => 113.4, // 4cm = 113.4pt (1pt = 1/72 inch, 1cm = 28.35pt)
+                'margin_right'     => 85.05, // 3cm
+                'margin_bottom'    => 70.87, // 2.5cm
+                'margin_left'      => 85.05, // 3cm
             ]);
 
         $filename = 'Minuta-CompraVenta-' . ($acto->numero_expediente ?? $acto->id) . '.pdf';
