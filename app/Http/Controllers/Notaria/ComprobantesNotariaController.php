@@ -458,7 +458,7 @@ class ComprobantesNotariaController extends Controller
                 'numero'                   => $correlativo,
                 'fecha_emision'            => now()->toDateString(),
                 'cliente_tipo_documento'   => $request->cliente_tipo_documento,
-                'cliente_numero_documento' => $request->cliente_numero_documento,
+                'cliente_numero_documento' => substr($request->cliente_numero_documento ?? '', 0, 20),
                 'cliente_nombre'           => strtoupper($request->cliente_nombre),
                 'cliente_email'            => $request->cliente_email ?? '',
                 'total_gravada'            => $gravada,
