@@ -3,16 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.6; color: #000; margin: 0; padding: 0; }
-    .container { padding: 40px 50px; }
-    .titulo { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; }
-    .parrafo { text-align: justify; margin-bottom: 14px; }
+    /* Formato oficial notarial - Verdana 8pt, interlineado 1.25, márgenes simétricos */
+    @page {
+        size: A4;
+        margin-top: 4cm;    /* hojas impares - usamos el mayor para seguridad */
+        margin-right: 3cm;
+        margin-bottom: 2.5cm;
+        margin-left: 3cm;
+    }
+    body {
+        font-family: Verdana, Geneva, sans-serif;
+        font-size: 8pt;
+        line-height: 1.25;
+        color: #000;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        /* DomPDF usa padding para simular márgenes de página */
+        padding-top: 0;
+        padding-right: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+    }
+    .parrafo {
+        text-align: justify;
+        margin-bottom: 8pt;
+        line-height: 1.25;
+    }
     .clausula { font-weight: bold; }
-    .firma-container { margin-top: 60px; display: table; width: 100%; }
-    .firma { display: table-cell; width: 50%; text-align: center; padding-top: 10px; }
-    .linea-firma { border-top: 1px solid #000; width: 200px; margin: 0 auto 6px; }
-    .anotacion { margin-top: 40px; border-top: 1px solid #000; padding-top: 14px; }
-    .tab { display: inline-block; width: 30px; }
+    .firma-container { margin-top: 50pt; display: table; width: 100%; }
+    .firma { display: table-cell; width: 50%; text-align: center; padding-top: 8pt; }
+    .linea-firma { border-top: 1px solid #000; width: 180px; margin: 0 auto 4pt; }
+    .anotacion { margin-top: 30pt; border-top: 1px solid #000; padding-top: 10pt; }
 </style>
 </head>
 <body>
