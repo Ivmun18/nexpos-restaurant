@@ -121,33 +121,6 @@
                         ⚠️ Faltan {{ acto.requisitos.filter(r => !r.entregado).length }} documento(s) por entregar
                     </div>
                 </div>
-
-                <!-- PLANTILLA DATOS ESPECÍFICOS -->
-                <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-                        <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Datos del {{ labelTipo(acto.tipo_acto) }}</p>
-                        <button @click="guardandoDatos ? null : guardarDatos()" style="padding:5px 14px; background:#14B8A6; color:white; border:none; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;">
-                            💾 Guardar
-                        </button>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                        <template v-for="campo in camposPlantilla" :key="campo.key">
-                            <div :style="campo.full ? 'grid-column:1/-1' : ''">
-                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:4px; font-weight:600; text-transform:uppercase;">{{ campo.label }}</label>
-                                <textarea v-if="campo.tipo === 'textarea'" v-model="formDatos[campo.key]" :rows="campo.rows || 2"
-                                    style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
-                                <select v-else-if="campo.tipo === 'select'" v-model="formDatos[campo.key]"
-                                    style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
-                                    <option value="">Seleccionar...</option>
-                                    <option v-for="op in campo.opciones" :key="op" :value="op">{{ op }}</option>
-                                </select>
-
-            <!-- Partes Intervinientes -->
-
-                                <input v-else v-model="formDatos[campo.key]" :type="campo.tipo || 'text'"
-                                    style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                            </div>
-                        
     <!-- MODAL MINUTA COMPRAVENTA -->
     <div v-if="modalMinuta" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem;">
         <div style="background:white; border-radius:16px; width:760px; max-width:95vw; max-height:92vh; overflow-y:auto;">
