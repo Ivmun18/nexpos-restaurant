@@ -4,10 +4,7 @@
         <!-- HEADER -->
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
             <a href="/notaria/actos" style="background:#F1F5F9; border:none; border-radius:10px; padding:9px 14px; font-size:14px; cursor:pointer; text-decoration:none; color:#475569; font-weight:600;">← Volver</a>
-            <a :href="`/notaria/actos/${acto.id}/imprimir`" target="_blank"
-                style="background:#14B8A6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
-                🖨️ Imprimir Acto
-            </a>
+
             <a :href="`/notaria/actos/${acto.id}/descargar`"
                 style="background:#3B82F6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📥 Descargar PDF
