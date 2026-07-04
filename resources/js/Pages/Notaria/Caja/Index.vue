@@ -702,17 +702,28 @@ function seleccionarServicio(nombre) {
 }
 
 function recalcularBiometrico() {
+    // Restaurar precio original del primer item si tenía huella descontada
+    const primerItem = itemsRapido.value.find(i => !i._esHuella)
+    if (primerItem && primerItem._precioOriginal !== undefined) {
+        primerItem.precio_unitario = primerItem._precioOriginal
+        delete primerItem._precioOriginal
+    }
     // Quitar biométrico existente
     itemsRapido.value = itemsRapido.value.filter(i => i.tipo_servicio !== '__biometrico__')
-    // Calcular total sin biométrico
-    const totalSinHuella = itemsRapido.value.reduce((s, i) => s + (Number(i.precio_unitario) * (Number(i.cantidad) || 1)), 0)
+    // Calcular total real
+    const totalReal = itemsRapido.value.reduce((s, i) => s + (Number(i.precio_unitario) * (Number(i.cantidad) || 1)), 0)
     // Verificar si algún item es trámite registral
     const esTramite = itemsRapido.value.some(i => {
         const d = (i.tipo_servicio || '').toLowerCase()
         return d.includes('tramite registral') || d.includes('trámite registral')
     })
-    // Agregar biométrico si aplica
-    if (!esTramite && totalSinHuella >= 10) {
+    // Agregar biométrico si aplica: descontarlo del primer item
+    if (!esTramite && totalReal >= 10) {
+        const primero = itemsRapido.value.find(i => !i._esHuella)
+        if (primero && Number(primero.precio_unitario) > 1.50) {
+            primero._precioOriginal = Number(primero.precio_unitario)
+            primero.precio_unitario = Number((primero.precio_unitario - 1.50).toFixed(2))
+        }
         itemsRapido.value.push({
             tipo_servicio: '__biometrico__',
             tipo_servicio_custom: '',

@@ -299,6 +299,7 @@ class ComprobantesNotariaController extends Controller
         $exonerada  = $empresa->zona_exonerada;
 
         // Agregar biométrico automáticamente si aplica (>= S/10 y no es trámite registral)
+        // El biométrico se descuenta del primer item, el total NO cambia
         $esTramiteRegistralVD = false;
         foreach ($request->items as $itm) {
             $desc = strtolower($itm['descripcion'] ?? '');
@@ -307,17 +308,20 @@ class ComprobantesNotariaController extends Controller
             }
         }
         $huellaVD = (!$esTramiteRegistralVD && $total >= 10) ? 1.50 : 0;
-        $itemsConHuella = $request->items;
+        $itemsConHuella = (array)$request->items;
         if ($huellaVD > 0) {
-            $itemsConHuella = array_merge((array)$request->items, [[
-                'tipo_servicio' => 'Uso biométrico',
-                'descripcion'   => 'Uso biométrico',
-                'cantidad'      => 1,
+            // Descontar 1.50 del primer item (el frontend ya lo hace visualmente)
+            // pero si el frontend ya envió el primer item descontado, usarlo tal cual
+            // Solo agregar la línea de biométrico al items_json
+            $itemsConHuella = array_merge($itemsConHuella, [[
+                'tipo_servicio'  => 'Uso biométrico',
+                'descripcion'    => 'Uso biométrico',
+                'cantidad'       => 1,
                 'precio_unitario'=> 1.50,
-                'precio'        => 1.50,
-                'monto'         => 1.50,
+                'precio'         => 1.50,
+                'monto'          => 1.50,
             ]]);
-            $total = round($total + 1.50, 2);
+            // Total no cambia — el biométrico ya estaba incluido en el precio del servicio
         }
         if ($exonerada) {
             $gravada = 0;
@@ -331,16 +335,6 @@ class ComprobantesNotariaController extends Controller
 
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Recalcular gravada/igv con total ya incluido biométrico
-        if ($exonerada) {
-            $gravada = 0; $igv = 0; $baseImponible = $total;
-        } else {
-            $gravada = round($total / 1.18, 2);
-            $igv     = round($total - $gravada, 2);
-            $baseImponible = $gravada;
-        }
-
-        // También guardar items con huella en items_json
         // Construir items UBL
         $lineas = [];
         foreach ($itemsConHuella as $idx => $item) {
