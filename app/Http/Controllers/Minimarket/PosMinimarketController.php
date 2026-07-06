@@ -280,7 +280,7 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         $lineas[] = [
             'cbc:ID'                  => ['_text' => (string)($idx + 1)],
             'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => $i['unidad_de_medida'] ?? 'NIU'], '_text' => (string) $cantidad],
-            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valLinea],
+            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($valLinea, 2, '.', '')],
             'cac:PricingReference' => [
                 'cac:AlternativeConditionPrice' => [
                     'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => round((float) $i['precio_unitario'], 2)],
@@ -288,10 +288,10 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
                 ],
             ],
             'cac:TaxTotal' => [
-                'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvLinea],
+                'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($igvLinea, 2, '.', '')],
                 'cac:TaxSubtotal' => [[
-                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valLinea],
-                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvLinea],
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($valLinea, 2, '.', '')],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($igvLinea, 2, '.', '')],
                     'cac:TaxCategory'   => [
                         'cbc:Percent'                => ['_text' => (string)(float) $i['porcentaje_igv']],
                         'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
@@ -308,7 +308,7 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
                 'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => $i['codigo'] ?? 'S/C']],
             ],
             'cac:Price' => [
-                'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valorUnit],
+                'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($valorUnit, 2, '.', '')],
             ],
         ];
     }
@@ -345,17 +345,17 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
             ],
         ],
         'cac:TaxTotal' => [
-            'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+            'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($igv, 2, '.', '')],
             'cac:TaxSubtotal' => [[
-                'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
-                'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
-                'cac:TaxCategory'   => ['cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
+                'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($baseImponible, 2, '.', '')],
+                'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($igv, 2, '.', '')],
+                'cac:TaxCategory'   => ['cbc:Percent' => ['_text' => '0'], 'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'], 'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
             ]],
         ],
         'cac:LegalMonetaryTotal' => [
-            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
-            'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
-            'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($baseImponible, 2, '.', '')],
+            'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
+            'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
         ],
         'cac:InvoiceLine' => $lineas,
     ];
