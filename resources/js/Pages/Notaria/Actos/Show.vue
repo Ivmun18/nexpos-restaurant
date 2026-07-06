@@ -490,6 +490,7 @@ import PartesIntervinientes from '@/Components/Notaria/PartesIntervinientes.vue'
 const props = defineProps({
     acto:  { type: Object, default: () => ({}) },
     datos: { type: Object, default: () => ({}) },
+    vendedor:{ type: Object, default: () => ({}) },
 })
 
 const modalMinuta     = ref(false)
@@ -546,14 +547,20 @@ async function generarMinuta() {
 onMounted(() => {
     if (props.acto.tipo_acto === 'escritura_publica') {
         const d = props.datos || {}
+        const v = props.vendedor || {}
         formMinuta.value = {
-            vendedor_tipo: 'empresa',
-            vendedor_razon_social: '', vendedor_ruc: '', vendedor_domicilio: '',
-            vendedor_partida_registral: '', representante_cargo: 'Gerente General',
-            representante_nombre: '', representante_dni: '',
-            representante_estado_civil: 'soltero', representante_profesion: '',
-            representante_domicilio: '', vendedor_nombre: '', vendedor_dni: '',
-            vendedor_estado_civil: '',
+            vendedor_tipo:               v.vendedor_tipo || 'empresa',
+            vendedor_razon_social:       v.vendedor_razon_social || '',
+            vendedor_ruc:                v.vendedor_ruc || '',
+            vendedor_domicilio:          v.vendedor_domicilio || '',
+            vendedor_partida_registral:  v.vendedor_partida_registral || '',
+            representante_cargo:         v.representante_cargo || 'Gerente General',
+            representante_nombre:        v.representante_nombre || '',
+            representante_dni:           v.representante_dni || '',
+            representante_estado_civil:  v.representante_estado_civil || 'soltero',
+            representante_profesion:     v.representante_profesion || '',
+            representante_domicilio:     v.representante_domicilio || '',
+            vendedor_nombre: '', vendedor_dni: '', vendedor_estado_civil: '',
             comprador_nombre:       d.comprador_nombre || '',
             comprador_dni:          d.comprador_dni || '',
             comprador_estado_civil: d.comprador_estado_civil || 'soltero',
