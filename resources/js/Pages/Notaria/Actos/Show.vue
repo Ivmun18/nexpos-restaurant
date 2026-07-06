@@ -522,8 +522,9 @@ async function generarMinuta() {
         const res = await fetch('/notaria/actos/' + props.acto.id + '/minuta-compraventa', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify(formMinuta.value)
+            body: JSON.stringify({ ...formMinuta.value, guardar_datos: true })
         })
+        if (res.status === 419) { alert('Sesión expirada, recarga'); window.location.reload(); return }
         if (res.ok) {
             const blob = await res.blob()
             const url = URL.createObjectURL(blob)
@@ -544,22 +545,45 @@ async function generarMinuta() {
 
 onMounted(() => {
     if (props.acto.tipo_acto === 'escritura_publica') {
+        const d = props.datos || {}
         formMinuta.value = {
             vendedor_tipo: 'empresa',
-            vendedor_razon_social: '', vendedor_ruc: '', vendedor_domicilio: '', vendedor_partida_registral: '',
-            representante_cargo: 'Gerente General', representante_nombre: '', representante_dni: '',
-            representante_estado_civil: 'soltero', representante_profesion: '', representante_domicilio: '',
-            vendedor_nombre: '', vendedor_dni: '', vendedor_estado_civil: '',
-            comprador_nombre: '', comprador_dni: '', comprador_estado_civil: '', comprador_profesion: '', comprador_domicilio: '',
-            es_bien_futuro: false,
-            predio_descripcion: '', predio_partida: '', ciudad: 'Huánuco',
-            proyecto_descripcion: '', proyecto_municipalidad: 'Municipalidad Distrital de Amarilis',
-            proyecto_expediente: '', proyecto_fecha: '', proyecto_arquitecto: '', plazo_anos: 'tres',
-            lote_descripcion: '', lote_area: '', lote_area_letras: '',
-            lindero_frente: '', medida_frente: '', lindero_derecha: '', medida_derecha: '',
-            lindero_izquierda: '', medida_izquierda: '', lindero_fondo: '', medida_fondo: '',
-            precio_total: String(props.acto.monto_cobrar || ''),
-            precio_total_letras: '', forma_pago_detalle: '', fecha_minuta: '',
+            vendedor_razon_social: '', vendedor_ruc: '', vendedor_domicilio: '',
+            vendedor_partida_registral: '', representante_cargo: 'Gerente General',
+            representante_nombre: '', representante_dni: '',
+            representante_estado_civil: 'soltero', representante_profesion: '',
+            representante_domicilio: '', vendedor_nombre: '', vendedor_dni: '',
+            vendedor_estado_civil: '',
+            comprador_nombre:       d.comprador_nombre || '',
+            comprador_dni:          d.comprador_dni || '',
+            comprador_estado_civil: d.comprador_estado_civil || 'soltero',
+            comprador_profesion:    d.comprador_profesion || '',
+            comprador_domicilio:    d.comprador_domicilio || '',
+            es_bien_futuro:         d.es_bien_futuro === 'true' || d.es_bien_futuro === true,
+            predio_descripcion:     d.predio_descripcion || '',
+            predio_partida:         d.predio_partida || '',
+            ciudad:                 d.ciudad || 'Huánuco',
+            proyecto_descripcion:   d.proyecto_descripcion || '',
+            proyecto_municipalidad: d.proyecto_municipalidad || 'Municipalidad Distrital de Amarilis',
+            proyecto_expediente:    d.proyecto_expediente || '',
+            proyecto_fecha:         d.proyecto_fecha || '',
+            proyecto_arquitecto:    d.proyecto_arquitecto || '',
+            plazo_anos:             d.plazo_anos || 'tres',
+            lote_descripcion:       d.lote_descripcion || '',
+            lote_area:              d.lote_area || '',
+            lote_area_letras:       d.lote_area_letras || '',
+            lindero_frente:         d.lindero_frente || '',
+            medida_frente:          d.medida_frente || '',
+            lindero_derecha:        d.lindero_derecha || '',
+            medida_derecha:         d.medida_derecha || '',
+            lindero_izquierda:      d.lindero_izquierda || '',
+            medida_izquierda:       d.medida_izquierda || '',
+            lindero_fondo:          d.lindero_fondo || '',
+            medida_fondo:           d.medida_fondo || '',
+            precio_total:           d.precio_total || String(props.acto.monto_cobrar || ''),
+            precio_total_letras:    d.precio_total_letras || '',
+            forma_pago_detalle:     d.forma_pago_detalle || '',
+            fecha_minuta:           d.fecha_minuta || '',
         }
     }
 })
