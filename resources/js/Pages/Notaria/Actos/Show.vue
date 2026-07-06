@@ -4,7 +4,10 @@
         <!-- HEADER -->
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
             <a href="/notaria/actos" style="background:#F1F5F9; border:none; border-radius:10px; padding:9px 14px; font-size:14px; cursor:pointer; text-decoration:none; color:#475569; font-weight:600;">← Volver</a>
-
+            <a :href="`/notaria/actos/${acto.id}/imprimir`" target="_blank"
+                style="background:#14B8A6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                🖨️ Imprimir Acto
+            </a>
             <a :href="`/notaria/actos/${acto.id}/descargar`"
                 style="background:#3B82F6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📥 Descargar PDF
@@ -12,10 +15,6 @@
             <button v-if="tieneMinuta" @click="modalMinuta=true"
                 style="background:#F97316; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📄 Generar Minuta
-            </button>
-            <button v-if="tieneMinuta" @click="imprimirMinutaDirecto"
-                style="background:#7C3AED; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
-                🖨️ Imprimir Minuta
             </button>
             <div>
                 <h2 style="font-size:20px; font-weight:800; color:#1E293B; margin:0;">{{ acto.numero_expediente }}</h2>
@@ -71,7 +70,7 @@
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                         <div>
-                            <p v-if="acto.tipo_acto !== 'escritura_publica'" style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Requisitos y documentos</p>
+                            <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Requisitos y documentos</p>
                             <p style="font-size:11px; color:#94A3B8; margin:2px 0 0;">
                                 {{ acto.requisitos?.filter(r => r.entregado).length || 0 }} de {{ acto.requisitos?.length || 0 }} entregados
                             </p>
@@ -122,8 +121,8 @@
                     </div>
                 </div>
 
-                <!-- PLANTILLA DATOS ESPECÍFICOS - oculto para escritura_publica -->
-                <div v-if="acto.tipo_acto !== 'escritura_publica'" style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+                <!-- PLANTILLA DATOS ESPECÍFICOS -->
+                <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                         <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Datos del {{ labelTipo(acto.tipo_acto) }}</p>
                         <button @click="guardandoDatos ? null : guardarDatos()" style="padding:5px 14px; background:#14B8A6; color:white; border:none; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;">
@@ -256,7 +255,7 @@
 
 
             <!-- Partes Intervinientes -->
-            <PartesIntervinientes v-if="acto.tipo_acto !== 'escritura_publica'" :acto="acto" :partes="acto.partes || []" />
+            <PartesIntervinientes :acto="acto" :partes="acto.partes || []" />
 
                 <!-- SEGUIMIENTO -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
@@ -489,9 +488,8 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import PartesIntervinientes from '@/Components/Notaria/PartesIntervinientes.vue'
 
 const props = defineProps({
-    acto:    { type: Object, default: () => ({}) },
-    datos:   { type: Object, default: () => ({}) },
-    vendedor:{ type: Object, default: () => ({}) },
+    acto:  { type: Object, default: () => ({}) },
+    datos: { type: Object, default: () => ({}) },
 })
 
 const modalMinuta     = ref(false)
@@ -517,27 +515,6 @@ const tieneMinuta = computed(() => {
     return tipos.includes(props.acto.tipo_acto)
 })
 
-async function imprimirMinutaDirecto() {
-    try {
-        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-        const res = await fetch('/notaria/actos/' + props.acto.id + '/minuta-compraventa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({ ...formMinuta.value, guardar_datos: false })
-        })
-        if (res.ok) {
-            const blob = await res.blob()
-            const url = URL.createObjectURL(blob)
-            const win = window.open(url, '_blank')
-            if (win) win.print()
-        } else {
-            alert('❌ Error al generar la minuta')
-        }
-    } catch(e) {
-        alert('❌ Error: ' + e.message)
-    }
-}
-
 async function generarMinuta() {
     generandoMinuta.value = true
     try {
@@ -545,9 +522,8 @@ async function generarMinuta() {
         const res = await fetch('/notaria/actos/' + props.acto.id + '/minuta-compraventa', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({ ...formMinuta.value, guardar_datos: true })
+            body: JSON.stringify(formMinuta.value)
         })
-        if (res.status === 419) { alert('Sesión expirada, recarga'); window.location.reload(); return }
         if (res.ok) {
             const blob = await res.blob()
             const url = URL.createObjectURL(blob)
@@ -568,51 +544,22 @@ async function generarMinuta() {
 
 onMounted(() => {
     if (props.acto.tipo_acto === 'escritura_publica') {
-        const d = props.datos || {}
-        const v = props.vendedor || {}
         formMinuta.value = {
-            vendedor_tipo:               v.vendedor_tipo || 'empresa',
-            vendedor_razon_social:       v.vendedor_razon_social || '',
-            vendedor_ruc:                v.vendedor_ruc || '',
-            vendedor_domicilio:          v.vendedor_domicilio || '',
-            vendedor_partida_registral:  v.vendedor_partida_registral || '',
-            representante_cargo:         v.representante_cargo || 'Gerente General',
-            representante_nombre:        v.representante_nombre || '',
-            representante_dni:           v.representante_dni || '',
-            representante_estado_civil:  v.representante_estado_civil || 'soltero',
-            representante_profesion:     v.representante_profesion || '',
-            representante_domicilio:     v.representante_domicilio || '',
+            vendedor_tipo: 'empresa',
+            vendedor_razon_social: '', vendedor_ruc: '', vendedor_domicilio: '', vendedor_partida_registral: '',
+            representante_cargo: 'Gerente General', representante_nombre: '', representante_dni: '',
+            representante_estado_civil: 'soltero', representante_profesion: '', representante_domicilio: '',
             vendedor_nombre: '', vendedor_dni: '', vendedor_estado_civil: '',
-            comprador_nombre:       d.comprador_nombre || '',
-            comprador_dni:          d.comprador_dni || '',
-            comprador_estado_civil: d.comprador_estado_civil || 'soltero',
-            comprador_profesion:    d.comprador_profesion || '',
-            comprador_domicilio:    d.comprador_domicilio || '',
-            es_bien_futuro:         d.es_bien_futuro === 'true' || d.es_bien_futuro === true,
-            predio_descripcion:     d.predio_descripcion || '',
-            predio_partida:         d.predio_partida || '',
-            ciudad:                 d.ciudad || 'Huánuco',
-            proyecto_descripcion:   d.proyecto_descripcion || '',
-            proyecto_municipalidad: d.proyecto_municipalidad || 'Municipalidad Distrital de Amarilis',
-            proyecto_expediente:    d.proyecto_expediente || '',
-            proyecto_fecha:         d.proyecto_fecha || '',
-            proyecto_arquitecto:    d.proyecto_arquitecto || '',
-            plazo_anos:             d.plazo_anos || 'tres',
-            lote_descripcion:       d.lote_descripcion || '',
-            lote_area:              d.lote_area || '',
-            lote_area_letras:       d.lote_area_letras || '',
-            lindero_frente:         d.lindero_frente || '',
-            medida_frente:          d.medida_frente || '',
-            lindero_derecha:        d.lindero_derecha || '',
-            medida_derecha:         d.medida_derecha || '',
-            lindero_izquierda:      d.lindero_izquierda || '',
-            medida_izquierda:       d.medida_izquierda || '',
-            lindero_fondo:          d.lindero_fondo || '',
-            medida_fondo:           d.medida_fondo || '',
-            precio_total:           d.precio_total || String(props.acto.monto_cobrar || ''),
-            precio_total_letras:    d.precio_total_letras || '',
-            forma_pago_detalle:     d.forma_pago_detalle || '',
-            fecha_minuta:           d.fecha_minuta || '',
+            comprador_nombre: '', comprador_dni: '', comprador_estado_civil: '', comprador_profesion: '', comprador_domicilio: '',
+            es_bien_futuro: false,
+            predio_descripcion: '', predio_partida: '', ciudad: 'Huánuco',
+            proyecto_descripcion: '', proyecto_municipalidad: 'Municipalidad Distrital de Amarilis',
+            proyecto_expediente: '', proyecto_fecha: '', proyecto_arquitecto: '', plazo_anos: 'tres',
+            lote_descripcion: '', lote_area: '', lote_area_letras: '',
+            lindero_frente: '', medida_frente: '', lindero_derecha: '', medida_derecha: '',
+            lindero_izquierda: '', medida_izquierda: '', lindero_fondo: '', medida_fondo: '',
+            precio_total: String(props.acto.monto_cobrar || ''),
+            precio_total_letras: '', forma_pago_detalle: '', fecha_minuta: '',
         }
     }
 })
