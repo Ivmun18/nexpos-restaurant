@@ -255,7 +255,7 @@
 
 
             <!-- Partes Intervinientes -->
-            <PartesIntervinientes :acto="acto" :partes="acto.partes || []" />
+            <PartesIntervinientes v-if="acto.tipo_acto !== 'escritura_publica'" :acto="acto" :partes="acto.partes || []" />
 
                 <!-- SEGUIMIENTO -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
