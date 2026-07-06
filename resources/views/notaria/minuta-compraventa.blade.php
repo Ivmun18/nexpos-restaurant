@@ -65,7 +65,7 @@ a quien en adelante se le denominará <strong><u>LA COMPRADORA</u></strong>; en 
 con Partida Registral N° {{ $d['predio_partida'] }} de la Oficina Registral de {{ $d['ciudad'] ?? 'Huánuco' }},
 en la que consta sus demás características.</p>
 
-@if(!empty($d['es_bien_futuro']))
+@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
 <p class="parrafo"><span class="clausula">SEGUNDO:</span> En el predio descrito en la cláusula que precede, LA VENDEDORA viene desarrollando un proyecto de
 {{ $d['proyecto_descripcion'] }}, cuya licencia fue solicitada ante {{ $d['proyecto_municipalidad'] ?? 'la Municipalidad Distrital de Amarilis' }},
 provincia y departamento de Huánuco, con Expediente N° {{ $d['proyecto_expediente'] }}, presentado con fecha {{ $d['proyecto_fecha'] }}.
@@ -76,8 +76,8 @@ y su respectiva memoria descriptiva, elaborados por {{ $d['proyecto_arquitecto']
 En tal sentido, LA COMPRADORA declara conocer que, a la fecha de la suscripción del presente contrato, el lote materia de esta minuta tiene la condición de bien futuro.</p>
 @endif
 
-<p class="parrafo"><span class="clausula">{{ !empty($d['es_bien_futuro']) ? 'TERCERO' : 'SEGUNDO' }}:</span>
-@if(!empty($d['es_bien_futuro']))
+<p class="parrafo"><span class="clausula">{{ (isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0) ? 'TERCERO' : 'SEGUNDO' }}:</span>
+@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
 En tales condiciones, dentro del proyecto señalado, se encuentra el
 @else
 El predio materia de la presente compraventa es el
@@ -91,11 +91,11 @@ El predio materia de la presente compraventa es el
     <tr><td>- Por el Fondo:</td><td>colinda con {{ $d['lindero_fondo'] }}, con {{ $d['medida_fondo'] }} ml.</td></tr>
 </table>
 
-<p class="parrafo"><span class="clausula">{{ !empty($d['es_bien_futuro']) ? 'CUARTO' : 'TERCERO' }}:</span>
+<p class="parrafo"><span class="clausula">{{ (isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0) ? 'CUARTO' : 'TERCERO' }}:</span>
 En virtud del presente contrato, LA VENDEDORA da en venta real y enajenación perpetua a favor de LA COMPRADORA el lote descrito en la cláusula precedente,
 comprenderá sus usos, costumbres, entradas, salidas, aires, suelo, sub suelo, sobre suelo y todo cuanto de hecho y por derecho le corresponda, sin reserva ni limitación alguna.</p>
 
-<p class="parrafo"><span class="clausula">{{ !empty($d['es_bien_futuro']) ? 'QUINTO' : 'CUARTO' }}:</span>
+<p class="parrafo"><span class="clausula">{{ (isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0) ? 'QUINTO' : 'CUARTO' }}:</span>
 Las partes, de común acuerdo, establecen que el precio total de venta por el predio materia de esta minuta es de
 <strong>S/ {{ number_format(floatval($d['precio_total']), 2) }} ({{ strtoupper($d['precio_total_letras']) }})</strong>,
 suma de dinero que fue cancelada por LA COMPRADORA de la siguiente manera:</p>
@@ -104,7 +104,7 @@ suma de dinero que fue cancelada por LA COMPRADORA de la siguiente manera:</p>
 
 <p class="parrafo">En tal sentido LA VENDEDORA declara totalmente cancelado el precio de venta.</p>
 
-@if(!empty($d['es_bien_futuro']))
+@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
 <p class="parrafo"><span class="clausula">SEXTO:</span> Las partes declaran que entre el valor del inmueble y el precio pactado existe la más justa y perfecta equivalencia,
 por lo que de haber alguna diferencia, se hacen mutua gracia y recíproca donación, renunciando a cualquier acción que tenga por objeto invalidar los efectos del presente contrato.</p>
 
@@ -116,7 +116,7 @@ la recepción de obras de la habilitación urbana y/o que apruebe su independiza
 contados a partir de la fecha de esta minuta.</p>
 @endif
 
-@if(!empty($d['es_bien_futuro']))
+@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
 <p class="parrafo"><span class="clausula">NOVENO:</span> Queda entendido que, aun cuando no se haya emitido la autorización municipal referida en la cláusula séptima,
 LA COMPRADORA puede asumir la posesión del lote objeto de esta minuta, pues le ha sido señalado la ubicación física del lote objeto de compraventa,
 debiendo en tal caso comunicar, por escrito, de dicha circunstancia al vendedor. Sin embargo, dicha posesión no deberá obstaculizar la obtención de la aprobación
@@ -124,7 +124,7 @@ del proyecto de habilitación urbana, en cuyo supuesto, deberán devolver dicha 
 quedando incólume el derecho de propiedad transferida a favor de LA COMPRADORA.</p>
 
 <p class="parrafo"><span class="clausula">DÉCIMO:</span> Una vez que se haya cumplido la condición suspensiva, LA COMPRADORA deberá declarar la transferencia
-contenida en este documento por ante la municipalidad distrital de {{ $d['municipalidad_distrito'] ?? 'Amarilis' }} – {{ $d['ciudad'] ?? 'Huánuco' }},
+contenida en este documento por ante la municipalidad distrital de {{ $d['municipalidad_distrito'] ?? $d['ciudad'] ?? 'Huánuco' }},
 para los fines del pago del impuesto predial y demás impuestos que afecten al predio sub materia, así como inscribir esta compra venta ante el registro de predios
 de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}.
 
