@@ -920,23 +920,35 @@ const buscarClienteRapido = async () => {
 }
 
 const buscarCliente = async () => {
-    const doc = formComp.value.cliente_numero_documento
-    const tipo = formComp.value.cliente_tipo_documento
-    const len = tipo === '6' ? 11 : 8
-    if (doc.length !== len) return
+    const doc = (formComp.value.cliente_numero_documento||'').replace(/\D/g,'')
+    if (doc.length !== 8 && doc.length !== 11) return
+    // Auto-detectar tipo
+    formComp.value.cliente_tipo_documento = doc.length === 11 ? '6' : '1'
 
     buscandoCliente.value = true
     try {
-        // Buscar primero en clientes registrados
+        const csrf = document.querySelector('meta[name=csrf-token]').content
+        // 1. Buscar en clientes registrados
         const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+            headers: { 'X-CSRF-TOKEN': csrf }
         })
         if (res.ok) {
             const data = await res.json()
             if (data.nombre) {
                 formComp.value.cliente_nombre = data.nombre
                 formComp.value.cliente_email = data.email || ''
+                buscandoCliente.value = false
+                return
             }
+        }
+        // 2. Fallback a API externa
+        const r = await fetch('/api/consulta-documento?documento=' + doc, {
+            headers: { 'X-CSRF-TOKEN': csrf }
+        })
+        if (r.ok) {
+            const d = await r.json()
+            if (d.nombres) formComp.value.cliente_nombre = d.nombres + ' ' + d.apellidoPaterno + ' ' + d.apellidoMaterno
+            else if (d.razonSocial) formComp.value.cliente_nombre = d.razonSocial
         }
     } catch(e) {
         console.error(e)
