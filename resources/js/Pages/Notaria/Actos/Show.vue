@@ -828,12 +828,23 @@ const buscarClienteComp = async () => {
     buscandoComp.value = true
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        // 1. Buscar en clientes registrados
         const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
-            method: 'GET',
             headers: { 'X-CSRF-TOKEN': csrf }
         })
-        const data = await res.json()
-        if (data.nombre) compNombre.value = data.nombre
+        if (res.ok) {
+            const data = await res.json()
+            if (data.nombre) { compNombre.value = data.nombre; buscandoComp.value = false; return }
+        }
+        // 2. Fallback a API externa
+        const r = await fetch('/api/consulta-documento?documento=' + doc, {
+            headers: { 'X-CSRF-TOKEN': csrf }
+        })
+        if (r.ok) {
+            const d = await r.json()
+            if (d.nombres) compNombre.value = d.nombres + ' ' + d.apellidoPaterno + ' ' + d.apellidoMaterno
+            else if (d.razonSocial) compNombre.value = d.razonSocial
+        }
     } catch(e) { console.error(e) }
     buscandoComp.value = false
 }
