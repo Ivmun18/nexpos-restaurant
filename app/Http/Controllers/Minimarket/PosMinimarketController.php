@@ -404,7 +404,7 @@ private function numeroALetrasMinimarket($numero)
 {
     $entero  = (int) floor($numero);
     $decimal = (int) round(($numero - $entero) * 100);
-    return strtoupper($this->convertirNumeroALetrasMinimarket($entero)) . " CON {$decimal}/100 SOLES";
+    return strtoupper($this->convertirNumeroALetrasMinimarket($entero)) . ' CON ' . str_pad($decimal, 2, '0', STR_PAD_LEFT) . '/100 SOLES';
 }
 
 private function convertirNumeroALetrasMinimarket($num)
