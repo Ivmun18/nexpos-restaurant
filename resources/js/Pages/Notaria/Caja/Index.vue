@@ -1082,8 +1082,11 @@ function cerrarCaja() {
 
 async function confirmarCobro(boletaSimple = false) {
     if (!itemsExp.value.length || !expedienteSeleccionado.value || procesando.value) return
-    // Actualizar monto en formCobro con el total de items
-    formCobro.value.monto = totalExp.value.toFixed(2)
+    // El monto a registrar en caja es el saldo pendiente (no el total del servicio)
+    // para no duplicar los adelantos ya registrados
+    const saldoPendiente = Number(expedienteSeleccionado.value.saldo ?? 
+        (expedienteSeleccionado.value.monto_cobrar - expedienteSeleccionado.value.monto_pagado))
+    formCobro.value.monto = saldoPendiente.toFixed(2)
 
     // Validación: si NO es boleta simple, validar datos del cliente
     if (!boletaSimple) {
