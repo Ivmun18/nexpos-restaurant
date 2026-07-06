@@ -140,122 +140,15 @@
                                     <option value="">Seleccionar...</option>
                                     <option v-for="op in campo.opciones" :key="op" :value="op">{{ op }}</option>
                                 </select>
-
-            <!-- Partes Intervinientes -->
-
                                 <input v-else v-model="formDatos[campo.key]" :type="campo.tipo || 'text'"
                                     style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                             </div>
-                        
-    <!-- MODAL MINUTA COMPRAVENTA -->
-    <div v-if="modalMinuta" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem;">
-        <div style="background:white; border-radius:16px; width:760px; max-width:95vw; max-height:92vh; overflow-y:auto;">
-            <div style="padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:white; z-index:10; border-radius:16px 16px 0 0;">
-                <div>
-                    <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0;">📄 Generar Minuta de Compra Venta</p>
-                    <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">Expediente: {{ props.acto.numero_expediente }}</p>
-                </div>
-                <button @click="modalMinuta=false" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:16px;">✕</button>
-            </div>
-            <div style="padding:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-
-                <!-- TIPO VENDEDOR -->
-                <div style="grid-column:1/-1;">
-                    <label style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Tipo de vendedor</label>
-                    <div style="display:flex; gap:12px; margin-top:6px;">
-                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="radio" v-model="formMinuta.vendedor_tipo" value="persona"> Persona natural</label>
-                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="radio" v-model="formMinuta.vendedor_tipo" value="empresa"> Empresa</label>
+                        </template>
                     </div>
                 </div>
 
-                <template v-if="formMinuta.vendedor_tipo === 'empresa'">
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Razón Social vendedora *</label><input v-model="formMinuta.vendedor_razon_social" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">RUC vendedora *</label><input v-model="formMinuta.vendedor_ruc" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio vendedora *</label><input v-model="formMinuta.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Partida registral vendedora</label><input v-model="formMinuta.vendedor_partida_registral" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Cargo representante</label><input v-model="formMinuta.representante_cargo" type="text" placeholder="Gerente General" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre representante *</label><input v-model="formMinuta.representante_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI representante *</label><input v-model="formMinuta.representante_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil representante</label><input v-model="formMinuta.representante_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión representante</label><input v-model="formMinuta.representante_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio representante *</label><input v-model="formMinuta.representante_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                </template>
-                <template v-else>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre vendedor *</label><input v-model="formMinuta.vendedor_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI vendedor *</label><input v-model="formMinuta.vendedor_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil vendedor</label><input v-model="formMinuta.vendedor_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio vendedor *</label><input v-model="formMinuta.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                </template>
-
-                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
-                    <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">COMPRADOR</p>
-                </div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre comprador *</label><input v-model="formMinuta.comprador_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI comprador *</label><input v-model="formMinuta.comprador_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil *</label><input v-model="formMinuta.comprador_estado_civil" type="text" placeholder="soltero(a)" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión *</label><input v-model="formMinuta.comprador_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio comprador *</label><input v-model="formMinuta.comprador_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-
-                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
-                    <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">PREDIO</p>
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;"><input type="checkbox" v-model="formMinuta.es_bien_futuro"> Es bien futuro (habilitación urbana en trámite)</label>
-                </div>
-                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción del predio *</label><input v-model="formMinuta.predio_descripcion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Partida registral predio *</label><input v-model="formMinuta.predio_partida" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Ciudad</label><input v-model="formMinuta.ciudad" type="text" placeholder="Huánuco" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-
-                <template v-if="formMinuta.es_bien_futuro">
-                    <div style="grid-column:1/-1; background:#FFF7ED; border-radius:8px; padding:1rem; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                        <p style="grid-column:1/-1; font-size:12px; font-weight:700; color:#C2410C; margin:0 0 4px;">PROYECTO DE HABILITACIÓN URBANA</p>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción proyecto</label><input v-model="formMinuta.proyecto_descripcion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Municipalidad</label><input v-model="formMinuta.proyecto_municipalidad" type="text" placeholder="Municipalidad Distrital de Amarilis" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Expediente municipal</label><input v-model="formMinuta.proyecto_expediente" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha presentación</label><input v-model="formMinuta.proyecto_fecha" type="text" placeholder="23 de junio de 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Arquitecto responsable</label><input v-model="formMinuta.proyecto_arquitecto" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Plazo (en letras, ej: tres)</label><input v-model="formMinuta.plazo_anos" type="text" placeholder="tres" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    </div>
-                </template>
-
-                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
-                    <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">DESCRIPCIÓN DEL LOTE</p>
-                </div>
-                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción lote *</label><input v-model="formMinuta.lote_descripcion" type="text" placeholder="Lote 4 de la Manzana B" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Área (ej: 100.01 m2)</label><input v-model="formMinuta.lote_area" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Área en letras</label><input v-model="formMinuta.lote_area_letras" type="text" placeholder="cien punto cero uno metros cuadrados" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Frente colinda con</label><input v-model="formMinuta.lindero_frente" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida frente (ml)</label><input v-model="formMinuta.medida_frente" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Derecha colinda con</label><input v-model="formMinuta.lindero_derecha" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida derecha (ml)</label><input v-model="formMinuta.medida_derecha" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Izquierda colinda con</label><input v-model="formMinuta.lindero_izquierda" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida izquierda (ml)</label><input v-model="formMinuta.medida_izquierda" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fondo colinda con</label><input v-model="formMinuta.lindero_fondo" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida fondo (ml)</label><input v-model="formMinuta.medida_fondo" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-
-                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
-                    <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">PRECIO Y FORMA DE PAGO</p>
-                </div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Precio total (S/) *</label><input v-model="formMinuta.precio_total" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Precio en letras *</label><input v-model="formMinuta.precio_total_letras" type="text" placeholder="setenta y cinco mil y 00/100 soles" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Detalle forma de pago *</label><textarea v-model="formMinuta.forma_pago_detalle" rows="4" placeholder="1) Mediante transferencia bancaria de fecha..." style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha de la minuta *</label><input v-model="formMinuta.fecha_minuta" type="text" placeholder="25 de agosto de 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-            </div>
-
-            <div style="padding:1rem 1.5rem; border-top:1px solid #E2E8F0; display:flex; justify-content:flex-end; gap:12px; position:sticky; bottom:0; background:white; border-radius:0 0 16px 16px;">
-                <button @click="modalMinuta=false" style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600;">Cancelar</button>
-                <button @click="generarMinuta" :disabled="generandoMinuta" style="padding:10px 20px; background:#F97316; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
-                    {{ generandoMinuta ? '⏳ Generando...' : '📥 Generar PDF' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
-</template>
-                    </div>
-                </div>
-
-
-            <!-- Partes Intervinientes -->
-            <PartesIntervinientes v-if="acto.tipo_acto !== 'escritura_publica'" :acto="acto" :partes="acto.partes || []" />
+                <!-- Partes Intervinientes -->
+                <PartesIntervinientes v-if="acto.tipo_acto !== 'escritura_publica'" :acto="acto" :partes="acto.partes || []" />
 
                 <!-- SEGUIMIENTO -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
@@ -356,6 +249,108 @@
             </div>
         </div>
 
+        <!-- MODAL MINUTA COMPRAVENTA -->
+        <div v-if="modalMinuta" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem;">
+            <div style="background:white; border-radius:16px; width:760px; max-width:95vw; max-height:92vh; overflow-y:auto;">
+                <div style="padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:white; z-index:10; border-radius:16px 16px 0 0;">
+                    <div>
+                        <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0;">📄 Generar Minuta de Compra Venta</p>
+                        <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">Expediente: {{ props.acto.numero_expediente }}</p>
+                    </div>
+                    <button @click="modalMinuta=false" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:16px;">✕</button>
+                </div>
+                <div style="padding:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+
+                    <!-- TIPO VENDEDOR -->
+                    <div style="grid-column:1/-1;">
+                        <label style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Tipo de vendedor</label>
+                        <div style="display:flex; gap:12px; margin-top:6px;">
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="radio" v-model="formMinuta.vendedor_tipo" value="persona"> Persona natural</label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="radio" v-model="formMinuta.vendedor_tipo" value="empresa"> Empresa</label>
+                        </div>
+                    </div>
+
+                    <template v-if="formMinuta.vendedor_tipo === 'empresa'">
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Razón Social vendedora *</label><input v-model="formMinuta.vendedor_razon_social" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">RUC vendedora *</label><input v-model="formMinuta.vendedor_ruc" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio vendedora *</label><input v-model="formMinuta.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Partida registral vendedora</label><input v-model="formMinuta.vendedor_partida_registral" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Cargo representante</label><input v-model="formMinuta.representante_cargo" type="text" placeholder="Gerente General" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre representante *</label><input v-model="formMinuta.representante_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI representante *</label><input v-model="formMinuta.representante_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil representante</label><input v-model="formMinuta.representante_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión representante</label><input v-model="formMinuta.representante_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio representante *</label><input v-model="formMinuta.representante_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    </template>
+                    <template v-else>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre vendedor *</label><input v-model="formMinuta.vendedor_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI vendedor *</label><input v-model="formMinuta.vendedor_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil vendedor</label><input v-model="formMinuta.vendedor_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio vendedor *</label><input v-model="formMinuta.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    </template>
+
+                    <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
+                        <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">COMPRADOR</p>
+                    </div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre comprador *</label><input v-model="formMinuta.comprador_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI comprador *</label><input v-model="formMinuta.comprador_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil *</label><input v-model="formMinuta.comprador_estado_civil" type="text" placeholder="soltero(a)" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión *</label><input v-model="formMinuta.comprador_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio comprador *</label><input v-model="formMinuta.comprador_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                    <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
+                        <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">PREDIO</p>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;"><input type="checkbox" v-model="formMinuta.es_bien_futuro"> Es bien futuro (habilitación urbana en trámite)</label>
+                    </div>
+                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción del predio *</label><input v-model="formMinuta.predio_descripcion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Partida registral predio *</label><input v-model="formMinuta.predio_partida" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Ciudad</label><input v-model="formMinuta.ciudad" type="text" placeholder="Huánuco" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                    <template v-if="formMinuta.es_bien_futuro">
+                        <div style="grid-column:1/-1; background:#FFF7ED; border-radius:8px; padding:1rem; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <p style="grid-column:1/-1; font-size:12px; font-weight:700; color:#C2410C; margin:0 0 4px;">PROYECTO DE HABILITACIÓN URBANA</p>
+                            <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción proyecto</label><input v-model="formMinuta.proyecto_descripcion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Municipalidad</label><input v-model="formMinuta.proyecto_municipalidad" type="text" placeholder="Municipalidad Distrital de Amarilis" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Expediente municipal</label><input v-model="formMinuta.proyecto_expediente" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha presentación</label><input v-model="formMinuta.proyecto_fecha" type="text" placeholder="23 de junio de 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Arquitecto responsable</label><input v-model="formMinuta.proyecto_arquitecto" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                            <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Plazo (en letras, ej: tres)</label><input v-model="formMinuta.plazo_anos" type="text" placeholder="tres" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        </div>
+                    </template>
+
+                    <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
+                        <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">DESCRIPCIÓN DEL LOTE</p>
+                    </div>
+                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción lote *</label><input v-model="formMinuta.lote_descripcion" type="text" placeholder="Lote 4 de la Manzana B" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Área (ej: 100.01 m2)</label><input v-model="formMinuta.lote_area" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Área en letras</label><input v-model="formMinuta.lote_area_letras" type="text" placeholder="cien punto cero uno metros cuadrados" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Frente colinda con</label><input v-model="formMinuta.lindero_frente" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida frente (ml)</label><input v-model="formMinuta.medida_frente" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Derecha colinda con</label><input v-model="formMinuta.lindero_derecha" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida derecha (ml)</label><input v-model="formMinuta.medida_derecha" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Izquierda colinda con</label><input v-model="formMinuta.lindero_izquierda" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida izquierda (ml)</label><input v-model="formMinuta.medida_izquierda" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fondo colinda con</label><input v-model="formMinuta.lindero_fondo" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medida fondo (ml)</label><input v-model="formMinuta.medida_fondo" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                    <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;">
+                        <p style="font-size:12px; font-weight:700; color:#0F766E; margin:0 0 8px;">PRECIO Y FORMA DE PAGO</p>
+                    </div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Precio total (S/) *</label><input v-model="formMinuta.precio_total" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Precio en letras *</label><input v-model="formMinuta.precio_total_letras" type="text" placeholder="setenta y cinco mil y 00/100 soles" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Detalle forma de pago *</label><textarea v-model="formMinuta.forma_pago_detalle" rows="4" placeholder="1) Mediante transferencia bancaria de fecha..." style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha de la minuta *</label><input v-model="formMinuta.fecha_minuta" type="text" placeholder="25 de agosto de 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                </div>
+
+                <div style="padding:1rem 1.5rem; border-top:1px solid #E2E8F0; display:flex; justify-content:flex-end; gap:12px; position:sticky; bottom:0; background:white; border-radius:0 0 16px 16px;">
+                    <button @click="modalMinuta=false" style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600;">Cancelar</button>
+                    <button @click="generarMinuta" :disabled="generandoMinuta" style="padding:10px 20px; background:#F97316; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                        {{ generandoMinuta ? '⏳ Generando...' : '📥 Generar PDF' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- MODAL ACTUALIZAR ESTADO -->
         <div v-if="modalEstado" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
             <div style="background:white; border-radius:16px; padding:1.5rem; width:400px; max-width:95vw;">
@@ -378,91 +373,80 @@
         </div>
 
         <!-- MODAL COMPROBANTE ELECTRÓNICO -->
-    <div v-if="modalComprobante" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
-        <div style="background:white; border-radius:16px; padding:1.5rem; width:460px; max-width:95vw;">
-            <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 4px;">🧾 Emitir comprobante electrónico</p>
-            <p style="font-size:12px; color:#94A3B8; margin:0 0 1.2rem;">{{ acto.numero_expediente }} — {{ acto.asunto }}</p>
-
-            <!-- Tipo comprobante -->
-            <div style="margin-bottom:1rem;">
-                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Tipo de comprobante</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <button @click="formComp.tipo_comprobante='03'; formComp.cliente_tipo_documento='1'"
-                        :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer',
-                            borderColor: formComp.tipo_comprobante==='03'?'#14B8A6':'#E2E8F0',
-                            background: formComp.tipo_comprobante==='03'?'#F0FDFA':'white',
-                            color: formComp.tipo_comprobante==='03'?'#0F766E':'#64748B'}">
-                        🧾 Boleta<br><span style="font-size:10px; font-weight:400;">Para personas naturales</span>
+        <div v-if="modalComprobante" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
+            <div style="background:white; border-radius:16px; padding:1.5rem; width:460px; max-width:95vw;">
+                <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 4px;">🧾 Emitir comprobante electrónico</p>
+                <p style="font-size:12px; color:#94A3B8; margin:0 0 1.2rem;">{{ acto.numero_expediente }} — {{ acto.asunto }}</p>
+                <div style="margin-bottom:1rem;">
+                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:600; text-transform:uppercase;">Tipo de comprobante</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <button @click="formComp.tipo_comprobante='03'; formComp.cliente_tipo_documento='1'"
+                            :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer',
+                                borderColor: formComp.tipo_comprobante==='03'?'#14B8A6':'#E2E8F0',
+                                background: formComp.tipo_comprobante==='03'?'#F0FDFA':'white',
+                                color: formComp.tipo_comprobante==='03'?'#0F766E':'#64748B'}">
+                            🧾 Boleta<br><span style="font-size:10px; font-weight:400;">Para personas naturales</span>
+                        </button>
+                        <button @click="formComp.tipo_comprobante='01'; formComp.cliente_tipo_documento='6'"
+                            :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer',
+                                borderColor: formComp.tipo_comprobante==='01'?'#6366F1':'#E2E8F0',
+                                background: formComp.tipo_comprobante==='01'?'#EEF2FF':'white',
+                                color: formComp.tipo_comprobante==='01'?'#4F46E5':'#64748B'}">
+                            📄 Factura<br><span style="font-size:10px; font-weight:400;">Para empresas con RUC</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
+                    <div>
+                        <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'RUC' : 'DNI' }} *</label>
+                        <input v-model="formComp.cliente_numero_documento" type="text"
+                            :placeholder="formComp.tipo_comprobante==='01' ? '20xxxxxxxxx' : '12345678'"
+                            :maxlength="formComp.tipo_comprobante==='01' ? 11 : 8"
+                            style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'Razón social' : 'Nombre completo' }} *</label>
+                        <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre o razón social"
+                            style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    </div>
+                    <div style="grid-column:1/-1;">
+                        <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Email (para envío)</label>
+                        <input v-model="formComp.cliente_email" type="email" placeholder="correo@ejemplo.com"
+                            style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    </div>
+                </div>
+                <div style="background:#F8FAFC; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                        <span style="font-size:12px; color:#64748B;">Subtotal</span>
+                        <span style="font-size:12px;">S/ {{ (Number(acto.monto_cobrar) / 1.18).toFixed(2) }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                        <span style="font-size:12px; color:#64748B;">IGV (18%)</span>
+                        <span style="font-size:12px;">S/ {{ (Number(acto.monto_cobrar) - Number(acto.monto_cobrar) / 1.18).toFixed(2) }}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; border-top:1px solid #E2E8F0; padding-top:6px; margin-top:4px;">
+                        <span style="font-size:14px; font-weight:700;">Total</span>
+                        <span style="font-size:16px; font-weight:800; color:#0F766E;">S/ {{ Number(acto.monto_cobrar).toFixed(2) }}</span>
+                    </div>
+                </div>
+                <div v-if="errorComp" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#991B1B;">
+                    ❌ {{ errorComp }}
+                </div>
+                <div v-if="pdfComp" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#166534;">
+                    ✅ Comprobante emitido correctamente.
+                    <a :href="pdfComp" target="_blank" style="font-weight:700; color:#0F766E; margin-left:6px;">📥 Descargar PDF</a>
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                    <button @click="modalComprobante=false; errorComp=''; pdfComp=''" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cerrar</button>
+                    <button @click="emitirComprobante" :disabled="emitiendo"
+                        style="padding:9px 20px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                        {{ emitiendo ? '⏳ Emitiendo...' : '🧾 Emitir a SUNAT' }}
                     </button>
-                    <button @click="formComp.tipo_comprobante='01'; formComp.cliente_tipo_documento='6'"
-                        :style="{padding:'10px', borderRadius:'8px', border:'2px solid', fontSize:'13px', fontWeight:'700', cursor:'pointer',
-                            borderColor: formComp.tipo_comprobante==='01'?'#6366F1':'#E2E8F0',
-                            background: formComp.tipo_comprobante==='01'?'#EEF2FF':'white',
-                            color: formComp.tipo_comprobante==='01'?'#4F46E5':'#64748B'}">
-                        📄 Factura<br><span style="font-size:10px; font-weight:400;">Para empresas con RUC</span>
-                    </button>
                 </div>
-            </div>
-
-            <!-- Datos cliente -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
-                <div>
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'RUC' : 'DNI' }} *</label>
-                    <input v-model="formComp.cliente_numero_documento" type="text"
-                        :placeholder="formComp.tipo_comprobante==='01' ? '20xxxxxxxxx' : '12345678'"
-                        :maxlength="formComp.tipo_comprobante==='01' ? 11 : 8"
-                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                </div>
-                <div>
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">{{ formComp.tipo_comprobante==='01' ? 'Razón social' : 'Nombre completo' }} *</label>
-                    <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre o razón social"
-                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                </div>
-                <div style="grid-column:1/-1;">
-                    <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Email (para envío)</label>
-                    <input v-model="formComp.cliente_email" type="email" placeholder="correo@ejemplo.com"
-                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                </div>
-            </div>
-
-            <!-- Resumen monto -->
-            <div style="background:#F8FAFC; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-                    <span style="font-size:12px; color:#64748B;">Subtotal</span>
-                    <span style="font-size:12px;">S/ {{ (Number(acto.monto_cobrar) / 1.18).toFixed(2) }}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
-                    <span style="font-size:12px; color:#64748B;">IGV (18%)</span>
-                    <span style="font-size:12px;">S/ {{ (Number(acto.monto_cobrar) - Number(acto.monto_cobrar) / 1.18).toFixed(2) }}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; border-top:1px solid #E2E8F0; padding-top:6px; margin-top:4px;">
-                    <span style="font-size:14px; font-weight:700;">Total</span>
-                    <span style="font-size:16px; font-weight:800; color:#0F766E;">S/ {{ Number(acto.monto_cobrar).toFixed(2) }}</span>
-                </div>
-            </div>
-
-            <!-- Error -->
-            <div v-if="errorComp" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#991B1B;">
-                ❌ {{ errorComp }}
-            </div>
-
-            <!-- Success -->
-            <div v-if="pdfComp" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px; margin-bottom:1rem; font-size:12px; color:#166534;">
-                ✅ Comprobante emitido correctamente.
-                <a :href="pdfComp" target="_blank" style="font-weight:700; color:#0F766E; margin-left:6px;">📥 Descargar PDF</a>
-            </div>
-
-            <div style="display:flex; gap:8px; justify-content:flex-end;">
-                <button @click="modalComprobante=false; errorComp=''; pdfComp=''" style="padding:9px 18px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer;">Cerrar</button>
-                <button @click="emitirComprobante" :disabled="emitiendo"
-                    style="padding:9px 20px; background:linear-gradient(135deg,#6366F1,#4F46E5); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
-                    {{ emitiendo ? '⏳ Emitiendo...' : '🧾 Emitir a SUNAT' }}
-                </button>
             </div>
         </div>
-    </div>
 
-    <!-- MODAL PAGO -->
+        <!-- MODAL PAGO -->
         <div v-if="modalPago" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; display:flex; align-items:center; justify-content:center;">
             <div style="background:white; border-radius:16px; padding:1.5rem; width:360px; max-width:95vw;">
                 <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0 0 1.2rem;">💰 Registrar pago</p>
@@ -790,7 +774,6 @@ function estiloPago(p) {
 
 function formatFecha(f) {
     if (!f) return '—'
-    // Manejar tanto fechas con y sin hora
     const fecha = f.includes('T') || f.includes(' ') ? new Date(f) : new Date(f + 'T12:00:00')
     if (isNaN(fecha)) return '—'
     return fecha.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' })
