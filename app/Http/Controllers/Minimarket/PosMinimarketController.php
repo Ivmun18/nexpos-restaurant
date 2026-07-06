@@ -373,20 +373,22 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         $data = $response->json();
         \Log::info('ApiSunat minimarket response venta ' . $venta->id . ': ' . json_encode($data));
 
-        $aceptada = $response->successful() && (
-            isset($data['sunatResponse']) ||
-            (isset($data['pdf']) && isset($data['documentId']))
-        );
+        $aceptada  = $response->successful() && isset($data['sunatResponse']);
+        $pendiente = $response->successful() && !$aceptada && isset($data['pdf']) && isset($data['documentId']);
+        $rechazada = !$aceptada && !$pendiente;
 
         $pdfUrl = $data['sunatResponse']['enlace_del_pdf']
             ?? $data['pdf']['80mm']
             ?? $data['pdf']['A4']
             ?? null;
 
+        $estadoSunat = $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado');
+        $estadoVenta = $aceptada ? 'aceptado' : 'pendiente';
+
         $venta->update([
             'nubefact_id'     => $pdfUrl,
-            'nubefact_estado' => $aceptada ? 'aceptado' : 'rechazado',
-            'estado'          => $aceptada ? 'aceptado' : 'pendiente',
+            'nubefact_estado' => $estadoSunat,
+            'estado'          => $estadoVenta,
             'observaciones'   => json_encode($data),
         ]);
     } catch (\Exception $e) {
