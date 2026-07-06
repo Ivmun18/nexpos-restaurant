@@ -528,7 +528,27 @@
                                 </div>
                             </div>
 
-                            <!-- BOTÓN COBRAR -->
+                            <!-- ADELANTO -->
+                            <div v-if="expedienteSeleccionado.monto_pagado < expedienteSeleccionado.monto_cobrar"
+                                style="border:1px solid #FDE68A; border-radius:10px; padding:12px; margin-bottom:1rem; background:#FFFBEB;">
+                                <p style="font-size:11px; font-weight:700; color:#92400E; margin:0 0 8px; text-transform:uppercase;">📝 Registrar adelanto</p>
+                                <div style="display:flex; gap:8px; align-items:end;">
+                                    <div style="flex:1;">
+                                        <label style="font-size:10px; color:#64748B; display:block; margin-bottom:3px;">Monto adelanto S/</label>
+                                        <input v-model="montoAdelanto" type="number" step="0.01" min="0.01" placeholder="0.00"
+                                            style="width:100%; padding:9px 12px; border:1px solid #FDE68A; border-radius:8px; font-size:14px; font-weight:700; outline:none; box-sizing:border-box; text-align:center;" />
+                                    </div>
+                                    <button @click="registrarAdelanto" :disabled="!montoAdelanto || procesando"
+                                        style="padding:9px 16px; background:#F59E0B; color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                        💵 Adelantar
+                                    </button>
+                                </div>
+                                <div v-if="pdfAdelanto" style="margin-top:8px; background:#F0FDF4; border-radius:6px; padding:6px 10px; font-size:12px; color:#166534;">
+                                    ✅ Adelanto registrado. <a :href="pdfAdelanto" target="_blank" style="font-weight:700; color:#0F766E;">📥 Comprobante</a>
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN COBRAR TOTAL -->
                             <button @click="confirmarCobro" :disabled="!itemsExp.length || procesando"
                                 :style="{
                                     width:'100%', padding:'16px', border:'none', borderRadius:'12px',
@@ -666,6 +686,53 @@ const props = defineProps({
 const busqueda               = ref('')
 const expedienteSeleccionado = ref(null)
 const procesando             = ref(false)
+const montoAdelanto          = ref('')
+const pdfAdelanto            = ref('')
+
+async function registrarAdelanto() {
+    if (!montoAdelanto.value || !expedienteSeleccionado.value || procesando.value) return
+    procesando.value = true
+    pdfAdelanto.value = ''
+    try {
+        const csrf = await fetch('/sanctum/csrf-cookie').then(() => document.querySelector('meta[name="csrf-token"]')?.content)
+        const actoId = expedienteSeleccionado.value.id
+        const res = await fetch('/notaria/caja/' + actoId + '/cobrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({
+                monto:                    Number(montoAdelanto.value),
+                metodo_pago:              formCobro.value.metodo_pago,
+                tipo:                     'adelanto',
+                referencia:               formCobro.value.referencia || '',
+                tipo_comprobante:         '03',
+                cliente_tipo_documento:   '0',
+                cliente_numero_documento: '00000000',
+                cliente_nombre:           'CLIENTES VARIOS',
+                boleta_simple:            true,
+                items: [{
+                    tipo_servicio: 'Adelanto - ' + (expedienteSeleccionado.value.asunto || 'Servicio notarial'),
+                    descripcion:   'Adelanto - ' + (expedienteSeleccionado.value.asunto || 'Servicio notarial'),
+                    cantidad: 1,
+                    precio_unitario: Number(montoAdelanto.value),
+                    monto: Number(montoAdelanto.value),
+                }],
+                monto_total: Number(montoAdelanto.value),
+            })
+        })
+        if (res.status === 419) { alert('Sesión expirada'); window.location.reload(); return }
+        const data = await res.json()
+        if (data.pdf) pdfAdelanto.value = data.pdf
+        if (data.pdf) window.open(data.pdf, '_blank')
+        if (data.success || data.mensaje) {
+            montoAdelanto.value = ''
+            router.reload({ only: ['pendientes', 'resumenCaja'] })
+        }
+        if (data.mensaje) alert(data.mensaje)
+    } catch(e) {
+        alert('Error: ' + e.message)
+    }
+    procesando.value = false
+}
 const modalCerrar            = ref(false)
 const modalServicioRapido    = ref(false)
 const procesandoRapido       = ref(false)
