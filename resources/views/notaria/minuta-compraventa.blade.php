@@ -116,13 +116,81 @@ la recepción de obras de la habilitación urbana y/o que apruebe su independiza
 contados a partir de la fecha de esta minuta.</p>
 @endif
 
-<p class="parrafo"><span class="clausula">{{ !empty($d['es_bien_futuro']) ? 'NOVENO' : 'QUINTO' }}:</span>
-LA VENDEDORA declara que sobre el lote objeto de esta minuta, no pesa ningún gravamen, carga, medida judicial ni extrajudicial alguna,
-obligándose en todo caso al saneamiento en los términos más amplios previstos en la ley.</p>
+@if(!empty($d['es_bien_futuro']))
+<p class="parrafo"><span class="clausula">NOVENO:</span> Queda entendido que, aun cuando no se haya emitido la autorización municipal referida en la cláusula séptima,
+LA COMPRADORA puede asumir la posesión del lote objeto de esta minuta, pues le ha sido señalado la ubicación física del lote objeto de compraventa,
+debiendo en tal caso comunicar, por escrito, de dicha circunstancia al vendedor. Sin embargo, dicha posesión no deberá obstaculizar la obtención de la aprobación
+del proyecto de habilitación urbana, en cuyo supuesto, deberán devolver dicha posesión al vendedor de manera incondicional, solo para fines de dicha habilitación urbana,
+quedando incólume el derecho de propiedad transferida a favor de LA COMPRADORA.</p>
 
-<p class="parrafo"><span class="clausula">{{ !empty($d['es_bien_futuro']) ? 'DÉCIMO' : 'SEXTO' }}:</span>
-Para efectos de cualquier controversia que se genere con motivo de la celebración y ejecución de este contrato, las partes se someten a la competencia territorial
-de los jueces y tribunales de la ciudad de {{ $d['ciudad'] ?? 'Huánuco' }}, renunciando a los jueces de sus respectivos domicilios.</p>
+<p class="parrafo"><span class="clausula">DÉCIMO:</span> Una vez que se haya cumplido la condición suspensiva, LA COMPRADORA deberá declarar la transferencia
+contenida en este documento por ante la municipalidad distrital de {{ $d['municipalidad_distrito'] ?? 'Amarilis' }} – {{ $d['ciudad'] ?? 'Huánuco' }},
+para los fines del pago del impuesto predial y demás impuestos que afecten al predio sub materia, así como inscribir esta compra venta ante el registro de predios
+de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}.
+
+No obstante, correrá de cargo de LA COMPRADORA el pago del impuesto predial y demás arbitrios a partir de la fecha de esta minuta, siendo que, hasta la fecha
+de esta minuta la vendedora ha cumplido con el pago de dicho impuesto y demás arbitrios municipales.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO PRIMERA:</span> LA VENDEDORA declara que sobre el lote objeto de esta minuta, no pesa ningún gravamen, carga,
+medida judicial ni extrajudicial alguna, ni en general, ningún acto o contrato limitativo de sus derechos de dominio y libre disposición, obligándose en todo caso
+al saneamiento en los términos más amplios previstos en la ley.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO SEGUNDA:</span> LA VENDEDORA se obliga a:</p>
+<p class="parrafo">A) Inscribir el predio en su área matriz descrito en la cláusula primera por ante el registro de predios de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}.</p>
+<p class="parrafo">B) Continuar y culminar el trámite de habilitación urbana referida en la cláusula segunda de este documento, con la debida diligencia, presentando y/o
+subsanando los documentos y demás requerimientos de la autoridad municipal en los plazos establecidos por la ley o por la autoridad municipal, a fin de obtener
+la autorización municipal de su objeto dentro del plazo previsto en la cláusula octava de este documento.</p>
+<p class="parrafo">C) Solicitar la inscripción de la resolución o autorización municipal que obtenga, relativo al proyecto de habilitación urbana, por ante el registro
+de predios de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}, dentro del plazo de 15 días de haberse obtenido dicha autorización.</p>
+<p class="parrafo">D) Entregar la posesión del lote objeto de este documento a LA COMPRADORA luego de la fecha que llegue a tener existencia legal, si hasta dicho
+momento EL VENDEDOR no hubiere asumido dicha posesión.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO TERCERA:</span> En el supuesto que una de las partes no cumpla con las obligaciones que se derivan de este contrato,
+la otra parte podrá, alternativamente, exigir el cumplimiento de la obligación de su contraparte en los términos contenidos en este contrato o resolver el contrato.
+En este último supuesto, la parte que desea resolverla cursará previamente comunicación por conducto notarial a la otra parte, requiriendo el cumplimiento de la
+obligación incumplida en el plazo de 15 días de recibida dicha comunicación. Si persistiera dicho incumplimiento dará por resuelto este contrato.
+
+En el caso que este contrato quede resuelto, la parte que la causó restituirá, de manera incondicional, a su contraparte las prestaciones que hubiere efectuado.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO CUARTA:</span> Las partes acuerdan que todos los gastos y tributos que se originen a la celebración, formalización
+y ejecución del presente contrato serán asumidos por LA COMPRADORA.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO QUINTA:</span> Para efectos de cualquier controversia que se genere con motivo de la celebración y ejecución de este contrato,
+las partes se someten a la competencia territorial de los jueces y tribunales de la ciudad de {{ $d['ciudad'] ?? 'Huánuco' }},
+renunciando a los jueces de sus respectivos domicilios.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO SEXTA:</span> Para la validez de todas las comunicaciones y notificaciones a las partes, con motivo de la ejecución
+de este contrato, ambas señalan como sus respectivos domicilios los indicados en la introducción de este documento. El cambio de domicilio de cualquiera de las partes
+surtirá efecto desde la fecha de comunicación de dicho cambio a la otra parte, por vía notarial.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO SÉPTIMA:</span> En todo lo no previsto por las partes en el presente contrato, ambas se someten a lo establecido
+por las normas del código civil y demás del sistema jurídico que resulten aplicables.</p>
+
+@else
+
+<p class="parrafo"><span class="clausula">QUINTO:</span> Las partes declaran que entre el valor del inmueble y el precio pactado existe la más justa y perfecta
+equivalencia, por lo que de haber alguna diferencia de más o de menos, que en el presente no advierten, se hacen mutua gracia y recíproca donación, renunciando
+a cualquier acción que tenga por objeto invalidar los efectos del presente contrato.</p>
+
+<p class="parrafo"><span class="clausula">SEXTO:</span> LA VENDEDORA declara que sobre el lote objeto de esta minuta, no pesa ningún gravamen, carga,
+medida judicial ni extrajudicial alguna, ni en general, ningún acto o contrato limitativo de sus derechos de dominio y libre disposición, obligándose en todo caso
+al saneamiento en los términos más amplios previstos en la ley.</p>
+
+<p class="parrafo"><span class="clausula">SÉPTIMO:</span> Las partes acuerdan que todos los gastos y tributos que se originen a la celebración, formalización
+y ejecución del presente contrato serán asumidos por LA COMPRADORA.</p>
+
+<p class="parrafo"><span class="clausula">OCTAVO:</span> Para efectos de cualquier controversia que se genere con motivo de la celebración y ejecución de este contrato,
+las partes se someten a la competencia territorial de los jueces y tribunales de la ciudad de {{ $d['ciudad'] ?? 'Huánuco' }},
+renunciando a los jueces de sus respectivos domicilios.</p>
+
+<p class="parrafo"><span class="clausula">NOVENO:</span> Para la validez de todas las comunicaciones y notificaciones a las partes, con motivo de la ejecución
+de este contrato, ambas señalan como sus respectivos domicilios los indicados en la introducción de este documento. El cambio de domicilio de cualquiera de las partes
+surtirá efecto desde la fecha de comunicación de dicho cambio a la otra parte, por vía notarial.</p>
+
+<p class="parrafo"><span class="clausula">DÉCIMO:</span> En todo lo no previsto por las partes en el presente contrato, ambas se someten a lo establecido
+por las normas del código civil y demás del sistema jurídico que resulten aplicables.</p>
+
+@endif
 
 <p class="parrafo">Sírvase Ud. Señor Notario, agregar lo que fuera de ley.</p>
 
