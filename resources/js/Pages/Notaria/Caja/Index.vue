@@ -378,7 +378,7 @@
                                 <div v-if="expedienteSeleccionado.pagos?.length" style="margin-bottom:8px;">
                                     <span style="font-size:12px; font-weight:600; color:#64748B;">Pagos registrados:</span>
                                     <div v-for="p in expedienteSeleccionado.pagos" :key="p.id" style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; border-bottom:1px dashed #F1F5F9;">
-                                        <span style="color:#64748B;">{{ p.tipo === 'adelanto' ? '📝 Adelanto' : '💰 Pago' }} ({{ p.metodo_pago }})</span>
+                                        <span style="color:#64748B;">{{ p.tipo === 'adelanto' ? '📝 Adelanto' : '💰 Pago' }} ({{ p.metodo_pago }}) — {{ p.created_at ? new Date(p.created_at).toLocaleDateString('es-PE') : '' }}</span>
                                         <span style="font-weight:600; color:#10B981;">S/ {{ Number(p.monto).toFixed(2) }}</span>
                                     </div>
                                 </div>
