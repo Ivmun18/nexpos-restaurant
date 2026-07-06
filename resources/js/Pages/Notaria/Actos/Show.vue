@@ -67,7 +67,7 @@
                 </div>
 
                 <!-- REQUISITOS / CHECKLIST DOCUMENTOS -->
-                <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+                <div v-if="acto.tipo_acto !== 'escritura_publica'" style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                         <div>
                             <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Requisitos y documentos</p>
@@ -122,7 +122,7 @@
                 </div>
 
                 <!-- PLANTILLA DATOS ESPECÍFICOS -->
-                <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
+                <div v-if="acto.tipo_acto !== 'escritura_publica'" style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                         <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">📋 Datos del {{ labelTipo(acto.tipo_acto) }}</p>
                         <button @click="guardandoDatos ? null : guardarDatos()" style="padding:5px 14px; background:#14B8A6; color:white; border:none; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;">
