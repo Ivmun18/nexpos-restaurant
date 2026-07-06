@@ -828,10 +828,9 @@ const buscarClienteComp = async () => {
     buscandoComp.value = true
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
-        const res = await fetch('/notaria/caja/buscar-cliente', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({ documento: doc })
+        const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
+            method: 'GET',
+            headers: { 'X-CSRF-TOKEN': csrf }
         })
         const data = await res.json()
         if (data.nombre) compNombre.value = data.nombre
