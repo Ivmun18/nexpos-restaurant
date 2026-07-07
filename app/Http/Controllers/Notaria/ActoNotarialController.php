@@ -453,7 +453,7 @@ class ActoNotarialController extends Controller
             'vendedor_razon_social'      => $empresa->minuta_vendedor_razon_social ?? $empresa->razon_social,
             'vendedor_ruc'               => $empresa->minuta_vendedor_ruc ?? $empresa->ruc,
             'vendedor_domicilio'         => $empresa->minuta_vendedor_domicilio ?? $empresa->direccion ?? '',
-            'vendedor_partida_registral' => $empresa->minuta_vendedor_partida_registral ?? '',
+            'vendedor_partida_registral' => $empresa->minuta_vendedor_partida ?? '',
             'representante_cargo'        => $empresa->minuta_representante_cargo ?? 'Gerente General',
             'representante_nombre'       => $empresa->minuta_representante_nombre ?? '',
             'representante_dni'          => $empresa->minuta_representante_dni ?? '',
