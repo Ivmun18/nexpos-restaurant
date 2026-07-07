@@ -915,6 +915,7 @@ Route::middleware(['auth', 'notaria.rol'])->prefix('notaria')->group(function ()
     Route::post('/actos/{acto}/estado', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'cambiarEstado'])->name('notaria.actos.estado');
     Route::post('/actos/{acto}/pago', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'registrarPago'])->name('notaria.actos.pago');
     Route::post('/actos/{acto}/minuta-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarMinutaCompraventa'])->name('notaria.actos.minuta');
+    Route::post('/actos/{acto}/testimonio-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarTestimonioCompraventa'])->name('notaria.actos.testimonio');
     Route::post('/actos/crear-con-minuta', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'crearConMinuta'])->name('notaria.actos.crear-minuta');
 });
 
@@ -1242,3 +1243,4 @@ Route::get('/portal/{token}', [\App\Http\Controllers\Odontologia\PortalPacienteC
 Route::get('/reservar/{slug}', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'show'])->name('reserva.publica');
 Route::get('/reservar/{slug}/horas', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'horas']);
 Route::post('/reservar/{slug}/agendar', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'agendar']);
+Route::post('/api/qz-sign', [App\Http\Controllers\QzSignController::class, 'sign']);

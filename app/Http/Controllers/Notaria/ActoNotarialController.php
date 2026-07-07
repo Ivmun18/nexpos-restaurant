@@ -412,4 +412,106 @@ class ActoNotarialController extends Controller
         return $pdf->download($filename);
     }
 
+    public function generarTestimonioCompraventa(Request $request, ActoNotarial $acto)
+    {
+        $empresa = auth()->user()->empresa;
+        $numeroExpediente = $acto->numero_expediente;
+
+        // Cargar datos guardados del acto
+        $datosMapa = $acto->datos()->pluck('valor', 'campo')->toArray();
+        $datos = array_merge($datosMapa, $request->all());
+
+        // Guardar datos si se solicita
+        if (!empty($request->guardar_datos)) {
+            foreach ($request->except(['guardar_datos', '_token']) as $campo => $valor) {
+                $acto->datos()->updateOrCreate(['campo' => $campo], ['valor' => is_array($valor) ? json_encode($valor) : (string)$valor]);
+            }
+        }
+
+        $d = [
+            'num_instrumento'            => $datos['num_instrumento'] ?? '',
+            'num_minuta'                 => $datos['num_minuta'] ?? '',
+            'fecha_letras'               => $datos['fecha_letras'] ?? '',
+            'fecha_minuta'               => $datos['fecha_minuta'] ?? now()->format('d \d\e F \d\e Y'),
+            'fecha_firma'                => $datos['fecha_firma'] ?? '',
+            'resolucion_ministerial'     => $datos['resolucion_ministerial'] ?? ($empresa->minuta_resolucion_ministerial ?? ''),
+            'fecha_resolucion'           => $datos['fecha_resolucion'] ?? ($empresa->minuta_fecha_resolucion ?? ''),
+            'registro_notario'           => $datos['registro_notario'] ?? ($empresa->minuta_registro_notario ?? ''),
+            'colegio_notarios'           => $datos['colegio_notarios'] ?? ($empresa->minuta_colegio_notarios ?? 'Huánuco y Pasco'),
+            'abogado_nombre'             => $datos['abogado_nombre'] ?? '',
+            'abogado_cau'                => $datos['abogado_cau'] ?? '',
+            'fojas_inicio'               => $datos['fojas_inicio'] ?? '',
+            'fojas_fin'                  => $datos['fojas_fin'] ?? '',
+            'papel_serie_inicio'         => $datos['papel_serie_inicio'] ?? '',
+            'papel_serie_fin'            => $datos['papel_serie_fin'] ?? '',
+            'medios_pago_descripcion'    => $datos['medios_pago_descripcion'] ?? '',
+            'medios_pago_tipo'           => $datos['medios_pago_tipo'] ?? 'depósito bancario',
+            'alcabala_monto'             => $datos['alcabala_monto'] ?? '',
+            'alcabala_fecha'             => $datos['alcabala_fecha'] ?? '',
+            'alcabala_recibo'            => $datos['alcabala_recibo'] ?? '',
+            'vendedor_tipo'              => $empresa->minuta_vendedor_tipo ?? 'empresa',
+            'vendedor_razon_social'      => $empresa->minuta_vendedor_razon_social ?? $empresa->razon_social,
+            'vendedor_ruc'               => $empresa->minuta_vendedor_ruc ?? $empresa->ruc,
+            'vendedor_domicilio'         => $empresa->minuta_vendedor_domicilio ?? $empresa->direccion ?? '',
+            'vendedor_partida_registral' => $empresa->minuta_vendedor_partida_registral ?? '',
+            'representante_cargo'        => $empresa->minuta_representante_cargo ?? 'Gerente General',
+            'representante_nombre'       => $empresa->minuta_representante_nombre ?? '',
+            'representante_dni'          => $empresa->minuta_representante_dni ?? '',
+            'representante_estado_civil' => $empresa->minuta_representante_estado_civil ?? 'soltero',
+            'representante_profesion'    => $empresa->minuta_representante_profesion ?? '',
+            'representante_domicilio'    => $empresa->minuta_representante_domicilio ?? '',
+            'comprador_nombre'           => $datos['comprador_nombre'] ?? '',
+            'comprador_dni'              => $datos['comprador_dni'] ?? '',
+            'comprador_estado_civil'     => $datos['comprador_estado_civil'] ?? 'soltero',
+            'comprador_profesion'        => $datos['comprador_profesion'] ?? '',
+            'comprador_domicilio'        => $datos['comprador_domicilio'] ?? '',
+            'ciudad'                     => $empresa->minuta_ciudad ?? 'Huánuco',
+            'predio_descripcion'         => $datos['predio_descripcion'] ?? '',
+            'predio_partida'             => $datos['predio_partida'] ?? '',
+            'proyecto_descripcion'       => $datos['proyecto_descripcion'] ?? '',
+            'proyecto_municipalidad'     => $datos['proyecto_municipalidad'] ?? '',
+            'proyecto_expediente'        => $datos['proyecto_expediente'] ?? '',
+            'proyecto_fecha'             => $datos['proyecto_fecha'] ?? '',
+            'proyecto_arquitecto'        => $datos['proyecto_arquitecto'] ?? '',
+            'plazo_anos'                 => $datos['plazo_anos'] ?? 'tres',
+            'lote_descripcion'           => $datos['lote_descripcion'] ?? '',
+            'lote_area'                  => $datos['lote_area'] ?? '',
+            'lote_area_letras'           => $datos['lote_area_letras'] ?? '',
+            'lindero_frente'             => $datos['lindero_frente'] ?? '',
+            'medida_frente'              => $datos['medida_frente'] ?? '',
+            'lindero_derecha'            => $datos['lindero_derecha'] ?? '',
+            'medida_derecha'             => $datos['medida_derecha'] ?? '',
+            'lindero_izquierda'          => $datos['lindero_izquierda'] ?? '',
+            'medida_izquierda'           => $datos['medida_izquierda'] ?? '',
+            'lindero_fondo'              => $datos['lindero_fondo'] ?? '',
+            'medida_fondo'               => $datos['medida_fondo'] ?? '',
+            'precio_total'               => $datos['precio_total'] ?? $acto->monto_cobrar,
+            'precio_total_letras'        => $datos['precio_total_letras'] ?? '',
+            'forma_pago_detalle'         => $datos['forma_pago_detalle'] ?? '',
+        ];
+
+        $html = view('notaria.testimonio-compraventa', [
+            'acto'    => $acto,
+            'empresa' => $empresa,
+            'd'       => $d,
+        ])->render();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'defaultFont'      => 'Verdana',
+                'isRemoteEnabled'  => false,
+                'dpi'              => 96,
+                'margin_top'       => 113.4,
+                'margin_right'     => 85.05,
+                'margin_bottom'    => 70.87,
+                'margin_left'      => 85.05,
+            ]);
+
+        $filename = 'Testimonio-CompraVenta-' . $numeroExpediente . '.pdf';
+        return $pdf->download($filename);
+    }
+
 }
+
+    // ESTE METODO SE AGREGO FUERA DE LA CLASE - MOVER MANUALMENTE SI ES NECESARIO
