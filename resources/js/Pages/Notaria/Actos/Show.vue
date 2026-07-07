@@ -536,7 +536,7 @@
                 <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Instrumento</label><input v-model="formTestimonio.num_instrumento" type="text" placeholder="0680" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                 <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Minuta</label><input v-model="formTestimonio.num_minuta" type="text" placeholder="0602" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                 <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha en letras *</label><input v-model="formTestimonio.fecha_letras" type="text" placeholder="DIECIOCHO DÍAS DEL MES DE MAYO DE DOS MIL VEINTISÉIS" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha firma (dd-mm-aaaa)</label><input v-model="formTestimonio.fecha_firma" type="text" placeholder="18-05-2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha firma (dd-mm-aaaa)</label><input v-model="formTestimonio.fecha_firma" @input="onFechaFirmaChange" type="text" placeholder="18/05/2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                 <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha de la minuta</label><input v-model="formTestimonio.fecha_minuta" type="text" placeholder="18 de mayo de 2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                 <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Resolución Ministerial</label><input v-model="formTestimonio.resolucion_ministerial" type="text" placeholder="0044-2025-JUS" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                 <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha resolución</label><input v-model="formTestimonio.fecha_resolucion" type="text" placeholder="06 DE FEBRERO DEL 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
@@ -578,6 +578,56 @@ const props = defineProps({
 
 const modalMinuta     = ref(false)
 const modalTestimonio = ref(false)
+
+function fechaALetras(fecha) {
+    if (!fecha) return ''
+    const partes = fecha.split('/')
+    if (partes.length !== 3) return ''
+    const dia = parseInt(partes[0])
+    const mes = parseInt(partes[1]) - 1
+    const anio = parseInt(partes[2])
+    if (isNaN(dia) || isNaN(mes) || isNaN(anio)) return ''
+    const diasArr = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ',
+        'ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISEIS','DIECISIETE','DIECIOCHO','DIECINUEVE','VEINTE',
+        'VEINTIUN','VEINTIDOS','VEINTITRES','VEINTICUATRO','VEINTICINCO','VEINTISEIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE','TREINTA','TREINTA Y UN']
+    const mesesArr = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
+    function n2l(n) {
+        if (n<=0) return ''
+        if (n===1) return 'UN'; if (n===2) return 'DOS'; if (n===3) return 'TRES'
+        if (n===4) return 'CUATRO'; if (n===5) return 'CINCO'; if (n===6) return 'SEIS'
+        if (n===7) return 'SIETE'; if (n===8) return 'OCHO'; if (n===9) return 'NUEVE'
+        if (n===10) return 'DIEZ'; if (n===11) return 'ONCE'; if (n===12) return 'DOCE'
+        if (n===13) return 'TRECE'; if (n===14) return 'CATORCE'; if (n===15) return 'QUINCE'
+        if (n===16) return 'DIECISEIS'; if (n===17) return 'DIECISIETE'; if (n===18) return 'DIECIOCHO'
+        if (n===19) return 'DIECINUEVE'; if (n===20) return 'VEINTE'
+        if (n<30) return 'VEINTI'+n2l(n-20).toLowerCase()
+        if (n===30) return 'TREINTA'; if (n<40) return 'TREINTA Y '+n2l(n-30)
+        if (n===40) return 'CUARENTA'; if (n<50) return 'CUARENTA Y '+n2l(n-40)
+        if (n===50) return 'CINCUENTA'; if (n<60) return 'CINCUENTA Y '+n2l(n-50)
+        if (n===60) return 'SESENTA'; if (n<70) return 'SESENTA Y '+n2l(n-60)
+        if (n===70) return 'SETENTA'; if (n<80) return 'SETENTA Y '+n2l(n-70)
+        if (n===80) return 'OCHENTA'; if (n<90) return 'OCHENTA Y '+n2l(n-80)
+        if (n===90) return 'NOVENTA'; if (n<100) return 'NOVENTA Y '+n2l(n-90)
+        if (n===100) return 'CIEN'; if (n<200) return 'CIENTO '+n2l(n-100)
+        if (n===200) return 'DOSCIENTOS'; if (n<300) return 'DOSCIENTOS '+n2l(n-200)
+        if (n===300) return 'TRESCIENTOS'; if (n<400) return 'TRESCIENTOS '+n2l(n-300)
+        if (n===400) return 'CUATROCIENTOS'; if (n<500) return 'CUATROCIENTOS '+n2l(n-400)
+        if (n===500) return 'QUINIENTOS'; if (n<600) return 'QUINIENTOS '+n2l(n-500)
+        if (n===600) return 'SEISCIENTOS'; if (n<700) return 'SEISCIENTOS '+n2l(n-600)
+        if (n===700) return 'SETECIENTOS'; if (n<800) return 'SETECIENTOS '+n2l(n-700)
+        if (n===800) return 'OCHOCIENTOS'; if (n<900) return 'OCHOCIENTOS '+n2l(n-800)
+        if (n===900) return 'NOVECIENTOS'; if (n<1000) return 'NOVECIENTOS '+n2l(n-900)
+        if (n===1000) return 'MIL'; if (n<2000) return 'MIL '+n2l(n-1000)
+        return n2l(Math.floor(n/1000))+' MIL'+(n%1000?' '+n2l(n%1000):'')
+    }
+    if (!diasArr[dia] || !mesesArr[mes]) return ''
+    return diasArr[dia]+' DÍAS DEL MES DE '+mesesArr[mes]+' DE '+n2l(anio)
+}
+
+function onFechaFirmaChange() {
+    const letras = fechaALetras(formTestimonio.value.fecha_firma)
+    if (letras) formTestimonio.value.fecha_letras = letras
+}
 
 function abrirModalTestimonio() {
     const d = props.datos || {}
