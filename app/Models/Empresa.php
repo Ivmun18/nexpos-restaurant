@@ -67,6 +67,12 @@ class Empresa extends Model
         'ultimo_num_boleta',
         'ultimo_num_factura',
         'ultimo_num_nota_credito',
+        'minuta_notario_nombre',
+        'minuta_notario_dni',
+        'minuta_resolucion_ministerial',
+        'minuta_fecha_resolucion',
+        'minuta_registro_notario',
+        'minuta_colegio_notarios',
     ];
 
     protected $casts = [
