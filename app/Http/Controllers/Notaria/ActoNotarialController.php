@@ -257,6 +257,21 @@ class ActoNotarialController extends Controller
 
         return back()->with('success', 'Pago de S/ ' . $request->monto . ' registrado.');
     }
+    public function generarDocumento(Request \$request, ActoNotarial \$acto, string \$tipo)
+    {
+        \$metodos = [
+            'minuta-compraventa'    => 'generarMinutaCompraventa',
+            'testimonio-compraventa'=> 'generarTestimonioCompraventa',
+            'parte-compraventa'     => 'generarParteCompraventa',
+        ];
+
+        if (!isset(\$metodos[\$tipo])) {
+            return response()->json(['error' => 'Tipo de documento no válido'], 404);
+        }
+
+        return \$this->{\$metodos[\$tipo]}(\$request, \$acto);
+    }
+
     public function generarMinutaCompraventa(Request $request, ActoNotarial $acto)
     {
         $empresa = auth()->user()->empresa;
