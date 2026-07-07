@@ -600,7 +600,7 @@ function fechaALetras(fecha) {
         if (n===13) return 'TRECE'; if (n===14) return 'CATORCE'; if (n===15) return 'QUINCE'
         if (n===16) return 'DIECISEIS'; if (n===17) return 'DIECISIETE'; if (n===18) return 'DIECIOCHO'
         if (n===19) return 'DIECINUEVE'; if (n===20) return 'VEINTE'
-        if (n<30) return 'VEINTI'+n2l(n-20).toLowerCase()
+        if (n===21) return 'VEINTIUN'; if (n===22) return 'VEINTIDOS'; if (n===23) return 'VEINTITRES'; if (n===24) return 'VEINTICUATRO'; if (n===25) return 'VEINTICINCO'; if (n===26) return 'VEINTISEIS'; if (n===27) return 'VEINTISIETE'; if (n===28) return 'VEINTIOCHO'; if (n===29) return 'VEINTINUEVE'
         if (n===30) return 'TREINTA'; if (n<40) return 'TREINTA Y '+n2l(n-30)
         if (n===40) return 'CUARENTA'; if (n<50) return 'CUARENTA Y '+n2l(n-40)
         if (n===50) return 'CINCUENTA'; if (n<60) return 'CINCUENTA Y '+n2l(n-50)
