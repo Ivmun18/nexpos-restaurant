@@ -241,7 +241,51 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+
+const configurarQZ = () => {
+    qz.security.setCertificatePromise((resolve) => {
+        fetch('/qz-certificate.pem').then(r => r.text()).then(resolve)
+    })
+    qz.security.setSignatureAlgorithm('SHA512')
+    qz.security.setSignaturePromise((toSign) => {
+        return (resolve, reject) => {
+            fetch('/api/qz-sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
+                body: JSON.stringify({ message: toSign })
+            }).then(r => r.text()).then(resolve).catch(reject)
+        }
+    })
+}
+
+const abrirGaveta = () => {
+    if (typeof qz === 'undefined') { console.warn('QZ no cargado'); return }
+    configurarQZ()
+    const doImprimir = () => {
+        qz.printers.find('POSPrinter POS80').then(printer => {
+            console.log('Impresora encontrada:', printer)
+            const config = qz.configs.create(printer)
+            const data = [{ type: 'raw', format: 'command', data: '\x1B\x70\x00\x40\xFF' }]
+            return qz.print(config, data)
+        }).then(() => console.log('Comando gaveta enviado OK'))
+        .catch(err => console.warn('Gaveta QZ error:', err))
+    }
+    if (qz.websocket.isActive()) {
+        doImprimir()
+    } else {
+        qz.websocket.connect().then(doImprimir).catch(err => console.warn('Connect error:', err))
+    }
+}
+
+onMounted(() => {
+    if (!document.getElementById('qz-script')) {
+        const s = document.createElement('script')
+        s.id = 'qz-script'
+        s.src = 'https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js'
+        document.head.appendChild(s)
+    }
+})
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -428,6 +472,7 @@ const confirmarCobro = () => {
             clienteRazonSocial.value = ''
             clienteEmail.value   = ''
             mostrarModalCobro.value = false
+            abrirGaveta()
         },
         onError: () => { procesando.value = false }
     })

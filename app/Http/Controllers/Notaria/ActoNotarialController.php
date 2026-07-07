@@ -108,6 +108,32 @@ class ActoNotarialController extends Controller
         return back()->with('success', 'Expediente ' . $acto->numero_expediente . ' creado correctamente.');
     }
 
+    public function editar(Request $request, ActoNotarial $acto)
+    {
+        $acto->update([
+            'asunto'       => $request->asunto,
+            'fecha_ingreso'=> $request->fecha_ingreso,
+            'fecha_entrega'=> $request->fecha_entrega ?: null,
+            'monto_cobrar' => $request->monto_cobrar,
+            'observaciones'=> $request->observaciones,
+        ]);
+
+        if ($request->has('datos') && is_array($request->datos)) {
+            ActoDato::where('acto_id', $acto->id)->delete();
+            foreach ($request->datos as $campo => $valor) {
+                if (!is_null($valor) && $valor !== '') {
+                    ActoDato::create([
+                        'acto_id' => $acto->id,
+                        'campo'   => $campo,
+                        'valor'   => $valor,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     public function show(ActoNotarial $acto)
     {
         $acto->load(['cliente', 'usuario', 'documentos.usuario', 'seguimientos.usuario', 'datos', 'requisitos.user', 'partes']);
@@ -274,6 +300,7 @@ class ActoNotarialController extends Controller
 
     public function generarMinutaCompraventa(Request $request, ActoNotarial $acto)
     {
+        $acto->load('datos');
         $empresa = auth()->user()->empresa;
 
         // Datos del formulario
@@ -291,11 +318,32 @@ class ActoNotarialController extends Controller
             }
         }
 
+        // Combinar datos del formulario + datos guardados en acto_datos
+        $datosMapa = $acto->datos->pluck('valor', 'campo')->toArray();
+        $vendedor = [
+            'vendedor_tipo'              => $empresa->minuta_vendedor_tipo ?? 'empresa',
+            'vendedor_razon_social'      => $empresa->minuta_vendedor_razon_social ?? '',
+            'vendedor_ruc'               => $empresa->minuta_vendedor_ruc ?? '',
+            'vendedor_domicilio'         => $empresa->minuta_vendedor_domicilio ?? '',
+            'vendedor_partida_registral' => $empresa->minuta_vendedor_partida ?? '',
+            'representante_cargo'        => $empresa->minuta_representante_cargo ?? 'Gerente General',
+            'representante_nombre'       => $empresa->minuta_representante_nombre ?? '',
+            'representante_dni'          => $empresa->minuta_representante_dni ?? '',
+            'representante_estado_civil' => $empresa->minuta_representante_estado_civil ?? 'soltero',
+            'representante_profesion'    => $empresa->minuta_representante_profesion ?? '',
+            'representante_domicilio'    => $empresa->minuta_representante_domicilio ?? '',
+            'ciudad'                     => $empresa->minuta_ciudad ?? 'Huánuco',
+        ];
+        // Los datos del formulario tienen prioridad sobre los guardados
+        $dFinal = array_merge($vendedor, $datosMapa, $d);
+
         // Generar HTML de la minuta
         $html = view('notaria.minuta-compraventa', [
             'acto'    => $acto,
             'empresa' => $empresa,
-            'd'       => $d,
+            'd'       => $dFinal,
+            'datos'   => $dFinal,
+            'vendedor'=> $vendedor,
         ])->render();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)

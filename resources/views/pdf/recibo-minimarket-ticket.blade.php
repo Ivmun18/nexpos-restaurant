@@ -5,7 +5,7 @@
 <title>{{ $tipoDoc }} {{ $serie }}-{{ $numero }}</title>
 <style>
     @page { margin: 5mm; size: 80mm auto; }
-    body { font-family: 'Courier New', monospace; font-size: 12px; font-weight: bold; color: #000; margin: 0; padding: 0; width: 72mm; }
+    body { font-family: 'Courier New', monospace; font-size: 12px; font-weight: bold; color: #000; margin: 0 auto; padding: 0; width: 70mm; }
     .center { text-align: center; }
     .bold { font-weight: bold; }
     .line { border-top: 1px dashed #000; margin: 6px 0; }

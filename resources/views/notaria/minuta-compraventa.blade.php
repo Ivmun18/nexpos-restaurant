@@ -3,221 +3,118 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    /* Formato oficial notarial - Verdana 8pt, interlineado 1.25, márgenes simétricos */
-    @page {
-        size: A4;
-        margin-top: 4cm;    /* hojas impares - usamos el mayor para seguridad */
-        margin-right: 3cm;
-        margin-bottom: 2.5cm;
-        margin-left: 3cm;
-    }
-    body {
-        font-family: Verdana, Geneva, sans-serif;
-        font-size: 8pt;
-        line-height: 1.25;
-        color: #000;
-        margin: 0;
-        padding: 0;
-    }
-    .container {
-        /* DomPDF usa padding para simular márgenes de página */
-        padding-top: 0;
-        padding-right: 0;
-        padding-bottom: 0;
-        padding-left: 0;
-    }
-    .parrafo {
-        text-align: justify;
-        margin-bottom: 8pt;
-        line-height: 1.25;
-    }
-    .clausula { font-weight: bold; }
-    .firma-container { margin-top: 50pt; display: table; width: 100%; }
-    .firma { display: table-cell; width: 50%; text-align: center; padding-top: 8pt; }
-    .linea-firma { border-top: 1px solid #000; width: 180px; margin: 0 auto 4pt; }
-    .anotacion { margin-top: 30pt; border-top: 1px solid #000; padding-top: 10pt; }
+    @page { size: A4; margin-top: 4cm; margin-right: 3cm; margin-bottom: 2.5cm; margin-left: 3cm; }
+    body { font-family: Verdana, Geneva, sans-serif; font-size: 8pt; line-height: 1.25; color: #000; margin: 0; padding: 0; }
+    .parrafo { text-align: justify; margin-bottom: 6pt; line-height: 1.25; }
+    .estrellas { text-align: center; margin: 8pt 0; }
+    .anotacion { margin-top: 20pt; }
 </style>
 </head>
 <body>
-<div class="container">
+<?php
+$d = array_merge($vendedor ?? [], $datos ?? []);
+$notario_nombre  = 'ALEX SAÚL HERRERA ARIAS';
+$notario_dni     = '44052670';
+$notario_rm      = '0044-2025-JUS';
+$notario_rm_fecha= '06 DE FEBRERO DEL 2025';
+$notario_registro= '042';
+$notario_colegio = 'COLEGIO DE NOTARIOS DE HUÁNUCO Y PASCO';
+$ciudad          = mb_strtoupper($d['ciudad'] ?? 'HUÁNUCO');
+$vendedor_nombre  = mb_strtoupper($d['vendedor_nombre'] ?? '');
+$vendedor_dni     = $d['vendedor_dni'] ?? '';
+$vendedor_ec      = mb_strtoupper($d['vendedor_estado_civil'] ?? 'SOLTERO');
+$vendedor_prof    = mb_strtoupper($d['vendedor_profesion'] ?? 'INDEPENDIENTE');
+$vendedor_dom     = mb_strtoupper($d['vendedor_domicilio'] ?? '');
+$conyuge_nombre   = mb_strtoupper($d['conyuge_vendedor'] ?? '');
+$conyuge_dni      = $d['conyuge_vendedor_dni'] ?? '';
+$comprador_nombre = mb_strtoupper($d['comprador_nombre'] ?? '');
+$comprador_dni    = $d['comprador_dni'] ?? '';
+$comprador_ec     = mb_strtoupper($d['comprador_estado_civil'] ?? 'SOLTERO');
+$comprador_prof   = mb_strtoupper($d['comprador_profesion'] ?? 'INDEPENDIENTE');
+$comprador_dom    = mb_strtoupper($d['comprador_domicilio'] ?? '');
+$predio_desc      = mb_strtoupper($d['predio_descripcion'] ?? $d['lote_descripcion'] ?? '');
+$predio_partida   = $d['predio_partida'] ?? '';
+$lote_area        = $d['lote_area'] ?? '';
+$lote_area_letras = mb_strtoupper($d['lote_area_letras'] ?? '');
+$lindero_frente   = mb_strtoupper($d['lindero_frente'] ?? '');
+$medida_frente    = $d['medida_frente'] ?? '';
+$lindero_derecha  = mb_strtoupper($d['lindero_derecha'] ?? '');
+$medida_derecha   = $d['medida_derecha'] ?? '';
+$lindero_izquierda= mb_strtoupper($d['lindero_izquierda'] ?? '');
+$medida_izquierda = $d['medida_izquierda'] ?? '';
+$lindero_fondo    = mb_strtoupper($d['lindero_fondo'] ?? '');
+$medida_fondo     = $d['medida_fondo'] ?? '';
+$precio_total     = $d['precio_total'] ?? '0';
+$precio_letras    = mb_strtoupper($d['precio_total_letras'] ?? '');
+$forma_pago       = mb_strtoupper($d['forma_pago_detalle'] ?? '');
+$fecha_minuta     = mb_strtoupper($d['fecha_minuta'] ?? '');
+$kardex           = $acto->numero_expediente ?? '';
+?>
 
-<p class="parrafo"><strong>SEÑOR NOTARIO:</strong></p>
+<p class="parrafo"><strong>PARTE NOTARIAL</strong></p>
+<p class="parrafo"><strong>KARDEX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {{ $kardex }}.-</strong> = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
+<p class="parrafo"><strong>INSTRUMENTO&nbsp;: COMPRA VENTA</strong></p>
+<p class="parrafo"><strong>VENDEDOR&nbsp;&nbsp;&nbsp;: {{ $vendedor_nombre }}{{ $conyuge_nombre ? ' Y CÓNYUGE ' . $conyuge_nombre : '' }}.</strong> = = = = = = = = = = = = = = = = =</p>
+<p class="parrafo"><strong>COMPRADOR&nbsp;&nbsp;: {{ $comprador_nombre }}.</strong> = = = = = = = = = = = = = = = = = = =</p>
+<p class="estrellas">*********************************************************************************</p>
 
-<p class="parrafo">Sírvase Ud. extender en su Registro de Escrituras Públicas una de <strong>COMPRA VENTA DE PREDIO</strong> que celebran de una parte
-@if($d['vendedor_tipo'] === 'empresa')
-<strong><u>{{ strtoupper($d['vendedor_razon_social']) }}</u></strong>, con RUC N° {{ $d['vendedor_ruc'] }}, con domicilio en {{ $d['vendedor_domicilio'] }},
-inscrito en la partida registral N° {{ $d['vendedor_partida_registral'] ?? '___________' }} del Registro de Personas Jurídicas de {{ $d['ciudad'] ?? 'Huánuco' }},
-a quien en adelante se le denominará <strong><u>LA VENDEDORA</u></strong> debidamente representada por su {{ $d['representante_cargo'] ?? 'Gerente General' }},
-<strong>{{ strtoupper($d['representante_nombre']) }}</strong>, de nacionalidad peruana, identificado con DNI N° {{ $d['representante_dni'] }},
-de estado civil {{ $d['representante_estado_civil'] ?? 'soltero' }}, de profesión {{ $d['representante_profesion'] ?? '___________' }},
-con domicilio en {{ $d['representante_domicilio'] }};
-@else
-<strong><u>{{ strtoupper($d['vendedor_nombre']) }}</u></strong>, identificado con DNI N° {{ $d['vendedor_dni'] }},
-de estado civil {{ $d['vendedor_estado_civil'] ?? 'soltero' }}, con domicilio en {{ $d['vendedor_domicilio'] }},
-a quien en adelante se le denominará <strong><u>EL VENDEDOR</u></strong>;
-@endif
-y de otra parte <strong><u>{{ strtoupper($d['comprador_nombre']) }}</u></strong>, identificado(a) con Documento Nacional de Identidad N° {{ $d['comprador_dni'] }},
-{{ $d['comprador_nacionalidad'] ?? 'peruano(a)' }}, de estado civil {{ $d['comprador_estado_civil'] }},
-de profesión {{ $d['comprador_profesion'] }}, con domicilio en {{ $d['comprador_domicilio'] }},
-a quien en adelante se le denominará <strong><u>LA COMPRADORA</u></strong>; en los términos y condiciones siguientes:</p>
+<p class="parrafo"><strong>INTRODUCCIÓN</strong>: = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">PRIMERO:</span> LA VENDEDORA es propietario del predio signado como {{ $d['predio_descripcion'] }},
-con Partida Registral N° {{ $d['predio_partida'] }} de la Oficina Registral de {{ $d['ciudad'] ?? 'Huánuco' }},
-en la que consta sus demás características.</p>
+<p class="parrafo">EN EL DISTRITO, PROVINCIA Y DEPARTAMENTO DE {{ $ciudad }}, A LOS <strong>{{ $fecha_minuta ?: '_____ DÍAS DEL MES DE _____ DEL DOS MIL _____' }}</strong>; ANTE MÍ, <strong>{{ $notario_nombre }}</strong>, ABOGADO-NOTARIO DE {{ $ciudad }}, CON DOCUMENTO NACIONAL DE IDENTIDAD Nº {{ $notario_dni }}, SUFRAGANTE, NOMBRADO CON RESOLUCIÓN MINISTERIAL NRO. {{ $notario_rm }} DE FECHA {{ $notario_rm_fecha }}, CON REGISTRO Nº {{ $notario_registro }} DEL {{ $notario_colegio }}, <strong>COMPARECEN</strong>: = = = = = = = = = = = = =</p>
 
-@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
-<p class="parrafo"><span class="clausula">SEGUNDO:</span> En el predio descrito en la cláusula que precede, LA VENDEDORA viene desarrollando un proyecto de
-{{ $d['proyecto_descripcion'] }}, cuya licencia fue solicitada ante {{ $d['proyecto_municipalidad'] ?? 'la Municipalidad Distrital de Amarilis' }},
-provincia y departamento de Huánuco, con Expediente N° {{ $d['proyecto_expediente'] }}, presentado con fecha {{ $d['proyecto_fecha'] }}.
+<p class="parrafo">- DON/DOÑA <strong>{{ $vendedor_nombre }}</strong>, PERUANO(A), IDENTIFICADO(A) CON DNI Nº <strong>{{ $vendedor_dni }}</strong>, {{ $vendedor_prof }}, {{ $vendedor_ec }}{{ $conyuge_nombre ? ', Y SU CÓNYUGE DOÑA <strong>' . $conyuge_nombre . '</strong>, PERUANA, IDENTIFICADA CON DNI Nº <strong>' . $conyuge_dni . '</strong>' : '' }}, CON DOMICILIO EN {{ $vendedor_dom }}, QUIENES PROCEDEN POR SU PROPIO DERECHO.- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-La distribución de manzanas y lotes, así como las áreas, linderos y medidas perimétricas de cada uno de los lotes, se encuentra detallado en el plano de trazado y lotización
-y su respectiva memoria descriptiva, elaborados por {{ $d['proyecto_arquitecto'] }}, lo que es de conocimiento de LA COMPRADORA.
+<p class="parrafo">- DON/DOÑA <strong>{{ $comprador_nombre }}</strong>, PERUANO(A), IDENTIFICADO(A) CON DNI Nº <strong>{{ $comprador_dni }}</strong>, {{ $comprador_prof }}, {{ $comprador_ec }}, CON DOMICILIO EN {{ $comprador_dom }}, QUIEN PROCEDE POR SU PROPIO DERECHO.-</p>
 
-En tal sentido, LA COMPRADORA declara conocer que, a la fecha de la suscripción del presente contrato, el lote materia de esta minuta tiene la condición de bien futuro.</p>
-@endif
+<p class="parrafo">LOS COMPARECIENTES SON MAYORES DE EDAD, SUFRAGANTES, HÁBILES PARA CONTRATAR E INTELIGENTES EN EL IDIOMA CASTELLANO, QUIENES SE OBLIGAN CON CAPACIDAD, LIBERTAD Y CONOCIMIENTO SUFICIENTE, DE LO QUE DOY FE. ASÍ COMO DE HABER CONSTATADO QUE PROCEDEN CON CAPACIDAD, LIBERTAD Y CONOCIMIENTO CON QUE SE OBLIGAN CONFORME A LA LEY DEL NOTARIADO, ASIMISMO SE ADVIRTIÓ SOBRE LOS EFECTOS LEGALES DEL PRESENTE INSTRUMENTO PÚBLICO NOTARIAL, DE CONFORMIDAD AL ARTÍCULO VEINTISIETE DEL DECRETO LEGISLATIVO NÚMERO MIL CUARENTA Y NUEVE Y ME ENTREGAN UNA MINUTA DE <strong>COMPRA VENTA</strong>, PARA QUE SU TENOR SE ELEVE A ESCRITURA PÚBLICA LA CUAL ARCHIVO EN SU LEGAJO RESPECTIVO, BAJO EL NÚMERO RESPECTIVO, SIENDO SU CONTENIDO LITERAL COMO SIGUE: = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">{{ (isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0) ? 'TERCERO' : 'SEGUNDO' }}:</span>
-@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
-En tales condiciones, dentro del proyecto señalado, se encuentra el
-@else
-El predio materia de la presente compraventa es el
-@endif
-{{ $d['lote_descripcion'] }}, de {{ $d['lote_area'] }} ({{ $d['lote_area_letras'] }}), con linderos y medidas perimétricas siguientes:</p>
+<p class="parrafo"><strong>SEÑOR NOTARIO: </strong>= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<table width="100%" style="margin-bottom:14px; font-size:12px;">
-    <tr><td width="30%">- Por el Frente:</td><td>colinda con {{ $d['lindero_frente'] }}, con {{ $d['medida_frente'] }} ml.</td></tr>
-    <tr><td>- Por la Derecha:</td><td>colinda con {{ $d['lindero_derecha'] }}, con {{ $d['medida_derecha'] }} ml.</td></tr>
-    <tr><td>- Por la Izquierda:</td><td>colinda con {{ $d['lindero_izquierda'] }}, con {{ $d['medida_izquierda'] }} ml.</td></tr>
-    <tr><td>- Por el Fondo:</td><td>colinda con {{ $d['lindero_fondo'] }}, con {{ $d['medida_fondo'] }} ml.</td></tr>
-</table>
+<p class="parrafo">SÍRVASE UD. EXTENDER EN SU REGISTRO DE ESCRITURAS PÚBLICAS UNA DE <strong>COMPRA VENTA</strong> QUE CELEBRAN DE UNA PARTE, <strong>{{ $vendedor_nombre }}</strong>{{ $conyuge_nombre ? ', Y CÓNYUGE <strong>' . $conyuge_nombre . '</strong>' : '' }}, IDENTIFICADO(A) CON DOCUMENTO NACIONAL DE IDENTIDAD N° <strong>{{ $vendedor_dni }}</strong>{{ $conyuge_dni ? ', E IDENTIFICADA CON DNI N° <strong>' . $conyuge_dni . '</strong>' : '' }}, PERUANO(A), DE OCUPACIÓN {{ $vendedor_prof }}, DE ESTADO CIVIL {{ $vendedor_ec }}, CON DOMICILIO EN {{ $vendedor_dom }}, A QUIEN(ES) EN ADELANTE SE LE(S) DENOMINARÁ <strong>EL/LOS VENDEDOR(ES)</strong> Y, DE OTRA PARTE, <strong>{{ $comprador_nombre }}</strong>, IDENTIFICADO(A) CON DOCUMENTO NACIONAL DE IDENTIDAD N° <strong>{{ $comprador_dni }}</strong>, PERUANO(A), DE ESTADO CIVIL {{ $comprador_ec }}, DE OCUPACIÓN {{ $comprador_prof }}, DOMICILIADO(A) EN {{ $comprador_dom }}, A QUIEN EN ADELANTE SE LE DENOMINARÁ <strong>EL/LA COMPRADOR(A)</strong>; EN LOS TÉRMINOS Y CONDICIONES DE LAS CLÁUSULAS SIGUIENTES: =</p>
 
-<p class="parrafo"><span class="clausula">{{ (isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0) ? 'CUARTO' : 'TERCERO' }}:</span>
-En virtud del presente contrato, LA VENDEDORA da en venta real y enajenación perpetua a favor de LA COMPRADORA el lote descrito en la cláusula precedente,
-comprenderá sus usos, costumbres, entradas, salidas, aires, suelo, sub suelo, sobre suelo y todo cuanto de hecho y por derecho le corresponda, sin reserva ni limitación alguna.</p>
+<p class="parrafo"><strong>PRIMERA:</strong> EL/LOS VENDEDOR(ES) ES(SON) PROPIETARIO(S) DEL {{ $predio_desc }}, INSCRITO EN LA PARTIDA REGISTRAL N° <strong>{{ $predio_partida }}</strong> DEL REGISTRO DE PREDIOS DE LA OFICINA REGISTRAL DE {{ $ciudad }}, EN LA QUE CONSTAN SUS DEMÁS CARACTERÍSTICAS FÍSICAS. = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">{{ (isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0) ? 'QUINTO' : 'CUARTO' }}:</span>
-Las partes, de común acuerdo, establecen que el precio total de venta por el predio materia de esta minuta es de
-<strong>S/ {{ number_format(floatval($d['precio_total']), 2) }} ({{ strtoupper($d['precio_total_letras']) }})</strong>,
-suma de dinero que fue cancelada por LA COMPRADORA de la siguiente manera:</p>
+<p class="parrafo"><strong>SEGUNDA:</strong> POR EL MÉRITO DE ESTE CONTRATO EL/LOS VENDEDOR(ES) DA(N) EN VENTA REAL Y ENAJENACIÓN PERPETUA A FAVOR DE EL/LA COMPRADOR(A) EL PREDIO DESCRITO EN LA CLÁUSULA ANTERIOR, CONSISTENTE EN UN LOTE DE <strong>{{ $lote_area }}</strong> ({{ $lote_area_letras }}), CON LINDEROS Y MEDIDAS PERIMÉTRICAS SIGUIENTES: POR EL FRENTE CON {{ $lindero_frente }} EN {{ $medida_frente }}, POR LA DERECHA ENTRANDO CON {{ $lindero_derecha }} EN {{ $medida_derecha }}, POR LA IZQUIERDA ENTRANDO CON {{ $lindero_izquierda }} EN {{ $medida_izquierda }} Y POR EL FONDO CON {{ $lindero_fondo }} EN {{ $medida_fondo }}. = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo" style="white-space: pre-line;">{{ $d['forma_pago_detalle'] }}</p>
+<p class="parrafo">DICHA VENTA ES, <em>AD CORPUS</em>, POR LO QUE, COMPRENDE TODO LO INHERENTE Y ACCESORIO, ESTO ES, LA FÁBRICA, AIRE, ENTRADAS, SALIDAS, USOS, COSTUMBRES, SERVIDUMBRES Y TODO CUANTO DE HECHO O POR DERECHO LE CORRESPONDA A DICHO INMUEBLE, SIN RESERVA NI LIMITACIÓN ALGUNA. =</p>
 
-<p class="parrafo">En tal sentido LA VENDEDORA declara totalmente cancelado el precio de venta.</p>
+<p class="parrafo"><strong>TERCERA:</strong> EL PRECIO TOTAL DE VENTA POR EL PREDIO DESCRITO EN LA CLÁUSULA PRIMERA DE ESTE DOCUMENTO, PACTADO DE COMÚN ACUERDO, ES DE <strong>S/ {{ number_format(floatval($precio_total), 2) }} ({{ $precio_letras }})</strong>, CANCELADO EN SU TOTALIDAD POR EL/LA COMPRADOR(A) A FAVOR DE EL/LOS VENDEDOR(ES) MEDIANTE {{ $forma_pago }}, POR LO QUE ÉSTOS DECLARAN TOTALMENTE CANCELADO EL PRECIO DE VENTA. = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
-<p class="parrafo"><span class="clausula">SEXTO:</span> Las partes declaran que entre el valor del inmueble y el precio pactado existe la más justa y perfecta equivalencia,
-por lo que de haber alguna diferencia, se hacen mutua gracia y recíproca donación, renunciando a cualquier acción que tenga por objeto invalidar los efectos del presente contrato.</p>
+<p class="parrafo"><strong>CUARTA:</strong> AMBAS PARTES DECLARAN QUE EXISTE LA MÁS JUSTA Y PERFECTA EQUIVALENCIA ENTRE EL PRECIO PACTADO Y EL VALOR REAL DEL INMUEBLE, MATERIA DE VENTA, Y QUE, SI ALGUNA DIFERENCIA HUBIERE DE MÁS O DE MENOS, QUE AL MOMENTO NO SE ADVIERTE, SE HACEN DE ELLA MUTUA GRACIA Y RECÍPROCA DONACIÓN, RENUNCIANDO DESDE AHORA EN FORMA EXPRESA A TODA ACCIÓN O EXCEPCIÓN QUE, POR ERROR, DOLO, U OTRA CAUSA CUALQUIERA TIENDA A INVALIDAR ESTE CONTRATO, ASÍ COMO A LOS PLAZOS PARA INTERPONERLAS. = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">SÉPTIMO:</span> Las partes acuerdan que, tratándose de una venta de bien futuro, el presente contrato queda sujeto a la condición suspensiva
-de que el bien llegue a tener existencia, en aplicación del Artículo 1534° del Código Civil. El lote llegará a tener existencia legal con la resolución municipal que apruebe
-la recepción de obras de la habilitación urbana y/o que apruebe su independización en el registro de predios de Huánuco.</p>
+<p class="parrafo"><strong>QUINTA:</strong> EL/LOS VENDEDOR(ES) DECLARA(N) QUE SOBRE EL INMUEBLE QUE ENAJENA(N) NO PESA CARGA, EMBARGO, MEDIDA JUDICIAL O EXTRAJUDICIAL, NI GRAVAMEN ALGUNO QUE EN CUALQUIER FORMA AFECTE O LIMITE EL DERECHO DE SU LIBRE USO Y DISPOSICIÓN. EN TODO CASO EL/LOS VENDEDOR(ES), SE OBLIGA(N) AL SANEAMIENTO DE LEY. = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">OCTAVO:</span> EL VENDEDOR se obliga a obtener la autorización municipal dentro del plazo máximo de {{ $d['plazo_años'] ?? 'tres' }} años,
-contados a partir de la fecha de esta minuta.</p>
-@endif
+<p class="parrafo"><strong>SEXTA:</strong> EL/LOS VENDEDOR(ES) DECLARA(N) QUE RESPECTO DEL PREDIO OBJETO DE ESTA VENTA SE ENCUENTRAN AL DÍA EN EL PAGO DEL IMPUESTO AL PATRIMONIO PREDIAL Y DE CUALQUIER OTRO TRIBUTO QUE PUDIEREN AFECTAR AL INMUEBLE TRANSFERIDO; SIENDO DE CARGO DE EL/LA COMPRADOR(A) EL PAGO DE LOS MISMOS A PARTIR DE LA FECHA DE ESTA MINUTA. = = = = = = = = = = = = = = = =</p>
 
-@if((isset($d['es_bien_futuro']) && $d['es_bien_futuro'] !== false && $d['es_bien_futuro'] !== 'false' && $d['es_bien_futuro'] !== '' && $d['es_bien_futuro'] !== '0' && $d['es_bien_futuro'] !== 0))
-<p class="parrafo"><span class="clausula">NOVENO:</span> Queda entendido que, aun cuando no se haya emitido la autorización municipal referida en la cláusula séptima,
-LA COMPRADORA puede asumir la posesión del lote objeto de esta minuta, pues le ha sido señalado la ubicación física del lote objeto de compraventa,
-debiendo en tal caso comunicar, por escrito, de dicha circunstancia al vendedor. Sin embargo, dicha posesión no deberá obstaculizar la obtención de la aprobación
-del proyecto de habilitación urbana, en cuyo supuesto, deberán devolver dicha posesión al vendedor de manera incondicional, solo para fines de dicha habilitación urbana,
-quedando incólume el derecho de propiedad transferida a favor de LA COMPRADORA.</p>
+<p class="parrafo"><strong>SÉPTIMA:</strong> EN TODO LO NO PREVISTO EN ESTA MINUTA SE APLICARÁN LAS NORMAS PERTINENTES DEL CÓDIGO CIVIL. = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO:</span> Una vez que se haya cumplido la condición suspensiva, LA COMPRADORA deberá declarar la transferencia
-contenida en este documento por ante la municipalidad distrital de {{ $d['municipalidad_distrito'] ?? $d['ciudad'] ?? 'Huánuco' }},
-para los fines del pago del impuesto predial y demás impuestos que afecten al predio sub materia, así como inscribir esta compra venta ante el registro de predios
-de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}.
+<p class="parrafo">SÍRVASE UD. SEÑOR NOTARIO, AGREGAR LO QUE FUERA DE LEY. = = = = = = = = = = = = = = = =</p>
 
-No obstante, correrá de cargo de LA COMPRADORA el pago del impuesto predial y demás arbitrios a partir de la fecha de esta minuta, siendo que, hasta la fecha
-de esta minuta la vendedora ha cumplido con el pago de dicho impuesto y demás arbitrios municipales.</p>
+<p class="parrafo">{{ $ciudad }}, {{ $fecha_minuta }}.</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO PRIMERA:</span> LA VENDEDORA declara que sobre el lote objeto de esta minuta, no pesa ningún gravamen, carga,
-medida judicial ni extrajudicial alguna, ni en general, ningún acto o contrato limitativo de sus derechos de dominio y libre disposición, obligándose en todo caso
-al saneamiento en los términos más amplios previstos en la ley.</p>
+<p class="parrafo"><strong>FIRMA Y HUELLA DACTILAR DE: {{ $vendedor_nombre }}, VENDEDOR(A){{ $conyuge_nombre ? '.- ' . $conyuge_nombre . ', VENDEDOR(A)' : '' }}.- {{ $comprador_nombre }}, COMPRADOR(A).-</strong> = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO SEGUNDA:</span> LA VENDEDORA se obliga a:</p>
-<p class="parrafo">A) Inscribir el predio en su área matriz descrito en la cláusula primera por ante el registro de predios de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}.</p>
-<p class="parrafo">B) Continuar y culminar el trámite de habilitación urbana referida en la cláusula segunda de este documento, con la debida diligencia, presentando y/o
-subsanando los documentos y demás requerimientos de la autoridad municipal en los plazos establecidos por la ley o por la autoridad municipal, a fin de obtener
-la autorización municipal de su objeto dentro del plazo previsto en la cláusula octava de este documento.</p>
-<p class="parrafo">C) Solicitar la inscripción de la resolución o autorización municipal que obtenga, relativo al proyecto de habilitación urbana, por ante el registro
-de predios de la oficina registral de {{ $d['ciudad'] ?? 'Huánuco' }}, dentro del plazo de 15 días de haberse obtenido dicha autorización.</p>
-<p class="parrafo">D) Entregar la posesión del lote objeto de este documento a LA COMPRADORA luego de la fecha que llegue a tener existencia legal, si hasta dicho
-momento EL VENDEDOR no hubiere asumido dicha posesión.</p>
+<p class="parrafo"><strong>UNA FIRMA Y UN SELLO DE: ABOGADO AUTORIZANTE.-</strong> =</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO TERCERA:</span> En el supuesto que una de las partes no cumpla con las obligaciones que se derivan de este contrato,
-la otra parte podrá, alternativamente, exigir el cumplimiento de la obligación de su contraparte en los términos contenidos en este contrato o resolver el contrato.
-En este último supuesto, la parte que desea resolverla cursará previamente comunicación por conducto notarial a la otra parte, requiriendo el cumplimiento de la
-obligación incumplida en el plazo de 15 días de recibida dicha comunicación. Si persistiera dicho incumplimiento dará por resuelto este contrato.
+<p class="parrafo anotacion"><strong>ANOTACIÓN</strong>. = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-En el caso que este contrato quede resuelto, la parte que la causó restituirá, de manera incondicional, a su contraparte las prestaciones que hubiere efectuado.</p>
+<p class="parrafo">LA COMPRAVENTA SE ENCUENTRA AFECTA AL PAGO DEL IMPUESTO DE ALCABALA. ELÉVESE A ESCRITURA PÚBLICA PREVIA LAS FORMALIDADES DE LEY. = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO CUARTA:</span> Las partes acuerdan que todos los gastos y tributos que se originen a la celebración, formalización
-y ejecución del presente contrato serán asumidos por LA COMPRADORA.</p>
+<p class="parrafo">{{ $ciudad }}, {{ $fecha_minuta }}.</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO QUINTA:</span> Para efectos de cualquier controversia que se genere con motivo de la celebración y ejecución de este contrato,
-las partes se someten a la competencia territorial de los jueces y tribunales de la ciudad de {{ $d['ciudad'] ?? 'Huánuco' }},
-renunciando a los jueces de sus respectivos domicilios.</p>
+<p class="parrafo"><strong>FIRMADO: {{ $notario_nombre }}.- ABOGADO - NOTARIO.- SELLO NOTARIAL.-</strong> = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO SEXTA:</span> Para la validez de todas las comunicaciones y notificaciones a las partes, con motivo de la ejecución
-de este contrato, ambas señalan como sus respectivos domicilios los indicados en la introducción de este documento. El cambio de domicilio de cualquiera de las partes
-surtirá efecto desde la fecha de comunicación de dicho cambio a la otra parte, por vía notarial.</p>
+<p class="parrafo"><strong>CONSTANCIA.-</strong> SE DEJA CONSTANCIA QUE LOS OTORGANTES HAN SIDO INSTRUIDOS DE LOS ALCANCES Y EFECTOS LEGALES QUE PRODUCE EL PRESENTE INSTRUMENTO, RELEVANDO DE TODA RESPONSABILIDAD AL NOTARIO QUE INTERVIENE EN LA PRESENTE. DOY FE.- = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">DÉCIMO SÉPTIMA:</span> En todo lo no previsto por las partes en el presente contrato, ambas se someten a lo establecido
-por las normas del código civil y demás del sistema jurídico que resulten aplicables.</p>
+<p class="parrafo"><strong>CONSTANCIA</strong>.- CONFORME AL ARTÍCULO 55 DEL DECRETO LEGISLATIVO N° 1049 "LEY DEL NOTARIADO", MODIFICADO MEDIANTE DECRETO LEGISLATIVO 1232; CERTIFICO QUE HE CORROBORADO LA IDENTIDAD DE LOS COMPARECIENTES A TRAVÉS DE COMPARACIONES BIOMÉTRICAS DE SUS HUELLAS DACTILARES A TRAVÉS DEL SERVICIO DE LA RENIEC, LAS CUALES ARROJAN RESULTADO POSITIVO A LA CORRESPONDENCIA DE LAS HUELLAS LO QUE ARCHIVO EN MI LEGAJO RESPECTIVO.- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-@else
+<p class="parrafo"><strong>CONCLUSIÓN.-</strong> FORMALIZADO EL PRESENTE INSTRUMENTO, DI A CONOCER SU OBJETO Y TENOR A LOS COMPARECIENTES POR LECTURA QUE LES HICE DE PRINCIPIO A FIN, LUEGO DE LO CUAL FIRMAN Y SE RATIFICAN EN SU CONTENIDO Y PROCEDEN A FIRMARLO EN SEÑAL DE CONFORMIDAD, JUNTO CONMIGO. DE LO QUE DOY FE.- = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">QUINTO:</span> Las partes declaran que entre el valor del inmueble y el precio pactado existe la más justa y perfecta
-equivalencia, por lo que de haber alguna diferencia de más o de menos, que en el presente no advierten, se hacen mutua gracia y recíproca donación, renunciando
-a cualquier acción que tenga por objeto invalidar los efectos del presente contrato.</p>
+<p class="parrafo"><strong>FIRMADO: {{ $notario_nombre }}, ABOGADO - NOTARIO PÚBLICO DE {{ $ciudad }}. UN SELLO NOTARIAL.-</strong> = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">SEXTO:</span> LA VENDEDORA declara que sobre el lote objeto de esta minuta, no pesa ningún gravamen, carga,
-medida judicial ni extrajudicial alguna, ni en general, ningún acto o contrato limitativo de sus derechos de dominio y libre disposición, obligándose en todo caso
-al saneamiento en los términos más amplios previstos en la ley.</p>
+<p class="parrafo"><strong>CONCUERDA,</strong> CON EL ORIGINAL DE SU REFERENCIA AL QUE ME REMITO EN CASO NECESARIO, EXPIDO EL PRESENTE <strong>PARTE NOTARIAL</strong> A SOLICITUD DE LA PARTE INTERESADA, PREVIA CONFRONTACIÓN DE LEY. DOY FÉ.- = = = = = = = = = = = = = = = = = = = = = = = = = = = = =</p>
 
-<p class="parrafo"><span class="clausula">SÉPTIMO:</span> Las partes acuerdan que todos los gastos y tributos que se originen a la celebración, formalización
-y ejecución del presente contrato serán asumidos por LA COMPRADORA.</p>
+<p class="parrafo"><strong>{{ $ciudad }}, {{ $fecha_minuta }}.-</strong></p>
 
-<p class="parrafo"><span class="clausula">OCTAVO:</span> Para efectos de cualquier controversia que se genere con motivo de la celebración y ejecución de este contrato,
-las partes se someten a la competencia territorial de los jueces y tribunales de la ciudad de {{ $d['ciudad'] ?? 'Huánuco' }},
-renunciando a los jueces de sus respectivos domicilios.</p>
-
-<p class="parrafo"><span class="clausula">NOVENO:</span> Para la validez de todas las comunicaciones y notificaciones a las partes, con motivo de la ejecución
-de este contrato, ambas señalan como sus respectivos domicilios los indicados en la introducción de este documento. El cambio de domicilio de cualquiera de las partes
-surtirá efecto desde la fecha de comunicación de dicho cambio a la otra parte, por vía notarial.</p>
-
-<p class="parrafo"><span class="clausula">DÉCIMO:</span> En todo lo no previsto por las partes en el presente contrato, ambas se someten a lo establecido
-por las normas del código civil y demás del sistema jurídico que resulten aplicables.</p>
-
-@endif
-
-<p class="parrafo">Sírvase Ud. Señor Notario, agregar lo que fuera de ley.</p>
-
-<p class="parrafo">{{ $d['ciudad'] ?? 'Huánuco' }}, {{ $d['fecha_minuta'] }}.</p>
-
-<div class="firma-container">
-    <div class="firma">
-        <div class="linea-firma"></div>
-        <strong>{{ strtoupper($d['vendedor_tipo'] === 'empresa' ? $d['representante_nombre'] : $d['vendedor_nombre']) }}</strong><br>
-        @if($d['vendedor_tipo'] === 'empresa')
-        por {{ strtoupper($d['vendedor_razon_social']) }}<br>
-        @endif
-        VENDEDOR(A)
-    </div>
-    <div class="firma">
-        <div class="linea-firma"></div>
-        <strong>{{ strtoupper($d['comprador_nombre']) }}</strong><br>
-        COMPRADOR(A)
-    </div>
-</div>
-
-<div class="anotacion">
-    <p class="parrafo"><strong>Anotación.</strong></p>
-    <p class="parrafo">La presente se encuentra afecta al pago del impuesto de alcabala. Acredite su pago y elévese a escritura pública con las formalidades de Ley.</p>
-    <p class="parrafo">{{ $d['ciudad'] ?? 'Huánuco' }}, {{ $d['fecha_minuta'] }}.</p>
-</div>
-
-</div>
 </body>
 </html>
