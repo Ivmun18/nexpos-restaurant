@@ -581,7 +581,7 @@ const modalTestimonio = ref(false)
 
 function fechaALetras(fecha) {
     if (!fecha) return ''
-    const partes = fecha.split('/')
+    const partes = fecha.replace(/-/g, '/').split('/')
     if (partes.length !== 3) return ''
     const dia = parseInt(partes[0])
     const mes = parseInt(partes[1]) - 1
