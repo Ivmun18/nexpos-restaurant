@@ -12,7 +12,7 @@
                 style="background:#3B82F6; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📥 Descargar PDF
             </a>
-            <button v-if="tieneMinuta" @click="abrirModalDoc"
+            <button @click="abrirModalDoc"
                 style="background:#1D4ED8; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📄 Generar Documento
             </button>
