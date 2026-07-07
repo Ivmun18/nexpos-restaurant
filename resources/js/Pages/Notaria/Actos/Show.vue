@@ -16,6 +16,10 @@
                 style="background:#F97316; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📄 Generar Minuta
             </button>
+            <button v-if="tieneMinuta" @click="modalTestimonio=true"
+                style="background:#0F766E; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                📜 Generar Testimonio
+            </button>
             <div>
                 <h2 style="font-size:20px; font-weight:800; color:#1E293B; margin:0;">{{ acto.numero_expediente }}</h2>
                 <p style="font-size:13px; color:#94A3B8; margin:2px 0 0;">{{ labelTipo(acto.tipo_acto) }} · Ingresado {{ formatFecha(acto.fecha_ingreso) }}</p>
@@ -518,6 +522,45 @@
             </div>
         </div>
 
+    <!-- MODAL TESTIMONIO -->
+    <div v-if="modalTestimonio" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:white; border-radius:16px; width:700px; max-width:95vw; max-height:92vh; overflow-y:auto;">
+            <div style="padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:white; z-index:10; border-radius:16px 16px 0 0;">
+                <div>
+                    <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0;">📜 Generar Testimonio de Compra Venta</p>
+                    <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">Expediente: {{ props.acto.numero_expediente }}</p>
+                </div>
+                <button @click="modalTestimonio=false" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:16px;">✕</button>
+            </div>
+            <div style="padding:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Instrumento</label><input v-model="formTestimonio.num_instrumento" type="text" placeholder="0680" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Minuta</label><input v-model="formTestimonio.num_minuta" type="text" placeholder="0602" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha en letras *</label><input v-model="formTestimonio.fecha_letras" type="text" placeholder="DIECIOCHO DÍAS DEL MES DE MAYO DE DOS MIL VEINTISÉIS" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha firma (dd-mm-aaaa)</label><input v-model="formTestimonio.fecha_firma" type="text" placeholder="18-05-2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha de la minuta</label><input v-model="formTestimonio.fecha_minuta" type="text" placeholder="18 de mayo de 2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Resolución Ministerial</label><input v-model="formTestimonio.resolucion_ministerial" type="text" placeholder="0044-2025-JUS" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha resolución</label><input v-model="formTestimonio.fecha_resolucion" type="text" placeholder="06 DE FEBRERO DEL 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Registro notario</label><input v-model="formTestimonio.registro_notario" type="text" placeholder="042" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Abogado nombre</label><input v-model="formTestimonio.abogado_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CAU</label><input v-model="formTestimonio.abogado_cau" type="text" placeholder="2241" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fojas inicio</label><input v-model="formTestimonio.fojas_inicio" type="text" placeholder="01106" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fojas fin</label><input v-model="formTestimonio.fojas_fin" type="text" placeholder="01107 Vuelta" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Serie papel inicio</label><input v-model="formTestimonio.papel_serie_inicio" type="text" placeholder="B-1394756" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Serie papel fin</label><input v-model="formTestimonio.papel_serie_fin" type="text" placeholder="B-1394757 Vuelta" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Medios de pago (descripción)</label><textarea v-model="formTestimonio.medios_pago_descripcion" rows="2" placeholder="SEIS DEPÓSITOS BANCARIOS..." style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Monto alcabala S/</label><input v-model="formTestimonio.alcabala_monto" type="text" placeholder="1,230.00" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha alcabala</label><input v-model="formTestimonio.alcabala_fecha" type="text" placeholder="18 de mayo de 2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Recibo alcabala</label><input v-model="formTestimonio.alcabala_recibo" type="text" placeholder="0009641-2026" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+            </div>
+            <div style="padding:1rem 1.5rem; border-top:1px solid #E2E8F0; display:flex; justify-content:flex-end; gap:12px; position:sticky; bottom:0; background:white; border-radius:0 0 16px 16px;">
+                <button @click="modalTestimonio=false" style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600;">Cancelar</button>
+                <button @click="generarTestimonio" :disabled="generandoTest" style="padding:10px 20px; background:#0F766E; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                    {{ generandoTest ? '⏳ Generando...' : '📜 Generar PDF' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
     </AppLayout>
 </template>
 
@@ -534,6 +577,43 @@ const props = defineProps({
 })
 
 const modalMinuta     = ref(false)
+const modalTestimonio = ref(false)
+const generandoTest   = ref(false)
+const formTestimonio  = ref({
+    num_instrumento: '', num_minuta: '', fecha_letras: '', fecha_minuta: '', fecha_firma: '',
+    resolucion_ministerial: '', fecha_resolucion: '', registro_notario: '', colegio_notarios: 'Huánuco y Pasco',
+    abogado_nombre: '', abogado_cau: '',
+    fojas_inicio: '', fojas_fin: '', papel_serie_inicio: '', papel_serie_fin: '',
+    medios_pago_descripcion: '', medios_pago_tipo: 'depósito bancario',
+    alcabala_monto: '', alcabala_fecha: '', alcabala_recibo: '',
+})
+
+async function generarTestimonio() {
+    generandoTest.value = true
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/actos/' + props.acto.id + '/testimonio-compraventa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ ...formMinuta.value, ...formTestimonio.value, guardar_datos: true })
+        })
+        if (res.ok) {
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'Testimonio-' + props.acto.numero_expediente + '.pdf'
+            a.click()
+            URL.revokeObjectURL(url)
+            modalTestimonio.value = false
+        } else {
+            alert('Error al generar el testimonio')
+        }
+    } catch(e) {
+        alert('Error: ' + e.message)
+    }
+    generandoTest.value = false
+}
 const generandoMinuta = ref(false)
 const formMinuta      = ref({
     vendedor_tipo: 'empresa',
