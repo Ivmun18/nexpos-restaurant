@@ -916,6 +916,7 @@ Route::middleware(['auth', 'notaria.rol'])->prefix('notaria')->group(function ()
     Route::post('/actos/{acto}/pago', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'registrarPago'])->name('notaria.actos.pago');
     Route::post('/actos/{acto}/minuta-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarMinutaCompraventa'])->name('notaria.actos.minuta');
     Route::post('/actos/{acto}/testimonio-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarTestimonioCompraventa'])->name('notaria.actos.testimonio');
+    Route::post('/actos/{acto}/parte-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarParteCompraventa'])->name('notaria.actos.parte');
     Route::post('/actos/crear-con-minuta', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'crearConMinuta'])->name('notaria.actos.crear-minuta');
 });
 

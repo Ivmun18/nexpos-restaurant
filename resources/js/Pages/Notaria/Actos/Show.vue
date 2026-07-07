@@ -16,6 +16,10 @@
                 style="background:#F97316; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📄 Generar Minuta
             </button>
+            <button v-if="tieneMinuta" @click="abrirModalParte"
+                style="background:#7C3AED; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+                📋 Parte Notarial
+            </button>
             <button v-if="tieneMinuta" @click="abrirModalTestimonio"
                 style="background:#0F766E; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📜 Generar Testimonio
@@ -522,6 +526,70 @@
             </div>
         </div>
 
+    <!-- MODAL PARTE NOTARIAL -->
+    <div v-if="modalParte" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:white; border-radius:16px; width:700px; max-width:95vw; max-height:92vh; overflow-y:auto;">
+            <div style="padding:1.25rem 1.5rem; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:white; z-index:10; border-radius:16px 16px 0 0;">
+                <div>
+                    <p style="font-size:16px; font-weight:700; color:#1E293B; margin:0;">📋 Generar Parte Notarial - Compraventa</p>
+                    <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">Expediente: {{ props.acto.numero_expediente }}</p>
+                </div>
+                <button @click="modalParte=false" style="background:#F1F5F9; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:16px;">✕</button>
+            </div>
+            <div style="padding:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Instrumento</label><input v-model="formParte.num_instrumento" type="text" placeholder="98" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">N° Minuta</label><input v-model="formParte.num_minuta" type="text" placeholder="92" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha en letras *</label><input v-model="formParte.fecha_letras" type="text" placeholder="NUEVE DÍAS DEL MES DE JUNIO DEL DOS MIL VEINTICINCO" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha firma (dd-mm-aaaa)</label><input v-model="formParte.fecha_firma" @input="formParte.fecha_letras = fechaALetras(formParte.fecha_firma) || formParte.fecha_letras" type="text" placeholder="09-06-2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fecha de la minuta</label><input v-model="formParte.fecha_minuta" type="text" placeholder="09 de junio de 2025" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;"><p style="font-size:12px; font-weight:700; color:#7C3AED; margin:0;">VENDEDOR</p></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre completo *</label><input v-model="formParte.vendedor_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI *</label><input v-model="formParte.vendedor_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil</label><input v-model="formParte.vendedor_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión/Ocupación</label><input v-model="formParte.vendedor_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio</label><input v-model="formParte.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;"><p style="font-size:12px; font-weight:700; color:#7C3AED; margin:0;">COMPRADOR 1</p></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre completo *</label><input v-model="formParte.comprador_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI *</label><input v-model="formParte.comprador_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil</label><input v-model="formParte.comprador_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión/Ocupación</label><input v-model="formParte.comprador_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio</label><input v-model="formParte.comprador_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;"><p style="font-size:12px; font-weight:700; color:#7C3AED; margin:0;">COMPRADOR 2 (opcional)</p></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre completo</label><input v-model="formParte.comprador2_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI</label><input v-model="formParte.comprador2_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil</label><input v-model="formParte.comprador2_estado_civil" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión/Ocupación</label><input v-model="formParte.comprador2_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+
+                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;"><p style="font-size:12px; font-weight:700; color:#7C3AED; margin:0;">PREDIO</p></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Descripción del predio *</label><textarea v-model="formParte.predio_descripcion" rows="3" placeholder="DEL LOTE DE TERRENO, PARTE DE LA PARCELA N° 70..." style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Partida registral *</label><input v-model="formParte.predio_partida" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Precio total S/ *</label><input v-model="formParte.precio_total" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Precio en letras *</label><input v-model="formParte.precio_total_letras" type="text" placeholder="VEINTICUATRO MIL Y 00/100 SOLES" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Forma de pago detalle *</label><textarea v-model="formParte.forma_pago_detalle" rows="3" placeholder="CANCELADO EN SU TOTALIDAD MEDIANTE DOS DEPÓSITOS BANCARIOS..." style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea></div>
+                <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Antecedente registral (opcional)</label><textarea v-model="formParte.antecedente_registral" rows="3" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea></div>
+
+                <div style="grid-column:1/-1; border-top:1px solid #E2E8F0; padding-top:1rem;"><p style="font-size:12px; font-weight:700; color:#7C3AED; margin:0;">CONSTANCIAS Y CONCLUSIÓN</p></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Tipo medio de pago</label><input v-model="formParte.medios_pago_tipo" type="text" placeholder="DEPÓSITO EN CUENTA CÓDIGO 007" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Anotación (opcional)</label><input v-model="formParte.anotacion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Abogado nombre</label><input v-model="formParte.abogado_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">CAU / Reg.</label><input v-model="formParte.abogado_cau" type="text" placeholder="3335" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fojas inicio</label><input v-model="formParte.fojas_inicio" type="text" placeholder="000149" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Fojas fin</label><input v-model="formParte.fojas_fin" type="text" placeholder="000149 VUELTA" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Serie papel inicio</label><input v-model="formParte.papel_serie_inicio" type="text" placeholder="B-1291599" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Serie papel fin</label><input v-model="formParte.papel_serie_fin" type="text" placeholder="B-1291599 VUELTA" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+            </div>
+            <div style="padding:1rem 1.5rem; border-top:1px solid #E2E8F0; display:flex; justify-content:flex-end; gap:12px; position:sticky; bottom:0; background:white; border-radius:0 0 16px 16px;">
+                <button @click="modalParte=false" style="padding:10px 20px; background:#F1F5F9; color:#64748B; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600;">Cancelar</button>
+                <button @click="generarParte" :disabled="generandoParte" style="padding:10px 20px; background:#7C3AED; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                    {{ generandoParte ? '⏳ Generando...' : '📋 Generar PDF' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL TESTIMONIO -->
     <div v-if="modalTestimonio" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem;">
         <div style="background:white; border-radius:16px; width:700px; max-width:95vw; max-height:92vh; overflow-y:auto;">
@@ -577,6 +645,85 @@ const props = defineProps({
 })
 
 const modalMinuta     = ref(false)
+const modalParte      = ref(false)
+const generandoParte  = ref(false)
+const formParte = ref({
+    num_instrumento: '', num_minuta: '', fecha_letras: '', fecha_minuta: '', fecha_firma: '',
+    vendedor_nombre: '', vendedor_dni: '', vendedor_estado_civil: '', vendedor_profesion: '', vendedor_domicilio: '',
+    comprador_nombre: '', comprador_dni: '', comprador_estado_civil: '', comprador_profesion: '', comprador_domicilio: '',
+    comprador2_nombre: '', comprador2_dni: '', comprador2_estado_civil: '', comprador2_profesion: '', comprador2_domicilio: '',
+    predio_descripcion: '', predio_partida: '', antecedente_registral: '',
+    precio_total: '', precio_total_letras: '', forma_pago_detalle: '',
+    medios_pago_tipo: 'DEPÓSITO EN CUENTA', anotacion: '',
+    abogado_nombre: '', abogado_cau: '',
+    fojas_inicio: '', fojas_fin: '', papel_serie_inicio: '', papel_serie_fin: '',
+})
+
+function abrirModalParte() {
+    const d = props.datos || {}
+    formParte.value = {
+        num_instrumento:    d.num_instrumento || '',
+        num_minuta:         d.num_minuta || '',
+        fecha_letras:       d.fecha_letras || '',
+        fecha_minuta:       d.fecha_minuta || '',
+        fecha_firma:        d.fecha_firma || '',
+        vendedor_nombre:    d.vendedor_nombre || '',
+        vendedor_dni:       d.vendedor_dni || '',
+        vendedor_estado_civil: d.vendedor_estado_civil || '',
+        vendedor_profesion: d.vendedor_profesion || '',
+        vendedor_domicilio: d.vendedor_domicilio || '',
+        comprador_nombre:   d.comprador_nombre || '',
+        comprador_dni:      d.comprador_dni || '',
+        comprador_estado_civil: d.comprador_estado_civil || '',
+        comprador_profesion: d.comprador_profesion || '',
+        comprador_domicilio: d.comprador_domicilio || '',
+        comprador2_nombre:  d.comprador2_nombre || '',
+        comprador2_dni:     d.comprador2_dni || '',
+        comprador2_estado_civil: d.comprador2_estado_civil || '',
+        comprador2_profesion: d.comprador2_profesion || '',
+        comprador2_domicilio: d.comprador2_domicilio || '',
+        predio_descripcion: d.predio_descripcion || '',
+        predio_partida:     d.predio_partida || '',
+        antecedente_registral: d.antecedente_registral || '',
+        precio_total:       d.precio_total || '',
+        precio_total_letras: d.precio_total_letras || '',
+        forma_pago_detalle: d.forma_pago_detalle || '',
+        medios_pago_tipo:   d.medios_pago_tipo || 'DEPÓSITO EN CUENTA',
+        anotacion:          d.anotacion || '',
+        abogado_nombre:     d.abogado_nombre || '',
+        abogado_cau:        d.abogado_cau || '',
+        fojas_inicio:       d.fojas_inicio || '',
+        fojas_fin:          d.fojas_fin || '',
+        papel_serie_inicio: d.papel_serie_inicio || '',
+        papel_serie_fin:    d.papel_serie_fin || '',
+    }
+    modalParte.value = true
+}
+
+async function generarParte() {
+    generandoParte.value = true
+    try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const res = await fetch('/notaria/actos/' + props.acto.id + '/parte-compraventa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ ...formParte.value, guardar_datos: true })
+        })
+        if (res.ok) {
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'Parte-' + props.acto.numero_expediente + '.pdf'
+            a.click()
+            URL.revokeObjectURL(url)
+            modalParte.value = false
+        } else { alert('Error al generar') }
+    } catch(e) { alert('Error: ' + e.message) }
+    generandoParte.value = false
+}
+
+
 const modalTestimonio = ref(false)
 
 function fechaALetras(fecha) {

@@ -512,6 +512,66 @@ class ActoNotarialController extends Controller
         return $pdf->download($filename);
     }
 
-}
+    public function generarParteCompraventa(Request $request, ActoNotarial $acto)
+    {
+        $empresa = auth()->user()->empresa;
+        $datosMapa = $acto->datos()->pluck('valor', 'campo')->toArray();
+        $datos = array_merge($datosMapa, $request->all());
 
-    // ESTE METODO SE AGREGO FUERA DE LA CLASE - MOVER MANUALMENTE SI ES NECESARIO
+        if (!empty($request->guardar_datos)) {
+            foreach ($request->except(['guardar_datos', '_token']) as $campo => $valor) {
+                $acto->datos()->updateOrCreate(['campo' => $campo], ['valor' => is_array($valor) ? json_encode($valor) : (string)$valor]);
+            }
+        }
+
+        $d = [
+            'num_instrumento'     => $datos['num_instrumento'] ?? '',
+            'num_minuta'          => $datos['num_minuta'] ?? '',
+            'fecha_letras'        => $datos['fecha_letras'] ?? '',
+            'fecha_minuta'        => $datos['fecha_minuta'] ?? now()->format('d \d\e F \d\e Y'),
+            'fecha_firma'         => $datos['fecha_firma'] ?? '',
+            'ciudad'              => $empresa->minuta_ciudad ?? 'Huánuco',
+            'vendedor_nombre'     => $datos['vendedor_nombre'] ?? '',
+            'vendedor_dni'        => $datos['vendedor_dni'] ?? '',
+            'vendedor_estado_civil' => $datos['vendedor_estado_civil'] ?? '',
+            'vendedor_profesion'  => $datos['vendedor_profesion'] ?? '',
+            'vendedor_domicilio'  => $datos['vendedor_domicilio'] ?? '',
+            'comprador_nombre'    => $datos['comprador_nombre'] ?? '',
+            'comprador_dni'       => $datos['comprador_dni'] ?? '',
+            'comprador_estado_civil' => $datos['comprador_estado_civil'] ?? '',
+            'comprador_profesion' => $datos['comprador_profesion'] ?? '',
+            'comprador_domicilio' => $datos['comprador_domicilio'] ?? '',
+            'comprador2_nombre'   => $datos['comprador2_nombre'] ?? '',
+            'comprador2_dni'      => $datos['comprador2_dni'] ?? '',
+            'comprador2_estado_civil' => $datos['comprador2_estado_civil'] ?? '',
+            'comprador2_profesion' => $datos['comprador2_profesion'] ?? '',
+            'comprador2_domicilio' => $datos['comprador2_domicilio'] ?? '',
+            'predio_descripcion'  => $datos['predio_descripcion'] ?? '',
+            'predio_partida'      => $datos['predio_partida'] ?? '',
+            'antecedente_registral' => $datos['antecedente_registral'] ?? '',
+            'precio_total'        => $datos['precio_total'] ?? '',
+            'precio_total_letras' => $datos['precio_total_letras'] ?? '',
+            'forma_pago_detalle'  => $datos['forma_pago_detalle'] ?? '',
+            'medios_pago_tipo'    => $datos['medios_pago_tipo'] ?? 'DEPÓSITO EN CUENTA',
+            'anotacion'           => $datos['anotacion'] ?? '',
+            'abogado_nombre'      => $datos['abogado_nombre'] ?? '',
+            'abogado_cau'         => $datos['abogado_cau'] ?? '',
+            'fojas_inicio'        => $datos['fojas_inicio'] ?? '',
+            'fojas_fin'           => $datos['fojas_fin'] ?? '',
+            'papel_serie_inicio'  => $datos['papel_serie_inicio'] ?? '',
+            'papel_serie_fin'     => $datos['papel_serie_fin'] ?? '',
+        ];
+
+        $html = view('notaria.parte-compraventa', compact('acto', 'empresa', 'd'))->render();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'defaultFont'     => 'Verdana',
+                'isRemoteEnabled' => false,
+                'dpi'             => 96,
+            ]);
+
+        return $pdf->download('Parte-CompraVenta-' . $acto->numero_expediente . '.pdf');
+    }
+}
