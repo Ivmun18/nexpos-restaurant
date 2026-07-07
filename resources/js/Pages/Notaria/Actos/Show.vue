@@ -16,7 +16,7 @@
                 style="background:#F97316; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📄 Generar Minuta
             </button>
-            <button v-if="tieneMinuta" @click="modalTestimonio=true"
+            <button v-if="tieneMinuta" @click="abrirModalTestimonio"
                 style="background:#0F766E; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:14px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:6px;">
                 📜 Generar Testimonio
             </button>
@@ -578,6 +578,33 @@ const props = defineProps({
 
 const modalMinuta     = ref(false)
 const modalTestimonio = ref(false)
+
+function abrirModalTestimonio() {
+    const d = props.datos || {}
+    formTestimonio.value = {
+        num_instrumento:         d.num_instrumento || '',
+        num_minuta:              d.num_minuta || '',
+        fecha_letras:            d.fecha_letras || '',
+        fecha_minuta:            d.fecha_minuta || '',
+        fecha_firma:             d.fecha_firma || '',
+        resolucion_ministerial:  d.resolucion_ministerial || '',
+        fecha_resolucion:        d.fecha_resolucion || '',
+        registro_notario:        d.registro_notario || '',
+        colegio_notarios:        d.colegio_notarios || 'Huánuco y Pasco',
+        abogado_nombre:          d.abogado_nombre || '',
+        abogado_cau:             d.abogado_cau || '',
+        fojas_inicio:            d.fojas_inicio || '',
+        fojas_fin:               d.fojas_fin || '',
+        papel_serie_inicio:      d.papel_serie_inicio || '',
+        papel_serie_fin:         d.papel_serie_fin || '',
+        medios_pago_descripcion: d.medios_pago_descripcion || '',
+        medios_pago_tipo:        d.medios_pago_tipo || 'depósito bancario',
+        alcabala_monto:          d.alcabala_monto || '',
+        alcabala_fecha:          d.alcabala_fecha || '',
+        alcabala_recibo:         d.alcabala_recibo || '',
+    }
+    modalTestimonio.value = true
+}
 const generandoTest   = ref(false)
 const formTestimonio  = ref({
     num_instrumento: '', num_minuta: '', fecha_letras: '', fecha_minuta: '', fecha_firma: '',
