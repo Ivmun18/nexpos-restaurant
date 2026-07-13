@@ -1,7 +1,7 @@
 <template>
     <!-- Notaría: diseño compacto azul -->
     <div v-if="esNotaria" style="min-height:100vh; background:#3B5998; display:flex; align-items:center; justify-content:center; padding:1rem;">
-        <div style="background:white; border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:360px;">
+        <div style="background:white; border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:360px; box-shadow:0 8px 32px rgba(108,142,191,0.15);">
             <div style="text-align:center; margin-bottom:2rem;">
                 <div style="display:inline-flex; align-items:center; justify-content:center; background:#3B5998; border-radius:14px; width:56px; height:56px; margin-bottom:1rem;">
                     <span style="font-size:28px;">⚡</span>
@@ -42,13 +42,13 @@
 
 
     <!-- Dental: diseño compacto celeste -->
-    <div v-else-if="esDental" style="min-height:100vh; background:#0891B2; display:flex; align-items:center; justify-content:center; padding:1rem;">
-        <div style="background:white; border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:360px;">
+    <div v-else-if="esDental" style="min-height:100vh; background:#F0F4FF; display:flex; align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:white; border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:360px; box-shadow:0 8px 32px rgba(108,142,191,0.15);">
             <div style="text-align:center; margin-bottom:2rem;">
-                <div style="display:inline-flex; align-items:center; justify-content:center; background:#0891B2; border-radius:14px; width:56px; height:56px; margin-bottom:1rem;">
+                <div style="display:inline-flex; align-items:center; justify-content:center; background:#6C8EBF; border-radius:14px; width:56px; height:56px; margin-bottom:1rem;">
                     <span style="font-size:28px;">🦷</span>
                 </div>
-                <p style="font-size:22px; font-weight:900; color:#0891B2; margin:0; letter-spacing:1px;">NEXPOS</p>
+                <p style="font-size:22px; font-weight:900; color:#5570B0; margin:0; letter-spacing:1px;">NEXPOS</p>
                 <p style="font-size:11px; color:#6B7280; letter-spacing:3px; margin:4px 0 0; text-transform:uppercase;">Sistema Dental</p>
             </div>
             <div style="margin-bottom:1rem;">
@@ -72,7 +72,7 @@
                 <svg width="16" height="16" fill="none" stroke="#EF4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                 <span style="font-size:12px; color:#DC2626; font-weight:500;">{{ error }}</span>
             </div>
-            <button @click="submit" :disabled="procesando" style="width:100%; background:#0891B2; color:white; border:none; border-radius:8px; height:44px; font-size:14px; font-weight:600; cursor:pointer;">
+            <button @click="submit" :disabled="procesando" style="width:100%; background:#6C8EBF; color:white; border:none; border-radius:8px; height:44px; font-size:14px; font-weight:600; cursor:pointer;">
                 <span v-if="procesando">⏳ Ingresando...</span>
                 <span v-else>🦷 Ingresar al sistema</span>
             </button>
