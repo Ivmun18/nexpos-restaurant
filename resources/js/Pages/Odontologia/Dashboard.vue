@@ -8,7 +8,7 @@
         <h1 style="font-size:20px; font-weight:700; color:#1e293b; margin:0;">🦷 Centro Odontológico</h1>
         <p style="font-size:12px; color:#64748b; margin:2px 0 0;">{{ fechaHoy }}</p>
       </div>
-      <a href="/odontologia/citas/crear" style="background:#6C8EBF; color:white; border:none; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:600; text-decoration:none; display:inline-block;">+ Nueva cita</a>
+      <a href="/odontologia/citas" style="background:#6C8EBF; color:white; border:none; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:600; text-decoration:none; display:inline-block;">+ Nueva cita</a>
     </div>
 
     <!-- Stats -->
