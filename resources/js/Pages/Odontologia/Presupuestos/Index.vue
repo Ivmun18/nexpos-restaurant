@@ -56,10 +56,12 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
           <div>
             <label style="font-size:12px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">PACIENTE *</label>
-            <input v-model="buscarPaciente" @input="searchPaciente" type="text" placeholder="Buscar paciente..." style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; box-sizing:border-box;" />
-            <div v-if="resultadosPaciente.length" style="border:1px solid #E2E8F0; border-radius:8px; margin-top:4px; background:white; position:relative; z-index:10;">
-              <div v-for="p in resultadosPaciente" :key="p.id" @click="seleccionarPaciente(p)" style="padding:10px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #F1F5F9;">
-                {{ p.apellidos }}, {{ p.nombres }} - {{ p.dni }}
+            <div style="position:relative;">
+              <input v-model="buscarPaciente" @input="searchPaciente" type="text" placeholder="Buscar paciente..." style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px; box-sizing:border-box;" />
+              <div v-if="resultadosPaciente.length" style="border:1px solid #E2E8F0; border-radius:8px; margin-top:4px; background:white; position:absolute; z-index:9999; width:100%; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <div v-for="p in resultadosPaciente" :key="p.id" @click="seleccionarPaciente(p)" style="padding:10px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #F1F5F9;">
+                  {{ p.apellidos }}, {{ p.nombres }} - {{ p.dni }}
+                </div>
               </div>
             </div>
           </div>
@@ -208,10 +210,17 @@ const recalcularTotal = () => {
 
 const agregarItem = () => { form.value.items.push({ descripcion:'', numero_pieza:'', precio:0, cantidad:1 }); recalcularTotal() }
 
-const searchPaciente = async () => {
+// DEBUG
+console.log('Pacientes props:', props.pacientes)
+
+const searchPaciente = () => {
   if (buscarPaciente.value.length < 2) { resultadosPaciente.value = []; return }
-  const r = await fetch('/odontologia/pacientes/buscar?q=' + buscarPaciente.value)
-  resultadosPaciente.value = await r.json()
+  const q = buscarPaciente.value.toLowerCase()
+  resultadosPaciente.value = props.pacientes.filter(p =>
+    p.nombres.toLowerCase().includes(q) ||
+    p.apellidos.toLowerCase().includes(q) ||
+    (p.dni && p.dni.includes(q))
+  ).slice(0, 10)
 }
 
 const seleccionarPaciente = (p) => {
