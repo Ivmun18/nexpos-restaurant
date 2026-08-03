@@ -727,7 +727,10 @@ async function registrarAdelanto() {
             montoAdelanto.value = ''
             router.reload({ only: ['pendientes', 'resumenCaja'] })
         }
-        if (data.mensaje) alert(data.mensaje)
+        if (data.mensaje) {
+            const msg = data.success ? '✅ Comprobante emitido correctamente' : ('❌ ' + data.mensaje)
+            alert(msg)
+        }
     } catch(e) {
         alert('Error: ' + e.message)
     }
@@ -893,7 +896,8 @@ async function cobrarServicioRapido() {
         }
         const data = await res.json()
         if (data.success) {
-            alert('✅ ' + data.mensaje)
+            const msgOk = (data.mensaje && !data.mensaje.startsWith('{')) ? data.mensaje : 'Comprobante emitido correctamente'
+            alert('✅ ' + msgOk)
             if (data.pdf) window.open(data.pdf, '_blank')
             modalServicioRapido.value = false
             formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', forma_pago: 'Contado', cuotas: [] }
@@ -1155,7 +1159,10 @@ async function confirmarCobro(boletaSimple = false) {
         if (data.mensaje) {
             errorComp.value = ''
             pdfComp.value = data.pdf || ''
-            alert(data.mensaje)
+            const msgCobro = data.success
+                ? '✅ Comprobante emitido correctamente'
+                : (data.mensaje.startsWith('{') ? '❌ Error al emitir comprobante. Intente nuevamente.' : '❌ ' + data.mensaje)
+            alert(msgCobro)
         }
     } catch(e) {
         console.error('Error cobro:', e)
