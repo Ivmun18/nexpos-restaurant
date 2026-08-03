@@ -198,11 +198,12 @@ class ComprobantesNotariaController extends Controller
                 'total'                    => $total,
                 'items_json'               => json_encode($request->items),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                'apisunat_document_id'     => $data['documentId'] ?? null,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
                 'enlace_cdr'               => isset($request->items[0]['descripcion']) ? $request->items[0]['descripcion'] : null,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
@@ -474,11 +475,12 @@ class ComprobantesNotariaController extends Controller
                 'total'                    => $total,
                 'items_json'               => json_encode($itemsConHuella),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                'apisunat_document_id'     => $data['documentId'] ?? null,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
                 'enlace_cdr'               => isset($itemsConHuella[0]['descripcion']) ? $itemsConHuella[0]['descripcion'] : null,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
@@ -661,16 +663,17 @@ class ComprobantesNotariaController extends Controller
             $aceptada  = $response->successful() && isset($data['sunatResponse']);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
 
-            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado');
+            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado');
             $descripcion = $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data));
             $enlaceXml  = $pendiente && isset($data['xml']) ? $data['xml'] : null;
 
             \DB::table('comprobantes_sunat')->where('id', $id)->update([
-                'aceptada_por_sunat' => $aceptada ? 1 : 0,
-                'sunat_descripcion'  => $descripcion,
-                'estado'             => $estado,
-                'enlace_xml'         => $enlaceXml,
-                'updated_at'         => now(),
+                'aceptada_por_sunat'   => $aceptada ? 1 : 0,
+                'apisunat_document_id' => $data['documentId'] ?? null,
+                'sunat_descripcion'    => $descripcion,
+                'estado'               => $estado,
+                'enlace_xml'           => $enlaceXml,
+                'updated_at'           => now(),
             ]);
 
             return response()->json([
