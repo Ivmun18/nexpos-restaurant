@@ -255,8 +255,8 @@ class ComprobantesNotariaController extends Controller
             }
 
             return response()->json([
-                'success' => $aceptada,
-                'mensaje' => $aceptada ? $fileName . ' emitida correctamente' : 'Rechazada: ' . json_encode($data),
+                'success' => $aceptada || $pendiente,
+                'mensaje' => $aceptada ? $fileName . ' emitida correctamente' : ($pendiente ? $fileName . ' emitida correctamente' : 'Rechazada: ' . json_encode($data)),
                 'pdf'     => '/notaria/comprobantes/' . $comprobanteId . '/recibo-ticket',
             ]);
 
