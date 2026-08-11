@@ -214,12 +214,12 @@ const guardar = () => {
 
     if (form.value.id) {
         router.put(`/usuarios/${form.value.id}`, form.value, {
-            onSuccess: () => { modal.value = false; window.location.replace('/usuarios') },
+            onSuccess: () => { modal.value = false; router.reload({ only: ['usuarios'] }) },
             onError: (errors) => { error.value = Object.values(errors)[0] }
         })
     } else {
         router.post('/usuarios', form.value, {
-            onSuccess: () => { modal.value = false; window.location.replace('/usuarios') },
+            onSuccess: () => { modal.value = false; router.reload({ only: ['usuarios'] }) },
             onError: (errors) => { error.value = Object.values(errors)[0] }
         })
     }
