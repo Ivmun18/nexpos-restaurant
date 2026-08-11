@@ -73,9 +73,14 @@ class UsuarioController extends Controller
         $datos = [
             'name'     => $request->name,
             'username' => $request->username,
-            'email'    => $esNotaria ? null : $request->email,
             'rol'      => $request->rol,
         ];
+
+        // El campo email no existe en el formulario de notaria: se preserva
+        // el valor actual del usuario en vez de sobrescribirlo con null.
+        if (!$esNotaria) {
+            $datos['email'] = $request->email;
+        }
 
         if ($request->password) {
             $request->validate(['password' => 'min:6']);
