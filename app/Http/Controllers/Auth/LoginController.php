@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Models\AuditoriaLog;
 use Inertia\Inertia;
 
@@ -45,8 +46,13 @@ class LoginController extends Controller
         ]);
     }
 
-    // Verificar contraseña (siempre contra el email real del usuario encontrado)
-    if (!Auth::attempt(['email' => $user->email, 'password' => $request->password])) {
+    // Verificar contraseña contra el hash del usuario ya identificado.
+    // No se usa Auth::attempt(['email' => ...]) porque email puede ser NULL
+    // (usuarios de notaria sin correo): varios usuarios comparten NULL y
+    // Auth::attempt buscaria por ese criterio, pudiendo autenticar contra
+    // el usuario equivocado. Como ya tenemos $user resuelto por email/
+    // username/name, verificamos el hash directamente y logueamos manual.
+    if (!Hash::check($request->password, $user->password)) {
         AuditoriaLog::registrar(
             'auth',
             'login_fallido',
@@ -59,12 +65,13 @@ class LoginController extends Controller
             'warning',
             $user->empresa_id
         );
-        
+
         return back()->withErrors([
             'password' => 'La contraseña es incorrecta.',
         ]);
     }
 
+    Auth::login($user);
     $request->session()->regenerate();
     
     AuditoriaLog::registrar(
