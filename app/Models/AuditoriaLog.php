@@ -53,13 +53,14 @@ class AuditoriaLog extends Model
         ?array $datosAntes = null,
         ?array $datosDespues = null,
         ?string $descripcion = null,
-        string $severidad = 'info'
+        string $severidad = 'info',
+        ?int $empresaId = null
     ): self {
         $user = auth()->user();
         $request = request();
 
         return self::create([
-            'empresa_id'          => $user?->empresa_id,
+            'empresa_id'          => $empresaId ?? $user?->empresa_id,
             'usuario_id'          => $user?->id,
             'usuario_nombre'      => $user?->name,
             'categoria'           => $categoria,

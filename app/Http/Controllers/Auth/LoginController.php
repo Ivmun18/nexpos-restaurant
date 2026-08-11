@@ -55,7 +55,8 @@ class LoginController extends Controller
             null,
             ['email' => $request->email],
             'Intento de login fallido (contraseña incorrecta)',
-            'warning'
+            'warning',
+            $user->empresa_id
         );
         
         return back()->withErrors([
