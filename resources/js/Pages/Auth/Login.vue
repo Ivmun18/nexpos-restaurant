@@ -10,10 +10,10 @@
                 <p style="font-size:11px; color:#6B7280; letter-spacing:3px; margin:4px 0 0; text-transform:uppercase;">Sistema Notarial</p>
             </div>
             <div style="margin-bottom:1rem;">
-                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">Correo electrónico</label>
+                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:6px;">Correo o usuario</label>
                 <div style="display:flex; align-items:center; border:1.5px solid #D1D5DB; border-radius:8px; padding:0 12px; height:44px; background:#F9FAFB;">
                     <svg style="margin-right:8px; flex-shrink:0;" width="16" height="16" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    <input v-model="form.email" type="email" placeholder="correo@empresa.com" style="flex:1; border:none; background:transparent; font-size:13px; color:#1E293B; outline:none; width:100%;" />
+                    <input v-model="form.email" type="text" placeholder="Correo o usuario" style="flex:1; border:none; background:transparent; font-size:13px; color:#1E293B; outline:none; width:100%;" />
                 </div>
             </div>
             <div style="margin-bottom:1.5rem;">

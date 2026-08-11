@@ -22,16 +22,18 @@ class LoginController extends Controller
  public function store(Request $request)
 {
     $request->validate([
-        'email'    => 'required|email',
+        'email'    => 'required|string',
         'password' => 'required',
     ]);
 
-    // Verificar si el email existe
-    $user = \App\Models\User::where('email', $request->email)->first();
+    // Buscar por email o por nombre de usuario
+    $user = \App\Models\User::where('email', $request->email)
+        ->orWhere('name', $request->email)
+        ->first();
 
     if (!$user) {
         return back()->withErrors([
-            'email' => 'No encontramos una cuenta con ese correo electrónico.',
+            'email' => 'No encontramos una cuenta con ese correo o usuario.',
         ]);
     }
 
@@ -42,8 +44,8 @@ class LoginController extends Controller
         ]);
     }
 
-    // Verificar contraseña
-    if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+    // Verificar contraseña (siempre contra el email real del usuario encontrado)
+    if (!Auth::attempt(['email' => $user->email, 'password' => $request->password])) {
         AuditoriaLog::registrar(
             'auth',
             'login_fallido',
