@@ -99,10 +99,10 @@
                             <input v-model="form.name" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
                         </div>
                         <div>
-                            <label style="font-size:13px; font-weight:600; color:#64748B;">Nombre de usuario</label>
+                            <label style="font-size:13px; font-weight:600; color:#64748B;">Nombre de usuario<span v-if="industria === 'notaria'"> *</span></label>
                             <input v-model="form.username" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
                         </div>
-                        <div>
+                        <div v-if="industria !== 'notaria'">
                             <label style="font-size:13px; font-weight:600; color:#64748B;">Email</label>
                             <input v-model="form.email" type="email" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
                             <p style="font-size:11px; color:#94A3B8; margin:4px 0 0;">Debes ingresar al menos un correo o un nombre de usuario.</p>
@@ -205,7 +205,11 @@ const abrirModal = (u) => {
 const guardar = () => {
     error.value = ''
     if (!form.value.name) { error.value = 'El nombre completo es obligatorio.'; return }
-    if (!form.value.email && !form.value.username) { error.value = 'Ingresa al menos un correo o un nombre de usuario.'; return }
+    if (industria.value === 'notaria') {
+        if (!form.value.username) { error.value = 'El nombre de usuario es obligatorio.'; return }
+    } else if (!form.value.email && !form.value.username) {
+        error.value = 'Ingresa al menos un correo o un nombre de usuario.'; return
+    }
     if (!form.value.id && !form.value.password) { error.value = 'La contraseña es obligatoria.'; return }
 
     if (form.value.id) {

@@ -24,15 +24,17 @@ class UsuarioController extends Controller
 
     public function store(Request $request)
     {
+        $esNotaria = auth()->user()->empresa->industry_type === 'notaria';
+
         $request->validate([
             'name'     => 'required|max:100',
-            'username' => 'nullable|max:100|unique:users,username',
-            'email'    => 'nullable|email|unique:users,email',
+            'username' => ($esNotaria ? 'required' : 'nullable') . '|max:100|unique:users,username',
+            'email'    => $esNotaria ? 'nullable' : 'nullable|email|unique:users,email',
             'password' => 'required|min:6',
             'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente',
         ]);
 
-        if (!$request->email && !$request->username) {
+        if (!$esNotaria && !$request->email && !$request->username) {
             return back()->withErrors([
                 'email' => 'Debes ingresar al menos un correo electrónico o un nombre de usuario.',
             ])->withInput();
@@ -42,7 +44,7 @@ class UsuarioController extends Controller
             'empresa_id' => auth()->user()->empresa_id,
             'name'       => $request->name,
             'username'   => $request->username,
-            'email'      => $request->email,
+            'email'      => $esNotaria ? null : $request->email,
             'password'   => Hash::make($request->password),
             'rol'        => $request->rol,
             'activo'     => true,
@@ -53,14 +55,16 @@ class UsuarioController extends Controller
 
     public function update(Request $request, User $usuario)
     {
+        $esNotaria = auth()->user()->empresa->industry_type === 'notaria';
+
         $request->validate([
             'name'     => 'required|max:100',
-            'username' => 'nullable|max:100|unique:users,username,' . $usuario->id,
-            'email'    => 'nullable|email|unique:users,email,' . $usuario->id,
+            'username' => ($esNotaria ? 'required' : 'nullable') . '|max:100|unique:users,username,' . $usuario->id,
+            'email'    => $esNotaria ? 'nullable' : 'nullable|email|unique:users,email,' . $usuario->id,
             'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente',
         ]);
 
-        if (!$request->email && !$request->username) {
+        if (!$esNotaria && !$request->email && !$request->username) {
             return back()->withErrors([
                 'email' => 'Debes ingresar al menos un correo electrónico o un nombre de usuario.',
             ])->withInput();
@@ -69,7 +73,7 @@ class UsuarioController extends Controller
         $datos = [
             'name'     => $request->name,
             'username' => $request->username,
-            'email'    => $request->email,
+            'email'    => $esNotaria ? null : $request->email,
             'rol'      => $request->rol,
         ];
 
