@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Empresa;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -15,13 +14,6 @@ class ConsultarPendientesNotaria extends Command
 
     public function handle()
     {
-        $empresa = Empresa::find(15);
-
-        if (!$empresa || !$empresa->apisunat_token) {
-            $this->error('Empresa 15 no encontrada o sin apisunat_token configurado.');
-            return;
-        }
-
         $pendientes = DB::table('comprobantes_sunat')
             ->where('empresa_id', 15)
             ->where('estado', 'pendiente')
@@ -32,15 +24,8 @@ class ConsultarPendientesNotaria extends Command
 
         foreach ($pendientes as $comp) {
             try {
-                $documento = $comp->tipo_comprobante === '03' ? 'boleta' : 'factura';
-
-                $response = Http::withToken($empresa->apisunat_token)
-                    ->timeout(30)
-                    ->post('https://app.apisunat.pe/api/v3/status', [
-                        'documento' => $documento,
-                        'serie'     => $comp->serie,
-                        'numero'    => (int) $comp->numero,
-                    ]);
+                $response = Http::timeout(30)
+                    ->get("https://back.apisunat.com/documents/{$comp->apisunat_document_id}/getById");
 
                 if (!$response->successful()) {
                     Log::warning("notaria:consultar-pendientes: HTTP {$response->status()} para comprobante {$comp->id} (doc {$comp->apisunat_document_id}): " . $response->body());
