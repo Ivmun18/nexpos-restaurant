@@ -14,6 +14,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'empresa_id',
+        'tienda_id',
         'name',
         'email',
         'password',
@@ -40,6 +41,15 @@ class User extends Authenticatable
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    /**
+     * Tienda física donde trabaja el usuario. NULL = acceso a todas las
+     * tiendas (dueño/admin).
+     */
+    public function tienda()
+    {
+        return $this->belongsTo(Tienda::class);
     }
 
     /**
