@@ -34,14 +34,19 @@ class ConsultarPendientesNotaria extends Command
             try {
                 $response = Http::withToken($empresa->apisunat_token)
                     ->timeout(30)
-                    ->get("https://api.apisunat.com/v1/documents/{$comp->apisunat_document_id}");
+                    ->post('https://app.apisunat.pe/api/v3/status', [
+                        'serie'           => $comp->serie,
+                        'numero'          => $comp->numero,
+                        'tipoComprobante' => $comp->tipo_comprobante,
+                    ]);
 
                 if (!$response->successful()) {
-                    Log::warning("notaria:consultar-pendientes: HTTP {$response->status()} para comprobante {$comp->id} (doc {$comp->apisunat_document_id})");
+                    Log::warning("notaria:consultar-pendientes: HTTP {$response->status()} para comprobante {$comp->id} (doc {$comp->apisunat_document_id}): " . $response->body());
                     continue;
                 }
 
                 $status = $response->json('status');
+                Log::info("notaria:consultar-pendientes: respuesta comprobante {$comp->id}: " . $response->body());
 
                 if ($status === 'ACEPTADO') {
                     DB::table('comprobantes_sunat')->where('id', $comp->id)->update([
