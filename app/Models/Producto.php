@@ -81,6 +81,11 @@ class Producto extends Model
         return $this->belongsTo(Empresa::class);
     }
 
+    public function presentaciones()
+    {
+        return $this->hasMany(ProductoPresentacion::class, 'producto_id');
+    }
+
     public function getPrecioConIgvAttribute()
     {
         if ($this->afecto_igv) {

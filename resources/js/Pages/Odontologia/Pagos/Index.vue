@@ -3,7 +3,12 @@
   <div style="padding:24px; max-width:1200px; margin:0 auto;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
       <h1 style="font-size:22px; font-weight:700; margin:0;">Pagos</h1>
-      <button @click="modalNuevo=true" style="background:#8B5CF6; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer;">+ Nuevo pago</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input type="date" v-model="desde" style="padding:8px 10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;" />
+        <input type="date" v-model="hasta" style="padding:8px 10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px;" />
+        <button @click="abrirReporte" style="background:#0F766E; color:white; padding:9px 16px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">📄 PDF Contador</button>
+        <button @click="modalNuevo=true" style="background:#8B5CF6; color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer;">+ Nuevo pago</button>
+      </div>
     </div>
 
     <div style="background:white; border:1px solid #E2E8F0; border-radius:12px; overflow:hidden;">
@@ -108,16 +113,25 @@
 
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 
 const props = defineProps({ pagos: Object })
+const hoy = new Date()
+const pad = n => String(n).padStart(2,'0')
+const primerDiaMes = `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-01`
+const hoyStr = `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`
+const desde = ref(primerDiaMes)
+const hasta = ref(hoyStr)
 const modalNuevo = ref(false)
 const buscarPaciente = ref('')
 const resultadosPaciente = ref([])
 const metodoPagoCuota = ref({})
 const form = ref({ paciente_id:'', monto_total:'', tipo_pago:'contado', num_cuotas:2, observaciones:'' })
 
+const abrirReporte = () => {
+  window.open(`/reportes/reporte-contador-pdf?desde=${desde.value}&hasta=${hasta.value}`, '_blank')
+}
 const estadoStyle = (e) => {
   const m = { pendiente:{background:'#FFFBEB',color:'#B45309'}, parcial:{background:'#EFF6FF',color:'#1D4ED8'}, pagado:{background:'#F0FDF4',color:'#15803D'}, anulado:{background:'#FEF2F2',color:'#B91C1C'} }
   return { ...(m[e]||{}), padding:'3px 8px', borderRadius:'6px', fontSize:'11px', fontWeight:'600' }

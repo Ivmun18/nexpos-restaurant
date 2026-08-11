@@ -6,16 +6,16 @@
 <style>
     @page :right { margin: 35mm 5mm 5mm 5mm; size: 80mm auto; }
     @page :left { margin: 25mm 5mm 5mm 5mm; size: 80mm auto; }
-    body { font-family: Verdana, sans-serif; font-size: 8pt; line-height: 1.25; font-weight: bold; color: #000; margin: 0; padding: 0; width: 72mm; }
+    body { font-family: Verdana, sans-serif; font-size: 8pt; line-height: 1.25; font-weight: normal; color: #000; margin: 0; padding: 0; width: 72mm; }
     .center { text-align: center; }
     .bold { font-weight: bold; }
     .line { border-top: 1px dashed #000; margin: 6px 0; }
     .table { width: 100%; border-collapse: collapse; }
     .table th { text-align: left; font-size: 11px; font-weight: bold; border-bottom: 1px dashed #000; padding: 2px 0; }
-    .table td { font-size: 11px; font-weight: bold; padding: 2px 0; word-wrap: break-word; }
+    .table td { font-size: 11px; font-weight: normal; padding: 2px 0; word-wrap: break-word; }
     .table { table-layout: fixed; }
     .right { text-align: right; }
-    .small { font-size: 10px; font-weight: bold; }
+    .small { font-size: 10px; font-weight: normal; }
     .mt { margin-top: 8px; }
     .mb { margin-bottom: 8px; }
 </style>
@@ -34,7 +34,7 @@
             }
         @endphp
         @if($logoSrc)
-        <img src="{{ $logoSrc }}" style="max-width:55mm; max-height:18mm; margin-bottom:4px;" />
+        <img src="{{ $logoSrc }}" style="max-width:72mm; max-height:32mm; margin-bottom:4px; display:block; margin-left:auto; margin-right:auto;" />
         @endif
         <p class="bold" style="font-size:13px; margin:0;">{{ $empresa->razon_social }}</p>
         <p style="margin:2px 0;">RUC: {{ $empresa->ruc }}</p>
@@ -59,17 +59,15 @@
     <table class="table">
         <thead>
             <tr>
-                <th style="width:8%">#</th>
-                <th style="width:42%">PRODUCTO</th>
-                <th style="width:12%" class="right">CANT</th>
-                <th style="width:18%" class="right">P/U</th>
-                <th style="width:20%" class="right">TOTAL</th>
+                <th style="width:44%">PRODUCTO</th>
+                <th style="width:10%" class="right">CANT</th>
+                <th style="width:23%" class="right">P/U</th>
+                <th style="width:23%" class="right">TOTAL</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($items as $i => $item)
+            @foreach($items as $item)
             <tr>
-                <td>{{ $i + 1 }}</td>
                 <td>{{ $item['descripcion'] }}</td>
                 <td class="right">{{ $item['cantidad'] }}</td>
                 <td class="right">{{ number_format($item['precio_unitario'], 2) }}</td>

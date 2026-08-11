@@ -35,11 +35,35 @@ class AuditoriaController extends Controller
         $logs = $query->latest()->paginate(50);
 
         $industria = auth()->user()->empresa->industry_type ?? 'general';
-        $baseUrl = $industria === 'notaria' ? '/notaria/auditoria' : '/auditoria';
+        $baseUrl = $industria === 'notaria' ? '/notaria/auditoria' : '/gimnasio/auditoria';
+        if (!in_array($industria, ['notaria', 'gimnasio'])) {
+            $baseUrl = '/auditoria';
+        }
+
+        // Módulos según industria
+        $modulosPorIndustria = [
+            'notaria'   => ['Notaria', 'Facturación', 'Caja', 'Clientes', 'Productos', 'Usuarios'],
+            'gimnasio'  => ['Miembros', 'Planes', 'Pagos', 'Accesos', 'Clases', 'Instructores', 'Usuarios'],
+            'hotel'     => ['Habitaciones', 'Reservas', 'Huespedes', 'Pagos', 'Housekeeping', 'Usuarios'],
+            'farmacia'  => ['Productos', 'Ventas', 'Compras', 'Caja', 'Clientes', 'Usuarios'],
+            'restaurante'=> ['Pedidos', 'Caja', 'Productos', 'Clientes', 'Usuarios'],
+            'minimarket' => ['Productos', 'Ventas', 'Compras', 'Caja', 'Usuarios'],
+            'ferreteria' => ['Productos', 'Ventas', 'Compras', 'Caja', 'Usuarios'],
+            'odontologia'=> ['Pacientes', 'Tratamientos', 'Citas', 'Pagos', 'Usuarios'],
+            'general'    => ['Ventas', 'Compras', 'Caja', 'Productos', 'Clientes', 'Usuarios'],
+        ];
+
+        // También obtener módulos reales de los logs de esta empresa
+        $modulosReales = AuditLog::where('empresa_id', EmpresaHelper::id())
+            ->distinct()->pluck('modulo')->filter()->sort()->values()->toArray();
+
+        $modulos = count($modulosReales) > 0
+            ? $modulosReales
+            : ($modulosPorIndustria[$industria] ?? $modulosPorIndustria['general']);
 
         return Inertia::render('Auditoria/Index', [
             'logs'     => $logs,
-            'modulos'  => ['Notaria', 'Facturación', 'Caja', 'Clientes', 'Ventas', 'Compras', 'Productos', 'Usuarios', 'Empresas', 'Pedidos'],
+            'modulos'  => $modulos,
             'acciones' => ['create', 'update', 'delete', 'view'],
             'baseUrl'  => $baseUrl,
         ]);

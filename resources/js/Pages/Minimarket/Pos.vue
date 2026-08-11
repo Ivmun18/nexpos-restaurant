@@ -42,7 +42,7 @@
                             @mouseleave="e => { e.currentTarget.style.borderColor = p.stock_actual <= 0 ? '#FEE2E2' : '#E2E8F0'; e.currentTarget.style.boxShadow='none' }"
                         >
                             <div style="font-size:24px; text-align:center; margin-bottom:6px;">
-                                {{ iconProducto(p.categoria) }}
+                                {{ p.categoria?.icono || '📦' }}
                             </div>
                             <p style="font-size:13px; font-weight:600; color:#1E293B; margin:0 0 4px; line-height:1.3;">{{ p.descripcion }}</p>
                             <p style="font-size:11px; color:#94A3B8; margin:0 0 6px;">{{ p.codigo_barras || 'Sin código' }}</p>
@@ -60,10 +60,10 @@
             </div>
 
             <!-- ══ PANEL DERECHO: Carrito + Cobro ══ -->
-            <div style="display:flex; flex-direction:column; gap:16px; min-height:0; height:100%; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; gap:16px;">
 
                 <!-- Carrito -->
-                <div style="flex:1; min-height:0; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow-y:auto;">
+                <div style="background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
                         <p style="font-size:16px; font-weight:800; color:#1E293B; margin:0;">🛒 Carrito</p>
                         <button v-if="carrito.length" @click="carrito = []"
@@ -78,10 +78,17 @@
                     </div>
 
                     <div v-for="(item, i) in carrito" :key="item.id"
-                        style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #F1F5F9;">
+                        style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #F1F5F9;">
                         <div style="flex:1; min-width:0;">
                             <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.descripcion }}</p>
-                            <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ Number(item.precio_venta).toFixed(2) }} c/u</p>
+                            <p style="font-size:12px; color:#94A3B8; margin:2px 0 0;">S/ {{ precioConRecargo(item).toFixed(2) }} c/u</p>
+                            <select v-if="item.presentaciones && item.presentaciones.length"
+                                :value="item.presentacion_id || ''"
+                                @change="cambiarPresentacion(i, $event.target.value)"
+                                style="margin-top:4px; font-size:11px; padding:2px 4px; border-radius:6px; border:1px solid #E2E8F0; max-width:140px;">
+                                <option value="">Unidad</option>
+                                <option v-for="pr in item.presentaciones" :key="pr.id" :value="pr.id">{{ pr.nombre }}</option>
+                            </select>
                         </div>
                         <div style="display:flex; align-items:center; gap:6px;">
                             <button @click="decrementar(i)"
@@ -91,7 +98,7 @@
                                 style="width:26px; height:26px; border-radius:8px; border:1px solid #14B8A6; background:#F0FDFA; cursor:pointer; font-size:14px; font-weight:700; color:#14B8A6;">+</button>
                         </div>
                         <div style="text-align:right; min-width:60px;">
-                            <p style="font-size:14px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ (item.precio_venta * item.cantidad).toFixed(2) }}</p>
+                            <p style="font-size:14px; font-weight:800; color:#14B8A6; margin:0;">S/ {{ (precioConRecargo(item) * item.cantidad).toFixed(2) }}</p>
                         </div>
                         <button @click="carrito.splice(i, 1)"
                             style="color:#CBD5E1; background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
@@ -102,14 +109,14 @@
                 <div style="flex-shrink:0; background:white; border-radius:16px; padding:16px; border:1px solid #E2E8F0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
 
                     <!-- Total -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 16px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:8px 14px; background:linear-gradient(135deg,#14B8A6,#0F766E); border-radius:10px;">
                         <p style="font-size:15px; font-weight:700; color:white; margin:0;">TOTAL</p>
                         <p style="font-size:28px; font-weight:900; color:white; margin:0;">S/ {{ total.toFixed(2) }}</p>
                     </div>
 
                     <!-- Método de pago -->
-                    <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 10px;">Método de pago</p>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+                    <p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 6px;">Método de pago</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
                         <button v-for="m in metodos" :key="m.valor" @click="metodoPago = m.valor"
                             :style="{
                                 padding: '10px',
@@ -125,6 +132,20 @@
                         </button>
                     </div>
 
+                    <!-- Institucion (solo vale) -->
+                    <div v-if="metodoPago === 'vale'" style="margin-bottom:14px;">
+                        <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 6px;">Institucion</p>
+                        <select v-model="institucionId"
+                            style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box;">
+                            <option value="">Selecciona una institucion</option>
+                            <option v-for="inst in instituciones" :key="inst.id" :value="inst.id">{{ inst.nombre }} (+{{ inst.porcentaje_recargo }}%)</option>
+                        </select>
+                        <div v-if="recargoMonto > 0" style="margin-top:8px; padding:8px 12px; background:#FFFBEB; border-radius:8px; display:flex; justify-content:space-between; font-size:13px;">
+                            <span style="color:#92400E;">Recargo por vale</span>
+                            <span style="color:#92400E; font-weight:700;">+S/ {{ recargoMonto.toFixed(2) }}</span>
+                        </div>
+                    </div>
+
                     <!-- Monto pagado (solo efectivo) -->
                     <div v-if="metodoPago === 'efectivo'" style="margin-bottom:14px;">
                         <p style="font-size:13px; font-weight:600; color:#64748B; margin:0 0 6px;">Monto recibido</p>
@@ -138,44 +159,8 @@
                             <span style="font-size:16px; font-weight:800; color:#166534;">S/ {{ (montoPagado - total).toFixed(2) }}</span>
                         </div>
                     </div>
-
-                    <!-- Comprobante -->
-                    <div style="margin-bottom:12px;">
-                        <p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Comprobante</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
-                            <button type="button" @click="tipoComprobante = 'ninguno'"
-                                :style="tipoComprobante === 'ninguno' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
-                                🚫 Ninguno
-                            </button>
-                            <button type="button" @click="tipoComprobante = 'boleta'"
-                                :style="tipoComprobante === 'boleta' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
-                                🧾 Boleta
-                            </button>
-                            <button type="button" @click="tipoComprobante = 'factura'"
-                                :style="tipoComprobante === 'factura' ? 'padding:8px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:8px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
-                                📄 Factura
-                            </button>
-                        </div>
-
-                        <!-- Datos cliente para boleta/factura -->
-                        <div v-if="tipoComprobante !== 'ninguno'" style="display:flex; flex-direction:column; gap:8px;">
-                            <input v-model="clienteDni" type="text"
-                                :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
-                            <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
-                                placeholder="Razón social del cliente *"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
-                            <input v-model="clienteEmail" type="email"
-                                placeholder="Email (para enviar comprobante)"
-                                style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                            />
-                        </div>
-                    </div>
-
                     <!-- Botón cobrar -->
-                    <button @click="cobrar"
+                    <button @click="abrirModalCobro"
                         :disabled="!carrito.length || procesando"
                         :style="{
                             width: '100%',
@@ -196,15 +181,117 @@
         </div>
 
     </AppLayout>
+
+    <!-- Modal de confirmacion de cobro -->
+    <div v-if="mostrarModalCobro" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;">
+        <div style="background:white; border-radius:16px; padding:20px; max-width:400px; width:100%; max-height:90vh; overflow-y:auto;">
+            <p style="font-size:16px; font-weight:800; color:#0F172A; margin:0 0 4px;">Confirmar venta</p>
+            <p style="font-size:13px; color:#64748B; margin:0 0 16px;">Total: S/ {{ total.toFixed(2) }}</p>
+<p style="font-size:12px; font-weight:600; color:#64748B; margin:0 0 8px; text-transform:uppercase; letter-spacing:1px;">Tipo de comprobante</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;">
+                <button type="button" @click="tipoComprobante = 'ninguno'"
+                    :style="tipoComprobante === 'ninguno' ? 'padding:10px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:10px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                    🚫 Ninguno
+                </button>
+                <button type="button" @click="tipoComprobante = 'boleta'"
+                    :style="tipoComprobante === 'boleta' ? 'padding:10px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:10px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                    🧾 Boleta
+                </button>
+                <button type="button" @click="tipoComprobante = 'factura'"
+                    :style="tipoComprobante === 'factura' ? 'padding:10px; border-radius:8px; border:2px solid #14B8A6; background:#F0FDFA; color:#0F766E; font-size:12px; font-weight:600; cursor:pointer;' : 'padding:10px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:12px; cursor:pointer;'">
+                    📄 Factura
+                </button>
+            </div>
+<div v-if="tipoComprobante !== 'ninguno'" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                <input v-model="clienteDni" type="text"
+                    :placeholder="tipoComprobante === 'factura' ? 'RUC del cliente *' : 'DNI del cliente (opcional)'"
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                />
+                <input v-if="tipoComprobante === 'factura'" v-model="clienteRazonSocial" type="text"
+                    placeholder="Razón social del cliente *"
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                />
+                <input v-model="clienteEmail" type="email"
+                    placeholder="Email (para enviar comprobante)"
+                    style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
+                />
+            </div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <button type="button" @click="mostrarModalCobro = false" :disabled="procesando"
+                    style="padding:12px; border-radius:10px; border:2px solid #E2E8F0; background:white; color:#64748B; font-size:14px; font-weight:700; cursor:pointer;">
+                    Cancelar
+                </button>
+                <button type="button" @click="confirmarCobro" :disabled="procesando"
+                    :style="{
+                        padding: '12px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg,#14B8A6,#0F766E)',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontWeight: '800',
+                        cursor: procesando ? 'not-allowed' : 'pointer',
+                    }">
+                    {{ procesando ? '⏳ Procesando...' : '✅ Confirmar y cobrar' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+
+const configurarQZ = () => {
+    qz.security.setCertificatePromise((resolve) => {
+        fetch('/qz-certificate.pem').then(r => r.text()).then(resolve)
+    })
+    qz.security.setSignatureAlgorithm('SHA512')
+    qz.security.setSignaturePromise((toSign) => {
+        return (resolve, reject) => {
+            fetch('/api/qz-sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
+                body: JSON.stringify({ message: toSign })
+            }).then(r => r.text()).then(resolve).catch(reject)
+        }
+    })
+}
+
+const abrirGaveta = () => {
+    if (typeof qz === 'undefined') { console.warn('QZ no cargado'); return }
+    configurarQZ()
+    const doImprimir = () => {
+        qz.printers.find('POSPrinter POS80').then(printer => {
+            console.log('Impresora encontrada:', printer)
+            const config = qz.configs.create(printer)
+            const data = [{ type: 'raw', format: 'command', data: '\x1B\x70\x00\x40\xFF' }]
+            return qz.print(config, data)
+        }).then(() => console.log('Comando gaveta enviado OK'))
+        .catch(err => console.warn('Gaveta QZ error:', err))
+    }
+    if (qz.websocket.isActive()) {
+        doImprimir()
+    } else {
+        qz.websocket.connect().then(doImprimir).catch(err => console.warn('Connect error:', err))
+    }
+}
+
+onMounted(() => {
+    if (!document.getElementById('qz-script')) {
+        const s = document.createElement('script')
+        s.id = 'qz-script'
+        s.src = 'https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js'
+        document.head.appendChild(s)
+    }
+})
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
     productos: { type: Array, default: () => [] },
+    instituciones: { type: Array, default: () => [] },
 })
 
 const busqueda   = ref('')
@@ -218,7 +305,14 @@ const metodos = [
     { valor: 'yape',     label: 'Yape',     icon: '📱' },
     { valor: 'plin',     label: 'Plin',     icon: '📲' },
     { valor: 'tarjeta',  label: 'Tarjeta',  icon: '💳' },
+    { valor: 'vale',     label: 'Vale Institucion', icon: '🏢' },
 ]
+
+const institucionId = ref('')
+
+const institucionSeleccionada = computed(() =>
+    props.instituciones?.find(i => i.id == institucionId.value) || null
+)
 
 const productosFiltrados = computed(() => {
     if (!busqueda.value) return props.productos
@@ -230,22 +324,42 @@ const productosFiltrados = computed(() => {
 })
 
 const tipoComprobante = ref('ninguno')
+const mostrarModalCobro = ref(false)
 const clienteDni = ref('')
 const clienteRazonSocial = ref('')
 const clienteEmail = ref('')
 
-const total = computed(() =>
+const subtotal = computed(() =>
     carrito.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
 )
 
-const iconProducto = (categoria) => {
-    const map = {
-        bebidas: '🥤', lacteos: '🥛', panaderia: '🍞', carnes: '🥩',
-        frutas: '🍎', verduras: '🥦', limpieza: '🧼', snacks: '🍿',
-        conservas: '🥫', higiene: '🧴',
+const recargoMonto = computed(() => {
+    if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) return 0
+    return Math.round(subtotal.value * (institucionSeleccionada.value.porcentaje_recargo / 100) * 100) / 100
+})
+
+const precioConRecargo = (item) => {
+    if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) {
+        return Number(item.precio_venta)
     }
-    return map[categoria?.toLowerCase()] || '📦'
+    const factor = 1 + (institucionSeleccionada.value.porcentaje_recargo / 100)
+    return Math.round(item.precio_venta * factor * 100) / 100
 }
+
+const itemsParaEnviar = computed(() => {
+    if (metodoPago.value !== 'vale' || !institucionSeleccionada.value) {
+        return carrito.value
+    }
+    const factor = 1 + (institucionSeleccionada.value.porcentaje_recargo / 100)
+    return carrito.value.map(item => ({
+        ...item,
+        precio_venta: Math.round(item.precio_venta * factor * 100) / 100,
+    }))
+})
+
+const total = computed(() =>
+    itemsParaEnviar.value.reduce((sum, i) => sum + i.precio_venta * i.cantidad, 0)
+)
 
 const inputBusqueda = ref(null)
 
@@ -274,20 +388,49 @@ const escanearCodigo = () => {
     }
 }
 
+const presentacionPorDefecto = (p) => {
+    if (!p.presentaciones || !p.presentaciones.length) return null
+    return p.presentaciones.find(pr => pr.es_default) || null
+}
+
 const agregarAlCarrito = (p) => {
     if (p.stock_actual <= 0) return
     const existe = carrito.value.find(i => i.id === p.id)
     if (existe) {
-        if (existe.cantidad < p.stock_actual) existe.cantidad++
+        existe.cantidad++
     } else {
-        carrito.value.push({ ...p, cantidad: 1 })
+        const pres = presentacionPorDefecto(p)
+        carrito.value.push({
+            ...p,
+            cantidad: 1,
+            presentacion_id: pres ? pres.id : null,
+            precio_venta: pres ? Number(pres.precio_venta) : p.precio_venta,
+            unidad_sunat: pres ? pres.unidad_sunat : 'NIU',
+        })
+    }
+}
+
+const cambiarPresentacion = (i, presentacionId) => {
+    const item = carrito.value[i]
+    const prod = props.productos.find(p => p.id === item.id)
+    if (!prod) return
+    if (!presentacionId) {
+        item.presentacion_id = null
+        item.precio_venta = prod.precio_venta
+        item.unidad_sunat = 'NIU'
+        return
+    }
+    const pres = prod.presentaciones.find(pr => pr.id == presentacionId)
+    if (pres) {
+        item.presentacion_id = pres.id
+        item.precio_venta = Number(pres.precio_venta)
+        item.unidad_sunat = pres.unidad_sunat
     }
 }
 
 const incrementar = (i) => {
     const item = carrito.value[i]
-    const prod = props.productos.find(p => p.id === item.id)
-    if (item.cantidad < (prod?.stock_actual ?? 999)) item.cantidad++
+    item.cantidad++
 }
 
 const decrementar = (i) => {
@@ -295,15 +438,26 @@ const decrementar = (i) => {
     else carrito.value.splice(i, 1)
 }
 
-const cobrar = () => {
+const abrirModalCobro = () => {
+    if (!carrito.value.length) return
+    if (metodoPago.value === 'vale' && !institucionId.value) {
+        alert('Selecciona la institucion del vale antes de cobrar')
+        return
+    }
+    mostrarModalCobro.value = true
+}
+
+const confirmarCobro = () => {
     if (!carrito.value.length || procesando.value) return
     procesando.value = true
 
     router.post('/minimarket/pos', {
-        items:              carrito.value,
+        items:              itemsParaEnviar.value,
         metodo_pago:        metodoPago.value,
         total:              total.value,
         monto_pagado:       montoPagado.value || null,
+        institucion_id:     metodoPago.value === 'vale' ? (institucionId.value || null) : null,
+        recargo_monto:      recargoMonto.value,
         tipo_comprobante:   tipoComprobante.value,
         cliente_dni:        clienteDni.value,
         cliente_razon_social: clienteRazonSocial.value,
@@ -317,6 +471,8 @@ const cobrar = () => {
             clienteDni.value     = ''
             clienteRazonSocial.value = ''
             clienteEmail.value   = ''
+            mostrarModalCobro.value = false
+            abrirGaveta()
         },
         onError: () => { procesando.value = false }
     })

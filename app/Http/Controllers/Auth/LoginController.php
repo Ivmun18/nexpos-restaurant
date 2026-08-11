@@ -10,8 +10,12 @@ use Inertia\Inertia;
 
 class LoginController extends Controller
 {
-    public function show()
+    public function show(Request $request)
     {
+        $host = $request->getHost();
+        if ($host === 'minimarket.nexposolution.com') {
+            return Inertia::render('Auth/LoginMinimarket');
+        }
         return Inertia::render('Auth/Login');
     }
 
@@ -70,6 +74,19 @@ class LoginController extends Controller
         'Inicio de sesión exitoso'
     );
     
+    $empresa = \DB::table('empresas')->where('id', auth()->user()->empresa_id)->first();
+    $industryRedirects = [
+        'gimnasio'    => '/gimnasio/dashboard',
+        'hotel'       => '/hotel/dashboard',
+        'notaria'     => '/notaria/actos',
+        'minimarket'  => '/minimarket/pos',
+        'odontologia' => '/odontologia/dashboard',
+        'optica'      => '/optica/dashboard',
+    ];
+    if ($empresa && isset($industryRedirects[$empresa->industry_type])) {
+        return redirect()->intended($industryRedirects[$empresa->industry_type]);
+    }
+
     return redirect()->intended('/dashboard');
 }
 

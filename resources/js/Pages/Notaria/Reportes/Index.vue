@@ -30,12 +30,13 @@
                     <p style="font-size:28px; font-weight:800; color:#4F46E5; margin:0;">{{ comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').length }}</p>
                 </div>
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
-                    <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">TOTAL VENTAS</p>
+                    <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">TOTAL FACTURADO</p>
                     <p style="font-size:28px; font-weight:800; color:#10B981; margin:0;">S/ {{ totalVentas.toFixed(2) }}</p>
                 </div>
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:20px;">
                     <p style="font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; margin:0 0 8px;">INGRESOS HOY</p>
                     <p style="font-size:28px; font-weight:800; color:#F59E0B; margin:0;">S/ {{ ingresosHoy.toFixed(2) }}</p>
+                    <p style="font-size:10px; color:#94A3B8; margin:4px 0 0;">Solo contado (sin crédito)</p>
                 </div>
             </div>
 
@@ -65,6 +66,7 @@
                                 <th style="padding:12px 16px; text-align:left;">Serie-Número</th>
 
                                 <th style="padding:12px 16px; text-align:right;">Total</th>
+                                <th style="padding:12px 16px; text-align:center;">Pago</th>
                                 <th style="padding:12px 16px; text-align:left;">Estado</th>
                                 <th style="padding:12px 16px; text-align:left;">Acciones</th>
                             </tr>
@@ -73,7 +75,7 @@
                             <tr v-for="(c, i) in comprobantes" :key="c.id" style="border-top:1px solid #F1F5F9;">
                                 <td style="padding:10px 16px; color:#64748B;">{{ i + 1 }}</td>
                                 <td style="padding:10px 16px; color:#374151;">{{ formatFecha(c.fecha_emision) }}</td>
-                                <td style="padding:10px 16px; font-weight:600; color:#1E293B;">{{ c.cliente_nombre || '-' }}</td>
+                                <td style="padding:6px 8px; font-weight:600; color:#1E293B; font-size:12px;">{{ c.cliente_nombre || '-' }}</td>
                                 <td style="padding:10px 16px;">
                                     <span :style="{ background: c.tipo_comprobante==='01' ? '#DBEAFE' : '#D1FAE5', color: c.tipo_comprobante==='01' ? '#1D4ED8' : '#065F46', padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700' }">
                                         {{ c.tipo_comprobante === '01' ? 'Factura' : 'Boleta' }}
@@ -82,28 +84,45 @@
                                 <td style="padding:10px 16px; color:#374151; font-family:monospace;">{{ c.serie }}-{{ String(c.numero).padStart(8, '0') }}</td>
 
                                 <td style="padding:10px 16px; text-align:right; font-weight:700; color:#1E293B;">S/ {{ Number(c.total).toFixed(2) }}</td>
+                                <td style="padding:10px 16px; text-align:center;">
+                                    <span :style="{
+                                        padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700',
+                                        background: c.forma_pago === 'Credito' ? '#FEF3C7' : '#D1FAE5',
+                                        color: c.forma_pago === 'Credito' ? '#92400E' : '#065F46',
+                                    }">{{ c.forma_pago === 'Credito' ? '📅 Crédito' : '💵 Contado' }}</span>
+                                </td>
                                 <td style="padding:10px 16px;">
                                     <span :style="{ background: c.estado==='aceptado' ? '#D1FAE5' : c.estado==='emitido' ? '#FEF3C7' : '#FEE2E2', color: c.estado==='aceptado' ? '#065F46' : c.estado==='emitido' ? '#92400E' : '#991B1B', padding:'2px 10px', borderRadius:'20px', fontSize:'11px', fontWeight:'700' }">
                                         {{ c.estado }}
                                     </span>
                                 </td>
-                                <td style="padding:10px 16px;">
-                                    <button v-if="c.estado !== 'aceptado' && c.estado !== 'anulado'" @click="reenviar(c)"
-                                        :disabled="reenviando === c.id"
-                                        style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
-                                        {{ reenviando === c.id ? '⏳...' : '🔄 Reenviar' }}
-                                    </button>
-                                    <button v-if="c.estado === 'emitido' || c.estado === 'aceptado'" @click="anular(c)"
-                                        :disabled="anulando === c.id"
-                                        style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; margin-left:4px;">
-                                        {{ anulando === c.id ? '⏳...' : '🚫 Anular' }}
-                                    </button>
-                                    <span v-if="c.estado === 'aceptado'" style="color:#16A34A; font-size:11px;">✅</span>
-                                    <span v-if="c.estado === 'anulado'" style="color:#DC2626; font-size:11px;">❌ Anulado</span>
-                                    <a :href="'/notaria/comprobantes/' + c.id + '/recibo-ticket'" target="_blank"
-                                        style="background:#F1F5F9; color:#374151; border:1px solid #E2E8F0; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; margin-left:4px;">
-                                        🖨️ Ticket
-                                    </a>
+                                <td style="padding:6px 8px;">
+                                    <div style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:4px; align-items:center;">
+                                        <button v-if="c.estado !== 'aceptado' && c.estado !== 'anulado'" @click="reenviar(c)"
+                                            :disabled="reenviando === c.id"
+                                            style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                            {{ reenviando === c.id ? '⏳...' : '🔄 Reenviar' }}
+                                        </button>
+                                        <button v-if="c.estado === 'emitido' || c.estado === 'aceptado'" @click="anular(c)"
+                                            :disabled="anulando === c.id"
+                                            style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                            {{ anulando === c.id ? '⏳...' : '🚫 Anular' }}
+                                        </button>
+                                        <span v-if="c.estado === 'aceptado'" style="color:#16A34A; font-size:11px;">✅</span>
+                                        <span v-if="c.estado === 'anulado'" style="color:#DC2626; font-size:11px;">❌ Anulado</span>
+                                        <a :href="'https://wa.me/?text=' + encodeURIComponent('Estimado cliente, adjuntamos su comprobante ' + c.serie + '-' + String(c.numero).padStart(8,'0') + ' por S/ ' + c.total + '. Descargue su ticket en: http://161.35.5.40/notaria/comprobantes/' + c.id + '/recibo-ticket')" target="_blank"
+                                            style="background:#25D366; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
+                                            💬 WhatsApp
+                                        </a>
+                                        <a :href="'/notaria/comprobantes/' + c.id + '/recibo-ticket'" target="_blank"
+                                            style="background:#6366F1; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
+                                            🖨️ Imprimir
+                                        </a>
+                                        <a v-if="c.enlace_xml" :href="c.enlace_xml" target="_blank"
+                                            style="background:#F59E0B; color:white; border:none; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; white-space:nowrap;">
+                                            📄 XML
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="comprobantes.length === 0">
@@ -201,7 +220,7 @@ const totalVentas  = computed(() => props.comprobantes.filter(c => c.estado === 
 const ingresosHoy  = computed(() => {
     const now = new Date()
     const hoy = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0')
-    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision && c.fecha_emision.startsWith(hoy)).reduce((s,c) => s + Number(c.total), 0)
+    return props.comprobantes.filter(c => (c.estado === 'aceptado' || c.estado === 'emitido') && c.fecha_emision && c.fecha_emision.startsWith(hoy) && c.forma_pago !== 'Credito').reduce((s,c) => s + Number(c.total), 0)
 })
 const totalIgv     = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_igv), 0))
 const totalGravada = computed(() => props.comprobantes.filter(c => c.estado === 'aceptado' || c.estado === 'emitido').reduce((s, c) => s + Number(c.total_gravada), 0))

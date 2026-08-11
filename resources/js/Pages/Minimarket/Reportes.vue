@@ -51,8 +51,9 @@
                 <p style="font-size:13px; opacity:0.7; margin:10px 0 0;">{{ resumen.total_ventas }} ventas</p>
             </div>
             <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-                <p style="font-size:13px; font-weight:600; color:#94A3B8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">🎫 Ticket promedio</p>
-                <p style="font-size:32px; font-weight:900; color:#1E293B; margin:0; line-height:1;">S/ {{ Number(resumen.ticket_promedio).toFixed(2) }}</p>
+                <p style="font-size:13px; font-weight:600; color:#94A3B8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">📅 Ventas de hoy</p>
+                <p style="font-size:32px; font-weight:900; color:#1E293B; margin:0; line-height:1;">S/ {{ Number(resumen.ventas_hoy).toFixed(2) }}</p>
+                <p style="font-size:13px; opacity:0.6; margin:6px 0 0;">{{ resumen.ventas_hoy_count }} transacciones</p>
             </div>
             <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                 <p style="font-size:13px; font-weight:600; color:#94A3B8; margin:0 0 12px; text-transform:uppercase; letter-spacing:1px;">💵 Efectivo</p>

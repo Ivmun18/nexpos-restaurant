@@ -17,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\VerificarEmpresaActiva::class,
             \App\Http\Middleware\ShareEmpresaData::class,
+            \App\Http\Middleware\NotariaSubdominio::class,
+            \App\Http\Middleware\MinimarketSubdominio::class,
+            \App\Http\Middleware\DentalSubdominio::class,
         ]);
         $middleware->alias([
             'only.admin' => \App\Http\Middleware\OnlyAdmin::class,

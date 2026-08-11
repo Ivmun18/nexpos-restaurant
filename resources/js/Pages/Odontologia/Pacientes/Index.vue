@@ -38,6 +38,7 @@
             <td style="padding:12px 16px; font-size:13px;">{{ calcularEdad(p.fecha_nacimiento) }}</td>
             <td style="padding:12px 16px;">
               <a :href="`/odontologia/pacientes/${p.id}`" style="color:#8B5CF6; font-size:13px; font-weight:600; text-decoration:none; margin-right:12px;">Ver</a>
+              <a :href="`/odontologia/odontograma/${p.id}`" style="color:#0F766E; font-size:13px; font-weight:600; text-decoration:none; margin-right:12px;">🦷 Odontograma</a>
               <a :href="`/odontologia/pacientes/${p.id}/editar`" style="color:#64748B; font-size:13px; text-decoration:none;">Editar</a>
             </td>
           </tr>

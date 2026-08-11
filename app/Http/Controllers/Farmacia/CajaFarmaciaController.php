@@ -56,7 +56,7 @@ class CajaFarmaciaController extends Controller
             ->get()
             ->map(function($caja) use ($empresaId) {
                 $ventas = Venta::where('empresa_id', $empresaId)
-                    ->whereDate('fecha_emision', Carbon::parse($caja->apertura_at)->toDateString())
+                    ->where('caja_id', $caja->id)
                     ->where('estado', '!=', 'anulado')
                     ->get();
                 $caja->cantidad_ventas = $ventas->count();
@@ -136,7 +136,8 @@ class CajaFarmaciaController extends Controller
         $hoy = now()->toDateString();
 
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('fecha_emision', $hoy)->get();
+            ->where('caja_id', $caja->id)
+            ->get();
 
         $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
         $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');

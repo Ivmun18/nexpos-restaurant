@@ -78,11 +78,15 @@ class CajaNotariaController extends Controller
                 ->whereDate('fecha_emision', now()->toDateString())
                 ->get();
 
-            $ingresos = $comprobantes->sum('total');
-
             // Egresos desde movimientos manuales
             $movimientos = $sesionActual->movimientos;
             $egresos = $movimientos->where('tipo', 'egreso')->sum('monto');
+
+            // Ingresos desde movimientos (excluye apertura y crédito no cobrado)
+            $ingresos = $movimientos
+                ->where('tipo', 'ingreso')
+                ->filter(fn($m) => !str_contains($m->concepto, 'Apertura'))
+                ->sum('monto');
 
             // Desglose por tipo de cobro
             $cobrosExpediente = $comprobantes->whereNotNull('acto_id')->sum('total');
@@ -191,18 +195,20 @@ class CajaNotariaController extends Controller
             $acto->update(['estado' => 'finalizado']);
         }
 
-        // Registrar en caja si hay sesión abierta
-        $sesion = SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->select('sesiones_caja.*')->first();
-        if ($sesion) {
-            CajaMovimiento::create([
-                'sesion_id'    => $sesion->id,
-                'usuario_id'   => auth()->id(),
-                'tipo'         => 'ingreso',
-                'concepto'     => ucfirst($request->tipo) . ' ' . $acto->numero_expediente . ' (' . $request->metodo_pago . ')',
-                'referencia_id'=> $acto->id,
-                'monto'        => $request->monto,
-                'metodo_pago'  => $request->metodo_pago,
-            ]);
+        // Registrar en caja si hay sesión abierta (NO registrar si es crédito)
+        if ($request->forma_pago !== 'Credito') {
+            $sesion = SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->select('sesiones_caja.*')->first();
+            if ($sesion) {
+                CajaMovimiento::create([
+                    'sesion_id'    => $sesion->id,
+                    'usuario_id'   => auth()->id(),
+                    'tipo'         => 'ingreso',
+                    'concepto'     => ucfirst($request->tipo) . ' ' . $acto->numero_expediente . ' (' . $request->metodo_pago . ')',
+                    'referencia_id'=> $acto->id,
+                    'monto'        => $request->monto,
+                    'metodo_pago'  => $request->metodo_pago,
+                ]);
+            }
         }
 
         // Solo emitir comprobante cuando el expediente está TOTALMENTE pagado
@@ -263,7 +269,7 @@ class CajaNotariaController extends Controller
         $resultado = app(\App\Http\Controllers\Notaria\ComprobantesNotariaController::class)->ventaDirecta($requestEmitir);
         $data = $resultado->getData(true);
 
-        if ($data['success'] ?? false) {
+        if (($data['success'] ?? false) && $request->forma_pago !== 'Credito') {
             $sesion = SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->select('sesiones_caja.*')->first();
             if ($sesion) {
                 \App\Models\CajaMovimiento::create([

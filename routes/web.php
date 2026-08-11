@@ -246,10 +246,13 @@ Route::get('/dashboard', function () {
         // Ingresos expedientes
         $ingresosHoyExp = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereDate('created_at', $hoy)->sum('monto');
-        // Ingresos venta directa
+        // Ingresos venta directa (excluir crédito - solo contado)
         $ingresosHoyVD = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->whereIn('estado', ['emitido','aceptado'])->sum('total');
-        $ingresosHoy = $ingresosHoyExp + $ingresosHoyVD;
+            ->whereDate('created_at', $hoy)->whereIn('estado', ['emitido','aceptado'])->where('forma_pago', '!=', 'Credito')->sum('total');
+        // Sumar también pagos de cuotas de hoy
+        $ingresosHoyCuotas = \DB::table('cuotas_credito')->where('empresa_id', $empresaId)
+            ->whereDate('fecha_pago', $hoy)->where('estado', 'pagada')->sum('monto_pagado');
+        $ingresosHoy = $ingresosHoyExp + $ingresosHoyVD + $ingresosHoyCuotas;
 
         $ingresosHoyCount = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereDate('created_at', $hoy)->count();
@@ -260,8 +263,10 @@ Route::get('/dashboard', function () {
         $ingresosHoyExpMes = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->sum('monto');
         $ingresosVDMes = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->whereIn('estado', ['emitido','aceptado'])->sum('total');
-        $ingresosMes = $ingresosHoyExpMes + $ingresosVDMes;
+            ->whereMonth('created_at', $mes)->whereYear('created_at', $anio)->whereIn('estado', ['emitido','aceptado'])->where('forma_pago', '!=', 'Credito')->sum('total');
+        $ingresosCuotasMes = \DB::table('cuotas_credito')->where('empresa_id', $empresaId)
+            ->whereMonth('fecha_pago', $mes)->whereYear('fecha_pago', $anio)->where('estado', 'pagada')->sum('monto_pagado');
+        $ingresosMes = $ingresosHoyExpMes + $ingresosVDMes + $ingresosCuotasMes;
         
         $actosProceso = \App\Models\ActoNotarial::where('empresa_id', $empresaId)
             ->where('estado', 'proceso')->count();
@@ -273,10 +278,12 @@ Route::get('/dashboard', function () {
             $totalExp = \App\Models\ActoPago::whereHas('acto', fn($q) => $q->where('empresa_id', $empresaId))
                 ->whereDate('created_at', $fecha->toDateString())->sum('monto');
             $totalVD = \DB::table('comprobantes_sunat')->where('empresa_id', $empresaId)
-                ->whereDate('created_at', $fecha->toDateString())->whereIn('estado', ['emitido','aceptado'])->sum('total');
+                ->whereDate('created_at', $fecha->toDateString())->whereIn('estado', ['emitido','aceptado'])->where('forma_pago', '!=', 'Credito')->sum('total');
+            $totalCuotas = \DB::table('cuotas_credito')->where('empresa_id', $empresaId)
+                ->whereDate('fecha_pago', $fecha->toDateString())->where('estado', 'pagada')->sum('monto_pagado');
             $ingresosPorDia[] = [
                 'dia'   => $fecha->locale('es')->isoFormat('ddd D'),
-                'total' => round($totalExp + $totalVD, 2),
+                'total' => round($totalExp + $totalVD + $totalCuotas, 2),
             ];
         }
 
@@ -322,6 +329,15 @@ Route::get('/dashboard', function () {
                 return $acto;
             });
 
+        // Cuentas por cobrar (cuotas pendientes)
+        $cuotasPendientes = \DB::table('cuotas_credito')
+            ->where('empresa_id', $empresaId)
+            ->where('estado', 'pendiente')
+            ->get();
+        $totalPorCobrar = $cuotasPendientes->sum('monto');
+        $facturasCreditoActivas = $cuotasPendientes->pluck('comprobante_id')->unique()->count();
+        $proximaVencimiento = $cuotasPendientes->sortBy('fecha_vencimiento')->first();
+
         return Inertia::render('Dashboard/Notaria', [
             'industry_name' => 'Notaría',
             'stats' => [
@@ -330,6 +346,12 @@ Route::get('/dashboard', function () {
                 'ingresos_hoy_count' => $ingresosHoyCount,
                 'ingresos_mes'       => $ingresosMes,
                 'actos_proceso'      => $actosProceso,
+            ],
+            'creditos' => [
+                'total_por_cobrar'       => round($totalPorCobrar, 2),
+                'facturas_activas'       => $facturasCreditoActivas,
+                'proxima_fecha'          => $proximaVencimiento?->fecha_vencimiento,
+                'proxima_monto'          => $proximaVencimiento?->monto,
             ],
             'ingresos_por_dia' => $ingresosPorDia,
             'top_actos'        => $topActos,
@@ -620,6 +642,7 @@ Route::post('/reset-password', [\App\Http\Controllers\Auth\PasswordResetControll
 Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/ventas', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'index'])->name('minimarket.ventas');
     Route::get('/minimarket/ventas/{id}', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'show'])->name('minimarket.ventas.show');
+    Route::get('/minimarket/ventas/{id}/recibo-ticket', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'reciboTicket'])->name('minimarket.ventas.recibo-ticket');
     Route::post('/minimarket/ventas/{id}/reintentar', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'reintentar'])->name('minimarket.ventas.reintentar');
     Route::post('/minimarket/ventas/{id}/anular', [\App\Http\Controllers\Minimarket\VentasMinimarketController::class, 'anular'])->name('minimarket.ventas.anular');
 });
@@ -631,10 +654,24 @@ Route::middleware(['auth', 'solo_admin'])->group(function () {
     Route::put('/minimarket/productos/{producto}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'update'])->name('minimarket.productos.update');
     Route::post('/minimarket/productos/{producto}/stock', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'ajustarStock'])->name('minimarket.productos.stock');
     Route::delete('/minimarket/productos/{producto}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'destroy'])->name('minimarket.productos.destroy');
+    Route::post('/minimarket/productos/{producto}/presentaciones', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'storePresentacion'])->name('minimarket.presentaciones.store');
+    Route::get('/minimarket/traslados', [\App\Http\Controllers\Minimarket\TrasladosMinimarketController::class, 'index'])->name('minimarket.traslados');
+    Route::post('/minimarket/traslados', [\App\Http\Controllers\Minimarket\TrasladosMinimarketController::class, 'store'])->name('minimarket.traslados.store');
+    Route::get('/minimarket/instituciones', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'index'])->name('minimarket.instituciones');
+    Route::post('/minimarket/instituciones', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'store'])->name('minimarket.instituciones.store');
+    Route::put('/minimarket/instituciones/{institucion}', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'update'])->name('minimarket.instituciones.update');
+    Route::delete('/minimarket/instituciones/{institucion}', [\App\Http\Controllers\Minimarket\InstitucionesMinimarketController::class, 'destroy'])->name('minimarket.instituciones.destroy');
+    Route::put('/minimarket/presentaciones/{presentacion}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'updatePresentacion'])->name('minimarket.presentaciones.update');
+    Route::delete('/minimarket/presentaciones/{presentacion}', [\App\Http\Controllers\Minimarket\ProductosMinimarketController::class, 'destroyPresentacion'])->name('minimarket.presentaciones.destroy');
     Route::get('/minimarket/categorias', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'index'])->name('minimarket.categorias');
     Route::post('/minimarket/categorias', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'store'])->name('minimarket.categorias.store');
     Route::put('/minimarket/categorias/{categoria}', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'update'])->name('minimarket.categorias.update');
     Route::delete('/minimarket/categorias/{categoria}', [\App\Http\Controllers\Minimarket\CategoriasMinimarketController::class, 'destroy'])->name('minimarket.categorias.destroy');
+
+    // ====== PLANTILLAS / DATOS DEMO ======
+    Route::get('/minimarket/plantillas', [\App\Http\Controllers\PlantillaController::class, 'index'])->name('minimarket.plantillas.index');
+    Route::post('/minimarket/plantillas/cargar', [\App\Http\Controllers\PlantillaController::class, 'cargar'])->name('minimarket.plantillas.cargar');
+    Route::post('/minimarket/empresa/limpiar-datos', [\App\Http\Controllers\PlantillaController::class, 'limpiarDatos'])->name('minimarket.empresa.limpiar');
 });
 
 // Reportes Minimarket (solo admin)
@@ -647,6 +684,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/caja', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'index'])->name('minimarket.caja');
     Route::post('/minimarket/caja/abrir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'abrir'])->name('minimarket.caja.abrir');
     Route::post('/minimarket/caja/{caja}/cerrar', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'cerrar'])->name('minimarket.caja.cerrar');
+    Route::post('/minimarket/caja/corregir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'corregir'])->name('minimarket.caja.corregir');
 });
 
 // Reportes Minimarket
@@ -751,6 +789,7 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
 
     // Vencimientos
     Route::get('/vencimientos', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'vencimientos'])->middleware('only.admin')->name('vencimientos');
+    Route::post('/productos/cargar-demo', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'cargarDemo'])->middleware('only.admin')->name('productos.cargar-demo');
 
     // ====== INVENTARIO INICIAL (con scanner) ======
     Route::get('/inventario-inicial',         [\App\Http\Controllers\Farmacia\InventarioInicialController::class, 'index'])->name('inventario.inicial');
@@ -764,6 +803,11 @@ Route::middleware(['auth'])->prefix('farmacia')->name('farmacia.')->group(functi
 
     Route::get('/productos/{producto}/historial', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'historial'])->name('productos.historial');
     Route::get('/productos/{producto}/kardex',   [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'kardex'])->name('productos.kardex');
+
+    // Presentaciones (paquetes/cajas/blisteres) farmacia
+    Route::post('/productos/{producto}/presentaciones', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'storePresentacion'])->name('farmacia.presentaciones.store');
+    Route::put('/presentaciones/{presentacion}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'updatePresentacion'])->name('farmacia.presentaciones.update');
+    Route::delete('/presentaciones/{presentacion}', [\App\Http\Controllers\Farmacia\ProductosFarmaciaController::class, 'destroyPresentacion'])->name('farmacia.presentaciones.destroy');
 
     // Recetas médicas farmacia
     Route::get('/recetas',          [\App\Http\Controllers\Farmacia\RecetasFarmaciaController::class, 'index'])->name('recetas.index');
@@ -870,6 +914,12 @@ Route::middleware(['auth', 'notaria.rol'])->prefix('notaria')->group(function ()
     Route::get('/actos/{acto}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'show'])->name('notaria.actos.show');
     Route::post('/actos/{acto}/estado', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'cambiarEstado'])->name('notaria.actos.estado');
     Route::post('/actos/{acto}/pago', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'registrarPago'])->name('notaria.actos.pago');
+    Route::post('/actos/{acto}/editar', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'editar'])->name('notaria.actos.editar');
+    Route::post('/actos/{acto}/generar/{tipo}', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarDocumento'])->name('notaria.actos.generar');
+    Route::post('/actos/{acto}/minuta-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarMinutaCompraventa'])->name('notaria.actos.minuta');
+    Route::post('/actos/{acto}/testimonio-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarTestimonioCompraventa'])->name('notaria.actos.testimonio');
+    Route::post('/actos/{acto}/parte-compraventa', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'generarParteCompraventa'])->name('notaria.actos.parte');
+    Route::post('/actos/crear-con-minuta', [App\Http\Controllers\Notaria\ActoNotarialController::class, 'crearConMinuta'])->name('notaria.actos.crear-minuta');
 });
 
 // Caja Notaría
@@ -923,6 +973,8 @@ Route::middleware(['auth'])->get('/reportes/reporte-contador-pdf', [App\Http\Con
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/reportes/actos-pdf', [App\Http\Controllers\Notaria\ReportesNotariaController::class, 'exportarActosPdf'])->name('notaria.reportes.actos.pdf');
 Route::middleware(['auth', 'notaria.rol'])->post('/notaria/caja/servicio-rapido', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'servicioRapido'])->name('notaria.caja.servicio-rapido');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes', [App\Http\Controllers\Notaria\ClienteNotariaController::class, 'index'])->name('notaria.clientes.index');
+Route::middleware(['auth', 'notaria.rol'])->get('/notaria/cuentas-cobrar', [App\Http\Controllers\Notaria\CuentasCobrarController::class, 'index'])->name('notaria.cuentas-cobrar.index');
+Route::middleware(['auth', 'notaria.rol'])->post('/notaria/cuentas-cobrar/{cuota}/pagar', [App\Http\Controllers\Notaria\CuentasCobrarController::class, 'registrarPago'])->name('notaria.cuentas-cobrar.pagar');
 Route::middleware(['auth', 'notaria.rol'])->get('/notaria/clientes/{id}', [App\Http\Controllers\Notaria\ClienteNotariaController::class, 'show'])->name('notaria.clientes.show');
 
 
@@ -981,8 +1033,12 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::put('/miembros/{miembro}',           [\App\Http\Controllers\Gimnasio\MiembroController::class, 'update'])->name('miembros.update');
     Route::delete('/miembros/{miembro}',        [\App\Http\Controllers\Gimnasio\MiembroController::class, 'destroy'])->name('miembros.destroy');
     Route::post('/miembros/{miembro}/renovar',  [\App\Http\Controllers\Gimnasio\MiembroController::class, 'renovar'])->name('miembros.renovar');
+    Route::get('/miembros/pago/{id}/recibo',    [\App\Http\Controllers\Gimnasio\MiembroController::class, 'recibo'])->name('miembros.recibo');
 
     // Planes
+    Route::get('/pagos',     [\App\Http\Controllers\Gimnasio\PagoController::class, 'index'])->name('pagos.index');
+    Route::get('/reportes',          [\App\Http\Controllers\Gimnasio\ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/contable', [\App\Http\Controllers\Gimnasio\ReportePdfController::class, 'contable'])->name('reportes.contable');
     Route::get('/planes',               [\App\Http\Controllers\Gimnasio\PlanController::class, 'index'])->name('planes.index');
     Route::post('/planes',              [\App\Http\Controllers\Gimnasio\PlanController::class, 'store'])->name('planes.store');
     Route::put('/planes/{plan}',        [\App\Http\Controllers\Gimnasio\PlanController::class, 'update'])->name('planes.update');
@@ -1004,9 +1060,9 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
     Route::delete('/horarios/{horario}',          [\App\Http\Controllers\Gimnasio\ClaseController::class, 'destroyHorario'])->name('horarios.destroy');
     // Accesos
     Route::get('/accesos',                   [\App\Http\Controllers\Gimnasio\AccesoController::class, 'index'])->name('accesos.index');
+    Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
     Route::post('/accesos/entrada',          [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarEntrada'])->name('accesos.entrada');
     Route::post('/accesos/{acceso}/salida',  [\App\Http\Controllers\Gimnasio\AccesoController::class, 'registrarSalida'])->name('accesos.salida');
-    Route::get('/accesos/buscar',            [\App\Http\Controllers\Gimnasio\AccesoController::class, 'buscarMiembro'])->name('accesos.buscar');
 
 });
 
@@ -1041,6 +1097,13 @@ Route::middleware(['auth', 'verified'])->prefix('hotel')->name('hotel.')->group(
     Route::put('/tipos/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'updateTipo'])->name('tipos.update');
     Route::get('/recepcion', [App\Http\Controllers\Hotel\HotelController::class, 'recepcion'])->name('recepcion');
     Route::post('/checkin', [App\Http\Controllers\Hotel\HotelController::class, 'checkin'])->name('checkin');
+    Route::get('/reservas/{id}/ticket', [App\Http\Controllers\Hotel\HotelController::class, 'ticketCheckin'])->name('ticket.checkin');
+    Route::get('/huespedes',         [App\Http\Controllers\Hotel\HotelController::class, 'huespedes'])->name('huespedes');
+    Route::get('/huespedes/{id}',    [App\Http\Controllers\Hotel\HotelController::class, 'huesped'])->name('huesped');
+    Route::get('/tarifas',           [App\Http\Controllers\Hotel\HotelController::class, 'tarifas'])->name('tarifas');
+    Route::post('/tarifas',       [App\Http\Controllers\Hotel\HotelController::class, 'storeTarifa'])->name('tarifas.store');
+    Route::put('/tarifas/{id}',   [App\Http\Controllers\Hotel\HotelController::class, 'updateTarifa'])->name('tarifas.update');
+    Route::delete('/tarifas/{id}',[App\Http\Controllers\Hotel\HotelController::class, 'destroyTarifa'])->name('tarifas.destroy');
     Route::post('/checkout/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'checkout'])->name('checkout');
     Route::get('/housekeeping', [App\Http\Controllers\Hotel\HotelController::class, 'housekeeping'])->name('housekeeping');
     Route::put('/housekeeping/{id}', [App\Http\Controllers\Hotel\HotelController::class, 'actualizarHousekeeping'])->name('housekeeping.update');
@@ -1095,3 +1158,92 @@ Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::get('/notaria/servicios/lista', [App\Http\Controllers\Notaria\ServicioNotariaController::class, 'lista'])->name('notaria.servicios.lista');
 });
 
+
+// ============================================================
+// ÓPTICA
+// ============================================================
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [App\Http\Controllers\Optica\OpticaDashboardController::class, 'index'])->name('dashboard');
+
+    // Pacientes
+    Route::get('/pacientes', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'index'])->name('pacientes.index');
+    Route::post('/pacientes', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'store'])->name('pacientes.store');
+    Route::get('/pacientes/{paciente}', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'show'])->name('pacientes.show');
+    Route::put('/pacientes/{paciente}', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'update'])->name('pacientes.update');
+    Route::delete('/pacientes/{paciente}', [App\Http\Controllers\Optica\OpticaPacientesController::class, 'destroy'])->name('pacientes.destroy');
+
+    // Fichas oftalmológicas
+    Route::get('/fichas', [App\Http\Controllers\Optica\OpticaFichasController::class, 'index'])->name('fichas.index');
+    Route::post('/fichas', [App\Http\Controllers\Optica\OpticaFichasController::class, 'store'])->name('fichas.store');
+    Route::get('/fichas/{ficha}', [App\Http\Controllers\Optica\OpticaFichasController::class, 'show'])->name('fichas.show');
+    Route::put('/fichas/{ficha}', [App\Http\Controllers\Optica\OpticaFichasController::class, 'update'])->name('fichas.update');
+    Route::delete('/fichas/{ficha}', [App\Http\Controllers\Optica\OpticaFichasController::class, 'destroy'])->name('fichas.destroy');
+    Route::get('/fichas/{ficha}/pdf', [App\Http\Controllers\Optica\OpticaFichasController::class, 'pdf'])->name('fichas.pdf');
+
+    // Recetas
+    Route::get('/recetas', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'index'])->name('recetas.index');
+    Route::post('/recetas', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'store'])->name('recetas.store');
+    Route::get('/recetas/{receta}/pdf', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'pdf'])->name('recetas.pdf');
+    Route::delete('/recetas/{receta}', [App\Http\Controllers\Optica\OpticaRecetasController::class, 'destroy'])->name('recetas.destroy');
+
+    // Productos / Inventario
+    Route::get('/productos', [App\Http\Controllers\Optica\OpticaProductosController::class, 'index'])->name('productos.index');
+    Route::post('/productos', [App\Http\Controllers\Optica\OpticaProductosController::class, 'store'])->name('productos.store');
+    Route::put('/productos/{producto}', [App\Http\Controllers\Optica\OpticaProductosController::class, 'update'])->name('productos.update');
+    Route::delete('/productos/{producto}', [App\Http\Controllers\Optica\OpticaProductosController::class, 'destroy'])->name('productos.destroy');
+
+    // POS / Ventas
+    Route::get('/ventas', [App\Http\Controllers\Optica\OpticaVentasController::class, 'index'])->name('ventas.index');
+    Route::get('/ventas/pos', [App\Http\Controllers\Optica\OpticaVentasController::class, 'pos'])->name('ventas.pos');
+    Route::post('/ventas', [App\Http\Controllers\Optica\OpticaVentasController::class, 'store'])->name('ventas.store');
+    Route::get('/ventas/{venta}/comprobante', [App\Http\Controllers\Optica\OpticaVentasController::class, 'comprobante'])->name('ventas.comprobante');
+    Route::post('/ventas/{venta}/anular', [App\Http\Controllers\Optica\OpticaVentasController::class, 'anular'])->name('ventas.anular');
+
+    // Caja
+    Route::get('/caja', [App\Http\Controllers\Optica\OpticaCajaController::class, 'index'])->name('caja.index');
+    Route::post('/caja/abrir', [App\Http\Controllers\Optica\OpticaCajaController::class, 'abrir'])->name('caja.abrir');
+    Route::post('/caja/cerrar', [App\Http\Controllers\Optica\OpticaCajaController::class, 'cerrar'])->name('caja.cerrar');
+    Route::post('/caja/movimiento', [App\Http\Controllers\Optica\OpticaCajaController::class, 'movimiento'])->name('caja.movimiento');
+
+    // Reportes
+    Route::get('/reportes', [App\Http\Controllers\Optica\OpticaReportesController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/export', [App\Http\Controllers\Optica\OpticaReportesController::class, 'export'])->name('reportes.export');
+});
+
+// Óptica - Categorías
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    Route::get('/categorias', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'index'])->name('categorias.index');
+    Route::post('/categorias', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'store'])->name('categorias.store');
+    Route::put('/categorias/{categoria}', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'update'])->name('categorias.update');
+    Route::delete('/categorias/{categoria}', [App\Http\Controllers\Optica\OpticaCategoriasController::class, 'destroy'])->name('categorias.destroy');
+});
+
+// Óptica - Doctores
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    Route::get('/doctores', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'index'])->name('doctores.index');
+    Route::post('/doctores', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'store'])->name('doctores.store');
+    Route::put('/doctores/{doctor}', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'update'])->name('doctores.update');
+    Route::delete('/doctores/{doctor}', [App\Http\Controllers\Optica\OpticaDoctoresController::class, 'destroy'])->name('doctores.destroy');
+});
+
+// Óptica - Historial Clínico
+Route::middleware(['auth'])->prefix('optica')->name('optica.')->group(function () {
+    Route::get('/historial', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'index'])->name('historial.index');
+    Route::post('/historial', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'store'])->name('historial.store');
+    Route::get('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'show'])->name('historial.show');
+    Route::put('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'update'])->name('historial.update');
+    Route::delete('/historial/{historial}', [App\Http\Controllers\Optica\OpticaHistorialController::class, 'destroy'])->name('historial.destroy');
+});
+
+// Portal público paciente odontología
+Route::get('/portal/{token}/doctores', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'doctores']);
+Route::get('/portal/{token}/horas', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'horasDisponibles']);
+Route::post('/portal/{token}/agendar', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'agendarCita']);
+Route::get('/portal/{token}', [\App\Http\Controllers\Odontologia\PortalPacienteController::class, 'show'])->name('portal.paciente');
+
+// Página pública de reservas odontología
+Route::get('/reservar/{slug}', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'show'])->name('reserva.publica');
+Route::get('/reservar/{slug}/horas', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'horas']);
+Route::post('/reservar/{slug}/agendar', [\App\Http\Controllers\Odontologia\ReservaPublicaController::class, 'agendar']);
+Route::post('/api/qz-sign', [App\Http\Controllers\QzSignController::class, 'sign']);

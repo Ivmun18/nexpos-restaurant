@@ -109,6 +109,45 @@
                             <button type="button" @click="quitarItem(i)"
                                 style="background:#FEF2F2; color:#991B1B; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;">X</button>
                         </div>
+                        <div v-if="presentacionesDe(item.producto_id).length" style="margin-bottom:8px;">
+                            <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">Compra por</label>
+                            <select v-model="item.presentacion_id" @change="aplicarPresentacionCompra(i)"
+                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; outline:none; box-sizing:border-box; background:white;">
+                                <option :value="null">Unidad base ({{ item.unidad_medida }})</option>
+                                <option v-for="pres in presentacionesDe(item.producto_id)" :key="pres.id" :value="pres.id">
+                                    {{ pres.nombre }} (1 = {{ pres.factor_conversion }} unidad base)
+                                </option>
+                            </select>
+                        </div>
+                        <div v-else style="margin-bottom:8px;">
+                            <button v-if="presInlineAbierta !== i" type="button" @click="abrirPresInline(i)"
+                                style="font-size:12px; color:#0E7490; background:#ECFEFF; border:1px solid #99F6E4; border-radius:6px; padding:6px 10px; cursor:pointer; font-weight:600;">
+                                + Definir presentacion (caja/saco/paquete)
+                            </button>
+                            <div v-else style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                                <div>
+                                    <label style="font-size:10px; color:#94A3B8; display:block; margin-bottom:3px;">Nombre</label>
+                                    <input v-model="presInlineForm.nombre" type="text" placeholder="Ej: Paquete x24"
+                                        style="width:100%; padding:6px; border:1px solid #E2E8F0; border-radius:6px; font-size:12px; outline:none; box-sizing:border-box;"/>
+                                </div>
+                                <div>
+                                    <label style="font-size:10px; color:#94A3B8; display:block; margin-bottom:3px;">Equivale a</label>
+                                    <input v-model="presInlineForm.factor_conversion" type="number" step="0.001" min="0" placeholder="Ej: 24"
+                                        style="width:100%; padding:6px; border:1px solid #E2E8F0; border-radius:6px; font-size:12px; outline:none; box-sizing:border-box;"/>
+                                </div>
+                                <div>
+                                    <label style="font-size:10px; color:#94A3B8; display:block; margin-bottom:3px;">Precio venta (S/)</label>
+                                    <input v-model="presInlineForm.precio_venta" type="number" step="0.01" min="0" placeholder="0.00"
+                                        style="width:100%; padding:6px; border:1px solid #E2E8F0; border-radius:6px; font-size:12px; outline:none; box-sizing:border-box;"/>
+                                </div>
+                                <div style="grid-column:1 / -1; display:flex; gap:8px; justify-content:flex-end;">
+                                    <button type="button" @click="cancelarPresInline"
+                                        style="padding:6px 12px; background:#F1F5F9; color:#64748B; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Cancelar</button>
+                                    <button type="button" @click="guardarPresInline(i)"
+                                        style="padding:6px 12px; background:#14B8A6; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
                             <div>
                                 <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">Cantidad</label>
@@ -128,7 +167,7 @@
                                     style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:6px; font-size:13px; font-weight:600; color:#1E293B; background:#F8FAFC; outline:none; box-sizing:border-box;"/>
                             </div>
                         </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:8px; border-top:1px dashed #E2E8F0;">
+                        <div v-if="props.es_farmacia" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:8px; border-top:1px dashed #E2E8F0;">
                             <div>
                                 <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px;">🏷️ Lote (opcional)</label>
                                 <input v-model="item.lote" type="text" placeholder="Ej: L-2026-001"
@@ -238,6 +277,25 @@
                             <option value="LTR">Litro</option>
                         </select>
                     </div>
+                    <div style="grid-column:1 / -1; border-top:1px solid #E2E8F0; padding-top:10px; margin-top:4px;">
+                        <p style="font-size:12px; font-weight:700; color:#1E293B; margin:0 0 8px;">📐 Presentacion de compra (opcional)</p>
+                        <p style="font-size:11px; color:#94A3B8; margin:0 0 8px;">Si este producto viene en caja/saco/paquete, define aqui cuantas unidades base trae. Podras comprar por esa presentacion desde ahora.</p>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Nombre presentacion</label>
+                        <input v-model="modalProductoNuevo.pres_nombre" type="text" placeholder="Ej: Caja x12"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Equivale a (unidades base)</label>
+                        <input v-model="modalProductoNuevo.pres_factor_conversion" type="number" step="0.001" min="0" placeholder="Ej: 12"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Precio venta de esa presentacion (S/)</label>
+                        <input v-model="modalProductoNuevo.pres_precio_venta" type="number" step="0.01" min="0" placeholder="0.00"
+                            style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"/>
+                    </div>
                     <div>
                         <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">🏷️ Lote</label>
                         <input v-model="modalProductoNuevo.lote" type="text" placeholder="Ej: L-2026-001"
@@ -277,10 +335,13 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 const props = defineProps({
     proveedores: Array,
     productos:   Array,
+    es_farmacia: { type: Boolean, default: false },
 })
 
 const procesando = ref(false)
 const error      = ref('')
+const presInlineAbierta = ref(null)
+const presInlineForm = ref({ nombre: '', factor_conversion: '', precio_venta: '' })
 
 const hoy = new Date().toISOString().split('T')[0]
 
@@ -308,6 +369,9 @@ const modalProductoNuevo = ref({
     fecha_vencimiento: '',
     unidad_medida: 'NIU',
     tipo_afectacion_igv: '10',
+    pres_nombre: '',
+    pres_factor_conversion: '',
+    pres_precio_venta: '',
 })
 
 const crearProductoYAgregar = async () => {
@@ -338,6 +402,32 @@ const crearProductoYAgregar = async () => {
         })
         const data = await response.json()
         if (data.success && data.producto) {
+            // Si se definio una presentacion, guardarla tambien
+            if (m.pres_nombre && m.pres_factor_conversion) {
+                try {
+                    const presResponse = await fetch(`/minimarket/productos/${data.producto.id}/presentaciones`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            nombre: m.pres_nombre,
+                            unidad_sunat: 'NIU',
+                            factor_conversion: parseFloat(m.pres_factor_conversion),
+                            precio_venta: parseFloat(m.pres_precio_venta || 0),
+                            es_default: false,
+                        })
+                    })
+                    const presData = await presResponse.json()
+                    if (presData.presentacion) {
+                        data.producto.presentaciones = [presData.presentacion]
+                    }
+                } catch (e) {
+                    console.error('No se pudo guardar la presentacion', e)
+                }
+            }
             // Agregar al inicio de productos disponibles
             props.productos.push(data.producto)
             // Agregar al carrito
@@ -509,6 +599,70 @@ const escanearDesdeInput = (event) => {
     }
 }
 
+const presentacionesDe = (producto_id) => {
+    const p = props.productos.find(p => p.id === producto_id)
+    return p?.presentaciones || []
+}
+
+const aplicarPresentacionCompra = (i) => {
+    const item = form.value.items[i]
+    if (!item.presentacion_id) return
+    const p = props.productos.find(p => p.id === item.producto_id)
+    const pres = p?.presentaciones?.find(pr => pr.id === item.presentacion_id)
+    if (pres) {
+        item.precio_unitario = Number(pres.precio_venta)
+        calcularItem(i)
+    }
+}
+
+const abrirPresInline = (i) => {
+    presInlineAbierta.value = i
+    presInlineForm.value = { nombre: '', factor_conversion: '', precio_venta: '' }
+}
+
+const cancelarPresInline = () => {
+    presInlineAbierta.value = null
+}
+
+const guardarPresInline = async (i) => {
+    const f = presInlineForm.value
+    if (!f.nombre || !f.factor_conversion || f.precio_venta === '') {
+        alert('Completa nombre, factor de conversion y precio de venta')
+        return
+    }
+    const item = form.value.items[i]
+    try {
+        const response = await fetch(`/minimarket/productos/${item.producto_id}/presentaciones`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                nombre: f.nombre,
+                unidad_sunat: 'NIU',
+                factor_conversion: parseFloat(f.factor_conversion),
+                precio_venta: parseFloat(f.precio_venta),
+                es_default: false,
+            })
+        })
+        const data = await response.json()
+        if (data.presentacion) {
+            const p = props.productos.find(p => p.id === item.producto_id)
+            if (p) {
+                if (!p.presentaciones) p.presentaciones = []
+                p.presentaciones.push(data.presentacion)
+            }
+            presInlineAbierta.value = null
+        } else {
+            alert('No se pudo guardar la presentacion')
+        }
+    } catch (e) {
+        alert('Error al guardar la presentacion')
+    }
+}
+
 const agregarProducto = (event) => {
     const id = parseInt(event.target.value)
     if (!id) return
@@ -530,6 +684,7 @@ const agregarProducto = (event) => {
         valor_unitario:      valorUnitario,
         total_igv:           afecto ? round(valorUnitario * 0.18, 2) : 0,
         total:               round(precio, 2),
+        presentacion_id:     null,
     })
     event.target.value = ''
 }

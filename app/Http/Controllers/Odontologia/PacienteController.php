@@ -7,6 +7,9 @@ use App\Models\Odontologia\OdontoCita;
 use App\Models\Odontologia\OdontoHistoriaClinica;
 use App\Models\Odontologia\OdontoPresupuesto;
 use App\Models\Odontologia\OdontoPago;
+use App\Models\Odontologia\OdontoOdontograma;
+use App\Models\Odontologia\OdontoDoctor;
+use App\Models\Odontologia\OdontoReceta;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -62,12 +65,38 @@ class PacienteController extends Controller
         $presupuestos = OdontoPresupuesto::with(['doctor','items'])->where('paciente_id', $id)->orderByDesc('fecha')->get();
         $pagos = OdontoPago::with('cuotas')->where('paciente_id', $id)->orderByDesc('fecha')->get();
 
-        return Inertia::render('Odontologia/Pacientes/Show', compact('paciente','citas','historias','presupuestos','pagos'));
+        $odontogramaEventos = OdontoOdontograma::where('empresa_id', $empresaId)
+            ->where('paciente_id', $id)
+            ->where(function($q) {
+                $q->where('estado', '!=', 'sano')->orWhereNotNull('notas');
+            })
+            ->orderByDesc('updated_at')
+            ->get(['diente','estado','notas','updated_at']);
+
+        $doctores = OdontoDoctor::where('empresa_id', $empresaId)->orderBy('nombre')->get(['id','nombre']);
+        $recetas = OdontoReceta::with('items')->where('paciente_id', $id)->orderByDesc('fecha')->get();
+        $radiografias = \App\Models\Odontologia\OdontoRadiografia::where('paciente_id', $id)->orderByDesc('fecha')->get();
+
+        return Inertia::render('Odontologia/Pacientes/Show', compact('paciente','citas','historias','presupuestos','pagos','odontogramaEventos','doctores','recetas','radiografias'));
     }
 
     public function edit($id) {
         $paciente = OdontoPaciente::where('empresa_id', $this->empresaId())->findOrFail($id);
         return Inertia::render('Odontologia/Pacientes/Edit', compact('paciente'));
+    }
+
+    public function fichaPdf($id) {
+        $empresaId  = $this->empresaId();
+        $paciente   = \App\Models\Odontologia\OdontoPaciente::where('empresa_id', $empresaId)->findOrFail($id);
+        $empresa    = \App\Models\Empresa::findOrFail($empresaId);
+        $historias  = \App\Models\Odontologia\OdontoHistoriaClinica::with('doctor')->where('paciente_id', $id)->orderByDesc('fecha')->get();
+        $presupuestos = \App\Models\Odontologia\OdontoPresupuesto::with('items')->where('paciente_id', $id)->orderByDesc('fecha')->get();
+        $odontograma  = \App\Models\Odontologia\OdontoOdontograma::where('paciente_id', $id)->where('empresa_id', $empresaId)->get();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('odontologia.ficha-clinica-pdf', compact('paciente','empresa','historias','presupuestos','odontograma'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->stream("ficha-{$paciente->apellidos}-{$paciente->nombres}.pdf");
     }
 
     public function update(Request $request, $id) {

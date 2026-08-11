@@ -45,7 +45,7 @@
                 </button>
             </div>
 
-            <nav style="flex:1; min-height:0; padding:8px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+            <nav ref="navRef" style="flex:1; min-height:0; padding:8px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
     
                 <!-- Dashboard siempre visible (oculto si tiene dashboard propio) -->
                 <a v-if="!['hotel','gimnasio','odontologia'].includes(empresa.industry_type)" href="/dashboard" :style="menuItem('/dashboard')">
@@ -62,12 +62,12 @@
 
                 <!-- Secciones dinámicas -->
                 <template v-for="(items, sectionName) in menuSections" :key="sectionName">
-                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL' && sectionName !== '_default_'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0;">
+                    <p v-if="!collapsed && sectionName && sectionName !== 'GENERAL' && sectionName !== '_default_' && sectionName !== 'PRINCIPAL'" style="font-size:11px; color:#CBD5E1; font-weight:700; letter-spacing:1px; padding:12px 12px 4px; margin:0; margin-top: sectionName === 'AJUSTES' ? '8px' : '0';">
                         {{ sectionName }}
                     </p>
                     
                     <template v-for="item in items" :key="item.path">
-                        <a v-if="item.path !== '/dashboard'" :href="item.path" :style="menuItem(item.path)">
+                        <Link v-if="item.path !== '/dashboard'" :href="item.path" :style="menuItem(item.path)">
                             <!-- Contenedor del ícono con color de sección -->
                             <span :style="iconWrapperStyle(item.section, item.path)">
                                 <!-- MESAS -->
@@ -246,10 +246,46 @@
                                     <circle cx="12" cy="12" r="3"/>
                                     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
                                 </svg>
+                                <!-- CAMA / HABITACIÓN -->
+                                <svg v-else-if="item.icon === 'cama'" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/>
+                                    <path d="M2 14h20"/>
+                                    <path d="M6 14v-4a2 2 0 012-2h8a2 2 0 012 2v4"/>
+                                    <path d="M2 20h20"/>
+                                </svg>
+                                <!-- LIMPIEZA / ESCOBA -->
+                                <svg v-else-if="item.icon === 'limpieza'" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M3 21l9-9"/>
+                                    <path d="M12.5 6.5L17 2l5 5-4.5 4.5"/>
+                                    <path d="M6 12L2 21h10l-4-5"/>
+                                </svg>
+                                <!-- HUÉSPED / PERSONA -->
+                                <svg v-else-if="item.icon === 'huesped'" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <!-- DOOR ENTER -->
+                                <svg v-else-if="item.icon === 'door-enter'" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M15 3H5a2 2 0 00-2 2v14a2 2 0 002 2h10"/>
+                                    <polyline points="10 17 15 12 10 7"/>
+                                    <line x1="15" y1="12" x2="3" y2="12"/>
+                                </svg>
+                                <!-- BARBELL / PESAS -->
+                                <svg v-else-if="item.icon === 'barbell'" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <line x1="6" y1="12" x2="18" y2="12"/>
+                                    <rect x="2" y="9" width="4" height="6" rx="1"/>
+                                    <rect x="18" y="9" width="4" height="6" rx="1"/>
+                                    <rect x="5" y="10" width="2" height="4" rx="0.5"/>
+                                    <rect x="17" y="10" width="2" height="4" rx="0.5"/>
+                                </svg>
+                                <!-- DEFAULT -->
+                                <svg v-else width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="4"/>
+                                </svg>
                             </span>
                             
                             <span v-if="!collapsed">{{ item.label }}</span>
-                        </a>
+                        </Link>
                     </template>
                 </template>
 
@@ -322,8 +358,8 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
+import { ref, computed, defineProps, onMounted } from 'vue'
+import { Link, router, usePage } from '@inertiajs/vue3'
 
 defineProps({
     title:    { type: String, default: 'Dashboard' },
@@ -334,6 +370,10 @@ const page = usePage()
 const collapsed = ref(false)
 const mobileOpen = ref(false)
 const isMobile = ref(window.innerWidth < 768)
+const navRef = ref(null)
+let savedScrollTop = 0
+router.on('before', () => { if (navRef.value) savedScrollTop = navRef.value.scrollTop })
+router.on('navigate', () => { setTimeout(() => { if (navRef.value) navRef.value.scrollTop = savedScrollTop }, 50) })
 
 const handleResize = () => {
     isMobile.value = window.innerWidth < 768
@@ -381,6 +421,8 @@ const modulesEnabled = computed(() => {
 // 🎨 PALETA DE COLORES POR SECCIÓN
 const sectionColors = {
     ODONTOLOGIA: { bg: '#EDE9FE', text: '#7C3AED', border: '#8B5CF6' },
+    'GIMNASIO':     { bg: '#FFF7ED', icon: '#EA580C', text: '#7C2D12', active: 'linear-gradient(135deg,#EA580C,#F97316)' },
+    'HOTEL':        { bg: '#FFF7ED', icon: '#C2410C', text: '#7C2D12', active: 'linear-gradient(135deg,#EA580C,#F97316)' },
     'PRINCIPAL':    { bg: '#E6F1FB', icon: '#185FA5', text: '#0C447C' },
     'RESTAURANTE':  { bg: '#FAECE7', icon: '#993C1D', text: '#4A1B0C' },
     'FARMACIA':     { bg: '#E1F5EE', icon: '#0F6E56', text: '#04342C' },
@@ -440,6 +482,7 @@ const allMenuItems = [
     { path: '/notaria/actos',       icon: 'notaria',      label: 'Expedientes',      module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/indice',      icon: 'book',         label: 'Índice Notarial',  module: 'indice',   section: 'NOTARIA' },
     { path: '/notaria/seguimiento', icon: 'seguimiento',  label: 'Seguimiento',      module: 'actos',    section: 'NOTARIA' },
+    { path: '/notaria/cuentas-cobrar', icon: 'seguimiento',  label: 'Cuentas x Cobrar', module: 'actos',    section: 'NOTARIA' },
     { path: '/notaria/caja',        icon: 'caja',         label: 'Caja notarial',    module: 'caja',     section: 'NOTARIA' },
     { path: '/notaria/clientes',    icon: 'cliente',      label: 'Clientes',         module: 'clientes', section: 'NOTARIA' },
     { path: '/notaria/reportes',    icon: 'reporte',      label: 'Reportes',         module: 'actos',    section: 'NOTARIA' },
@@ -448,6 +491,8 @@ const allMenuItems = [
     { path: '/gimnasio/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/miembros',    icon: 'users',      label: 'Miembros',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/planes',      icon: 'card',       label: 'Planes',        module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/pagos',       icon: 'caja',       label: 'Pagos',         module: 'gimnasio', section: 'GIMNASIO' },
+    { path: '/gimnasio/reportes',    icon: 'reporte',    label: 'Reportes',      module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/instructores',icon: 'barbell',    label: 'Instructores',  module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/clases',      icon: 'calendar',   label: 'Clases',        module: 'gimnasio', section: 'GIMNASIO' },
     { path: '/gimnasio/accesos',     icon: 'door-enter', label: 'Accesos',       module: 'gimnasio', section: 'GIMNASIO' },
@@ -456,14 +501,20 @@ const allMenuItems = [
     // ODONTOLOGIA
     { path: '/odontologia/dashboard',  icon: 'dashboard',  label: 'Dashboard',        module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/pacientes',  icon: 'users',      label: 'Pacientes',        module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/consultorios', icon: 'consultorio', label: 'Consultorios',   module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/citas',      icon: 'calendar',   label: 'Citas',            module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/doctores',   icon: 'doctor',     label: 'Doctores',         module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/doctores/estadisticas', icon: 'chart', label: 'Estadísticas',   module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/presupuestos', icon: 'reporte',  label: 'Presupuestos',     module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/pagos/caja', icon: 'caja',       label: 'Caja',             module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/pagos',      icon: 'caja',       label: 'Pagos',            module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/laboratorio',icon: 'lab',        label: 'Laboratorio',      module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/proveedores',icon: 'proveedor',  label: 'Proveedores',      module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/tratamientos', icon: 'stethoscope', label: 'Tratamientos',    module: 'odontologia', section: 'ODONTOLOGIA' },
     { path: '/odontologia/insumos',    icon: 'cesta',      label: 'Insumos',          module: 'odontologia', section: 'ODONTOLOGIA' },
-    { path: '/odontologia/facturacion', icon: 'factura',    label: 'Facturación',      module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/galeria', icon: 'galeria', label: 'Galería',           module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/reportes',      icon: 'chart',     label: 'Reportes',         module: 'odontologia', section: 'ODONTOLOGIA' },
+    { path: '/odontologia/configuracion', icon: 'settings',  label: 'Configuración',    module: 'odontologia', section: 'ODONTOLOGIA' },
 
     // HOTEL
     { path: '/hotel/dashboard',    icon: 'dashboard',  label: 'Dashboard',     module: 'hotel', section: 'HOTEL' },
@@ -472,13 +523,28 @@ const allMenuItems = [
     { path: '/hotel/tipos',        icon: 'categoria',  label: 'Tipos',         module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/housekeeping', icon: 'limpieza',   label: 'Housekeeping',  module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/reportes',      icon: 'reporte',    label: 'Reportes',      module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/tarifas',       icon: 'categoria',  label: 'Tarifas',       module: 'hotel', section: 'HOTEL' },
+    { path: '/hotel/huespedes',     icon: 'huesped',    label: 'Huéspedes',     module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/caja',          icon: 'caja',       label: 'Caja',          module: 'hotel', section: 'HOTEL' },
     { path: '/hotel/productos',    icon: 'box',        label: 'Productos',     module: 'hotel', section: 'HOTEL' },
+    { path: '/optica/dashboard',   icon: 'dashboard',  label: 'Dashboard',     module: 'optica', section: 'OPTICA' },
+    { path: '/optica/pacientes',   icon: 'cliente',    label: 'Pacientes',     module: 'optica', section: 'OPTICA' },
+    { path: '/optica/fichas',      icon: 'inventario', label: 'Fichas',        module: 'optica', section: 'OPTICA' },
+    { path: '/optica/recetas',     icon: 'receta',     label: 'Recetas',       module: 'optica', section: 'OPTICA' },
+    { path: '/optica/productos',   icon: 'paquete',    label: 'Inventario',    module: 'optica', section: 'OPTICA' },
+    { path: '/optica/ventas/pos',  icon: 'pos',        label: 'POS',           module: 'optica', section: 'OPTICA' },
+    { path: '/optica/ventas',      icon: 'ventas',     label: 'Ventas',        module: 'optica', section: 'OPTICA' },
+    { path: '/optica/caja',        icon: 'caja',       label: 'Caja',          module: 'optica', section: 'OPTICA' },
+    { path: '/optica/reportes',    icon: 'reporte',    label: 'Reportes',      module: 'optica', section: 'OPTICA' },
+    { path: '/optica/categorias',  icon: 'categoria',  label: 'Categorías',    module: 'optica', section: 'OPTICA' },
+    { path: '/optica/doctores',    icon: 'cliente',    label: 'Doctores',      module: 'optica', section: 'OPTICA' },
 
     // MINIMARKET
     { path: '/minimarket/pos',        icon: 'pos',        label: 'POS Venta',     module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/ventas',     icon: 'ventas',     label: 'Ventas',        module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/productos',  icon: 'cesta',      label: 'Productos',     module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/traslados',  icon: 'compras',    label: 'Traslados',     module: 'pos_minimarket', section: 'MINIMARKET' },
+    { path: '/minimarket/instituciones', icon: 'cliente', label: 'Instituciones', module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/categorias', icon: 'categoria',  label: 'Categorías',    module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/caja',       icon: 'caja',       label: 'Caja',          module: 'pos_minimarket', section: 'MINIMARKET' },
     { path: '/minimarket/reportes',   icon: 'reporte',    label: 'Reportes',      module: 'pos_minimarket', section: 'MINIMARKET' },
@@ -577,6 +643,14 @@ const menuItems = computed(() => {
             if (item.section === 'MINIMARKET') return false
         }
 
+        // En minimarket: Modalidad de cobro
+        //   'directo'  = vendedor cobra        -> mostrar Caja, ocultar Panel Cajero
+        //   'cajero'   = cajero centralizado   -> mostrar Panel Cajero, ocultar Caja
+        if (industry === 'minimarket') {
+            if (modalidadCobro.value === 'directo' && item.path === '/minimarket/cajero') return false
+            if (modalidadCobro.value === 'cajero' && item.path === '/minimarket/caja') return false
+        }
+
         // Ocultar módulos de ferretería si no es ferretería
         if (industry !== 'ferreteria') {
             if (item.section === 'FERRETERIA') return false
@@ -626,10 +700,19 @@ const menuItems = computed(() => {
         if (industry !== 'odontologia') {
             if (item.section === 'ODONTOLOGIA') return false
         }
+        // Odontología usa su propia configuración
+        if (industry === 'odontologia' && item.path === '/configuracion') return false
 
         // Ocultar módulos de hotel si no es hotel
         if (industry !== 'hotel') {
             if (item.section === 'HOTEL') return false
+        }
+        // Ocultar módulos de óptica si no es óptica
+        if (industry !== 'optica') {
+            if (item.section === 'OPTICA') return false
+        }
+        if (industry === 'optica') {
+            if (item.path === '/dashboard') return false
         }
 
         // En notaría ocultar caja general y reportes de otros módulos
@@ -646,13 +729,14 @@ const menuItems = computed(() => {
         if (!item.module) return true
         if (item.module === 'gimnasio') return industry === 'gimnasio'
         if (item.module === 'hotel') return industry === 'hotel'
-        if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin'
+        if (item.module === 'optica') return industry === 'optica'
+        if (item.module === 'admin') return rol === 'admin' || rol === 'superadmin' || rol === 'admin_optica'
         return modulesEnabled.value.includes(item.module)
     })
 })
 
 const menuSections = computed(() => {
-    const orden = ['ODONTOLOGIA', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'PRINCIPAL', '_default_', 'AJUSTES']
+    const orden = ['ODONTOLOGIA', 'NOTARIA', 'GIMNASIO', 'HOTEL', 'OPTICA', 'RESTAURANTE', 'SISTEMA', 'MINIMARKET', 'GENERAL', 'FERRETERIA', 'FARMACIA', 'PRINCIPAL', '_default_', 'AJUSTES']
     const sections = {}
     
     orden.forEach(s => {

@@ -37,7 +37,10 @@ const form = useForm({
     cliente_nombre:       '',
     cliente_email:        '',
     cliente_tipo_documento: '1',
+    descuento:            0,
 })
+
+const descuentoPct = ref(0)
 
 const mostrarModalCliente = ref(false)
 const buscandoDoc   = ref(false)
@@ -87,10 +90,13 @@ function onDocInput() {
 
 // Saldo que realmente falta cobrar de la cuenta
 const saldoReal = computed(() => {
-    if (props.saldo_pendiente !== null && props.saldo_pendiente !== undefined) {
-        return Number(props.saldo_pendiente)
-    }
-    return Number(props.total)
+    const base = (props.saldo_pendiente !== null && props.saldo_pendiente !== undefined)
+        ? Number(props.saldo_pendiente)
+        : Number(props.total)
+    const pct = parseFloat(descuentoPct.value) || 0
+    const desc = Math.round(base * pct / 100 * 100) / 100
+    form.descuento = desc
+    return Math.round((base - desc) * 100) / 100
 })
 
 // Cuánto debe pagar cada parte (división en partes iguales)
@@ -264,6 +270,21 @@ function cobrar() {
 
                     <!-- Total -->
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-top:3px solid #E2E8F0; margin-top:8px;">
+                        <!-- Descuento -->
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; padding:10px 14px; background:#fefce8; border-radius:10px; border:1px solid #fde68a;">
+                            <span style="font-size:13px; font-weight:600; color:#92400e;">🏷️ Descuento</span>
+                            <div style="display:flex; gap:6px; margin-left:auto;">
+                                <button v-for="pct in [0,5,10,15,20]" :key="pct"
+                                    @click="descuentoPct=pct; form.monto_pagado=saldoReal.toFixed(2)"
+                                    :style="descuentoPct===pct ? 'background:#f59e0b; color:white; border:none;' : 'background:white; color:#92400e; border:1px solid #fde68a;'"
+                                    style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                                    {{ pct }}%
+                                </button>
+                            </div>
+                            <span v-if="descuentoPct>0" style="font-size:13px; color:#dc2626; font-weight:600; margin-left:8px;">
+                                -S/ {{ form.descuento.toFixed(2) }}
+                            </span>
+                        </div>
                         <span style="font-size:22px; font-weight:800; color:#1E293B;">TOTAL</span>
                         <span style="font-size:32px; font-weight:800; color:#14B8A6;">S/ {{ Number(total).toFixed(2) }}</span>
                     </div>

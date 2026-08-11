@@ -189,21 +189,21 @@ const cerrarClase = () => { formClase.value = { ...formClaseVacio }; showFormCla
 
 const guardarClase = () => {
     if (formClase.value.id) {
-        router.put(route('gimnasio.clases.update', formClase.value.id), formClase.value, { onSuccess: cerrarClase })
+        router.put('/gimnasio/clases/' + formClase.value.id, formClase.value, { onSuccess: cerrarClase })
     } else {
-        router.post(route('gimnasio.clases.store'), formClase.value, { onSuccess: cerrarClase })
+        router.post('/gimnasio/clases', formClase.value, { onSuccess: cerrarClase })
     }
 }
 
 const guardarHorario = () => {
-    router.post(route('gimnasio.horarios.store'), formHorario.value, {
+    router.post('/gimnasio/horarios', formHorario.value, {
         onSuccess: () => { showFormHorario.value = false; formHorario.value = { clase_id:'', instructor_id:'', dia:'lunes', hora_inicio:'', hora_fin:'' } }
     })
 }
 
 const eliminarHorario = (h) => {
     if (confirm('¿Eliminar este horario?')) {
-        router.delete(route('gimnasio.horarios.destroy', h.id))
+        router.delete('/gimnasio/horarios/' + h.id)
     }
 }
 </script>

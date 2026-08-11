@@ -20,28 +20,31 @@ class CajaMinimarketController extends Controller
             ->where('estado', 'abierta')
             ->latest()->first();
 
-        // Ventas del día
+        // Ventas desde apertura de caja
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
+            ->where('fecha_emision', '>=', $cajaAbierta ? $cajaAbierta->apertura_at : $hoy)
+            ->where('estado', '!=', 'anulado')
             ->get();
 
-        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total_gravado');
-        $totalDia      = $ventasHoy->sum('total_gravado');
+        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalDia      = $ventasHoy->sum('total');
 
         // Ventas por hora
         $ventasPorHora = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
-            ->selectRaw('HOUR(created_at) as hora, COUNT(*) as cantidad, SUM(total_gravado) as total')
+            ->whereDate('fecha_emision', $hoy)
+            ->where('estado', '!=', 'anulado')
+            ->selectRaw('HOUR(created_at) as hora, COUNT(*) as cantidad, SUM(total) as total')
             ->groupBy('hora')
             ->orderBy('hora')
             ->get();
 
         // Últimas ventas
         $ultimasVentas = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)
+            ->whereDate('fecha_emision', $hoy)
+            ->where('estado', '!=', 'anulado')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
@@ -68,6 +71,50 @@ class CajaMinimarketController extends Controller
             'historial_cajas' => $historialCajas,
             'fecha'           => now()->locale('es')->isoFormat('dddd D [de] MMMM YYYY'),
         ]);
+    }
+
+    public function corregir(Request $request)
+    {
+        $request->validate(['monto_final' => 'required|numeric|min:0']);
+
+        $empresaId = auth()->user()->empresa_id;
+
+        $caja = CajaMinimarket::where('empresa_id', $empresaId)
+            ->where('estado', 'cerrada')
+            ->latest('cierre_at')
+            ->first();
+
+        if (!$caja) {
+            return back()->with('error', 'No hay caja cerrada para corregir');
+        }
+
+        // Recalcular ventas del período
+        $ventas = Venta::where('empresa_id', $empresaId)
+            ->where('fecha_emision', '>=', $caja->apertura_at)
+            ->where('fecha_emision', '<=', $caja->cierre_at)
+            ->where('estado', '!=', 'anulado')
+            ->get();
+
+        $totalEfectivo = $ventas->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventas->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventas->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventas->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalVentas   = $ventas->sum('total');
+        $montoFinal    = floatval($request->monto_final);
+        $diferencia    = $montoFinal - ($caja->monto_inicial + $totalEfectivo);
+
+        $caja->update([
+            'total_efectivo'  => $totalEfectivo,
+            'total_yape'      => $totalYape,
+            'total_plin'      => $totalPlin,
+            'total_tarjeta'   => $totalTarjeta,
+            'total_ventas'    => $totalVentas,
+            'cantidad_ventas' => $ventas->count(),
+            'monto_final'     => $montoFinal,
+            'diferencia'      => $diferencia,
+        ]);
+
+        return redirect()->route('minimarket.caja')->with('success', 'Caja corregida correctamente');
     }
 
     public function abrir(Request $request)
@@ -107,14 +154,16 @@ class CajaMinimarketController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $hoy = now()->toDateString();
 
+        // Calcular ventas desde la apertura de la caja (no solo hoy)
         $ventasHoy = Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', $hoy)->get();
+            ->where('fecha_emision', '>=', $caja->apertura_at)
+            ->where('estado', '!=', 'anulado')->get();
 
-        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total_gravado');
-        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total_gravado');
-        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total_gravado');
-        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total_gravado');
-        $totalVentas   = $ventasHoy->sum('total_gravado');
+        $totalEfectivo = $ventasHoy->where('metodo_pago', 'efectivo')->sum('total');
+        $totalYape     = $ventasHoy->where('metodo_pago', 'yape')->sum('total');
+        $totalPlin     = $ventasHoy->where('metodo_pago', 'plin')->sum('total');
+        $totalTarjeta  = $ventasHoy->where('metodo_pago', 'tarjeta')->sum('total');
+        $totalVentas   = $ventasHoy->sum('total');
 
         $efectivoEsperado = $caja->monto_inicial + $totalEfectivo;
         $diferencia = $request->monto_final - $efectivoEsperado;

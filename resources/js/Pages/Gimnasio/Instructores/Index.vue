@@ -94,9 +94,9 @@ const cerrar = () => { form.value = { ...formVacio }; showForm.value = false }
 
 const guardar = () => {
     if (form.value.id) {
-        router.put(route('gimnasio.instructores.update', form.value.id), form.value, { onSuccess: cerrar })
+        router.put('/gimnasio/instructores/' + form.value.id, form.value, { onSuccess: cerrar })
     } else {
-        router.post(route('gimnasio.instructores.store'), form.value, { onSuccess: cerrar })
+        router.post('/gimnasio/instructores', form.value, { onSuccess: cerrar })
     }
 }
 </script>

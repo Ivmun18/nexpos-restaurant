@@ -220,6 +220,95 @@ const cambiarHabitacion = async () => {
 
 // ── PAGO PARCIAL ──
 const pagoParcialForm = ref({ monto: 0, metodo_pago: 'efectivo', referencia: '' })
+const imprimirTicket = async (reserva) => {
+    try {
+        const res = await fetch('/hotel/reservas/' + reserva.id + '/ticket')
+        const d = await res.json()
+        const fmt = (f) => f ? new Date(f).toLocaleDateString('es-PE') : '-'
+        const fmtMoney = (n) => 'S/ ' + Number(n).toFixed(2)
+        const logoHtml = d.empresa.logo ? `<img src="${d.empresa.logo}" style="height:60px;margin-bottom:8px;">` : ''
+        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>Ticket Check-in ${d.reserva.codigo}</title>
+        <style>
+            * { margin:0; padding:0; box-sizing:border-box; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; color: #1a1a1a; background: #fff; }
+            .ticket { width: 320px; margin: 0 auto; padding: 20px 16px; }
+            .header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 14px; margin-bottom: 14px; }
+            .hotel-name { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+            .hotel-sub { font-size: 10px; color: #555; margin-top: 3px; }
+            .titulo { text-align: center; font-size: 13px; font-weight: 700; background: #1E293B; color: #fff; padding: 6px; border-radius: 4px; margin-bottom: 14px; letter-spacing: 1px; }
+            .codigo { text-align: center; font-size: 22px; font-weight: 900; letter-spacing: 2px; margin-bottom: 14px; color: #1E293B; }
+            .seccion { margin-bottom: 12px; }
+            .seccion-titulo { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #6B7280; border-bottom: 1px solid #E5E7EB; padding-bottom: 3px; margin-bottom: 6px; letter-spacing: 1px; }
+            .fila { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .fila span { font-size: 11px; color: #374151; }
+            .fila b { font-size: 11px; font-weight: 700; color: #111; text-align: right; max-width: 55%; }
+            .total-box { background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 6px; padding: 10px; margin: 12px 0; text-align: center; }
+            .total-label { font-size: 10px; color: #166534; font-weight: 600; }
+            .total-valor { font-size: 20px; font-weight: 900; color: #15803D; }
+            .saldo-box { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; padding: 8px; margin-bottom: 12px; text-align: center; }
+            .saldo-label { font-size: 10px; color: #991B1B; font-weight: 600; }
+            .saldo-valor { font-size: 16px; font-weight: 900; color: #DC2626; }
+            .footer { text-align: center; border-top: 2px dashed #ccc; padding-top: 12px; margin-top: 12px; font-size: 10px; color: #9CA3AF; }
+            .bienvenida { text-align: center; font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style></head><body>
+        <div class="ticket">
+            <div class="header">
+                ${logoHtml}
+                <div class="hotel-name">${d.empresa.nombre}</div>
+                <div class="hotel-sub">${d.empresa.direccion || ''}</div>
+                <div class="hotel-sub">RUC: ${d.empresa.ruc || ''} ${d.empresa.telefono ? '| Tel: ' + d.empresa.telefono : ''}</div>
+            </div>
+            <div class="titulo">✅ COMPROBANTE DE CHECK-IN</div>
+            <div class="codigo">${d.reserva.codigo}</div>
+            <div class="seccion">
+                <div class="seccion-titulo">👤 Datos del Huésped</div>
+                <div class="fila"><span>Nombre:</span><b>${d.huesped.nombre}</b></div>
+                <div class="fila"><span>Documento:</span><b>${d.huesped.tipo_documento === '1' ? 'DNI' : d.huesped.tipo_documento === '7' ? 'Pasaporte' : 'Doc.'} ${d.huesped.numero_documento}</b></div>
+                <div class="fila"><span>Nacionalidad:</span><b>${d.huesped.nacionalidad || 'Peruana'}</b></div>
+                ${d.huesped.telefono ? `<div class="fila"><span>Teléfono:</span><b>${d.huesped.telefono}</b></div>` : ''}
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">🛏️ Habitación</div>
+                <div class="fila"><span>Número:</span><b>Hab. ${d.habitacion.numero} — Piso ${d.habitacion.piso}</b></div>
+                <div class="fila"><span>Tipo:</span><b>${d.habitacion.tipo}</b></div>
+                <div class="fila"><span>Precio/noche:</span><b>${fmtMoney(d.reserva.precio_noche)}</b></div>
+            </div>
+            <div class="seccion">
+                <div class="seccion-titulo">📅 Estadía</div>
+                <div class="fila"><span>Check-in:</span><b>${fmt(d.reserva.fecha_checkin)}</b></div>
+                <div class="fila"><span>Check-out:</span><b>${fmt(d.reserva.fecha_checkout)}</b></div>
+                <div class="fila"><span>Noches:</span><b>${d.reserva.num_noches}</b></div>
+                <div class="fila"><span>Huéspedes:</span><b>${d.reserva.num_huespedes}</b></div>
+                ${d.reserva.observaciones ? `<div class="fila"><span>Observ.:</span><b>${d.reserva.observaciones}</b></div>` : ''}
+            </div>
+            <div class="total-box">
+                <div class="total-label">TOTAL DE ESTADÍA</div>
+                <div class="total-valor">${fmtMoney(d.reserva.total)}</div>
+            </div>
+            ${d.reserva.saldo > 0 ? `
+            <div class="saldo-box">
+                <div class="saldo-label">SALDO PENDIENTE</div>
+                <div class="saldo-valor">${fmtMoney(d.reserva.saldo)}</div>
+            </div>` : '<div style="text-align:center;color:#15803D;font-weight:700;font-size:12px;margin-bottom:12px;">✅ PAGADO COMPLETO</div>'}
+            <div class="bienvenida">¡Bienvenido a nuestro hotel!</div>
+            <div class="footer">
+                Emitido: ${new Date().toLocaleString('es-PE')}<br>
+                Conserve este comprobante durante su estadía
+            </div>
+        </div>
+        <script>window.onload = () => { window.print(); }<\/script>
+        </body></html>`
+
+        const win = window.open('', '_blank', 'width=400,height=700')
+        win.document.write(html)
+        win.document.close()
+    } catch(e) {
+        alert('Error al generar ticket: ' + e.message)
+    }
+}
+
 const cancelarReserva = async (reserva) => {
     if (!confirm('¿Cancelar la reserva de ' + reserva.huesped?.nombre_completo + '?')) return
     cargando.value = true
@@ -253,6 +342,7 @@ const registrarPago = async () => {
 }
 
 const infoHuesped = ref(null)
+const showCuenta = ref(null)
 const showCargo = ref(null)
 const formCargo = ref({ producto_id: '', cantidad: 1 })
 
@@ -268,41 +358,6 @@ const agregarCargo = () => {
 const eliminarCargo = (id) => {
     if (!confirm('¿Eliminar cargo?')) return
     router.delete('/hotel/cargos/' + id)
-}
-
-const imprimirTicket = () => {
-    const t = ticket.value
-    const contenido = `
-        <html><head><title>Ticket Hotel</title>
-        <style>body{font-family:monospace;padding:20px;max-width:380px;margin:auto}
-        h2{text-align:center}.linea{border-top:2px dashed #ccc;margin:10px 0}
-        .fila{display:flex;justify-content:space-between;margin:4px 0;font-size:13px}
-        .total{font-size:18px;font-weight:bold}.footer{text-align:center;font-size:11px;color:#999}
-        </style></head><body>
-        <h2>🏨 NEXPOS HOTEL</h2>
-        <p style="text-align:center;font-size:12px;color:#999">COMPROBANTE DE ESTADÍA</p>
-        <div class="linea"></div>
-        <div class="fila"><span>Código:</span><b>${t.codigo}</b></div>
-        <div class="fila"><span>Huésped:</span><b>${t.huesped}</b></div>
-        <div class="fila"><span>Documento:</span><b>${t.documento}</b></div>
-        <div class="fila"><span>Habitación:</span><b>${t.habitacion}</b></div>
-        <div class="linea"></div>
-        <div class="fila"><span>Check-in:</span><b>${new Date(t.fecha_checkin).toLocaleString('es-PE')}</b></div>
-        <div class="fila"><span>Check-out:</span><b>${new Date(t.fecha_checkout).toLocaleString('es-PE')}</b></div>
-        <div class="fila"><span>Noches:</span><b>${t.noches}</b></div>
-        <div class="fila"><span>Precio/noche:</span><b>S/ ${Number(t.precio_noche).toFixed(2)}</b></div>
-        <div class="linea"></div>
-        <div class="fila total"><span>TOTAL:</span><b>S/ ${Number(t.total).toFixed(2)}</b></div>
-        <div class="fila"><span>Método pago:</span><b>${t.metodo_pago?.toUpperCase()}</b></div>
-        <div class="fila"><span>Estado:</span><b>${t.estado_pago?.toUpperCase()}</b></div>
-        <div class="linea"></div>
-        <p class="footer">¡Gracias por su visita!</p>
-        </body></html>`
-    const ventana = window.open('', '_blank', 'width=420,height=600')
-    ventana.document.write(contenido)
-    ventana.document.close()
-    ventana.focus()
-    ventana.print()
 }
 
 const clickHabitacion = (h) => {
@@ -353,15 +408,16 @@ const estadoBadge = (estado) => {
                 <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:12px;">🗺️ Estado de habitaciones</div>
                 <div style="display:flex; flex-wrap:wrap; gap:10px;">
                     <div v-for="h in todasHabitaciones" :key="h.id"
-                        @click="clickHabitacion(h)"
+                        @click="h.estado !== 'mantenimiento' && clickHabitacion(h)"
                         :style="{
                             padding:'10px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:'600', minWidth:'110px', textAlign:'center',
                             cursor: h.estado==='disponible' || h.estado==='ocupada' ? 'pointer' : 'default',
                             background: h.estado==='disponible' ? '#DCFCE7' : h.estado==='ocupada' ? '#FEE2E2' : h.estado==='limpieza' ? '#FEF9C3' : '#F1F5F9',
                             color: h.estado==='disponible' ? '#16A34A' : h.estado==='ocupada' ? '#DC2626' : h.estado==='limpieza' ? '#CA8A04' : h.estado==='reservada' ? '#1D4ED8' : '#6B7280',
                             border: '2px solid',
-                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : h.estado==='reservada' ? '#93C5FD' : '#E2E8F0',
+                            borderColor: h.estado==='disponible' ? '#86EFAC' : h.estado==='ocupada' ? '#FCA5A5' : h.estado==='limpieza' ? '#FDE047' : h.estado==='reservada' ? '#93C5FD' : h.estado==='mantenimiento' ? '#FB923C' : '#E2E8F0',
                             transform: h.estado==='disponible' || h.estado==='ocupada' ? 'scale(1)' : '',
+                            cursor: h.estado==='mantenimiento' ? 'not-allowed' : 'pointer',
                         }">
                         <div style="font-size:15px; font-weight:700;">Hab. {{ h.numero }}</div>
                         <div style="font-size:11px; opacity:0.8;">{{ h.tipo?.nombre }}</div>
@@ -371,6 +427,7 @@ const estadoBadge = (estado) => {
                         <div style="font-size:11px;">S/ {{ h.tipo?.precio_noche }}/noche</div>
                         <div v-if="h.estado==='disponible'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para check-in</div>
                         <div v-if="h.estado==='ocupada'" style="font-size:10px; margin-top:4px; opacity:0.7;">Clic para ver info</div>
+                        <div v-if="h.estado==='mantenimiento'" style="font-size:10px; margin-top:4px; opacity:0.7; color:#EA580C;">No disponible</div>
                         <!-- Badge reserva futura -->
                         <div v-if="h.reservas_futuras?.length"
                             style="margin-top:6px; background:#1D4ED8; color:white; border-radius:6px; padding:3px 6px; font-size:10px; font-weight:700; line-height:1.3;">
@@ -407,7 +464,7 @@ const estadoBadge = (estado) => {
                 </div>
 
                 <div style="display:flex; gap:16px; margin-top:12px; font-size:11px; color:#64748B;">
-                    <span>✅ Disponible — clic para check-in</span><span>🔴 Ocupada — clic para ver huésped</span><span>🧹 Limpieza</span><span>🔧 Mantenimiento</span>
+                    <span>✅ Disponible — clic para check-in</span><span>🔴 Ocupada — clic para ver huésped</span><span>🧹 Limpieza</span><span style="color:#EA580C;">🔧 Mantenimiento — bloqueada</span>
                 </div>
             </div>
 
@@ -469,6 +526,14 @@ const estadoBadge = (estado) => {
                                     <button v-if="r.estado === 'checkin'" @click="showCambiarHab = r; cambiarHabForm.nueva_habitacion_id = ''"
                                         style="padding:6px 12px; background:#06B6D4; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
                                         🔄 Cambiar hab.
+                                    </button>
+                                    <button v-if="r.estado === 'checkin'" @click="showCuenta = r"
+                                        style="padding:6px 12px; background:#1D4ED8; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                        📋 Cuenta
+                                    </button>
+                                    <button v-if="r.estado === 'checkin'" @click="imprimirTicket(r)"
+                                        style="padding:6px 12px; background:#0F766E; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                        🖨️ Ticket
                                     </button>
                                     <button v-if="r.estado === 'checkin'" @click="showCheckout = r; pagoForm.monto = r.total - r.monto_pagado; pagoForm.cliente_documento = r.huesped?.numero_documento; pagoForm.cliente_nombre = r.huesped?.nombre_completo"
                                         style="padding:6px 12px; background:#DC2626; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">
@@ -879,4 +944,114 @@ const estadoBadge = (estado) => {
     </div>
 
 </AppLayout>
+
+            <!-- Modal Estado de Cuenta -->
+            <div v-if="showCuenta" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+                <div style="background:#fff; border-radius:16px; padding:28px; width:600px; max-height:90vh; overflow-y:auto;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="font-size:18px; font-weight:700; margin:0;">📋 Estado de Cuenta</h2>
+                        <button @click="showCuenta = null" style="background:none; border:none; font-size:20px; cursor:pointer; color:#94A3B8;">✕</button>
+                    </div>
+
+                    <!-- Datos huésped -->
+                    <div style="background:#F8FAFC; border-radius:10px; padding:14px; margin-bottom:16px;">
+                        <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:8px;">👤 Huésped</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            <div style="font-size:13px;"><span style="color:#64748B;">Nombre: </span><b>{{ showCuenta.huesped?.nombre_completo }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Documento: </span><b>{{ showCuenta.huesped?.numero_documento }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Habitación: </span><b>Hab. {{ showCuenta.habitacion?.numero }} — {{ showCuenta.habitacion?.tipo?.nombre }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Código: </span><b>{{ showCuenta.codigo }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Check-in: </span><b>{{ new Date(showCuenta.fecha_checkin).toLocaleDateString('es-PE') }}</b></div>
+                            <div style="font-size:13px;"><span style="color:#64748B;">Check-out: </span><b>{{ new Date(showCuenta.fecha_checkout_previsto).toLocaleDateString('es-PE') }}</b></div>
+                        </div>
+                    </div>
+
+                    <!-- Cargos -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:8px;">🧾 Cargos</div>
+                        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                            <thead>
+                                <tr style="background:#F1F5F9;">
+                                    <th style="padding:8px; text-align:left; font-size:11px; color:#64748B;">CONCEPTO</th>
+                                    <th style="padding:8px; text-align:center; font-size:11px; color:#64748B;">CANT.</th>
+                                    <th style="padding:8px; text-align:right; font-size:11px; color:#64748B;">PRECIO</th>
+                                    <th style="padding:8px; text-align:right; font-size:11px; color:#64748B;">SUBTOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Hospedaje -->
+                                <tr style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:8px;">🛏️ Hospedaje ({{ showCuenta.num_noches }} noche{{ showCuenta.num_noches > 1 ? 's' : '' }})</td>
+                                    <td style="padding:8px; text-align:center;">{{ showCuenta.num_noches }}</td>
+                                    <td style="padding:8px; text-align:right;">S/ {{ Number(showCuenta.precio_noche).toFixed(2) }}</td>
+                                    <td style="padding:8px; text-align:right; font-weight:600;">S/ {{ (showCuenta.num_noches * showCuenta.precio_noche).toFixed(2) }}</td>
+                                </tr>
+                                <!-- Cargos extras -->
+                                <tr v-for="c in cargos.filter(x => x.reserva_id === showCuenta.id)" :key="c.id" style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:8px;">🛒 {{ c.producto?.nombre }}</td>
+                                    <td style="padding:8px; text-align:center;">{{ c.cantidad }}</td>
+                                    <td style="padding:8px; text-align:right;">S/ {{ Number(c.precio_unitario).toFixed(2) }}</td>
+                                    <td style="padding:8px; text-align:right; font-weight:600;">S/ {{ Number(c.subtotal).toFixed(2) }}</td>
+                                </tr>
+                                <tr v-if="cargos.filter(x => x.reserva_id === showCuenta.id).length === 0">
+                                    <td colspan="4" style="padding:8px; text-align:center; color:#94A3B8; font-size:12px;">Sin cargos adicionales</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagos realizados -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; margin-bottom:8px;">💰 Pagos Realizados</div>
+                        <div v-if="!showCuenta.pagos || showCuenta.pagos.length === 0" style="font-size:12px; color:#94A3B8; text-align:center; padding:8px;">Sin pagos registrados</div>
+                        <table v-else style="width:100%; border-collapse:collapse; font-size:13px;">
+                            <thead>
+                                <tr style="background:#F1F5F9;">
+                                    <th style="padding:8px; text-align:left; font-size:11px; color:#64748B;">FECHA</th>
+                                    <th style="padding:8px; text-align:left; font-size:11px; color:#64748B;">MÉTODO</th>
+                                    <th style="padding:8px; text-align:right; font-size:11px; color:#64748B;">MONTO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="p in showCuenta.pagos" :key="p.id" style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:8px;">{{ new Date(p.created_at).toLocaleDateString('es-PE') }}</td>
+                                    <td style="padding:8px; text-transform:capitalize;">{{ p.metodo_pago }}</td>
+                                    <td style="padding:8px; text-align:right; font-weight:600; color:#16A34A;">S/ {{ Number(p.monto).toFixed(2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Resumen total -->
+                    <div style="border-top:2px solid #E2E8F0; padding-top:14px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px;">
+                            <span style="color:#374151;">Total estadía:</span>
+                            <b>S/ {{ Number(showCuenta.total).toFixed(2) }}</b>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px;">
+                            <span style="color:#16A34A;">Total pagado:</span>
+                            <b style="color:#16A34A;">S/ {{ Number(showCuenta.monto_pagado).toFixed(2) }}</b>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:12px; border-radius:10px; font-size:16px; font-weight:700;"
+                            :style="{ background: showCuenta.total - showCuenta.monto_pagado > 0 ? '#FEF2F2' : '#F0FDF4', color: showCuenta.total - showCuenta.monto_pagado > 0 ? '#DC2626' : '#16A34A' }">
+                            <span>{{ showCuenta.total - showCuenta.monto_pagado > 0 ? 'Saldo pendiente:' : '✅ Pagado completo' }}</span>
+                            <span>S/ {{ (showCuenta.total - showCuenta.monto_pagado).toFixed(2) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end;">
+                        <button @click="showPagoParcial = showCuenta; pagoParcialForm.monto = showCuenta.total - showCuenta.monto_pagado; showCuenta = null"
+                            v-if="showCuenta.total - showCuenta.monto_pagado > 0"
+                            style="padding:10px 20px; background:#F59E0B; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            💰 Registrar Pago
+                        </button>
+                        <button @click="showCuenta = null"
+                            style="padding:10px 20px; background:#F1F5F9; color:#374151; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
 </template>

@@ -20,6 +20,10 @@ class ComprobantesNotariaController extends Controller
             'cliente_numero_documento' => 'required|string',
             'cliente_nombre'           => 'required|string',
             'cliente_email'            => 'nullable|email',
+            'forma_pago'               => 'nullable|in:Contado,Credito',
+            'cuotas'                   => 'nullable|array',
+            'cuotas.*.monto'           => 'required_with:cuotas|numeric|min:0.01',
+            'cuotas.*.fecha'           => 'required_with:cuotas|date',
         ]);
 
         $empresa   = Empresa::find($acto->empresa_id);
@@ -41,8 +45,10 @@ class ComprobantesNotariaController extends Controller
         $baseImponible = $exonerada ? $total : $gravada;
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10)
-        $huella       = $total >= 10 ? 1.50 : 0;
+        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10, excepto trámite registral)
+        $esTramiteRegistral = stripos($acto->asunto ?? '', 'tramite registral') !== false
+                           || stripos($acto->asunto ?? '', 'trámite registral') !== false;
+        $huella       = (!$esTramiteRegistral && $total >= 10) ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
@@ -92,6 +98,34 @@ class ComprobantesNotariaController extends Controller
             ];
         }
 
+        // Forma de pago (Credito solo para facturas)
+        $formaPago = ($request->tipo_comprobante === '01' && $request->forma_pago === 'Credito')
+            ? 'Credito' : 'Contado';
+
+        if ($formaPago === 'Credito') {
+            $cuotas = $request->cuotas ?? [];
+            $paymentTerms = [
+                [
+                    'cbc:ID'             => ['_text' => 'FormaPago'],
+                    'cbc:PaymentMeansID' => ['_text' => 'Credito'],
+                    'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')],
+                ],
+            ];
+            foreach ($cuotas as $i => $cuota) {
+                $paymentTerms[] = [
+                    'cbc:ID'             => ['_text' => 'FormaPago'],
+                    'cbc:PaymentMeansID' => ['_text' => 'Cuota' . str_pad($i + 1, 3, '0', STR_PAD_LEFT)],
+                    'cbc:Amount'         => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format(floatval($cuota['monto']), 2, '.', '')],
+                    'cbc:PaymentDueDate' => ['_text' => $cuota['fecha']],
+                ];
+            }
+        } else {
+            $paymentTerms = [
+                'cbc:ID'             => ['_text' => 'FormaPago'],
+                'cbc:PaymentMeansID' => ['_text' => 'Contado'],
+            ];
+        }
+
         $documentBody = [
             'cbc:UBLVersionID'         => ['_text' => '2.1'],
             'cbc:CustomizationID'      => ['_text' => '2.0'],
@@ -100,14 +134,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-            'cac:PaymentTerms'         => [
-                'cbc:ID'                => ['_text' => 'FormaPago'],
-                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
-            ],
-            'cac:PaymentTerms'         => [
-                'cbc:ID'                => ['_text' => 'FormaPago'],
-                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
-            ],
+            'cac:PaymentTerms' => $paymentTerms,
             'cac:AccountingSupplierParty' => ['cac:Party' => [
                 'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
                 'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
@@ -169,17 +196,36 @@ class ComprobantesNotariaController extends Controller
                 'total_gravada'            => $baseImponible,
                 'total_igv'                => $igv,
                 'total'                    => $total,
+                'items_json'               => json_encode($request->items),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                'apisunat_document_id'     => $data['documentId'] ?? null,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
                 'enlace_cdr'               => isset($request->items[0]['descripcion']) ? $request->items[0]['descripcion'] : null,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
 
             $comprobanteId = \DB::getPdo()->lastInsertId();
+
+            // Guardar forma de pago y cuotas si es crédito
+            if ($formaPago === 'Credito' && $request->cuotas) {
+                \DB::table('comprobantes_sunat')->where('id', $comprobanteId)->update(['forma_pago' => 'Credito']);
+                foreach ($request->cuotas as $i => $cuota) {
+                    \DB::table('cuotas_credito')->insert([
+                        'comprobante_id'   => $comprobanteId,
+                        'empresa_id'       => $empresa->id,
+                        'numero_cuota'     => $i + 1,
+                        'monto'            => floatval($cuota['monto']),
+                        'fecha_vencimiento'=> $cuota['fecha'],
+                        'estado'           => 'pendiente',
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
 
             // Guardar cliente automáticamente si no existe
             if ($request->cliente_numero_documento && $request->cliente_numero_documento !== '00000000') {
@@ -209,8 +255,8 @@ class ComprobantesNotariaController extends Controller
             }
 
             return response()->json([
-                'success' => $aceptada,
-                'mensaje' => $aceptada ? $fileName . ' emitida correctamente' : 'Rechazada: ' . json_encode($data),
+                'success' => $aceptada || $pendiente,
+                'mensaje' => $aceptada ? $fileName . ' emitida correctamente' : ($pendiente ? $fileName . ' emitida correctamente' : 'Rechazada: ' . json_encode($data)),
                 'pdf'     => '/notaria/comprobantes/' . $comprobanteId . '/recibo-ticket',
             ]);
 
@@ -250,8 +296,42 @@ class ComprobantesNotariaController extends Controller
         }
 
         // Totales
-        $total      = round(collect($request->items)->sum('precio'), 2);
+        $total      = round(collect($request->items)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
         $exonerada  = $empresa->zona_exonerada;
+
+        // Agregar biométrico automáticamente si aplica (>= S/10 y no es trámite registral)
+        // El biométrico se descuenta del primer item, el total NO cambia
+        $esTramiteRegistralVD = false;
+        foreach ($request->items as $itm) {
+            $desc = strtolower($itm['descripcion'] ?? '');
+            if (str_contains($desc, 'tramite registral') || str_contains($desc, 'trámite registral')) {
+                $esTramiteRegistralVD = true; break;
+            }
+        }
+        $huellaVD = (!$esTramiteRegistralVD && $total >= 10) ? 1.50 : 0;
+        $itemsConHuella = (array)$request->items;
+
+        // Limpiar items: quitar el item interno __biometrico__ del frontend
+        $itemsConHuella = array_values(array_filter($itemsConHuella, function($i) {
+            return ($i['descripcion'] ?? '') !== '__biometrico__';
+        }));
+
+        // Verificar si el frontend ya envió el biométrico como "Uso biométrico"
+        $yaHuella = collect($itemsConHuella)->contains(function($i) {
+            return strtolower($i['descripcion'] ?? '') === 'uso biométrico' ||
+                   strtolower($i['descripcion'] ?? '') === 'uso biometrico';
+        });
+
+        if ($huellaVD > 0 && !$yaHuella) {
+            $itemsConHuella = array_merge($itemsConHuella, [[
+                'tipo_servicio'  => 'Uso biométrico',
+                'descripcion'    => 'Uso biométrico',
+                'cantidad'       => 1,
+                'precio_unitario'=> 1.50,
+                'precio'         => 1.50,
+                'monto'          => 1.50,
+            ]]);
+        }
         if ($exonerada) {
             $gravada = 0;
             $igv     = 0;
@@ -266,17 +346,20 @@ class ComprobantesNotariaController extends Controller
 
         // Construir items UBL
         $lineas = [];
-        foreach ($request->items as $idx => $item) {
-            $precioItem = round(floatval($item['precio']), 2);
-            $valUnit    = $exonerada ? $precioItem : round($precioItem / 1.18, 4);
-            $igvItem    = $exonerada ? 0 : round($precioItem - $valUnit, 2);
+        foreach ($itemsConHuella as $idx => $item) {
+            $cantidad   = intval($item['cantidad'] ?? 1);
+            $precioUnit = round(floatval($item['precio']), 4);
+            $precioItem = round($precioUnit * $cantidad, 2);
+            $valUnit    = $exonerada ? $precioUnit : round($precioUnit / 1.18, 4);
+            $igvItem    = $exonerada ? 0 : round(($precioItem) - round($precioItem / 1.18, 2), 2);
+            $lineaBase  = $exonerada ? round($precioUnit * $cantidad, 2) : round($precioItem / 1.18, 2);
             $lineas[] = [
                 'cbc:ID'                  => ['_text' => (string)($idx + 1)],
-                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
-                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => (string)$cantidad],
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $lineaBase],
                 'cac:PricingReference' => [
                     'cac:AlternativeConditionPrice' => [
-                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioUnit],
                         'cbc:PriceTypeCode' => ['_text' => '01'],
                     ],
                 ],
@@ -302,6 +385,19 @@ class ComprobantesNotariaController extends Controller
             ];
         }
 
+        // Forma de pago ventaDirecta
+        $formaPagoVD = ($request->tipo_comprobante === '01' && $request->forma_pago === 'Credito')
+            ? 'Credito' : 'Contado';
+        if ($formaPagoVD === 'Credito') {
+            $cuotasVD = $request->cuotas ?? [];
+            $paymentTermsVD = [['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Credito'], 'cbc:Amount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format($total, 2, '.', '')]]];
+            foreach ($cuotasVD as $i => $cuota) {
+                $paymentTermsVD[] = ['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Cuota' . str_pad($i + 1, 3, '0', STR_PAD_LEFT)], 'cbc:Amount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => number_format(floatval($cuota['monto']), 2, '.', '')], 'cbc:PaymentDueDate' => ['_text' => $cuota['fecha']]];
+            }
+        } else {
+            $paymentTermsVD = ['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Contado']];
+        }
+
         $documentBody = [
             'cbc:UBLVersionID'         => ['_text' => '2.1'],
             'cbc:CustomizationID'      => ['_text' => '2.0'],
@@ -310,10 +406,7 @@ class ComprobantesNotariaController extends Controller
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $request->tipo_comprobante],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-            'cac:PaymentTerms'         => [
-                'cbc:ID'                => ['_text' => 'FormaPago'],
-                'cbc:PaymentMeansID'    => ['_text' => 'Contado'],
-            ],
+            'cac:PaymentTerms'         => $paymentTermsVD,
             'cac:AccountingSupplierParty' => [
                 'cac:Party' => [
                     'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
@@ -374,22 +467,41 @@ class ComprobantesNotariaController extends Controller
                 'numero'                   => $correlativo,
                 'fecha_emision'            => now()->toDateString(),
                 'cliente_tipo_documento'   => $request->cliente_tipo_documento,
-                'cliente_numero_documento' => $request->cliente_numero_documento,
+                'cliente_numero_documento' => substr($request->cliente_numero_documento ?? '', 0, 20),
                 'cliente_nombre'           => strtoupper($request->cliente_nombre),
                 'cliente_email'            => $request->cliente_email ?? '',
                 'total_gravada'            => $gravada,
                 'total_igv'                => $igv,
                 'total'                    => $total,
+                'items_json'               => json_encode($itemsConHuella),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                'apisunat_document_id'     => $data['documentId'] ?? null,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'enlace_cdr'               => isset($request->items[0]['descripcion']) ? $request->items[0]['descripcion'] : null,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'enlace_cdr'               => isset($itemsConHuella[0]['descripcion']) ? $itemsConHuella[0]['descripcion'] : null,
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
             ]);
             $comprobanteId = \DB::getPdo()->lastInsertId();
+
+            // Guardar forma de pago y cuotas si es crédito
+            if ($formaPagoVD === 'Credito' && $request->cuotas) {
+                \DB::table('comprobantes_sunat')->where('id', $comprobanteId)->update(['forma_pago' => 'Credito']);
+                foreach ($request->cuotas as $i => $cuota) {
+                    \DB::table('cuotas_credito')->insert([
+                        'comprobante_id'   => $comprobanteId,
+                        'empresa_id'       => $empresa->id,
+                        'numero_cuota'     => $i + 1,
+                        'monto'            => floatval($cuota['monto']),
+                        'fecha_vencimiento'=> $cuota['fecha'],
+                        'estado'           => 'pendiente',
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                }
+            }
 
             // Guardar cliente automáticamente si no existe
             if ($request->cliente_numero_documento && $request->cliente_numero_documento !== '00000000') {
@@ -551,16 +663,17 @@ class ComprobantesNotariaController extends Controller
             $aceptada  = $response->successful() && isset($data['sunatResponse']);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
 
-            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado');
+            $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado');
             $descripcion = $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data));
             $enlaceXml  = $pendiente && isset($data['xml']) ? $data['xml'] : null;
 
             \DB::table('comprobantes_sunat')->where('id', $id)->update([
-                'aceptada_por_sunat' => $aceptada ? 1 : 0,
-                'sunat_descripcion'  => $descripcion,
-                'estado'             => $estado,
-                'enlace_xml'         => $enlaceXml,
-                'updated_at'         => now(),
+                'aceptada_por_sunat'   => $aceptada ? 1 : 0,
+                'apisunat_document_id' => $data['documentId'] ?? null,
+                'sunat_descripcion'    => $descripcion,
+                'estado'               => $estado,
+                'enlace_xml'           => $enlaceXml,
+                'updated_at'           => now(),
             ]);
 
             return response()->json([
@@ -587,40 +700,33 @@ class ComprobantesNotariaController extends Controller
         $subtotal  = $exonerada ? $total : (float) $comp->total_gravada;
         $igv       = $exonerada ? 0 : (float) $comp->total_igv;
 
-        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10)
-        $huella = $total >= 10 ? 1.50 : 0;
-        $montoServicio = round($total - $huella, 2);
-
-        // Obtener asunto del acto si existe
-        $asunto = 'Servicio notarial';
-        if ($comp->acto_id) {
-            $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
-            if ($acto) $asunto = $acto->asunto;
-        } elseif ($comp->enlace_cdr) {
-            $asunto = $comp->enlace_cdr;
-        }
-
-        $items = array_filter([
-            [
-                'descripcion'    => $asunto,
-                'cantidad'       => 1,
-                'precio_unitario'=> $montoServicio,
-                'total'          => $montoServicio,
-            ],
-            ...($huella > 0 ? [[
-                'descripcion'    => 'Uso biométrico',
-                'cantidad'       => 1,
-                'precio_unitario'=> $huella,
-                'total'          => $huella,
-            ]] : []),
-        ], fn($item) => $item['precio_unitario'] > 0);
-        if (empty($items)) {
-            $items = [[
-                'descripcion'    => $asunto,
-                'cantidad'       => 1,
-                'precio_unitario'=> $total,
-                'total'          => $total,
-            ]];
+        // Leer items reales o reconstruir como fallback
+        $itemsGuardados = !empty($comp->items_json) ? json_decode($comp->items_json, true) : null;
+        if ($itemsGuardados && count($itemsGuardados) > 0) {
+            $items = array_map(fn($i) => [
+                'descripcion'    => $i['descripcion'] ?? ($i['tipo_servicio'] ?? 'Servicio notarial'),
+                'cantidad'       => intval($i['cantidad'] ?? 1),
+                'precio_unitario'=> floatval($i['precio'] ?? $i['precio_unitario'] ?? 0),
+                'total'          => floatval($i['precio'] ?? $i['precio_unitario'] ?? 0) * intval($i['cantidad'] ?? 1),
+            ], $itemsGuardados);
+        } else {
+            // Fallback para comprobantes anteriores sin items_json
+            $huella = $total >= 10 ? 1.50 : 0;
+            $montoServicio = round($total - $huella, 2);
+            $asunto = 'Servicio notarial';
+            if ($comp->acto_id) {
+                $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
+                if ($acto) $asunto = $acto->asunto;
+            } elseif ($comp->enlace_cdr) {
+                $asunto = $comp->enlace_cdr;
+            }
+            $items = array_filter([
+                ['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $montoServicio, 'total' => $montoServicio],
+                ...($huella > 0 ? [['descripcion' => 'Uso biométrico', 'cantidad' => 1, 'precio_unitario' => $huella, 'total' => $huella]] : []),
+            ], fn($item) => $item['precio_unitario'] > 0);
+            if (empty($items)) {
+                $items = [['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $total, 'total' => $total]];
+            }
         }
 
         $tipoDoc = $comp->tipo_comprobante === '01' ? 'FACTURA ELECTRÓNICA' : 'BOLETA ELECTRÓNICA';
@@ -695,9 +801,145 @@ class ComprobantesNotariaController extends Controller
 
         $motivo = $request->input('motivo', 'Error en emisión');
         $fechaBaja = now()->format('Y-m-d');
-        $fileName  = $empresa->ruc . '-' . $comp->tipo_comprobante . '-' . $comp->serie . '-' . str_pad($comp->numero, 8, '0', STR_PAD_LEFT);
 
         try {
+            // FACTURAS: SUNAT no permite Comunicacion de Baja. Se requiere Nota de Credito (tipo 07) via sendBill.
+            if ($comp->tipo_comprobante === '01') {
+                // Factura requiere serie que inicia con F; Boleta con B (segun guia oficial SUNAT)
+                $serieNC       = $empresa->serie_nota_credito_factura ?? 'FC01';
+                $correlativoNC = ($empresa->ultimo_num_nota_credito_factura ?? 0) + 1;
+
+                $total     = (float) $comp->total;
+                $exonerada = $empresa->zona_exonerada;
+                $baseImponible = $exonerada ? $total : round($total / 1.18, 2);
+                $igv       = $exonerada ? 0 : round($total - $baseImponible, 2);
+                $valUnit   = $exonerada ? $total : round($total / 1.18, 4);
+                $igvItem   = $exonerada ? 0 : round($total - $valUnit, 2);
+                $refDoc    = $comp->serie . '-' . str_pad($comp->numero, 8, '0', STR_PAD_LEFT);
+                $fileName  = $empresa->ruc . '-07-' . $serieNC . '-' . str_pad($correlativoNC, 8, '0', STR_PAD_LEFT);
+
+                $documentBody = [
+                    'cbc:UBLVersionID'         => ['_text' => '2.1'],
+                    'cbc:CustomizationID'      => ['_text' => '2.0'],
+                    'cbc:ID'                   => ['_text' => $serieNC . '-' . str_pad($correlativoNC, 8, '0', STR_PAD_LEFT)],
+                    'cbc:IssueDate'            => ['_text' => $fechaBaja],
+                    'cac:DiscrepancyResponse'  => [
+                        'cbc:ReferenceID'  => ['_text' => $refDoc],
+                        'cbc:ResponseCode' => ['_text' => '01'],
+                        'cbc:Description'  => ['_text' => $motivo],
+                    ],
+                    'cac:BillingReference' => [
+                        'cac:InvoiceDocumentReference' => [
+                            'cbc:ID'               => ['_text' => $refDoc],
+                            'cbc:DocumentTypeCode' => ['_text' => '01'],
+                        ],
+                    ],
+                    'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+                    'cac:AccountingSupplierParty' => ['cac:Party' => [
+                        'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
+                        'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                        'cac:PartyLegalEntity'    => [
+                            'cbc:RegistrationName' => ['_text' => $empresa->razon_social],
+                            'cac:RegistrationAddress' => [
+                                'cbc:AddressTypeCode' => ['_text' => '0000'],
+                                'cac:AddressLine'     => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']],
+                            ],
+                        ],
+                    ]],
+                    'cac:AccountingCustomerParty' => ['cac:Party' => [
+                        'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $comp->cliente_tipo_documento], '_text' => $comp->cliente_numero_documento]],
+                        'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => $comp->cliente_nombre]],
+                    ]],
+                    'cac:TaxTotal' => [
+                        'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                        'cac:TaxSubtotal' => [[
+                            'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                            'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                            'cac:TaxCategory'   => $exonerada ? [
+                                'cbc:Percent' => ['_text' => '0'],
+                                'cbc:TaxExemptionReasonCode' => ['_text' => '20'],
+                                'cac:TaxScheme' => ['cbc:ID' => ['_text' => '9997'], 'cbc:Name' => ['_text' => 'EXO'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                            ] : [
+                                'cbc:ID'      => ['_text' => 'S'],
+                                'cbc:Percent' => ['_text' => '18'],
+                                'cbc:TaxExemptionReasonCode' => ['_text' => '10'],
+                                'cac:TaxScheme' => ['cbc:ID' => ['_text' => '1000'], 'cbc:Name' => ['_text' => 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                            ],
+                        ]],
+                    ],
+                    'cac:LegalMonetaryTotal' => [
+                        'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                        'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+                        'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+                    ],
+                    'cac:CreditNoteLine' => [[
+                        'cbc:ID'                  => ['_text' => '1'],
+                        'cbc:CreditedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+                        'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                        'cac:PricingReference' => [
+                            'cac:AlternativeConditionPrice' => [
+                                'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+                                'cbc:PriceTypeCode' => ['_text' => '01'],
+                            ],
+                        ],
+                        'cac:TaxTotal' => [
+                            'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                            'cac:TaxSubtotal' => [[
+                                'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                                'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                                'cac:TaxCategory'   => $exonerada ? [
+                                    'cbc:Percent' => ['_text' => '0'],
+                                    'cbc:TaxExemptionReasonCode' => ['_text' => '20'],
+                                    'cac:TaxScheme' => ['cbc:ID' => ['_text' => '9997'], 'cbc:Name' => ['_text' => 'EXO'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                                ] : [
+                                    'cbc:ID'      => ['_text' => 'S'],
+                                    'cbc:Percent' => ['_text' => '18'],
+                                    'cbc:TaxExemptionReasonCode' => ['_text' => '10'],
+                                    'cac:TaxScheme' => ['cbc:ID' => ['_text' => '1000'], 'cbc:Name' => ['_text' => 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                                ],
+                            ]],
+                        ],
+                        'cac:Item'  => ['cbc:Description' => ['_text' => 'Anulacion: ' . $motivo]],
+                        'cac:Price' => ['cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit]],
+                    ]],
+                ];
+
+                $response = \Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->timeout(60)
+                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                        'personaId'    => $empresa->apisunat_ruc,
+                        'personaToken' => $empresa->apisunat_token,
+                        'fileName'     => $fileName,
+                        'documentBody' => $documentBody,
+                    ]);
+
+                $result    = $response->json();
+                $aceptada  = $response->successful() && isset($result['sunatResponse']);
+                $pendiente = $response->successful() && isset($result['status']) && $result['status'] === 'PENDIENTE';
+
+                if (!$aceptada && !$pendiente) {
+                    return response()->json([
+                        'success' => false,
+                        'mensaje' => 'No se pudo anular: la Nota de Credito fue rechazada por SUNAT. ' . json_encode($result),
+                    ], 422);
+                }
+
+                $empresa->increment('ultimo_num_nota_credito_factura');
+
+                \DB::table('comprobantes_sunat')->where('id', $id)->update([
+                    'estado'            => 'anulado',
+                    'sunat_descripcion' => 'Anulada con NC ' . $serieNC . '-' . str_pad($correlativoNC, 8, '0', STR_PAD_LEFT) . ' | ' . json_encode($result),
+                    'updated_at'        => now(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'mensaje' => 'Factura anulada mediante Nota de Credito ' . $serieNC . '-' . str_pad($correlativoNC, 8, '0', STR_PAD_LEFT),
+                    'resultado' => $result,
+                ]);
+            }
+
+            // BOLETAS: Comunicacion de Baja (RA) via sendSummary
             $response = \Http::withHeaders(['Content-Type' => 'application/json'])
                 ->post('https://back.apisunat.com/personas/v1/sendSummary', [
                     'personaId'    => $empresa->apisunat_ruc,

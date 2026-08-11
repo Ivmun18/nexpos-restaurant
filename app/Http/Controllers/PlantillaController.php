@@ -47,16 +47,9 @@ class PlantillaController extends Controller
         try {
             $seeder = new $seederClass();
             $seeder->run($empresaId);
-            return response()->json([
-                'success' => true,
-                'message' => "✅ Plantilla '{$plantilla->nombre}' cargada con éxito",
-                'productos' => $plantilla->total_productos,
-                'categorias' => $plantilla->total_categorias,
-            ]);
+            return back()->with('success', "✅ Plantilla '{$plantilla->nombre}' cargada con éxito: {$plantilla->total_productos} productos y {$plantilla->total_categorias} categorías.");
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Error al cargar plantilla: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['error' => 'Error al cargar plantilla: ' . $e->getMessage()]);
         }
     }
 
@@ -92,20 +85,10 @@ class PlantillaController extends Controller
 
             \DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => '✅ Datos demo eliminados correctamente',
-                'detalles' => [
-                    'ventas_borradas'      => $ventasBorradas,
-                    'productos_borrados'   => $productosBorrados,
-                    'categorias_borradas'  => $categoriasBorradas,
-                ],
-            ]);
+            return back()->with('success', '✅ Datos eliminados: ' . $ventasBorradas . ' ventas, ' . $productosBorrados . ' productos, ' . $categoriasBorradas . ' categorías.');
         } catch (\Exception $e) {
             \DB::rollBack();
-            return response()->json([
-                'error' => 'Error al limpiar: ' . $e->getMessage()
-            ], 500);
+            return back()->withErrors(['error' => 'Error al limpiar: ' . $e->getMessage()]);
         }
     }
 }

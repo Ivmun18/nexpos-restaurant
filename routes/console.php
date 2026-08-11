@@ -12,3 +12,5 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('notaria:sincronizar-caja')->everyFiveMinutes();
 Schedule::command('backup:clean')->daily()->at('01:00');
 Schedule::command('backup:run')->daily()->at('02:00');
+
+Schedule::command('citas:recordatorios')->dailyAt('08:00')->withoutOverlapping();

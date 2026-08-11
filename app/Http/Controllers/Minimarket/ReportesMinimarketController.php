@@ -24,6 +24,10 @@ class ReportesMinimarketController extends Controller
             ->get();
 
         $totalPeriodo   = $ventas->sum('total');
+        $hoy = now()->toDateString();
+        $ventasHoy = $ventas->filter(fn($v) => \Carbon\Carbon::parse($v->fecha_emision)->toDateString() === $hoy);
+        $totalHoy = $ventasHoy->sum('total');
+        $countHoy = $ventasHoy->count();
         $totalEfectivo  = $ventas->where('metodo_pago', 'efectivo')->sum('total');
         $totalYape      = $ventas->where('metodo_pago', 'yape')->sum('total');
         $totalPlin      = $ventas->where('metodo_pago', 'plin')->sum('total');
@@ -40,12 +44,12 @@ class ReportesMinimarketController extends Controller
             ->get();
 
         // Top productos
-        $topProductos = VentaDetalle::selectRaw('descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
+        $topProductos = VentaDetalle::selectRaw('producto_id, MAX(descripcion) as descripcion, SUM(cantidad) as total_cantidad, SUM(total) as total_monto')
             ->whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId)
                 ->whereDate('fecha_emision', '>=', $desde)
                 ->whereDate('fecha_emision', '<=', $hasta)
                 ->where('estado', '!=', 'anulado'))
-            ->groupBy('descripcion')
+            ->groupBy('producto_id')
             ->orderByDesc('total_monto')
             ->limit(10)
             ->get();
@@ -90,6 +94,8 @@ class ReportesMinimarketController extends Controller
                 'total_tarjeta'  => round($totalTarjeta, 2),
                 'total_ventas'   => $ventas->count(),
                 'ticket_promedio'=> $ventas->count() > 0 ? round($totalPeriodo / $ventas->count(), 2) : 0,
+                'ventas_hoy'      => round($totalHoy, 2),
+                'ventas_hoy_count'=> $countHoy,
             ],
             'ventas_por_dia' => $ventasPorDia,
             'top_productos'  => $topProductos,

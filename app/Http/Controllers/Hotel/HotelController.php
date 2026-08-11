@@ -7,6 +7,7 @@ use App\Models\HotelHuesped;
 use App\Models\HotelReserva;
 use App\Models\HotelPago;
 use App\Models\HotelHousekeeping;
+use App\Models\HotelTarifaTemporada;
 use App\Models\HotelProducto;
 use App\Models\HotelCargo;
 use Illuminate\Http\Request;
@@ -21,13 +22,54 @@ class HotelController extends Controller
         $empresaId = auth()->user()->empresa_id;
         $hoy = Carbon::today();
 
+        // Estado habitaciones
         $totalHabitaciones  = HotelHabitacion::where('empresa_id', $empresaId)->count();
         $disponibles        = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'disponible')->count();
         $ocupadas           = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'ocupada')->count();
         $limpieza           = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'limpieza')->count();
-        $checkinsHoy        = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkin', $hoy)->count();
-        $checkoutsHoy       = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkout_previsto', $hoy)->where('estado', 'checkin')->count();
-        $ingresosMes        = HotelReserva::where('empresa_id', $empresaId)->whereMonth('created_at', $hoy->month)->sum('monto_pagado');
+        $mantenimiento      = HotelHabitacion::where('empresa_id', $empresaId)->where('estado', 'mantenimiento')->count();
+        $ocupacionPct       = $totalHabitaciones > 0 ? round(($ocupadas / $totalHabitaciones) * 100) : 0;
+
+        // Actividad hoy
+        $checkinsHoy    = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkin', $hoy)->count();
+        $checkoutsHoy   = HotelReserva::where('empresa_id', $empresaId)->whereDate('fecha_checkout_previsto', $hoy)->where('estado', 'checkin')->count();
+        $ingresosHoy    = HotelPago::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))->whereDate('created_at', $hoy)->sum('monto');
+
+        // Mes actual
+        $ingresosMes    = HotelPago::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))->whereMonth('created_at', $hoy->month)->whereYear('created_at', $hoy->year)->sum('monto');
+
+        // Saldos pendientes (reservas activas con deuda)
+        $saldoPendiente = HotelReserva::where('empresa_id', $empresaId)
+            ->where('estado', 'checkin')
+            ->whereRaw('monto_pagado < total')
+            ->selectRaw('SUM(total - monto_pagado) as saldo')
+            ->value('saldo') ?? 0;
+
+        $reservasPendientesPago = HotelReserva::where('empresa_id', $empresaId)
+            ->where('estado', 'checkin')
+            ->whereRaw('monto_pagado < total')
+            ->count();
+
+        // Próximos checkouts (hoy y mañana)
+        $proximosCheckouts = HotelReserva::with('habitacion.tipo','huesped')
+            ->where('empresa_id', $empresaId)
+            ->where('estado', 'checkin')
+            ->whereDate('fecha_checkout_previsto', '<=', $hoy->copy()->addDay())
+            ->orderBy('fecha_checkout_previsto')
+            ->get();
+
+        // Próximos checkins (hoy y mañana)
+        $proximosCheckins = HotelReserva::with('habitacion.tipo','huesped')
+            ->where('empresa_id', $empresaId)
+            ->where('estado', 'reservado')
+            ->whereDate('fecha_checkin', '<=', $hoy->copy()->addDay())
+            ->orderBy('fecha_checkin')
+            ->get();
+
+        // Housekeeping pendiente
+        $housekeepingPendiente = HotelHousekeeping::where('empresa_id', $empresaId)
+            ->whereIn('estado', ['pendiente','en_proceso'])
+            ->count();
 
         $habitaciones = HotelHabitacion::with('tipo','reservaActual.huesped')
             ->where('empresa_id', $empresaId)
@@ -35,8 +77,11 @@ class HotelController extends Controller
             ->get();
 
         return Inertia::render('Hotel/Dashboard', compact(
-            'totalHabitaciones','disponibles','ocupadas','limpieza',
-            'checkinsHoy','checkoutsHoy','ingresosMes','habitaciones'
+            'totalHabitaciones','disponibles','ocupadas','limpieza','mantenimiento','ocupacionPct',
+            'checkinsHoy','checkoutsHoy','ingresosHoy','ingresosMes',
+            'saldoPendiente','reservasPendientesPago',
+            'proximosCheckouts','proximosCheckins',
+            'housekeepingPendiente','habitaciones'
         ));
     }
 
@@ -103,7 +148,7 @@ class HotelController extends Controller
     public function recepcion()
     {
         $empresaId = auth()->user()->empresa_id;
-        $reservas = HotelReserva::with('habitacion.tipo','huesped')
+        $reservas = HotelReserva::with('habitacion.tipo','huesped','pagos')
             ->where('empresa_id', $empresaId)
             ->whereIn('estado', ['reservado','checkin'])
             ->orderBy('fecha_checkin','desc')->get();
@@ -132,7 +177,18 @@ class HotelController extends Controller
         $empresaId  = auth()->user()->empresa_id;
         $habitacion = HotelHabitacion::findOrFail($request->habitacion_id);
         $noches     = max(1, Carbon::parse($request->fecha_checkin)->startOfDay()->diffInDays(Carbon::parse($request->fecha_checkout)->startOfDay()));
-        $total      = $habitacion->tipo->precio_noche * $noches;
+        // Tarifa de temporada
+        $tarifaTemp = HotelTarifaTemporada::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->where('fecha_inicio', '<=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where('fecha_fin', '>=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where(function($q) use ($habitacion) {
+                $q->whereNull('tipo_id')->orWhere('tipo_id', $habitacion->tipo_id);
+            })
+            ->orderByDesc('tipo_id')
+            ->first();
+        $precioNoche = $tarifaTemp ? $tarifaTemp->precio_noche : $habitacion->tipo->precio_noche;
+        $total      = $precioNoche * $noches;
 
         // Verificar si hay reservas futuras que se cruzan con las fechas solicitadas
         $checkinSolicitado  = Carbon::parse($request->fecha_checkin)->startOfDay();
@@ -175,7 +231,7 @@ class HotelController extends Controller
             'fecha_checkin'          => $request->fecha_checkin,
             'fecha_checkout_previsto'=> $request->fecha_checkout,
             'num_huespedes'          => $request->num_huespedes ?? 1,
-            'precio_noche'           => $habitacion->tipo->precio_noche,
+            'precio_noche'           => $precioNoche,
             'num_noches'             => $noches,
             'total'                  => $total,
             'monto_pagado'           => 0,
@@ -189,13 +245,80 @@ class HotelController extends Controller
         return response()->json(['success' => true, 'reserva' => $reserva, 'codigo' => $codigo, 'mensaje' => 'Check-in realizado ✅']);
     }
 
+
+    // ── TICKET CHECK-IN ──
+    public function ticketCheckin($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $reserva = HotelReserva::with('habitacion.tipo', 'huesped')
+            ->where('id', $id)
+            ->where('empresa_id', $empresaId)
+            ->firstOrFail();
+
+        $empresa = auth()->user()->empresa;
+
+        $logoBase64 = '';
+        if ($empresa->logo) {
+            $logoPath = public_path('storage/' . $empresa->logo);
+            if (file_exists($logoPath)) {
+                $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $mime = $ext === 'png' ? 'image/png' : 'image/jpeg';
+                $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+            }
+        }
+
+        return response()->json([
+            'empresa' => [
+                'nombre'    => $empresa->nombre_comercial ?? $empresa->razon_social,
+                'ruc'       => $empresa->ruc,
+                'direccion' => $empresa->direccion,
+                'telefono'  => $empresa->telefono,
+                'logo'      => $logoBase64,
+            ],
+            'reserva' => [
+                'codigo'             => $reserva->codigo,
+                'fecha_checkin'      => $reserva->fecha_checkin,
+                'fecha_checkout'     => $reserva->fecha_checkout_previsto,
+                'num_noches'         => $reserva->num_noches,
+                'num_huespedes'      => $reserva->num_huespedes,
+                'precio_noche'       => $reserva->precio_noche,
+                'total'              => $reserva->total,
+                'monto_pagado'       => $reserva->monto_pagado,
+                'saldo'              => $reserva->total - $reserva->monto_pagado,
+                'observaciones'      => $reserva->observaciones,
+            ],
+            'habitacion' => [
+                'numero' => $reserva->habitacion->numero,
+                'piso'   => $reserva->habitacion->piso,
+                'tipo'   => $reserva->habitacion->tipo->nombre,
+            ],
+            'huesped' => [
+                'nombre'          => $reserva->huesped->nombre_completo,
+                'tipo_documento'  => $reserva->huesped->tipo_documento,
+                'numero_documento'=> $reserva->huesped->numero_documento,
+                'telefono'        => $reserva->huesped->telefono,
+                'nacionalidad'    => $reserva->huesped->nacionalidad,
+            ],
+        ]);
+    }
+
     // ── RESERVA ANTICIPADA ──
     public function reservar(Request $request)
     {
         $empresaId = auth()->user()->empresa_id;
         $habitacion = HotelHabitacion::findOrFail($request->habitacion_id);
         $noches = max(1, Carbon::parse($request->fecha_checkin)->startOfDay()->diffInDays(Carbon::parse($request->fecha_checkout)->startOfDay()));
-        $total  = $habitacion->tipo->precio_noche * $noches;
+        $tarifaTemp2 = HotelTarifaTemporada::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->where('fecha_inicio', '<=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where('fecha_fin', '>=', Carbon::parse($request->fecha_checkin)->toDateString())
+            ->where(function($q) use ($habitacion) {
+                $q->whereNull('tipo_id')->orWhere('tipo_id', $habitacion->tipo_id);
+            })
+            ->orderByDesc('tipo_id')
+            ->first();
+        $precioNoche2 = $tarifaTemp2 ? $tarifaTemp2->precio_noche : $habitacion->tipo->precio_noche;
+        $total  = $precioNoche2 * $noches;
 
         $huesped = HotelHuesped::firstOrCreate(
             ['empresa_id' => $empresaId, 'numero_documento' => $request->numero_documento],
@@ -237,7 +360,7 @@ class HotelController extends Controller
             'fecha_checkin'           => $request->fecha_checkin,
             'fecha_checkout_previsto' => $request->fecha_checkout,
             'num_huespedes'           => $request->num_huespedes ?? 1,
-            'precio_noche'            => $habitacion->tipo->precio_noche,
+            'precio_noche'            => $precioNoche2,
             'num_noches'              => $noches,
             'total'                   => $total,
             'monto_pagado'            => $request->adelanto ?? 0,
@@ -644,6 +767,24 @@ class HotelController extends Controller
             ? round($reservas->whereIn('estado', ['checkin','checkout'])->count() / max($totalReservas, 1) * 100, 1)
             : 0;
 
+        // Desglose: hospedaje vs room service
+        $ingresosHospedaje = $reservas->whereIn('estado', ['checkin','checkout'])->sum(function($r) {
+            return $r->precio_noche * $r->num_noches;
+        });
+        $ingresosRoomService = HotelCargo::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))
+            ->whereHas('reserva', fn($q) => $q->whereBetween('fecha_checkin', [$desde . ' 00:00:00', $hasta . ' 23:59:59']))
+            ->sum('subtotal');
+
+        // Top productos más vendidos (room service)
+        $topProductos = HotelCargo::with('producto')
+            ->whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId)
+                ->whereBetween('fecha_checkin', [$desde . ' 00:00:00', $hasta . ' 23:59:59']))
+            ->selectRaw('producto_id, SUM(cantidad) as total_cantidad, SUM(subtotal) as total_monto')
+            ->groupBy('producto_id')
+            ->orderByDesc('total_monto')
+            ->limit(5)
+            ->get();
+
         // Ingresos por método de pago
         $pagos = \App\Models\HotelPago::whereHas('reserva', fn($q) => $q->where('empresa_id', $empresaId))
             ->whereBetween('created_at', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
@@ -685,7 +826,8 @@ class HotelController extends Controller
         return Inertia::render('Hotel/Reportes', compact(
             'reservas','totalIngresos','totalReservas','ocupacionPromedio',
             'desde','hasta','totalNoches','promedioNoche','pagos',
-            'ingresosPorMes','ocupacionPorMes','totalHabitaciones'
+            'ingresosPorMes','ocupacionPorMes','totalHabitaciones',
+            'ingresosHospedaje','ingresosRoomService','topProductos'
         ));
     }
 
@@ -806,5 +948,84 @@ class HotelController extends Controller
         $reserva->update(['total' => ($reserva->precio_noche * $reserva->num_noches) + $totalCargos]);
 
         return redirect()->back()->with('success', 'Cargo eliminado');
+    }
+
+    // ── HUÉSPEDES ──
+    public function huespedes(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $buscar = $request->get('buscar', '');
+
+        $huespedes = HotelHuesped::where('empresa_id', $empresaId)
+            ->when($buscar, function($q) use ($buscar) {
+                $q->where(function($q2) use ($buscar) {
+                    $q2->where('nombre_completo', 'like', "%$buscar%")
+                       ->orWhere('numero_documento', 'like', "%$buscar%")
+                       ->orWhere('telefono', 'like', "%$buscar%");
+                });
+            })
+            ->withCount('reservas')
+            ->withSum(['reservas as total_gastado' => function($q) {
+                $q->whereIn('estado', ['checkin','checkout']);
+            }], 'monto_pagado')
+            ->orderByDesc('updated_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Hotel/Huespedes', compact('huespedes', 'buscar'));
+    }
+
+    public function huesped($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $huesped = HotelHuesped::where('id', $id)->where('empresa_id', $empresaId)->firstOrFail();
+        $reservas = HotelReserva::with('habitacion.tipo', 'pagos')
+            ->where('huesped_id', $id)
+            ->where('empresa_id', $empresaId)
+            ->orderByDesc('fecha_checkin')
+            ->get();
+
+        $totalGastado  = $reservas->whereIn('estado', ['checkin','checkout'])->sum('monto_pagado');
+        $totalEstadias = $reservas->whereIn('estado', ['checkin','checkout'])->count();
+        $totalNoches   = $reservas->whereIn('estado', ['checkin','checkout'])->sum('num_noches');
+
+        return Inertia::render('Hotel/HuespedDetalle', compact('huesped','reservas','totalGastado','totalEstadias','totalNoches'));
+    }
+
+    // ── TARIFAS TEMPORADA ──
+    public function tarifas()
+    {
+        $empresaId = auth()->user()->empresa_id;
+        $tarifas = HotelTarifaTemporada::with('tipo')
+            ->where('empresa_id', $empresaId)
+            ->orderBy('fecha_inicio')->get();
+        $tipos = HotelTipoHabitacion::where('empresa_id', $empresaId)->where('activo', true)->get();
+        return Inertia::render('Hotel/Tarifas', compact('tarifas', 'tipos'));
+    }
+
+    public function storeTarifa(Request $request)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelTarifaTemporada::create([
+            ...$request->only(['nombre','tipo_id','fecha_inicio','fecha_fin','precio_noche','color','descripcion']),
+            'empresa_id' => $empresaId,
+            'activo'     => true,
+        ]);
+        return back()->with('success', 'Tarifa creada ✅');
+    }
+
+    public function updateTarifa(Request $request, $id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelTarifaTemporada::where('id', $id)->where('empresa_id', $empresaId)
+            ->update($request->only(['nombre','tipo_id','fecha_inicio','fecha_fin','precio_noche','color','activo','descripcion']));
+        return back()->with('success', 'Tarifa actualizada ✅');
+    }
+
+    public function destroyTarifa($id)
+    {
+        $empresaId = auth()->user()->empresa_id;
+        HotelTarifaTemporada::where('id', $id)->where('empresa_id', $empresaId)->delete();
+        return back()->with('success', 'Tarifa eliminada');
     }
 }

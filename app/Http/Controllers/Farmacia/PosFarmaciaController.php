@@ -17,6 +17,7 @@ class PosFarmaciaController extends Controller
         $productos = Producto::where('empresa_id', auth()->user()->empresa_id)
             ->where('activo', true)
             ->orderBy('descripcion')
+            ->with(['presentaciones' => fn($q) => $q->where('activo', true)])
             ->get(['id', 'descripcion', 'descripcion_corta', 'codigo_barras', 'precio_venta', 'stock_actual', 'stock_minimo', 'categoria_id', 'fecha_vencimiento', 'lote', 'laboratorio', 'principio_activo', 'presentacion', 'concentracion', 'requiere_receta']);
 
         // Calcular estado de vencimiento de cada producto
@@ -141,7 +142,7 @@ class PosFarmaciaController extends Controller
         'receta_numero'       => $request->receta_numero ?? null,
         'receta_fecha'        => $request->receta_fecha ?? null,
         'receta_observaciones'=> $request->receta_observaciones ?? null,
-        'estado'              => $estadoVenta,
+        'estado'              => 'pendiente',
         'tipo_comprobante'    => $tipo,
         'serie'               => $serie,
         'correlativo'         => $correlativo,
@@ -185,7 +186,8 @@ class PosFarmaciaController extends Controller
         'total'              => $item['cantidad'] * $item['precio_venta'],
     ]);
 
-    \App\Models\Producto::where('id', $item['id'])->decrement('stock_actual', $item['cantidad']);
+    $factor = isset($item['factor']) && $item['factor'] > 1 ? (int)$item['factor'] : 1;
+    \App\Models\Producto::where('id', $item['id'])->decrement('stock_actual', $item['cantidad'] * $factor);
 }
 
     // Emitir comprobante en Nubefact si corresponde

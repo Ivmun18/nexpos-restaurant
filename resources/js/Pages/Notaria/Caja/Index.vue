@@ -140,7 +140,7 @@
                     </div>
 
                     <!-- SERVICIO RÁPIDO -->
-                    <div v-if="modalServicioRapido" style="background:white; border-radius:12px; border:2px solid #10B981; overflow:hidden;">
+                    <div v-if="modalServicioRapido" class="modal-servicio-rapido" style="background:white; border-radius:12px; border:2px solid #10B981; overflow:hidden;">
                         <div style="padding:1rem 1.25rem; background:linear-gradient(135deg,#ECFDF5,#D1FAE5); border-bottom:1px solid #A7F3D0;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <p style="font-size:14px; font-weight:800; color:#065F46; margin:0;">⚡ Servicio Rápido</p>
@@ -273,12 +273,16 @@
                                 <div style="background:#F8FAFC; padding:6px 10px; font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Ítems agregados</div>
                                 <div v-for="(it, idx) in itemsRapido" :key="idx" style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-top:1px solid #F1F5F9;">
                                     <div style="flex:1;">
-                                        <p style="margin:0; font-size:12px; font-weight:600; color:#1E293B;">{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</p>
+                                        <p style="margin:0; font-size:12px; font-weight:600;" :style="{color: it._esHuella ? '#D97706' : '#1E293B'}">
+                                            <span v-if="it._esHuella">🖐 Uso biométrico</span>
+                                            <span v-else>{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</span>
+                                        </p>
                                         <p style="margin:0; font-size:11px; color:#64748B;">{{ it.cantidad }} × S/ {{ Number(it.precio_unitario).toFixed(2) }}</p>
                                     </div>
                                     <div style="display:flex; align-items:center; gap:8px;">
-                                        <span style="font-size:13px; font-weight:800; color:#059669;">S/ {{ (it.cantidad * it.precio_unitario).toFixed(2) }}</span>
-                                        <button @click="quitarItem(idx)" style="background:#FEF2F2; border:none; color:#EF4444; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:13px; font-weight:700;">✕</button>
+                                        <span style="font-size:13px; font-weight:800;" :style="{color: it._esHuella ? '#D97706' : '#059669'}">S/ {{ (it.cantidad * it.precio_unitario).toFixed(2) }}</span>
+                                        <button v-if="!it._esHuella" @click="quitarItem(idx)" style="background:#FEF2F2; border:none; color:#EF4444; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:13px; font-weight:700;">✕</button>
+                                        <span v-else style="font-size:10px; color:#D97706; font-weight:700; background:#FFF7ED; padding:2px 6px; border-radius:4px;">AUTO</span>
                                     </div>
                                 </div>
                             </div>
@@ -293,6 +297,47 @@
                                         @click="formRapido.metodo_pago=m"
                                         :style="{ padding:'8px', border:'1px solid', borderRadius:'8px', cursor:'pointer', fontWeight:'600', fontSize:'12px', textTransform:'capitalize', background: formRapido.metodo_pago===m ? '#10B981' : 'white', color: formRapido.metodo_pago===m ? 'white' : '#374151', borderColor: formRapido.metodo_pago===m ? '#10B981' : '#E2E8F0' }">
                                         {{ m }}
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Forma de pago: solo si parece factura (RUC 11 dígitos) -->
+                            <div v-if="(formRapido.cliente_documento||'').replace(/\D/g,'').length === 11" style="margin-bottom:16px; display:flex; flex-direction:column; gap:8px;">
+                                <label style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Forma de pago</label>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                    <button v-for="fp in [{value:'Contado',icon:'💵'},{value:'Credito',icon:'📅'}]" :key="fp.value"
+                                        @click="formRapido.forma_pago = fp.value" type="button"
+                                        :style="{
+                                            padding:'8px', border:'2px solid', borderRadius:'8px', cursor:'pointer', textAlign:'center',
+                                            borderColor: formRapido.forma_pago === fp.value ? '#0F766E' : '#E2E8F0',
+                                            background: formRapido.forma_pago === fp.value ? '#F0FDFA' : 'white',
+                                            color: formRapido.forma_pago === fp.value ? '#0F766E' : '#64748B',
+                                            fontWeight:'700', fontSize:'12px',
+                                        }">
+                                        {{ fp.icon }} {{ fp.value }}
+                                    </button>
+                                </div>
+                                <div v-if="formRapido.forma_pago === 'Credito'" style="display:flex; flex-direction:column; gap:8px;">
+                                    <div v-for="(cuota, ci) in formRapido.cuotas" :key="ci" style="display:flex; gap:6px; align-items:end;">
+                                        <div style="flex:1;">
+                                            <label style="font-size:10px; font-weight:600; color:#64748B;">MONTO CUOTA {{ ci+1 }}</label>
+                                            <input v-model.number="cuota.monto" type="number" step="0.01" min="0.01"
+                                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                        </div>
+                                        <div style="flex:1;">
+                                            <label style="font-size:10px; font-weight:600; color:#64748B;">VENCIMIENTO</label>
+                                            <input v-model="cuota.fecha" type="date"
+                                                style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                        </div>
+                                        <button @click="formRapido.cuotas.splice(ci, 1)" type="button"
+                                            style="padding:8px 10px; background:#FEF2F2; border:none; color:#EF4444; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+                                    </div>
+                                    <div v-if="formRapido.cuotas.length" style="font-size:11px; color:#64748B; text-align:right;">
+                                        Asignado: S/ {{ formRapido.cuotas.reduce((s,c) => s + Number(c.monto||0), 0).toFixed(2) }}
+                                        / S/ {{ totalRapido.toFixed(2) }}
+                                    </div>
+                                    <button @click="agregarCuotaRapido()" type="button"
+                                        style="padding:8px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px; font-size:12px; font-weight:600; color:#0F766E; cursor:pointer;">
+                                        ➕ Agregar cuota
                                     </button>
                                 </div>
                             </div>
@@ -333,7 +378,7 @@
                                 <div v-if="expedienteSeleccionado.pagos?.length" style="margin-bottom:8px;">
                                     <span style="font-size:12px; font-weight:600; color:#64748B;">Pagos registrados:</span>
                                     <div v-for="p in expedienteSeleccionado.pagos" :key="p.id" style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; border-bottom:1px dashed #F1F5F9;">
-                                        <span style="color:#64748B;">{{ p.tipo === 'adelanto' ? '📝 Adelanto' : '💰 Pago' }} ({{ p.metodo_pago }})</span>
+                                        <span style="color:#64748B;">{{ p.tipo === 'adelanto' ? '📝 Adelanto' : '💰 Pago' }} ({{ p.metodo_pago }}) — {{ p.created_at ? new Date(p.created_at).toLocaleDateString('es-PE') : '' }}</span>
                                         <span style="font-weight:600; color:#10B981;">S/ {{ Number(p.monto).toFixed(2) }}</span>
                                     </div>
                                 </div>
@@ -343,14 +388,58 @@
                                 </div>
                             </div>
 
-                            <!-- Monto -->
-                            <div style="margin-bottom:1rem;">
-                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Monto a cobrar (S/)</label>
-                                <input v-model="formCobro.monto" type="number" step="0.01" min="0"
-                                    style="width:100%; padding:14px; border:2px solid #6366F1; border-radius:10px; font-size:28px; font-weight:900; outline:none; box-sizing:border-box; text-align:center; color:#1E293B;" />
+                            <!-- CLIENTE -->
+                            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:1rem;">
+                                <label style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Cliente</label>
+                                <input v-model="formComp.cliente_numero_documento" type="text"
+                                    @input="buscarCliente" placeholder="DNI (8 dígitos) o RUC (11 dígitos)"
+                                    style="width:100%; padding:10px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                <div v-if="buscandoCliente" style="font-size:11px; color:#64748B;">🔍 Buscando...</div>
+                                <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre del cliente *"
+                                    style="width:100%; padding:10px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                <input v-model="formComp.cliente_email" type="email" placeholder="Email (opcional)"
+                                    style="width:100%; padding:10px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                             </div>
 
-                            <!-- Método de pago -->
+                            <!-- AGREGAR ITEMS -->
+                            <div style="border:1px solid #E2E8F0; border-radius:10px; padding:10px; margin-bottom:1rem;">
+                                <p style="font-size:11px; font-weight:700; color:#1E293B; margin:0 0 8px; text-transform:uppercase;">+ Agregar ítem</p>
+                                <div style="display:grid; grid-template-columns:1fr 60px 80px auto; gap:6px; align-items:end;">
+                                    <div>
+                                        <label style="font-size:10px; color:#64748B;">Descripción</label>
+                                        <input v-model="itemActualExp.descripcion" type="text" placeholder="Servicio..."
+                                            style="width:100%; padding:7px 10px; border:1px solid #E2E8F0; border-radius:7px; font-size:12px; outline:none; box-sizing:border-box;" />
+                                    </div>
+                                    <div>
+                                        <label style="font-size:10px; color:#64748B;">Cant.</label>
+                                        <input v-model="itemActualExp.cantidad" type="number" min="1"
+                                            style="width:100%; padding:7px 8px; border:1px solid #E2E8F0; border-radius:7px; font-size:12px; outline:none; box-sizing:border-box;" />
+                                    </div>
+                                    <div>
+                                        <label style="font-size:10px; color:#64748B;">Precio S/</label>
+                                        <input v-model="itemActualExp.precio_unitario" type="number" step="0.01"
+                                            style="width:100%; padding:7px 8px; border:1px solid #E2E8F0; border-radius:7px; font-size:12px; outline:none; box-sizing:border-box;" />
+                                    </div>
+                                    <button @click="agregarItemExp" style="padding:7px 10px; background:#0F766E; color:white; border:none; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;">+Add</button>
+                                </div>
+                            </div>
+
+                            <!-- LISTA ITEMS -->
+                            <div v-if="itemsExp.length" style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:1rem;">
+                                <div v-for="(it, idx) in itemsExp" :key="idx"
+                                    style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; border-top:1px solid #F1F5F9;"
+                                    :style="{background: it._esHuella ? '#F0FDF4' : 'white'}">
+                                    <span style="font-size:12px; flex:1;">{{ it._esHuella ? '🔏' : '📋' }} {{ it.descripcion }}</span>
+                                    <span style="font-size:12px; font-weight:600; margin:0 8px;">S/ {{ (it.cantidad * it.precio_unitario).toFixed(2) }}</span>
+                                    <button v-if="!it._esHuella" @click="quitarItemExp(idx)" style="background:none; border:none; color:#EF4444; cursor:pointer; font-size:13px;">✕</button>
+                                </div>
+                                <div style="padding:8px 10px; background:#F8FAFC; display:flex; justify-content:space-between; font-weight:700;">
+                                    <span style="font-size:13px;">Total</span>
+                                    <span style="font-size:14px; color:#0F766E;">S/ {{ totalExp.toFixed(2) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- MÉTODO DE PAGO -->
                             <div style="margin-bottom:1rem;">
                                 <label style="font-size:11px; color:#64748B; display:block; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Método de pago</label>
                                 <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px;">
@@ -371,15 +460,15 @@
                                     style="width:100%; margin-top:8px; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                             </div>
 
-                            <!-- Comprobante inline -->
-                            <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:1.25rem;">
+                            <!-- COMPROBANTE -->
+                            <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:1rem;">
                                 <div style="padding:10px 14px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; gap:8px;">
                                     <span style="font-size:14px;">🧾</span>
                                     <p style="font-size:12px; font-weight:700; color:#1E293B; margin:0;">Comprobante de pago</p>
                                 </div>
                                 <div style="padding:12px 14px; display:flex; flex-direction:column; gap:10px;">
                                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                        <button v-for="t in tiposComp" :key="t.value" @click="formComp.tipo_comprobante = t.value"
+                                        <button v-for="t in tiposComp" :key="t.value" @click="formComp.tipo_comprobante = t.value; formComp.cliente_tipo_documento = t.value==='01'?'6':'1'"
                                             :style="{
                                                 padding:'10px', border:'2px solid', borderRadius:'8px', cursor:'pointer', textAlign:'center',
                                                 borderColor: formComp.tipo_comprobante === t.value ? '#0F766E' : '#E2E8F0',
@@ -390,23 +479,47 @@
                                             {{ t.icon }} {{ t.label }}
                                         </button>
                                     </div>
-                                    <div style="display:grid; grid-template-columns:100px 1fr; gap:8px;">
-                                        <select v-model="formComp.cliente_tipo_documento"
-                                            style="padding:9px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; font-weight:600;">
-                                            <option value="1">DNI</option>
-                                            <option value="6">RUC</option>
-                                            <option value="0">Sin doc.</option>
-                                        </select>
-                                        <input v-model="formComp.cliente_numero_documento" type="text"
-                                            :placeholder="formComp.cliente_tipo_documento==='6' ? '20xxxxxxxxx' : '12345678'"
-                                            @input="buscarCliente"
-                                            style="padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
-                                        <div v-if="buscandoCliente" style="font-size:11px; color:#64748B; margin-top:2px;">🔍 Buscando...</div>
+                                    <!-- Forma de pago: solo para Factura -->
+                                    <div v-if="formComp.tipo_comprobante === '01'" style="display:flex; flex-direction:column; gap:8px;">
+                                        <p style="font-size:11px; font-weight:700; color:#64748B; margin:0; text-transform:uppercase;">Forma de pago</p>
+                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                            <button v-for="fp in [{value:'Contado',icon:'💵'},{value:'Credito',icon:'📅'}]" :key="fp.value"
+                                                @click="formComp.forma_pago = fp.value" type="button"
+                                                :style="{
+                                                    padding:'10px', border:'2px solid', borderRadius:'8px', cursor:'pointer', textAlign:'center',
+                                                    borderColor: formComp.forma_pago === fp.value ? '#0F766E' : '#E2E8F0',
+                                                    background: formComp.forma_pago === fp.value ? '#F0FDFA' : 'white',
+                                                    color: formComp.forma_pago === fp.value ? '#0F766E' : '#64748B',
+                                                    fontWeight:'700', fontSize:'13px',
+                                                }">
+                                                {{ fp.icon }} {{ fp.value }}
+                                            </button>
+                                        </div>
+                                        <div v-if="formComp.forma_pago === 'Credito'" style="display:flex; flex-direction:column; gap:8px;">
+                                            <div v-for="(cuota, ci) in formComp.cuotas" :key="ci" style="display:flex; gap:6px; align-items:end;">
+                                                <div style="flex:1;">
+                                                    <label style="font-size:10px; font-weight:600; color:#64748B;">MONTO CUOTA {{ ci+1 }}</label>
+                                                    <input v-model.number="cuota.monto" type="number" step="0.01" min="0.01"
+                                                        style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                                </div>
+                                                <div style="flex:1;">
+                                                    <label style="font-size:10px; font-weight:600; color:#64748B;">VENCIMIENTO</label>
+                                                    <input v-model="cuota.fecha" type="date"
+                                                        style="width:100%; padding:8px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                                                </div>
+                                                <button @click="formComp.cuotas.splice(ci, 1)" type="button"
+                                                    style="padding:8px 10px; background:#FEF2F2; border:none; color:#EF4444; border-radius:8px; cursor:pointer; font-weight:700;">✕</button>
+                                            </div>
+                                            <div v-if="formComp.cuotas.length" style="font-size:11px; color:#64748B; text-align:right;">
+                                                Asignado: S/ {{ formComp.cuotas.reduce((s,c) => s + Number(c.monto||0), 0).toFixed(2) }}
+                                                / S/ {{ totalExp.toFixed(2) }}
+                                            </div>
+                                            <button @click="agregarCuotaComp()" type="button"
+                                                style="padding:8px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px; font-size:12px; font-weight:600; color:#0F766E; cursor:pointer;">
+                                                ➕ Agregar cuota
+                                            </button>
+                                        </div>
                                     </div>
-                                    <input v-model="formComp.cliente_nombre" type="text" placeholder="Nombre completo del cliente *"
-                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
-                                    <input v-model="formComp.cliente_email" type="email" placeholder="Email (opcional)"
-                                        style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                                     <div v-if="errorComp" style="background:#FEF2F2; border-radius:8px; padding:8px 12px; font-size:12px; color:#991B1B;">❌ {{ errorComp }}</div>
                                     <div v-if="pdfComp" style="background:#F0FDF4; border-radius:8px; padding:8px 12px; font-size:12px; color:#166534;">
                                         ✅ Comprobante emitido.
@@ -415,18 +528,38 @@
                                 </div>
                             </div>
 
-                            <!-- BOTÓN COBRAR -->
-                            <button @click="confirmarCobro" :disabled="!formCobro.monto || procesando"
+                            <!-- ADELANTO -->
+                            <div v-if="expedienteSeleccionado.monto_pagado < expedienteSeleccionado.monto_cobrar"
+                                style="border:1px solid #FDE68A; border-radius:10px; padding:12px; margin-bottom:1rem; background:#FFFBEB;">
+                                <p style="font-size:11px; font-weight:700; color:#92400E; margin:0 0 8px; text-transform:uppercase;">📝 Registrar adelanto</p>
+                                <div style="display:flex; gap:8px; align-items:end;">
+                                    <div style="flex:1;">
+                                        <label style="font-size:10px; color:#64748B; display:block; margin-bottom:3px;">Monto adelanto S/</label>
+                                        <input v-model="montoAdelanto" type="number" step="0.01" min="0.01" placeholder="0.00"
+                                            style="width:100%; padding:9px 12px; border:1px solid #FDE68A; border-radius:8px; font-size:14px; font-weight:700; outline:none; box-sizing:border-box; text-align:center;" />
+                                    </div>
+                                    <button @click="registrarAdelanto" :disabled="!montoAdelanto || procesando"
+                                        style="padding:9px 16px; background:#F59E0B; color:white; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                        💵 Adelantar
+                                    </button>
+                                </div>
+                                <div v-if="pdfAdelanto" style="margin-top:8px; background:#F0FDF4; border-radius:6px; padding:6px 10px; font-size:12px; color:#166534;">
+                                    ✅ Adelanto registrado. <a :href="pdfAdelanto" target="_blank" style="font-weight:700; color:#0F766E;">📥 Comprobante</a>
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN COBRAR TOTAL -->
+                            <button @click="confirmarCobro" :disabled="!itemsExp.length || procesando"
                                 :style="{
                                     width:'100%', padding:'16px', border:'none', borderRadius:'12px',
                                     fontSize:'17px', fontWeight:'800', transition:'all .2s',
-                                    background: !formCobro.monto || procesando ? '#E2E8F0' : 'linear-gradient(135deg,#6366F1,#4F46E5)',
-                                    color: !formCobro.monto || procesando ? '#94A3B8' : 'white',
-                                    cursor: !formCobro.monto || procesando ? 'not-allowed' : 'pointer',
+                                    background: !itemsExp.length || procesando ? '#E2E8F0' : 'linear-gradient(135deg,#6366F1,#4F46E5)',
+                                    color: !itemsExp.length || procesando ? '#94A3B8' : 'white',
+                                    cursor: !itemsExp.length || procesando ? 'not-allowed' : 'pointer',
                                 }">
-                                {{ procesando ? '⏳ Procesando...' : '💰 Cobrar S/ ' + (Number(formCobro.monto)||0).toFixed(2) }}
+                                {{ procesando ? '⏳ Procesando...' : '💰 Cobrar S/ ' + totalExp.toFixed(2) }}
                             </button>
-                            <button @click="confirmarCobro(true)" :disabled="!formCobro.monto || procesando"
+                            <button @click="confirmarCobro(true)" :disabled="!itemsExp.length || procesando"
                                 style="width:100%; margin-top:8px; padding:12px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:10px; font-size:13px; font-weight:600; color:#0F766E; cursor:pointer;">
                                 🧾 Boleta simple (sin datos)
                             </button>
@@ -553,6 +686,56 @@ const props = defineProps({
 const busqueda               = ref('')
 const expedienteSeleccionado = ref(null)
 const procesando             = ref(false)
+const montoAdelanto          = ref('')
+const pdfAdelanto            = ref('')
+
+async function registrarAdelanto() {
+    if (!montoAdelanto.value || !expedienteSeleccionado.value || procesando.value) return
+    procesando.value = true
+    pdfAdelanto.value = ''
+    try {
+        const csrf = await fetch('/sanctum/csrf-cookie').then(() => document.querySelector('meta[name="csrf-token"]')?.content)
+        const actoId = expedienteSeleccionado.value.id
+        const res = await fetch('/notaria/caja/' + actoId + '/cobrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({
+                monto:                    Number(montoAdelanto.value),
+                metodo_pago:              formCobro.value.metodo_pago,
+                tipo:                     'adelanto',
+                referencia:               formCobro.value.referencia || '',
+                tipo_comprobante:         '03',
+                cliente_tipo_documento:   '0',
+                cliente_numero_documento: '00000000',
+                cliente_nombre:           'CLIENTES VARIOS',
+                boleta_simple:            true,
+                items: [{
+                    tipo_servicio: 'Adelanto - ' + (expedienteSeleccionado.value.asunto || 'Servicio notarial'),
+                    descripcion:   'Adelanto - ' + (expedienteSeleccionado.value.asunto || 'Servicio notarial'),
+                    cantidad: 1,
+                    precio_unitario: Number(montoAdelanto.value),
+                    monto: Number(montoAdelanto.value),
+                }],
+                monto_total: Number(montoAdelanto.value),
+            })
+        })
+        if (res.status === 419) { alert('Sesión expirada'); window.location.reload(); return }
+        const data = await res.json()
+        if (data.pdf) pdfAdelanto.value = data.pdf
+        if (data.pdf) window.open(data.pdf, '_blank')
+        if (data.success || data.mensaje) {
+            montoAdelanto.value = ''
+            router.reload({ only: ['pendientes', 'resumenCaja'] })
+        }
+        if (data.mensaje) {
+            const msg = data.success ? '✅ Comprobante emitido correctamente' : ('❌ ' + data.mensaje)
+            alert(msg)
+        }
+    } catch(e) {
+        alert('Error: ' + e.message)
+    }
+    procesando.value = false
+}
 const modalCerrar            = ref(false)
 const modalServicioRapido    = ref(false)
 const procesandoRapido       = ref(false)
@@ -592,6 +775,8 @@ const formRapido = ref({
     cliente_nombre: 'CLIENTES VARIOS',
     cliente_documento: '00000000',
     metodo_pago: 'efectivo',
+    forma_pago: 'Contado',
+    cuotas: [],
 })
 const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
 const itemsRapido = ref([])
@@ -613,13 +798,66 @@ function seleccionarServicio(nombre) {
     if (sv && sv.precio > 0) itemActual.value.precio_unitario = sv.precio
 }
 
+function recalcularBiometrico() {
+    // Restaurar precio original del primer item si tenía huella descontada
+    const primerItem = itemsRapido.value.find(i => !i._esHuella)
+    if (primerItem && primerItem._precioOriginal !== undefined) {
+        primerItem.precio_unitario = primerItem._precioOriginal
+        delete primerItem._precioOriginal
+    }
+    // Quitar biométrico existente
+    itemsRapido.value = itemsRapido.value.filter(i => i.tipo_servicio !== '__biometrico__')
+    // Calcular total real
+    const totalReal = itemsRapido.value.reduce((s, i) => s + (Number(i.precio_unitario) * (Number(i.cantidad) || 1)), 0)
+    // Verificar si algún item es trámite registral
+    const esTramite = itemsRapido.value.some(i => {
+        const d = (i.tipo_servicio || '').toLowerCase()
+        return d.includes('tramite registral') || d.includes('trámite registral')
+    })
+    // Agregar biométrico si aplica: descontarlo del primer item
+    if (!esTramite && totalReal >= 10) {
+        const primero = itemsRapido.value.find(i => !i._esHuella)
+        if (primero && Number(primero.precio_unitario) > 1.50) {
+            primero._precioOriginal = Number(primero.precio_unitario)
+            primero.precio_unitario = Number((primero.precio_unitario - 1.50).toFixed(2))
+        }
+        itemsRapido.value.push({
+            tipo_servicio: '__biometrico__',
+            tipo_servicio_custom: '',
+            cantidad: 1,
+            precio_unitario: 1.50,
+            _esHuella: true
+        })
+    }
+}
+
 function agregarItem() {
-    if (!itemActual.value.tipo_servicio || !itemActual.value.precio_unitario) return
-    itemsRapido.value.push({ ...itemActual.value })
+    if (!itemActual.value.tipo_servicio) { alert('Seleccione un servicio'); return }
+    if (!itemActual.value.precio_unitario || Number(itemActual.value.precio_unitario) <= 0) { alert('Ingrese el precio unitario'); return }
+    itemsRapido.value.push({ ...itemActual.value, precio_unitario: Number(itemActual.value.precio_unitario), cantidad: Number(itemActual.value.cantidad) || 1 })
     itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
     servicioQuery.value = ''
+    mostrarSugerencias.value = false
+    recalcularBiometrico()
 }
-function quitarItem(i) { itemsRapido.value.splice(i, 1) }
+function quitarItem(i) {
+    if (itemsRapido.value[i]?._esHuella) return // no se puede quitar el biométrico manualmente
+    itemsRapido.value.splice(i, 1)
+    recalcularBiometrico()
+}
+
+function agregarCuotaComp() {
+    const totalCobro = Number(formCobro.value.monto) || 0
+    const asignado = formComp.value.cuotas.reduce((s, c) => s + Number(c.monto || 0), 0)
+    const restante = Math.max(0, totalCobro - asignado)
+    formComp.value.cuotas.push({ monto: Number(restante.toFixed(2)), fecha: '' })
+}
+
+function agregarCuotaRapido() {
+    const asignado = formRapido.value.cuotas.reduce((s, c) => s + Number(c.monto || 0), 0)
+    const restante = Math.max(0, totalRapido.value - asignado)
+    formRapido.value.cuotas.push({ monto: Number(restante.toFixed(2)), fecha: '' })
+}
 
 async function cobrarServicioRapido() {
     if (!itemsRapido.value.length) return
@@ -641,17 +879,28 @@ async function cobrarServicioRapido() {
         const payload = { ...formRapido.value, items, monto: totalMonto }
         const docLen = (payload.cliente_documento || '').replace(/\D/g, '').length
         payload.tipo_comprobante = docLen === 11 ? '01' : '03'
+        // Obtener token fresco antes de enviar
+        const csrfFresh = await fetch('/sanctum/csrf-cookie').then(() =>
+            document.querySelector('meta[name="csrf-token"]')?.content
+        ).catch(() => csrf)
+
         const res = await fetch('/notaria/caja/servicio-rapido', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfFresh },
             body: JSON.stringify(payload)
         })
+        if (res.status === 419) {
+            alert('⚠️ La sesión expiró. Recargando página...')
+            window.location.reload()
+            return
+        }
         const data = await res.json()
         if (data.success) {
-            alert('✅ ' + data.mensaje)
+            const msgOk = (data.mensaje && !data.mensaje.startsWith('{')) ? data.mensaje : 'Comprobante emitido correctamente'
+            alert('✅ ' + msgOk)
             if (data.pdf) window.open(data.pdf, '_blank')
             modalServicioRapido.value = false
-            formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo' }
+            formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', forma_pago: 'Contado', cuotas: [] }
             itemsRapido.value = []
             itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
             router.reload({ only: ['resumenCaja'] })
@@ -659,7 +908,7 @@ async function cobrarServicioRapido() {
             alert('❌ ' + data.mensaje)
         }
     } catch(e) {
-        alert('❌ Error de conexión')
+        alert('❌ Error de conexión: ' + e.message)
     }
     procesandoRapido.value = false
 }
@@ -670,7 +919,42 @@ const errorComp              = ref('')
 const pdfComp                = ref('')
 
 const formCobro = ref({ monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' })
-const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '' })
+
+// Items para cobro por expediente
+const itemsExp     = ref([])
+const totalExp     = computed(() => itemsExp.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0))
+const itemActualExp = ref({ descripcion: '', cantidad: 1, precio_unitario: '' })
+
+function recalcularBiometricoExp() {
+    const primero = itemsExp.value.find(i => !i._esHuella && i._precioOriginal !== undefined)
+    if (primero) { primero.precio_unitario = primero._precioOriginal; delete primero._precioOriginal }
+    itemsExp.value = itemsExp.value.filter(i => !i._esHuella)
+    const totalReal = itemsExp.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0)
+    const esTramite = itemsExp.value.some(i => (i.descripcion||'').toLowerCase().includes('tramite registral') || (i.descripcion||'').toLowerCase().includes('trámite registral'))
+    if (!esTramite && totalReal >= 10) {
+        const p = itemsExp.value.find(i => !i._esHuella)
+        if (p && Number(p.precio_unitario) > 1.50) {
+            p._precioOriginal = Number(p.precio_unitario)
+            p.precio_unitario = Number((p.precio_unitario - 1.50).toFixed(2))
+        }
+        itemsExp.value.push({ descripcion: 'Verificación biométrica RENIEC', cantidad: 1, precio_unitario: 1.50, _esHuella: true })
+    }
+}
+
+function agregarItemExp() {
+    if (!itemActualExp.value.descripcion) { alert('Ingresa la descripción'); return }
+    if (!itemActualExp.value.precio_unitario || Number(itemActualExp.value.precio_unitario) <= 0) { alert('Ingresa el precio'); return }
+    itemsExp.value.push({ descripcion: itemActualExp.value.descripcion, cantidad: Number(itemActualExp.value.cantidad)||1, precio_unitario: Number(itemActualExp.value.precio_unitario), _esHuella: false })
+    itemActualExp.value = { descripcion: '', cantidad: 1, precio_unitario: '' }
+    recalcularBiometricoExp()
+}
+
+function quitarItemExp(idx) {
+    if (itemsExp.value[idx]?._esHuella) return
+    itemsExp.value.splice(idx, 1)
+    recalcularBiometricoExp()
+}
+const formComp  = ref({ tipo_comprobante: '03', cliente_tipo_documento: '1', cliente_numero_documento: '', cliente_nombre: '', cliente_email: '', forma_pago: 'Contado', cuotas: [] })
 const buscandoCliente = ref(false)
 const buscandoRapido = ref(false)
 
@@ -707,23 +991,35 @@ const buscarClienteRapido = async () => {
 }
 
 const buscarCliente = async () => {
-    const doc = formComp.value.cliente_numero_documento
-    const tipo = formComp.value.cliente_tipo_documento
-    const len = tipo === '6' ? 11 : 8
-    if (doc.length !== len) return
+    const doc = (formComp.value.cliente_numero_documento||'').replace(/\D/g,'')
+    if (doc.length !== 8 && doc.length !== 11) return
+    // Auto-detectar tipo
+    formComp.value.cliente_tipo_documento = doc.length === 11 ? '6' : '1'
 
     buscandoCliente.value = true
     try {
-        // Buscar primero en clientes registrados
+        const csrf = document.querySelector('meta[name=csrf-token]').content
+        // 1. Buscar en clientes registrados
         const res = await fetch('/notaria/clientes/buscar?documento=' + doc, {
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }
+            headers: { 'X-CSRF-TOKEN': csrf }
         })
         if (res.ok) {
             const data = await res.json()
             if (data.nombre) {
                 formComp.value.cliente_nombre = data.nombre
                 formComp.value.cliente_email = data.email || ''
+                buscandoCliente.value = false
+                return
             }
+        }
+        // 2. Fallback a API externa
+        const r = await fetch('/api/consulta-documento?documento=' + doc, {
+            headers: { 'X-CSRF-TOKEN': csrf }
+        })
+        if (r.ok) {
+            const d = await r.json()
+            if (d.nombres) formComp.value.cliente_nombre = d.nombres + ' ' + d.apellidoPaterno + ' ' + d.apellidoMaterno
+            else if (d.razonSocial) formComp.value.cliente_nombre = d.razonSocial
         }
     } catch(e) {
         console.error(e)
@@ -761,9 +1057,20 @@ function seleccionar(e) {
         tipo_comprobante:         '03',
         cliente_tipo_documento:   e.cliente?.tipo_documento || '1',
         cliente_numero_documento: e.cliente?.numero_documento || '',
-        cliente_nombre:           e.cliente?.nombre || '',
+        cliente_nombre:           e.cliente?.nombre || 'CLIENTES VARIOS',
         cliente_email:            e.cliente?.email || '',
+        forma_pago:               'Contado',
+        cuotas:                   [],
     }
+    // Pre-cargar items del expediente
+    itemsExp.value = [{
+        descripcion:    e.asunto || 'Servicio notarial',
+        cantidad:       1,
+        precio_unitario: Number(e.saldo ?? (e.monto_cobrar - e.monto_pagado)),
+        _esHuella:      false
+    }]
+    itemActualExp.value = { descripcion: '', cantidad: 1, precio_unitario: '' }
+    recalcularBiometricoExp()
 }
 
 function abrirCaja() {
@@ -778,7 +1085,12 @@ function cerrarCaja() {
 }
 
 async function confirmarCobro(boletaSimple = false) {
-    if (!formCobro.value.monto || !expedienteSeleccionado.value || procesando.value) return
+    if (!itemsExp.value.length || !expedienteSeleccionado.value || procesando.value) return
+    // El monto a registrar en caja es el saldo pendiente (no el total del servicio)
+    // para no duplicar los adelantos ya registrados
+    const saldoPendiente = Number(expedienteSeleccionado.value.saldo ?? 
+        (expedienteSeleccionado.value.monto_cobrar - expedienteSeleccionado.value.monto_pagado))
+    formCobro.value.monto = saldoPendiente.toFixed(2)
 
     // Validación: si NO es boleta simple, validar datos del cliente
     if (!boletaSimple) {
@@ -815,11 +1127,30 @@ async function confirmarCobro(boletaSimple = false) {
 
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
+        const csrfFreshCobro = await fetch('/sanctum/csrf-cookie').then(() =>
+            document.querySelector('meta[name="csrf-token"]')?.content
+        ).catch(() => csrf)
         const res  = await fetch('/notaria/caja/' + actoId + '/cobrar', {
             method:  'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body:    JSON.stringify({ ...formCobro.value, ...compData })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfFreshCobro },
+            body:    JSON.stringify({ 
+                ...formCobro.value, 
+                ...compData,
+                items: itemsExp.value.map(it => ({
+                    tipo_servicio: it.descripcion,
+                    descripcion: it.descripcion,
+                    cantidad: it.cantidad,
+                    precio_unitario: it.precio_unitario,
+                    monto: it.cantidad * it.precio_unitario,
+                })),
+                monto: totalExp.value
+            })
         })
+        if (res.status === 419) {
+            alert('⚠️ La sesión expiró. Recargando página...')
+            window.location.reload()
+            return
+        }
         const data = await res.json()
         if (data.pdf) {
             pdfComp.value = data.pdf
@@ -828,7 +1159,10 @@ async function confirmarCobro(boletaSimple = false) {
         if (data.mensaje) {
             errorComp.value = ''
             pdfComp.value = data.pdf || ''
-            alert(data.mensaje)
+            const msgCobro = data.success
+                ? '✅ Comprobante emitido correctamente'
+                : (data.mensaje.startsWith('{') ? '❌ Error al emitir comprobante. Intente nuevamente.' : '❌ ' + data.mensaje)
+            alert(msgCobro)
         }
     } catch(e) {
         console.error('Error cobro:', e)
@@ -837,6 +1171,8 @@ async function confirmarCobro(boletaSimple = false) {
     procesando.value             = false
     expedienteSeleccionado.value = null
     formCobro.value = { monto: '', metodo_pago: 'efectivo', tipo: 'pago_final', referencia: '' }
+    itemsExp.value = []
+    itemActualExp.value = { descripcion: '', cantidad: 1, precio_unitario: '' }
     router.reload({ preserveScroll: true })
 }
 
@@ -869,3 +1205,20 @@ function formatFecha(f) {
     return new Date(f).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
 }
 </script>
+
+<style scoped>
+@media (max-width: 768px) {
+    .modal-servicio-rapido {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 9999 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        overflow-y: auto !important;
+        max-width: 100% !important;
+    }
+}
+</style>

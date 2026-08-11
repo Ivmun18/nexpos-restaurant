@@ -76,6 +76,7 @@ class CajaRestauranteController extends Controller
         $request->validate([
             'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin',
             'monto_pagado'      => 'required|numeric|min:0',
+            'descuento'        => 'nullable|numeric|min:0',
             'notas'             => 'nullable|string',
             'tipo_comprobante'  => 'nullable|in:boleta,factura,ninguno',
             'partes_total'      => 'nullable|integer|min:1',
@@ -107,6 +108,7 @@ class CajaRestauranteController extends Controller
 
         $vuelto = $cuentaSaldada ? round(max(0, $pagadoAcumulado - $total), 2) : 0;
 
+        $descuento = (float) ($request->descuento ?? 0);
         $caja = CajaRestaurante::create([
             'empresa_id'       => auth()->user()->empresa_id,
             'mesa_id'          => $mesa->id,
@@ -114,6 +116,7 @@ class CajaRestauranteController extends Controller
             'total'            => $total,
             'monto_pagado'     => $montoPagado,
             'vuelto'           => $vuelto,
+            'descuento'        => $descuento,
             'metodo_pago'      => $request->metodo_pago,
             'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
             'notas'            => $request->notas,
@@ -123,7 +126,10 @@ class CajaRestauranteController extends Controller
             'pagado_acumulado' => round($pagadoAcumulado, 2),
         ]);
 
-        $sesion = SesionCaja::where('estado', 'abierta')->first();
+        $cajaEmpresa = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)->first();
+        $sesion = $cajaEmpresa
+            ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresa->id)->first()
+            : null;
         if ($sesion) {
             $concepto = 'Cobro Mesa ' . $mesa->numero . ' (' . $request->metodo_pago . ')';
             if ($partesTotal > 1) {
@@ -290,8 +296,9 @@ class CajaRestauranteController extends Controller
                     ]);
 
                 $data      = $response->json();
+                $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
                 $aceptada  = $response->successful() && isset($data['sunatResponse']);
-                $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+                $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
                 $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
 
                 $comprobante = \App\Models\ComprobanteSunat::create([
@@ -383,6 +390,7 @@ class CajaRestauranteController extends Controller
         $subtotal = $detalles->sum('subtotal');
         $vuelto   = max(0, $request->monto_pagado - $subtotal);
 
+        $descuentoPlatos = (float) ($request->descuento ?? 0);
         $caja = CajaRestaurante::create([
             'empresa_id'       => auth()->user()->empresa_id,
             'mesa_id'          => $mesa->id,
@@ -402,7 +410,10 @@ class CajaRestauranteController extends Controller
         \App\Models\PedidoDetalle::whereIn('id', $detalles->pluck('id'))
             ->update(['pagado' => true, 'caja_detalle_id' => $caja->id]);
 
-        $sesion = SesionCaja::where('estado', 'abierta')->first();
+        $cajaEmpresaPlatos = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)->first();
+        $sesion = $cajaEmpresaPlatos
+            ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresaPlatos->id)->first()
+            : null;
         if ($sesion) {
             CajaMovimiento::create([
                 'sesion_id'    => $sesion->id,

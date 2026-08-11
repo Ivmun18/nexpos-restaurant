@@ -38,12 +38,15 @@ class CompraController extends Controller
 
         $productos = Producto::where('empresa_id', EmpresaHelper::id())
             ->where('activo', true)
+            ->with(['presentaciones' => fn($q) => $q->where('activo', true)])
             ->orderBy('descripcion')
             ->get(['id','codigo','codigo_barras','descripcion','unidad_medida','precio_compra','tipo_afectacion_igv']);
 
+        $empresa = \App\Models\Empresa::find(EmpresaHelper::id());
         return Inertia::render('Compras/Create', [
-            'proveedores' => $proveedores,
-            'productos'   => $productos,
+            'proveedores'  => $proveedores,
+            'productos'    => $productos,
+            'es_farmacia'  => $empresa ? $empresa->isFarmacia() : false,
         ]);
     }
 
@@ -102,7 +105,16 @@ class CompraController extends Controller
                 if (!empty($item['producto_id'])) {
                     $prod = Producto::find($item['producto_id']);
                     if ($prod) {
-                        $prod->increment('stock_actual', $cantidad);
+                        $factorConversion = 1;
+                        if (!empty($item['presentacion_id'])) {
+                            $presCompra = \App\Models\ProductoPresentacion::where('id', $item['presentacion_id'])
+                                ->where('producto_id', $prod->id)
+                                ->first();
+                            if ($presCompra) {
+                                $factorConversion = (float) $presCompra->factor_conversion;
+                            }
+                        }
+                        $prod->increment('stock_actual', $cantidad * $factorConversion);
                         // Actualizar lote y vencimiento si se proporcionaron
                         $updateData = [];
                         if (!empty($item['lote'])) $updateData['lote'] = $item['lote'];
