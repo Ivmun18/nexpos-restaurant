@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <style>
+    @page { margin-top: 2cm; }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: Arial, sans-serif; font-size:9px; color:#1E293B; padding:16px; }
+    body { font-family: Verdana, sans-serif; font-size:8pt; line-height:1.25; color:#1E293B; padding:16px; }
     h1 { font-size:16px; font-weight:700; color:#1E293B; margin-bottom:4px; }
     h2 { font-size:12px; font-weight:700; color:#4F46E5; margin:16px 0 8px; border-bottom:2px solid #4F46E5; padding-bottom:4px; }
     .info { font-size:9px; color:#64748B; margin-bottom:12px; line-height:1.6; }

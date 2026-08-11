@@ -5,12 +5,12 @@
     <title>{{ $acto->numero_expediente }}</title>
     <style>
         @page {
-            margin: 2cm 2.5cm;
+            margin: 4cm 2.5cm 2cm 2.5cm;
         }
         body {
-            font-family: 'Times New Roman', serif;
-            font-size: 12pt;
-            line-height: 1.6;
+            font-family: Verdana, sans-serif;
+            font-size: 8pt;
+            line-height: 1.25;
             color: #000;
         }
         .header {
