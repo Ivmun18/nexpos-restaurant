@@ -182,23 +182,23 @@ class ComprobantesNotariaController extends Controller
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
             $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
 
-            \DB::table('comprobantes_sunat')->insert([
+            $filaComprobante = [
                 'empresa_id'               => $empresa->id,
                 'acto_id'                  => $acto->id,
                 'tipo_comprobante'         => $request->tipo_comprobante,
                 'serie'                    => $serie,
                 'numero'                   => $correlativo,
                 'fecha_emision'            => now()->toDateString(),
-                'cliente_tipo_documento'   => $request->cliente_tipo_documento,
-                'cliente_numero_documento' => $request->cliente_numero_documento,
-                'cliente_nombre'           => strtoupper($request->cliente_nombre),
-                'cliente_email'            => $request->cliente_email ?? '',
+                'cliente_tipo_documento'   => substr($request->cliente_tipo_documento, 0, 1),
+                'cliente_numero_documento' => substr($request->cliente_numero_documento ?? '', 0, 20),
+                'cliente_nombre'           => substr(strtoupper($request->cliente_nombre), 0, 255),
+                'cliente_email'            => substr($request->cliente_email ?? '', 0, 255),
                 'total_gravada'            => $baseImponible,
                 'total_igv'                => $igv,
                 'total'                    => $total,
                 'items_json'               => json_encode($request->items),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
-                'apisunat_document_id'     => $data['documentId'] ?? null,
+                'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
@@ -206,7 +206,19 @@ class ComprobantesNotariaController extends Controller
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
-            ]);
+            ];
+
+            try {
+                \DB::table('comprobantes_sunat')->insert($filaComprobante);
+            } catch (\Exception $eInsert) {
+                // SUNAT ya recibio/proceso el documento (fileName/correlativo consumidos);
+                // si el insert local falla igual queda visible para reconciliar a mano.
+                \Log::critical('emitir: SUNAT aceptó el documento pero el insert local falló. fileName=' . $fileName
+                    . ' documentId=' . ($data['documentId'] ?? 'N/A')
+                    . ' fila=' . json_encode($filaComprobante)
+                    . ' error=' . $eInsert->getMessage());
+                throw $eInsert;
+            }
 
             $comprobanteId = \DB::getPdo()->lastInsertId();
 
@@ -460,22 +472,22 @@ class ComprobantesNotariaController extends Controller
             $pdfUrl    = null;
 
             // Guardar comprobante
-            \DB::table('comprobantes_sunat')->insert([
+            $filaComprobante = [
                 'empresa_id'               => $empresa->id,
                 'tipo_comprobante'         => $request->tipo_comprobante,
                 'serie'                    => $serie,
                 'numero'                   => $correlativo,
                 'fecha_emision'            => now()->toDateString(),
-                'cliente_tipo_documento'   => $request->cliente_tipo_documento,
+                'cliente_tipo_documento'   => substr($request->cliente_tipo_documento ?? '', 0, 1),
                 'cliente_numero_documento' => substr($request->cliente_numero_documento ?? '', 0, 20),
-                'cliente_nombre'           => strtoupper($request->cliente_nombre),
-                'cliente_email'            => $request->cliente_email ?? '',
+                'cliente_nombre'           => substr(strtoupper($request->cliente_nombre), 0, 255),
+                'cliente_email'            => substr($request->cliente_email ?? '', 0, 255),
                 'total_gravada'            => $gravada,
                 'total_igv'                => $igv,
                 'total'                    => $total,
                 'items_json'               => json_encode($itemsConHuella),
                 'aceptada_por_sunat'       => $aceptada ? 1 : 0,
-                'apisunat_document_id'     => $data['documentId'] ?? null,
+                'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
@@ -483,7 +495,17 @@ class ComprobantesNotariaController extends Controller
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'created_at'               => now(),
                 'updated_at'               => now(),
-            ]);
+            ];
+
+            try {
+                \DB::table('comprobantes_sunat')->insert($filaComprobante);
+            } catch (\Exception $eInsert) {
+                \Log::critical('ventaDirecta: SUNAT aceptó el documento pero el insert local falló. fileName=' . $fileName
+                    . ' documentId=' . ($data['documentId'] ?? 'N/A')
+                    . ' fila=' . json_encode($filaComprobante)
+                    . ' error=' . $eInsert->getMessage());
+                throw $eInsert;
+            }
             $comprobanteId = \DB::getPdo()->lastInsertId();
 
             // Guardar forma de pago y cuotas si es crédito
