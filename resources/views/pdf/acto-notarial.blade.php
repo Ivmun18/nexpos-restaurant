@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <title>{{ $acto->numero_expediente }}</title>
     <style>
-        @page {
+        @page :right {
+            margin: 3.5cm 2.5cm 2cm 2.5cm;
+        }
+        @page :left {
             margin: 4cm 2.5cm 2cm 2.5cm;
         }
         body {

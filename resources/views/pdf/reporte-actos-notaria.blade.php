@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <style>
-    @page { margin-top: 2cm; }
+    @page :right { margin-top: 3.5cm; }
+    @page :left { margin-top: 2cm; }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: Verdana, sans-serif; font-size:8pt; line-height:1.25; color:#1E293B; padding:16px; }
     h1 { font-size:16px; font-weight:700; color:#1E293B; margin-bottom:4px; }

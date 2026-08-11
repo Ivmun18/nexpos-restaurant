@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <title>{{ $tipoDoc }} {{ $serie }}-{{ $numero }}</title>
 <style>
-    @page { margin: 25mm 5mm 5mm 5mm; size: 80mm auto; }
+    @page :right { margin: 35mm 5mm 5mm 5mm; size: 80mm auto; }
+    @page :left { margin: 25mm 5mm 5mm 5mm; size: 80mm auto; }
     body { font-family: Verdana, sans-serif; font-size: 8pt; line-height: 1.25; font-weight: bold; color: #000; margin: 0; padding: 0; width: 72mm; }
     .center { text-align: center; }
     .bold { font-weight: bold; }

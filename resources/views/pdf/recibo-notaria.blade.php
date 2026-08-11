@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recibo de Pago - {{ $acto->numero_expediente }}</title>
     <style>
-        @page { margin-top: 2cm; }
+        @page :right { margin-top: 3.5cm; }
+        @page :left { margin-top: 2cm; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: Verdana, sans-serif; font-size:8pt; line-height:1.25; padding:20px; background:#f5f5f5; }
         .container { max-width:600px; margin:0 auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
