@@ -32,12 +32,14 @@ class ConsultarPendientesNotaria extends Command
 
         foreach ($pendientes as $comp) {
             try {
+                $documento = $comp->tipo_comprobante === '03' ? 'boleta' : 'factura';
+
                 $response = Http::withToken($empresa->apisunat_token)
                     ->timeout(30)
                     ->post('https://app.apisunat.pe/api/v3/status', [
-                        'serie'           => $comp->serie,
-                        'numero'          => $comp->numero,
-                        'tipoComprobante' => $comp->tipo_comprobante,
+                        'documento' => $documento,
+                        'serie'     => $comp->serie,
+                        'numero'    => (int) $comp->numero,
                     ]);
 
                 if (!$response->successful()) {
