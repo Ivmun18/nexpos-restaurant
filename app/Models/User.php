@@ -16,6 +16,7 @@ class User extends Authenticatable
         'empresa_id',
         'tienda_id',
         'name',
+        'username',
         'email',
         'password',
         'rol',

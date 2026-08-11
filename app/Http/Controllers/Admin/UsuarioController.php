@@ -26,14 +26,22 @@ class UsuarioController extends Controller
     {
         $request->validate([
             'name'     => 'required|max:100',
-            'email'    => 'required|email|unique:users,email',
+            'username' => 'nullable|max:100|unique:users,username',
+            'email'    => 'nullable|email|unique:users,email',
             'password' => 'required|min:6',
-            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor',
+            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente',
         ]);
+
+        if (!$request->email && !$request->username) {
+            return back()->withErrors([
+                'email' => 'Debes ingresar al menos un correo electrónico o un nombre de usuario.',
+            ])->withInput();
+        }
 
         User::create([
             'empresa_id' => auth()->user()->empresa_id,
             'name'       => $request->name,
+            'username'   => $request->username,
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
             'rol'        => $request->rol,
@@ -46,15 +54,23 @@ class UsuarioController extends Controller
     public function update(Request $request, User $usuario)
     {
         $request->validate([
-            'name'  => 'required|max:100',
-            'email' => 'required|email|unique:users,email,' . $usuario->id,
-            'rol'   => 'required|in:admin,cajero,mozo,cocinero,vendedor',
+            'name'     => 'required|max:100',
+            'username' => 'nullable|max:100|unique:users,username,' . $usuario->id,
+            'email'    => 'nullable|email|unique:users,email,' . $usuario->id,
+            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente',
         ]);
 
+        if (!$request->email && !$request->username) {
+            return back()->withErrors([
+                'email' => 'Debes ingresar al menos un correo electrónico o un nombre de usuario.',
+            ])->withInput();
+        }
+
         $datos = [
-            'name'  => $request->name,
-            'email' => $request->email,
-            'rol'   => $request->rol,
+            'name'     => $request->name,
+            'username' => $request->username,
+            'email'    => $request->email,
+            'rol'      => $request->rol,
         ];
 
         if ($request->password) {

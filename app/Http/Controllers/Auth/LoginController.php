@@ -26,8 +26,9 @@ class LoginController extends Controller
         'password' => 'required',
     ]);
 
-    // Buscar por email o por nombre de usuario
+    // Buscar por email, nombre de usuario (username) o nombre completo
     $user = \App\Models\User::where('email', $request->email)
+        ->orWhere('username', $request->email)
         ->orWhere('name', $request->email)
         ->first();
 

@@ -52,7 +52,7 @@
                                 <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">{{ u.name }}</p>
                             </div>
                         </td>
-                        <td style="padding:14px 20px; font-size:14px; color:#475569;">{{ u.email }}</td>
+                        <td style="padding:14px 20px; font-size:14px; color:#475569;">{{ u.email || u.username || '—' }}</td>
                         <td style="padding:14px 20px; text-align:center;">
                             <span :style="rolStyle(u.rol)">{{ rolLabel(u.rol) }}</span>
                         </td>
@@ -99,8 +99,13 @@
                             <input v-model="form.name" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
                         </div>
                         <div>
-                            <label style="font-size:13px; font-weight:600; color:#64748B;">Email *</label>
+                            <label style="font-size:13px; font-weight:600; color:#64748B;">Nombre de usuario</label>
+                            <input v-model="form.username" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                        </div>
+                        <div>
+                            <label style="font-size:13px; font-weight:600; color:#64748B;">Email</label>
                             <input v-model="form.email" type="email" style="width:100%; padding:10px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:14px; outline:none; box-sizing:border-box; margin-top:4px;" />
+                            <p style="font-size:11px; color:#94A3B8; margin:4px 0 0;">Debes ingresar al menos un correo o un nombre de usuario.</p>
                         </div>
                         <div>
                             <label style="font-size:13px; font-weight:600; color:#64748B;">{{ form.id ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña *' }}</label>
@@ -151,14 +156,16 @@ const busqueda = ref('')
 const modal = ref(false)
 const error = ref('')
 
-const formVacio = () => ({ id: null, name: '', email: '', password: '', rol: 'cajero' })
+const formVacio = () => ({ id: null, name: '', username: '', email: '', password: '', rol: 'cajero' })
 const form = ref(formVacio())
 
 const usuariosFiltrados = computed(() => {
     if (!busqueda.value) return props.usuarios
     const q = busqueda.value.toLowerCase()
     return props.usuarios.filter(u =>
-        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+        u.name.toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q)
     )
 })
 
@@ -190,14 +197,15 @@ const rolStyle = (rol) => {
 const abrirModal = (u) => {
     error.value = ''
     form.value = u
-        ? { id: u.id, name: u.name, email: u.email, password: '', rol: u.rol }
+        ? { id: u.id, name: u.name, username: u.username || '', email: u.email || '', password: '', rol: u.rol }
         : formVacio()
     modal.value = true
 }
 
 const guardar = () => {
     error.value = ''
-    if (!form.value.name || !form.value.email) { error.value = 'Nombre y email son obligatorios.'; return }
+    if (!form.value.name) { error.value = 'El nombre completo es obligatorio.'; return }
+    if (!form.value.email && !form.value.username) { error.value = 'Ingresa al menos un correo o un nombre de usuario.'; return }
     if (!form.value.id && !form.value.password) { error.value = 'La contraseña es obligatoria.'; return }
 
     if (form.value.id) {
