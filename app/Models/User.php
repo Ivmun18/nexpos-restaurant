@@ -130,4 +130,9 @@ class User extends Authenticatable
     {
         return $this->rol === 'mozo';
     }
+
+    public function esAsistente(): bool
+    {
+        return $this->rol === 'asistente';
+    }
 }

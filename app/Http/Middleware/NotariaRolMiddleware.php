@@ -2,11 +2,23 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ActoNotarial;
+use App\Models\ActoRequisito;
 use Closure;
 use Illuminate\Http\Request;
 
 class NotariaRolMiddleware
 {
+    // Prefijos/nombres de ruta del área de Expedientes (Certificaciones y Legalizaciones)
+    const PREFIJOS_ASISTENTE = [
+        'notaria.actos.',
+        'notaria.seguimiento',
+        'notaria.recibo.',
+        'notaria.requisitos.',
+        'notaria.clientes.',
+        'notaria.comprobantes.emitir',
+    ];
+
     // Rutas accesibles SOLO para cajero/admin (NO notario)
     const RUTAS_CAJA = [
         'notaria.caja.index',
@@ -47,11 +59,35 @@ class NotariaRolMiddleware
             return redirect('/dashboard')->with('error', 'La cajera solo tiene acceso a Caja.');
         }
 
-        // Notario y asistente: todo EXCEPTO caja
-        if ($rol === 'notario' || $rol === 'asistente') {
+        // Notario: todo EXCEPTO caja
+        if ($rol === 'notario') {
             if (in_array($rutaActual, self::RUTAS_CAJA)) {
                 return redirect('/dashboard')->with('error', 'No tienes acceso a Caja.');
             }
+            return $next($request);
+        }
+
+        // Abogado/Asistente: solo Certificaciones y Legalizaciones
+        if ($rol === 'asistente') {
+            $permitido = $rutaActual === 'dashboard'
+                || collect(self::PREFIJOS_ASISTENTE)->contains(
+                    fn ($prefijo) => $rutaActual === $prefijo || str_starts_with((string) $rutaActual, $prefijo)
+                );
+
+            if (!$permitido) {
+                return redirect('/dashboard')->with('error', 'Tu acceso está limitado a Certificaciones y Legalizaciones.');
+            }
+
+            $acto = $request->route('acto');
+            if ($acto instanceof ActoNotarial && $acto->tipo_acto !== 'legalizacion') {
+                abort(403, 'Solo tienes acceso a expedientes de legalización.');
+            }
+
+            $requisito = $request->route('requisito');
+            if ($requisito instanceof ActoRequisito && $requisito->acto?->tipo_acto !== 'legalizacion') {
+                abort(403, 'Solo tienes acceso a expedientes de legalización.');
+            }
+
             return $next($request);
         }
 

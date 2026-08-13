@@ -32,6 +32,11 @@ class ActoNotarialController extends Controller
               ->orWhere('asunto', 'like', "%{$buscar}%")
               ->orWhere('partes_intervinientes', 'like', "%{$buscar}%");
         });
+        // El rol Abogado/Asistente solo puede ver expedientes de legalización
+        if (auth()->user()->esAsistente()) {
+            $tipo = 'legalizacion';
+        }
+
         if ($tipo)   $query->where('tipo_acto', $tipo);
         if ($estado) $query->where('estado', $estado);
 
@@ -68,10 +73,14 @@ class ActoNotarialController extends Controller
             'observaciones'         => 'nullable|string',
         ]);
 
+        // El rol Abogado/Asistente solo puede crear expedientes de legalización,
+        // sin importar lo que se envíe en el formulario.
+        $tipoActo = auth()->user()->esAsistente() ? 'legalizacion' : $request->tipo_acto;
+
         $acto = ActoNotarial::create([
             'empresa_id'            => $empresaId,
             'numero_expediente'     => ActoNotarial::generarNumero($empresaId),
-            'tipo_acto'             => $request->tipo_acto,
+            'tipo_acto'             => $tipoActo,
             'asunto'                => $request->asunto,
             'cliente_id'            => $request->cliente_id,
             'usuario_id'            => auth()->id(),
@@ -160,11 +169,17 @@ class ActoNotarialController extends Controller
     {
         $empresaId = auth()->user()->empresa_id;
 
-        $actos = ActoNotarial::with(['cliente', 'usuario', 'requisitos', 'seguimientos.usuario'])
+        $query = ActoNotarial::with(['cliente', 'usuario', 'requisitos', 'seguimientos.usuario'])
             ->where('empresa_id', $empresaId)
             ->whereIn('estado', ['pendiente', 'en_proceso', 'finalizado'])
-            ->orderBy('created_at', 'desc')
-            ->get()
+            ->orderBy('created_at', 'desc');
+
+        // El rol Abogado/Asistente solo puede ver el seguimiento de legalizaciones
+        if (auth()->user()->esAsistente()) {
+            $query->where('tipo_acto', 'legalizacion');
+        }
+
+        $actos = $query->get()
             ->map(fn($a) => [
                 'id'                    => $a->id,
                 'numero_expediente'     => $a->numero_expediente,
@@ -376,11 +391,15 @@ class ActoNotarialController extends Controller
             5, '0', STR_PAD_LEFT
         );
 
+        // El rol Abogado/Asistente solo puede crear expedientes de legalización,
+        // sin importar lo que se envíe en el formulario.
+        $tipoActo = auth()->user()->esAsistente() ? 'legalizacion' : $request->tipo_acto;
+
         $actoId = \DB::table('actos_notariales')->insertGetId([
             'empresa_id'            => $empresa->id,
             'usuario_id'            => auth()->id(),
             'numero_expediente'     => $numeroExpediente,
-            'tipo_acto'             => $request->tipo_acto,
+            'tipo_acto'             => $tipoActo,
             'asunto'                => $request->asunto,
             'partes_intervinientes' => ($datos['comprador_nombre'] ?? '') . ' / ' . ($empresa->minuta_vendedor_razon_social ?? $empresa->razon_social),
             'monto_cobrar'          => $request->monto_cobrar,
