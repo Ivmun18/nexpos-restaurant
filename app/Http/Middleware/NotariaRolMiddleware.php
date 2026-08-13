@@ -9,8 +9,9 @@ use Illuminate\Http\Request;
 
 class NotariaRolMiddleware
 {
-    // Prefijos/nombres de ruta del área de Expedientes (Certificaciones y Legalizaciones)
-    const PREFIJOS_ASISTENTE = [
+    // Prefijos/nombres de ruta del área de Expedientes, compartidos por los
+    // roles restringidos por tipo_acto (ver User::TIPOS_ACTO_POR_ROL).
+    const PREFIJOS_EXPEDIENTES = [
         'notaria.actos.',
         'notaria.seguimiento',
         'notaria.recibo.',
@@ -67,25 +68,27 @@ class NotariaRolMiddleware
             return $next($request);
         }
 
-        // Abogado/Asistente: solo Certificaciones y Legalizaciones
-        if ($rol === 'asistente') {
+        // Roles restringidos a un subconjunto de tipo_acto dentro de Expedientes
+        // (asistente, prescripciones, legalizaciones, notificaciones, mixto)
+        $tiposPermitidos = $user->tipoActoPermitidos();
+        if ($tiposPermitidos !== null) {
             $permitido = $rutaActual === 'dashboard'
-                || collect(self::PREFIJOS_ASISTENTE)->contains(
+                || collect(self::PREFIJOS_EXPEDIENTES)->contains(
                     fn ($prefijo) => $rutaActual === $prefijo || str_starts_with((string) $rutaActual, $prefijo)
                 );
 
             if (!$permitido) {
-                return redirect('/dashboard')->with('error', 'Tu acceso está limitado a Certificaciones y Legalizaciones.');
+                return redirect('/dashboard')->with('error', 'Tu acceso está limitado a tu área de trabajo.');
             }
 
             $acto = $request->route('acto');
-            if ($acto instanceof ActoNotarial && $acto->tipo_acto !== 'legalizacion') {
-                abort(403, 'Solo tienes acceso a expedientes de legalización.');
+            if ($acto instanceof ActoNotarial && !in_array($acto->tipo_acto, $tiposPermitidos, true)) {
+                abort(403, 'No tienes acceso a este tipo de expediente.');
             }
 
             $requisito = $request->route('requisito');
-            if ($requisito instanceof ActoRequisito && $requisito->acto?->tipo_acto !== 'legalizacion') {
-                abort(403, 'Solo tienes acceso a expedientes de legalización.');
+            if ($requisito instanceof ActoRequisito && !in_array($requisito->acto?->tipo_acto, $tiposPermitidos, true)) {
+                abort(403, 'No tienes acceso a este tipo de expediente.');
             }
 
             return $next($request);

@@ -122,6 +122,10 @@
                                 <option v-if="industria === 'notaria'" value="notario">⚖️ Notario</option>
                                 <option v-if="industria === 'notaria'" value="secretaria">📋 Secretaria</option>
                                 <option v-if="industria === 'notaria'" value="asistente">🔍 Abogado/Asistente</option>
+                                <option v-if="industria === 'notaria'" value="prescripciones">🏞️ Prescripciones</option>
+                                <option v-if="industria === 'notaria'" value="legalizaciones">🔏 Legalizaciones</option>
+                                <option v-if="industria === 'notaria'" value="notificaciones">📨 Notificaciones</option>
+                                <option v-if="industria === 'notaria'" value="mixto">🔀 Mixto</option>
                             </select>
                         </div>
                     </div>
@@ -170,9 +174,13 @@ const usuariosFiltrados = computed(() => {
 })
 
 const rolLabel = (rol) => ({
-    notario:    '⚖️ Notario',
-    secretaria: '📋 Secretaria',
-    asistente:  '🔍 Abogado/Asistente',
+    notario:        '⚖️ Notario',
+    secretaria:     '📋 Secretaria',
+    asistente:      '🔍 Abogado/Asistente',
+    prescripciones: '🏞️ Prescripciones',
+    legalizaciones: '🔏 Legalizaciones',
+    notificaciones: '📨 Notificaciones',
+    mixto:          '🔀 Mixto',
     admin:     '👑 Admin',
     cajero:    '💰 Cajero',
     mozo:      '🍽️ Mozo',
@@ -182,11 +190,15 @@ const rolLabel = (rol) => ({
 
 const rolStyle = (rol) => {
     const estilos = {
-        admin:    { background: '#FEF3C7', color: '#92400E' },
-        cajero:     { background: '#EFF6FF', color: '#1D4ED8' },
-        notario:    { background: '#F0FDF4', color: '#166534' },
-        secretaria: { background: '#FEF3C7', color: '#92400E' },
-        asistente:  { background: '#EDE9FE', color: '#5B21B6' },
+        admin:          { background: '#FEF3C7', color: '#92400E' },
+        cajero:         { background: '#EFF6FF', color: '#1D4ED8' },
+        notario:        { background: '#F0FDF4', color: '#166534' },
+        secretaria:     { background: '#FEF3C7', color: '#92400E' },
+        asistente:      { background: '#EDE9FE', color: '#5B21B6' },
+        prescripciones: { background: '#ECFCCB', color: '#3F6212' },
+        legalizaciones: { background: '#ECFDF5', color: '#065F46' },
+        notificaciones: { background: '#FFF1F2', color: '#9F1239' },
+        mixto:          { background: '#E0E7FF', color: '#3730A3' },
         mozo:     { background: '#F0FDF4', color: '#166534' },
         cocinero: { background: '#FFF7ED', color: '#C2410C' },
         vendedor: { background: '#F5F3FF', color: '#6D28D9' },

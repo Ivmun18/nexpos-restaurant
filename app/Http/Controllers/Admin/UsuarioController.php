@@ -31,7 +31,7 @@ class UsuarioController extends Controller
             'username' => ($esNotaria ? 'required' : 'nullable') . '|max:100|unique:users,username',
             'email'    => $esNotaria ? 'nullable' : 'nullable|email|unique:users,email',
             'password' => 'required|min:6',
-            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente',
+            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente,prescripciones,legalizaciones,notificaciones,mixto',
         ]);
 
         if (!$esNotaria && !$request->email && !$request->username) {
@@ -61,7 +61,7 @@ class UsuarioController extends Controller
             'name'     => 'required|max:100',
             'username' => ($esNotaria ? 'required' : 'nullable') . '|max:100|unique:users,username,' . $usuario->id,
             'email'    => $esNotaria ? 'nullable' : 'nullable|email|unique:users,email,' . $usuario->id,
-            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente',
+            'rol'      => 'required|in:admin,cajero,mozo,cocinero,vendedor,notario,secretaria,asistente,prescripciones,legalizaciones,notificaciones,mixto',
         ]);
 
         if (!$esNotaria && !$request->email && !$request->username) {

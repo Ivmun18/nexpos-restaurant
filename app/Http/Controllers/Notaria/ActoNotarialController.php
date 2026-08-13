@@ -32,9 +32,11 @@ class ActoNotarialController extends Controller
               ->orWhere('asunto', 'like', "%{$buscar}%")
               ->orWhere('partes_intervinientes', 'like', "%{$buscar}%");
         });
-        // El rol Abogado/Asistente solo puede ver expedientes de legalización
-        if (auth()->user()->esAsistente()) {
-            $tipo = 'legalizacion';
+        // Roles restringidos a un subconjunto de tipo_acto (ver User::TIPOS_ACTO_POR_ROL)
+        $tiposPermitidos = auth()->user()->tipoActoPermitidos();
+        if ($tiposPermitidos !== null) {
+            $tipo = in_array($tipo, $tiposPermitidos, true) ? $tipo : null;
+            $query->whereIn('tipo_acto', $tiposPermitidos);
         }
 
         if ($tipo)   $query->where('tipo_acto', $tipo);
@@ -73,14 +75,16 @@ class ActoNotarialController extends Controller
             'observaciones'         => 'nullable|string',
         ]);
 
-        // El rol Abogado/Asistente solo puede crear expedientes de legalización,
-        // sin importar lo que se envíe en el formulario.
-        $tipoActo = auth()->user()->esAsistente() ? 'legalizacion' : $request->tipo_acto;
+        // Roles restringidos a un subconjunto de tipo_acto (ver User::TIPOS_ACTO_POR_ROL)
+        $tiposPermitidos = auth()->user()->tipoActoPermitidos();
+        if ($tiposPermitidos !== null && !in_array($request->tipo_acto, $tiposPermitidos, true)) {
+            return back()->withErrors(['tipo_acto' => 'No tienes permiso para crear expedientes de ese tipo.'])->withInput();
+        }
 
         $acto = ActoNotarial::create([
             'empresa_id'            => $empresaId,
             'numero_expediente'     => ActoNotarial::generarNumero($empresaId),
-            'tipo_acto'             => $tipoActo,
+            'tipo_acto'             => $request->tipo_acto,
             'asunto'                => $request->asunto,
             'cliente_id'            => $request->cliente_id,
             'usuario_id'            => auth()->id(),
@@ -174,9 +178,10 @@ class ActoNotarialController extends Controller
             ->whereIn('estado', ['pendiente', 'en_proceso', 'finalizado'])
             ->orderBy('created_at', 'desc');
 
-        // El rol Abogado/Asistente solo puede ver el seguimiento de legalizaciones
-        if (auth()->user()->esAsistente()) {
-            $query->where('tipo_acto', 'legalizacion');
+        // Roles restringidos a un subconjunto de tipo_acto (ver User::TIPOS_ACTO_POR_ROL)
+        $tiposPermitidos = auth()->user()->tipoActoPermitidos();
+        if ($tiposPermitidos !== null) {
+            $query->whereIn('tipo_acto', $tiposPermitidos);
         }
 
         $actos = $query->get()
@@ -391,15 +396,17 @@ class ActoNotarialController extends Controller
             5, '0', STR_PAD_LEFT
         );
 
-        // El rol Abogado/Asistente solo puede crear expedientes de legalización,
-        // sin importar lo que se envíe en el formulario.
-        $tipoActo = auth()->user()->esAsistente() ? 'legalizacion' : $request->tipo_acto;
+        // Roles restringidos a un subconjunto de tipo_acto (ver User::TIPOS_ACTO_POR_ROL)
+        $tiposPermitidos = auth()->user()->tipoActoPermitidos();
+        if ($tiposPermitidos !== null && !in_array($request->tipo_acto, $tiposPermitidos, true)) {
+            abort(403, 'No tienes permiso para crear expedientes de ese tipo.');
+        }
 
         $actoId = \DB::table('actos_notariales')->insertGetId([
             'empresa_id'            => $empresa->id,
             'usuario_id'            => auth()->id(),
             'numero_expediente'     => $numeroExpediente,
-            'tipo_acto'             => $tipoActo,
+            'tipo_acto'             => $request->tipo_acto,
             'asunto'                => $request->asunto,
             'partes_intervinientes' => ($datos['comprador_nombre'] ?? '') . ' / ' . ($empresa->minuta_vendedor_razon_social ?? $empresa->razon_social),
             'monto_cobrar'          => $request->monto_cobrar,

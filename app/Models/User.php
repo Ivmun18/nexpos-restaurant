@@ -131,8 +131,20 @@ class User extends Authenticatable
         return $this->rol === 'mozo';
     }
 
-    public function esAsistente(): bool
+    /**
+     * Roles de notaría restringidos a un subconjunto de tipo_acto.
+     * null (rol no listado) = sin restricción de tipo.
+     */
+    const TIPOS_ACTO_POR_ROL = [
+        'asistente'      => ['legalizacion'],
+        'prescripciones' => ['prescripcion_dominio', 'escritura_publica'],
+        'legalizaciones' => ['legalizacion', 'certificacion_notarial'],
+        'notificaciones' => ['notificacion', 'certificado_domiciliario'],
+        'mixto'          => ['legalizacion', 'certificacion_notarial', 'acta_no_contenciosa'],
+    ];
+
+    public function tipoActoPermitidos(): ?array
     {
-        return $this->rol === 'asistente';
+        return self::TIPOS_ACTO_POR_ROL[$this->rol] ?? null;
     }
 }

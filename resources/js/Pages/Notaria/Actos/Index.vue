@@ -297,7 +297,6 @@ import { router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const page = usePage()
-const esAsistente = computed(() => page.props.auth?.user?.rol === 'asistente')
 
 const props = defineProps({
     actos:    { type: Array,  default: () => [] },
@@ -414,6 +413,7 @@ const tiposActo = [
     { value: 'adjudicacion',             label: '🏛️ Adjudicación Inmueble',            grupo: 'Inmuebles' },
     { value: 'rectificacion_area',       label: '📏 Rectificación de Área',            grupo: 'Inmuebles' },
     { value: 'particion',                label: '✂️ Partición',                        grupo: 'Inmuebles' },
+    { value: 'prescripcion_dominio',     label: '🏞️ Prescripción de Dominio',          grupo: 'Inmuebles' },
     // Donaciones
     { value: 'donacion_inmueble',        label: '🎁 Donación Inmueble',               grupo: 'Donaciones' },
     { value: 'donacion_alicuotas',       label: '🎁 Donación Alícuotas',              grupo: 'Donaciones' },
@@ -446,14 +446,27 @@ const tiposActo = [
     { value: 'sucesion_intestada',       label: '📜 Sucesión Intestada',              grupo: 'Otros' },
     { value: 'certificacion_notarial',   label: '🔏 Certificación Notarial',          grupo: 'Otros' },
     { value: 'legalizacion',             label: '🔏 Legalización',                    grupo: 'Otros' },
+    { value: 'escritura_publica',        label: '📄 Escritura Pública',               grupo: 'Otros' },
+    { value: 'notificacion',             label: '📨 Notificación',                    grupo: 'Otros' },
+    { value: 'certificado_domiciliario', label: '🏘️ Certificado Domiciliario',        grupo: 'Otros' },
+    { value: 'acta_no_contenciosa',      label: '🗂️ Acta No Contenciosa',             grupo: 'Otros' },
     { value: 'arrendamiento',            label: '🔑 Arrendamiento',                   grupo: 'Otros' },
     { value: 'carta_notarial',           label: '✉️ Carta Notarial',                  grupo: 'Otros' },
     { value: 'otro',                     label: '📁 Otro',                            grupo: 'Otros' },
 ]
 
-// El rol Abogado/Asistente solo puede crear/filtrar expedientes de legalización
+// Roles restringidos a un subconjunto de tipos de acto (mismo mapa que en el backend)
+const TIPOS_POR_ROL = {
+    asistente:       ['legalizacion'],
+    prescripciones:  ['prescripcion_dominio', 'escritura_publica'],
+    legalizaciones:  ['legalizacion', 'certificacion_notarial'],
+    notificaciones:  ['notificacion', 'certificado_domiciliario'],
+    mixto:           ['legalizacion', 'certificacion_notarial', 'acta_no_contenciosa'],
+}
+
 const tiposActoDisponibles = computed(() => {
-    return esAsistente.value ? tiposActo.filter(t => t.value === 'legalizacion') : tiposActo
+    const permitidos = TIPOS_POR_ROL[page.props.auth?.user?.rol]
+    return permitidos ? tiposActo.filter(t => permitidos.includes(t.value)) : tiposActo
 })
 
 const gruposActo = computed(() => {
