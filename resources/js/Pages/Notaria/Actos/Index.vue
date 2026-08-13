@@ -23,7 +23,7 @@
                 <label style="font-size:11px; color:#94A3B8; display:block; margin-bottom:3px; font-weight:600; text-transform:uppercase;">Tipo acto</label>
                 <select v-model="filtros.tipo" style="padding:7px 10px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;">
                     <option value="">Todos</option>
-                    <option v-for="t in tiposActo" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    <option v-for="t in tiposActoDisponibles" :key="t.value" :value="t.value">{{ t.label }}</option>
                 </select>
             </div>
             <div>
@@ -293,8 +293,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+const page = usePage()
+const esAsistente = computed(() => page.props.auth?.user?.rol === 'asistente')
 
 const props = defineProps({
     actos:    { type: Array,  default: () => [] },
@@ -442,14 +445,20 @@ const tiposActo = [
     // No contenciosos / otros
     { value: 'sucesion_intestada',       label: '📜 Sucesión Intestada',              grupo: 'Otros' },
     { value: 'certificacion_notarial',   label: '🔏 Certificación Notarial',          grupo: 'Otros' },
+    { value: 'legalizacion',             label: '🔏 Legalización',                    grupo: 'Otros' },
     { value: 'arrendamiento',            label: '🔑 Arrendamiento',                   grupo: 'Otros' },
     { value: 'carta_notarial',           label: '✉️ Carta Notarial',                  grupo: 'Otros' },
     { value: 'otro',                     label: '📁 Otro',                            grupo: 'Otros' },
 ]
 
+// El rol Abogado/Asistente solo puede crear/filtrar expedientes de legalización
+const tiposActoDisponibles = computed(() => {
+    return esAsistente.value ? tiposActo.filter(t => t.value === 'legalizacion') : tiposActo
+})
+
 const gruposActo = computed(() => {
     const grupos = {}
-    tiposActo.forEach(t => {
+    tiposActoDisponibles.value.forEach(t => {
         if (!grupos[t.grupo]) grupos[t.grupo] = []
         grupos[t.grupo].push(t)
     })
