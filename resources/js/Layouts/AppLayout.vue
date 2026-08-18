@@ -311,8 +311,8 @@
             <header style="background:white; padding:16px 20px; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <!-- Botón hamburguesa móvil -->
-                    <button v-if="isMobile" @click="mobileOpen=!mobileOpen"
-                        style="width:36px; height:36px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <button v-show="true" class="mobile-menu-btn" @click="mobileOpen=!mobileOpen"
+                        style="width:36px; height:36px; border-radius:8px; border:1px solid #E2E8F0; background:white; cursor:pointer; align-items:center; justify-content:center; flex-shrink:0;">
                         <svg width="18" height="18" fill="none" stroke="#64748B" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M3 12h18M3 6h18M3 18h18"/>
                         </svg>
@@ -330,6 +330,7 @@
                     <a v-else-if="empresa.industry_type === 'minimarket'" href="/minimarket/pos" style="padding:10px 20px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border-radius:10px; font-size:14px; font-weight:600; text-decoration:none; box-shadow:0 4px 12px rgba(20,184,166,0.3);">
                      🛒 Nueva venta
                     </a>
+                    <span style="font-size:14px; font-weight:700; color:#1E293B;">{{ $page.props.auth?.user?.name }}</span>
                 </div>
             </header>
 
@@ -777,3 +778,13 @@ const menuItem = (path) => {
 
 const logout = () => router.post('/logout')
 </script>
+<style scoped>
+.mobile-menu-btn {
+    display: none;
+}
+@media (max-width: 1024px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
+}
+</style>
