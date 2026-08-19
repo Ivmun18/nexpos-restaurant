@@ -185,6 +185,7 @@ class ComprobantesNotariaController extends Controller
             $filaComprobante = [
                 'empresa_id'               => $empresa->id,
                 'acto_id'                  => $acto->id,
+                'usuario_id'               => auth()->id(),
                 'tipo_comprobante'         => $request->tipo_comprobante,
                 'serie'                    => $serie,
                 'numero'                   => $correlativo,
@@ -474,6 +475,7 @@ class ComprobantesNotariaController extends Controller
             // Guardar comprobante
             $filaComprobante = [
                 'empresa_id'               => $empresa->id,
+                'usuario_id'               => auth()->id(),
                 'tipo_comprobante'         => $request->tipo_comprobante,
                 'serie'                    => $serie,
                 'numero'                   => $correlativo,
@@ -758,6 +760,12 @@ class ComprobantesNotariaController extends Controller
 
         $totalLetras = $this->numeroALetras($total);
 
+        $vendedor = 'ADMIN';
+        if ($comp->usuario_id) {
+            $emisor = \DB::table('users')->find($comp->usuario_id);
+            if ($emisor) $vendedor = $emisor->name;
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.recibo-notaria-ticket', [
             'empresa'           => $empresa,
             'tipoDoc'           => $tipoDoc,
@@ -772,7 +780,7 @@ class ComprobantesNotariaController extends Controller
             'igv'               => $igv,
             'total'             => $total,
             'totalLetras'       => $totalLetras,
-            'vendedor'          => auth()->user()->name ?? 'ADMIN',
+            'vendedor'          => $vendedor,
             'metodoPago'        => 'EFECTIVO',
             'exonerada'         => $exonerada,
             'tipoComp'          => $comp->tipo_comprobante,
