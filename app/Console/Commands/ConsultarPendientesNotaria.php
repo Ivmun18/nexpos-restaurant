@@ -48,6 +48,12 @@ class ConsultarPendientesNotaria extends Command
                         'updated_at' => now(),
                     ]);
                     $this->warn("Comprobante {$comp->id} ({$comp->serie}-{$comp->numero}): RECHAZADO");
+                } elseif ($status === 'EXCEPCION') {
+                    DB::table('comprobantes_sunat')->where('id', $comp->id)->update([
+                        'estado'     => 'rechazado',
+                        'updated_at' => now(),
+                    ]);
+                    $this->warn("Comprobante {$comp->id} ({$comp->serie}-{$comp->numero}): EXCEPCION (marcado como rechazado)");
                 } else {
                     $this->line("Comprobante {$comp->id}: sigue pendiente (status={$status})");
                 }
