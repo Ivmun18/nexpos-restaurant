@@ -83,7 +83,12 @@ class CajaController extends Controller
             'monto'   => 'required|numeric|min:0.01',
         ]);
 
-        $sesion = SesionCaja::where('estado', 'abierta')->first();
+        $empresaId = auth()->user()->empresa_id;
+        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+
+        $sesion = $caja
+            ? SesionCaja::where('caja_id', $caja->id)->where('estado', 'abierta')->first()
+            : null;
 
         if (!$sesion) {
             return back()->with('error', 'No hay sesión de caja abierta.');
@@ -103,9 +108,12 @@ class CajaController extends Controller
 
     public function cerrar(Request $request)
     {
-        $sesion = SesionCaja::where('estado', 'abierta')
-            ->with('movimientos')
-            ->first();
+        $empresaId = auth()->user()->empresa_id;
+        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+
+        $sesion = $caja
+            ? SesionCaja::where('caja_id', $caja->id)->where('estado', 'abierta')->with('movimientos')->first()
+            : null;
 
         if (!$sesion) {
             return back()->with('error', 'No hay sesión de caja abierta.');
