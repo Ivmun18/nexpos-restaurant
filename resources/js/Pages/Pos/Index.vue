@@ -33,22 +33,16 @@ async function cargarModificadores() {
 }
 
 // Variantes de combo (ej: elegir Acompañamiento y Bebida, obligatorio)
-const variantesCache          = ref({}) // producto_id -> grupos[]
 const mostrarModalVariantes   = ref(false)
 const gruposVariantes         = ref([])
 const variantesSeleccionadas  = ref({}) // grupo_id -> nombre de opción
 const notaVariante            = ref('')
 
 async function obtenerVariantes(productoId) {
-    if (variantesCache.value[productoId] !== undefined) {
-        return variantesCache.value[productoId]
-    }
     try {
         const { data } = await axios.get('/api/producto-variantes', { params: { producto_id: productoId } })
-        variantesCache.value = { ...variantesCache.value, [productoId]: data }
         return data
     } catch (e) {
-        variantesCache.value = { ...variantesCache.value, [productoId]: [] }
         return []
     }
 }
