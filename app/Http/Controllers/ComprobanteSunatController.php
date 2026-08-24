@@ -305,6 +305,7 @@ class ComprobanteSunatController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
+                'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
             ]);
 
@@ -484,6 +485,7 @@ class ComprobanteSunatController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
+                'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
             ]);
 
@@ -706,6 +708,7 @@ class ComprobanteSunatController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
+                'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                 'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
             ]);
 
@@ -844,12 +847,17 @@ class ComprobanteSunatController extends Controller
             $aceptada  = $response->successful() && isset($data['sunatResponse']);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
 
-            \DB::table('comprobantes_sunat')->where('id', $id)->update([
+            $updatePayload = [
                 'aceptada_por_sunat' => $aceptada ? 1 : 0,
                 'sunat_descripcion'  => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'estado'             => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'updated_at'         => now(),
-            ]);
+            ];
+            if (!empty($data['documentId'])) {
+                $updatePayload['apisunat_document_id'] = substr($data['documentId'], 0, 100);
+            }
+
+            \DB::table('comprobantes_sunat')->where('id', $id)->update($updatePayload);
 
             return response()->json([
                 'success' => $aceptada || $pendiente,
@@ -926,7 +934,7 @@ class ComprobanteSunatController extends Controller
      */
     public function consultarEstado($id)
     {
-        $comprobante = ComprobanteSunat::with('empresa')->find($id);
+        $comprobante = ComprobanteSunat::find($id);
 
         if (!$comprobante) {
             return response()->json(['success' => false, 'mensaje' => 'Comprobante no encontrado'], 404);
@@ -936,39 +944,39 @@ class ComprobanteSunatController extends Controller
             return response()->json(['success' => false, 'mensaje' => 'No autorizado'], 403);
         }
 
-        $empresa = $comprobante->empresa;
-
-        if (!$empresa || !$empresa->apisunat_token) {
-            return response()->json(['success' => false, 'mensaje' => 'Empresa sin token ApiSunat configurado'], 422);
+        if (!$comprobante->apisunat_document_id) {
+            return response()->json(['success' => false, 'mensaje' => 'Comprobante sin document_id de ApiSunat, no se puede consultar'], 422);
         }
 
-        $fileName = $empresa->ruc . '-' . $comprobante->tipo_comprobante . '-' . $comprobante->serie
-            . '-' . str_pad($comprobante->numero, 8, '0', STR_PAD_LEFT);
-
         try {
-            $response = Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(30)
-                ->post('https://back.apisunat.com/personas/v1/getDocument', [
-                    'personaId'    => $empresa->apisunat_ruc,
-                    'personaToken' => $empresa->apisunat_token,
-                    'fileName'     => $fileName,
-                ]);
+            $response = Http::timeout(30)
+                ->get("https://back.apisunat.com/documents/{$comprobante->apisunat_document_id}/getById");
+
+            if (!$response->successful()) {
+                Log::warning("consultarEstado comprobante {$comprobante->id} (doc {$comprobante->apisunat_document_id}): HTTP {$response->status()} - " . $response->body());
+                return response()->json(['success' => false, 'mensaje' => 'Error HTTP ' . $response->status()], 502);
+            }
 
             $data = $response->json();
-            Log::info("consultarEstado comprobante {$comprobante->id} ({$fileName}): " . json_encode($data));
+            Log::info("consultarEstado comprobante {$comprobante->id} (doc {$comprobante->apisunat_document_id}): " . json_encode($data));
 
             $status = $data['status'] ?? null;
 
-            if ($status === 'ACEPTADA' || isset($data['sunatResponse'])) {
+            if ($status === 'ACEPTADO') {
                 $comprobante->update([
                     'estado'             => 'aceptado',
                     'aceptada_por_sunat' => 1,
                     'sunat_descripcion'  => 'Aceptada',
                 ]);
-            } elseif ($status === 'RECHAZADA') {
+            } elseif ($status === 'RECHAZADO') {
                 $comprobante->update([
                     'estado'            => 'rechazado',
                     'sunat_descripcion' => json_encode($data),
+                ]);
+            } elseif ($status === 'EXCEPCION') {
+                $comprobante->update([
+                    'estado'            => 'rechazado',
+                    'sunat_descripcion' => 'Excepción: ' . json_encode($data),
                 ]);
             }
 
