@@ -70,6 +70,10 @@ function sucursalDePedido(pedido) {
     return pedido.sucursal?.nombre || pedido.mesa?.sucursal?.nombre || null
 }
 
+function esDelivery(pedido) {
+    return pedido.mesa?.zona === 'delivery'
+}
+
 const resumenProduccion = computed(() => {
     const resumen = {}
     pedidos.value.forEach(pedido => {
@@ -146,8 +150,11 @@ function marcarListo(pedido) {
                 v-for="pedido in pedidos"
                 :key="pedido.id"
                 class="kds-card"
-                :style="{ borderColor: colorTiempo(pedido.created_at).borde }"
+                :style="{ borderColor: esDelivery(pedido) ? '#F97316' : colorTiempo(pedido.created_at).borde }"
             >
+                <!-- Banner delivery -->
+                <div v-if="esDelivery(pedido)" class="kds-delivery-banner">🛵 PARA LLEVAR</div>
+
                 <!-- Header tarjeta -->
                 <div class="kds-card-header" :style="{ background: colorTiempo(pedido.created_at).fondoHeader }">
                     <div>
@@ -369,6 +376,16 @@ function marcarListo(pedido) {
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.kds-delivery-banner {
+    background: linear-gradient(135deg, #F97316, #EA580C);
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
 }
 
 .kds-card-header {

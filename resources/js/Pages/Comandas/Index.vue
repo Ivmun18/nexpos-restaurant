@@ -65,7 +65,12 @@
                     <div v-for="comanda in pendientes" :key="comanda.id"
                         :style="cardStyle(comanda, '#FEF3C7')"
                         @click="verDetalle(comanda)">
-                        
+
+                        <!-- Banner delivery -->
+                        <div v-if="comanda.mesa.zona === 'delivery'" style="background:linear-gradient(135deg,#F97316,#EA580C); color:white; text-align:center; padding:6px; border-radius:8px; font-size:13px; font-weight:800; letter-spacing:0.5px; margin-bottom:10px;">
+                            🛵 PARA LLEVAR
+                        </div>
+
                         <!-- Header -->
                         <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
                             <div>
@@ -135,7 +140,12 @@
                     <div v-for="comanda in enPreparacion" :key="comanda.id"
                         :style="cardStyle(comanda, '#FEE2E2')"
                         @click="verDetalle(comanda)">
-                        
+
+                        <!-- Banner delivery -->
+                        <div v-if="comanda.mesa.zona === 'delivery'" style="background:linear-gradient(135deg,#F97316,#EA580C); color:white; text-align:center; padding:6px; border-radius:8px; font-size:13px; font-weight:800; letter-spacing:0.5px; margin-bottom:10px;">
+                            🛵 PARA LLEVAR
+                        </div>
+
                         <!-- Header -->
                         <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
                             <div>
@@ -209,7 +219,12 @@
                     <div v-for="comanda in listas" :key="comanda.id"
                         :style="cardStyle(comanda, '#DCFCE7')"
                         @click="verDetalle(comanda)">
-                        
+
+                        <!-- Banner delivery -->
+                        <div v-if="comanda.mesa.zona === 'delivery'" style="background:linear-gradient(135deg,#F97316,#EA580C); color:white; text-align:center; padding:6px; border-radius:8px; font-size:13px; font-weight:800; letter-spacing:0.5px; margin-bottom:10px;">
+                            🛵 PARA LLEVAR
+                        </div>
+
                         <!-- Header -->
                         <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
                             <div>

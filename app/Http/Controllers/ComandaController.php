@@ -75,6 +75,7 @@ class ComandaController extends Controller
                 'mesa' => [
                     'id' => $pedido->mesa->id,
                     'numero' => $pedido->mesa->numero,
+                    'zona' => $pedido->mesa->zona,
                 ],
                 'mozo' => $pedido->user->name ?? 'Sin asignar',
                 'estado' => $pedido->estado,
