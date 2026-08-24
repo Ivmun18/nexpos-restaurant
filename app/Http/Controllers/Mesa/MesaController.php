@@ -3,15 +3,21 @@
 namespace App\Http\Controllers\Mesa;
 
 use App\Helpers\EmpresaHelper;
+use App\Helpers\SucursalHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Mesa;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class MesaController extends Controller
 {
     public function index()
     {
+        if (!auth()->check()) {
+            return redirect()->route('login');
+        }
+
         // Verificar caja abierta
         $empresaId = auth()->user()->empresa_id;
         $caja = \App\Models\Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
@@ -24,8 +30,11 @@ class MesaController extends Controller
             return redirect()->route('caja.index')->with('warning', '⚠️ Debes abrir la caja antes de atender mesas.');
         }
 
-        $mesas = Mesa::where('empresa_id', EmpresaHelper::id())
-            ->where('activo', true)
+        $mesas = SucursalHelper::aplicarFiltro(
+            Mesa::with('sucursal:id,nombre')
+                ->where('empresa_id', EmpresaHelper::id())
+                ->where('activo', true)
+        )
             ->orderBy('orden')
             ->get();
 
@@ -36,9 +45,15 @@ class MesaController extends Controller
             'reservadas'=> $mesas->where('estado', 'reservada')->count(),
         ];
 
+        $sucursales = \App\Models\Sucursal::where('empresa_id', EmpresaHelper::id())
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get(['id', 'nombre']);
+
         return Inertia::render('Mesas/Index', [
-            'mesas'   => $mesas,
-            'resumen' => $resumen,
+            'mesas'      => $mesas,
+            'resumen'    => $resumen,
+            'sucursales' => $sucursales,
         ]);
     }
 
@@ -55,18 +70,41 @@ class MesaController extends Controller
 
     public function store(Request $request)
     {
+        $empresaId = EmpresaHelper::id();
+
+        // Solo un admin puede elegir explicitamente la sucursal; el resto
+        // de roles siempre queda en la suya propia (evita que un mozo de
+        // Local 2 spoofee sucursal_id y cree mesas en Local 1). Se resuelve
+        // antes de validar para poder chequear unicidad de numero contra la
+        // sucursal real con la que se va a guardar la mesa.
+        $sucursalId = SucursalHelper::id();
+        if (EmpresaHelper::esAdmin() && $request->filled('sucursal_id')) {
+            $sucursalId = $request->sucursal_id;
+        }
+
         $request->validate([
-            'numero'   => 'required|max:10',
-            'nombre'   => 'nullable|max:50',
-            'capacidad'=> 'required|integer|min:1|max:20',
-            'zona'     => 'required|in:salon,terraza,barra,privado,delivery',
+            'numero' => [
+                'required',
+                'max:10',
+                Rule::unique('mesas')->where(function ($query) use ($empresaId, $sucursalId) {
+                    $query->where('empresa_id', $empresaId);
+                    $sucursalId === null ? $query->whereNull('sucursal_id') : $query->where('sucursal_id', $sucursalId);
+                }),
+            ],
+            'nombre'      => 'nullable|max:50',
+            'capacidad'   => 'required|integer|min:1|max:20',
+            'zona'        => 'required|in:salon,terraza,barra,privado,delivery',
+            'sucursal_id' => 'nullable|exists:sucursales,id',
+        ], [
+            'numero.unique' => 'Ya existe una mesa con el número ' . $request->numero . ' en esta sucursal. Elegí otro número.',
         ]);
 
         $ultimo = Mesa::where('empresa_id', EmpresaHelper::id())->max('orden') ?? 0;
 
         Mesa::create([
-            'empresa_id' => EmpresaHelper::id(),
-            'numero'     => $request->numero,
+            'empresa_id'  => EmpresaHelper::id(),
+            'sucursal_id' => $sucursalId,
+            'numero'      => $request->numero,
             'nombre'     => $request->nombre ?? 'Mesa ' . $request->numero,
             'capacidad'  => $request->capacidad,
             'zona'       => $request->zona,

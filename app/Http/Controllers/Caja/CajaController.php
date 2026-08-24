@@ -33,10 +33,17 @@ class CajaController extends Controller
             ->limit(10)
             ->get();
 
+        $desglosePagos = \App\Models\CajaRestaurante::where('empresa_id', $empresaId)
+            ->whereDate('created_at', today())
+            ->selectRaw('metodo_pago, SUM(total) as total, COUNT(*) as cantidad')
+            ->groupBy('metodo_pago')
+            ->get();
+
         return Inertia::render('Caja/Index', [
-            'caja'         => $caja,
-            'sesionActiva' => $sesionActiva,
-            'historial'    => $historial,
+            'caja'          => $caja,
+            'sesionActiva'  => $sesionActiva,
+            'historial'     => $historial,
+            'desglosePagos' => $desglosePagos,
         ]);
     }
 

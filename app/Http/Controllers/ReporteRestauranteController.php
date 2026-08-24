@@ -12,19 +12,23 @@ class ReporteRestauranteController extends Controller
 {
     public function index(Request $request)
     {
-        $desde   = $request->get('desde', now()->startOfMonth()->toDateString());
-        $hasta   = $request->get('hasta', now()->toDateString());
-        $metodo  = $request->get('metodo', '');
-        $mozo_id = $request->get('mozo_id', '');
+        $desde       = $request->get('desde', now()->startOfMonth()->toDateString());
+        $hasta       = $request->get('hasta', now()->toDateString());
+        $metodo      = $request->get('metodo', '');
+        $mozo_id     = $request->get('mozo_id', '');
+        $sucursal_id = $request->get('sucursal_id', '');
 
         $empresaId = auth()->user()->empresa_id;
-        $query = CajaRestaurante::with(['mesa:id,numero,nombre,zona', 'user:id,name,rol'])
+        $query = CajaRestaurante::with(['mesa:id,numero,nombre,zona,sucursal_id', 'user:id,name,rol'])
             ->where('empresa_id', $empresaId)
             ->whereBetween('created_at', [$desde . ' 00:00:00', $hasta . ' 23:59:59'])
             ->orderBy('created_at', 'desc');
 
         if ($metodo)  $query->where('metodo_pago', $metodo);
         if ($mozo_id) $query->where('user_id', $mozo_id);
+        if ($sucursal_id) {
+            $query->whereHas('mesa', fn($q) => $q->where('sucursal_id', $sucursal_id));
+        }
 
         $ventas = $query->get();
 
@@ -59,6 +63,11 @@ class ReporteRestauranteController extends Controller
             ->select('id', 'name', 'rol')
             ->orderBy('name')
             ->get();
+
+        $sucursales = \App\Models\Sucursal::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->orderBy('nombre')
+            ->get(['id', 'nombre']);
 
         // ===== GANANCIAS (solo admin) =====
         $esAdmin = auth()->user()->rol === 'admin';
@@ -119,7 +128,8 @@ class ReporteRestauranteController extends Controller
             'por_dia'    => $porDia,
             'top_mozos'  => $topMozos,
             'mozos'      => $mozos,
-            'filtros'    => compact('desde', 'hasta', 'metodo', 'mozo_id'),
+            'sucursales' => $sucursales,
+            'filtros'    => compact('desde', 'hasta', 'metodo', 'mozo_id', 'sucursal_id'),
             'es_admin'   => $esAdmin,
             'ganancias'  => $ganancias,
         ]);

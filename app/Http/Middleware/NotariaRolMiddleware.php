@@ -68,6 +68,14 @@ class NotariaRolMiddleware
             return $next($request);
         }
 
+        // Abogado asistente: todo EXCEPTO caja (igual que notario)
+        if ($rol === 'abogado_asistente') {
+            if (in_array($rutaActual, self::RUTAS_CAJA)) {
+                return redirect('/dashboard')->with('error', 'No tienes acceso a Caja.');
+            }
+            return $next($request);
+        }
+
         // Roles restringidos a un subconjunto de tipo_acto dentro de Expedientes
         // (asistente, prescripciones, legalizaciones, notificaciones, mixto)
         $tiposPermitidos = $user->tipoActoPermitidos();

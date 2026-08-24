@@ -68,7 +68,7 @@
                                 style="padding:12px 20px; background:#6366F1; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
                                 Buscar
                             </button>
-                            <button @click="modalServicioRapido=!modalServicioRapido; expedienteSeleccionado=null"
+                            <button v-if="$page.props.auth.user.puede_facturar" @click="modalServicioRapido=!modalServicioRapido; expedienteSeleccionado=null"
                                 style="padding:12px 20px; background:#10B981; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
                                 ⚡ Servicio Rápido
                             </button>
@@ -461,7 +461,7 @@
                             </div>
 
                             <!-- COMPROBANTE -->
-                            <div style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:1rem;">
+                            <div v-if="$page.props.auth.user.puede_facturar" style="border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; margin-bottom:1rem;">
                                 <div style="padding:10px 14px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; display:flex; align-items:center; gap:8px;">
                                     <span style="font-size:14px;">🧾</span>
                                     <p style="font-size:12px; font-weight:700; color:#1E293B; margin:0;">Comprobante de pago</p>
@@ -559,7 +559,7 @@
                                 }">
                                 {{ procesando ? '⏳ Procesando...' : '💰 Cobrar S/ ' + totalExp.toFixed(2) }}
                             </button>
-                            <button @click="confirmarCobro(true)" :disabled="!itemsExp.length || procesando"
+                            <button v-if="$page.props.auth.user.puede_facturar" @click="confirmarCobro(true)" :disabled="!itemsExp.length || procesando"
                                 style="width:100%; margin-top:8px; padding:12px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:10px; font-size:13px; font-weight:600; color:#0F766E; cursor:pointer;">
                                 🧾 Boleta simple (sin datos)
                             </button>

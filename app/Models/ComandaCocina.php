@@ -12,6 +12,7 @@ class ComandaCocina extends Model
 
     protected $fillable = [
         'empresa_id',
+        'sucursal_id',
         'pedido_id',
         'pedido_detalle_id',
         'estacion_cocina_id',

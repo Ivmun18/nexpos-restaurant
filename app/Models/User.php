@@ -15,6 +15,7 @@ class User extends Authenticatable
     protected $fillable = [
         'empresa_id',
         'tienda_id',
+        'sucursal_id',
         'name',
         'username',
         'email',
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'telefono',
         'fecha_ingreso',
         'activo',
+        'puede_facturar',
         'observaciones',
     ];
 
@@ -37,6 +39,7 @@ class User extends Authenticatable
         'password'          => 'hashed',
         'fecha_ingreso'     => 'date',
         'activo'            => 'boolean',
+        'puede_facturar'    => 'boolean',
     ];
 
     public function empresa()
@@ -51,6 +54,15 @@ class User extends Authenticatable
     public function tienda()
     {
         return $this->belongsTo(Tienda::class);
+    }
+
+    /**
+     * Sucursal (restaurante) donde trabaja el usuario. NULL = acceso a
+     * todas las sucursales de la empresa (admin).
+     */
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class);
     }
 
     /**
@@ -132,19 +144,25 @@ class User extends Authenticatable
     }
 
     /**
-     * Roles de notaría restringidos a un subconjunto de tipo_acto.
-     * null (rol no listado) = sin restricción de tipo.
+     * Permiso para emitir comprobantes (boleta/factura). Independiente del
+     * rol: hoy solo se habilita a usuarios puntuales dentro de una empresa
+     * (p.ej. notaría), no a un rol completo.
      */
-    const TIPOS_ACTO_POR_ROL = [
-        'asistente'      => ['legalizacion'],
-        'prescripciones' => ['prescripcion_dominio', 'escritura_publica'],
-        'legalizaciones' => ['legalizacion', 'certificacion_notarial'],
-        'notificaciones' => ['notificacion', 'certificado_domiciliario'],
-        'mixto'          => ['legalizacion', 'certificacion_notarial', 'acta_no_contenciosa'],
-    ];
+    public function puedeFacturar(): bool
+    {
+        return (bool) $this->puede_facturar;
+    }
 
     public function tipoActoPermitidos(): ?array
     {
-        return self::TIPOS_ACTO_POR_ROL[$this->rol] ?? null;
+        return match($this->rol) {
+            "admin", "notario", "abogado_asistente" => null,
+            "asistente" => ["legalizacion"],
+            "prescripciones" => ["prescripcion_dominio", "escritura_publica"],
+            "legalizaciones" => ["legalizacion", "certificacion_notarial"],
+            "notificaciones" => ["notificacion", "certificado_domiciliario"],
+            "mixto" => ["legalizacion", "certificacion_notarial", "acta_no_contenciosa", "transferencia_vehicular", "constatacion"],
+            default => [],
+        };
     }
 }

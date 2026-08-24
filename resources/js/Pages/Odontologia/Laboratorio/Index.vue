@@ -116,7 +116,10 @@ const form = ref({ paciente_id:'', proveedor_id:'', doctor_id:'', tipo_trabajo:'
 
 const searchPaciente = async () => {
   if (buscarPaciente.value.length < 2) { resultadosPaciente.value = []; return }
-  const r = await fetch('/odontologia/pacientes/buscar?q=' + buscarPaciente.value)
+  const r = await fetch('/odontologia/pacientes/buscar?q=' + buscarPaciente.value, {
+      credentials: 'include',
+      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '', 'Accept': 'application/json' }
+    })
   resultadosPaciente.value = await r.json()
 }
 

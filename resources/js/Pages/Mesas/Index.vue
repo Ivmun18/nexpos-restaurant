@@ -29,6 +29,9 @@
             <button type="button" @click="zonaActiva='barra'" :style="zonaActiva==='barra' ? btnZonaActivo : btnZona">Barra</button>
             <button type="button" @click="zonaActiva='privado'" :style="zonaActiva==='privado' ? btnZonaActivo : btnZona">Privado</button>
             <button type="button" @click="zonaActiva='delivery'" :style="zonaActiva==='delivery' ? btnZonaActivo : btnZona">Delivery</button>
+            <span v-if="(sucursales || []).length" style="width:1px; background:#E2E8F0; margin:4px 4px;"></span>
+            <button v-if="(sucursales || []).length" type="button" @click="sucursalActiva='todas'" :style="sucursalActiva==='todas' ? btnZonaActivo : btnZona">Todas las sucursales</button>
+            <button v-for="s in sucursales" :key="s.id" type="button" @click="sucursalActiva=String(s.id)" :style="sucursalActiva===String(s.id) ? btnZonaActivo : btnZona">{{ s.nombre }}</button>
             <button type="button" @click="abrirModalNueva"
                 style="margin-left:auto; padding:12px 20px; background:#2563EB; color:white; border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer;">
                 + Nueva mesa
@@ -36,23 +39,24 @@
         </div>
 
         <!-- Mapa de mesas -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:16px; margin-bottom:2rem;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:8px; margin-bottom:2rem;">
             <div v-for="mesa in mesasFiltradas" :key="mesa.id"
                 @click="abrirMesa(mesa)"
                 :style="estiloMesa(mesa)"
-                style="border-radius:16px; padding:20px; cursor:pointer; transition:transform 0.1s; user-select:none; min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;"
+                style="border-radius:10px; padding:8px; cursor:pointer; transition:transform 0.1s; user-select:none; min-height:70px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;"
                 @touchstart="$event.currentTarget.style.transform='scale(0.96)'"
                 @touchend="$event.currentTarget.style.transform='scale(1)'"
                 @mousedown="$event.currentTarget.style.transform='scale(0.96)'"
                 @mouseup="$event.currentTarget.style.transform='scale(1)'">
 
-                <svg width="36" height="36" fill="none" :stroke="mesa.estado === 'libre' ? '#10B981' : mesa.estado === 'ocupada' ? '#EF4444' : mesa.estado === 'reservada' ? '#F59E0B' : '#6B7280'" stroke-width="1.5" viewBox="0 0 24 24">
+                <svg width="20" height="20" fill="none" :stroke="mesa.estado === 'libre' ? '#10B981' : mesa.estado === 'ocupada' ? '#EF4444' : mesa.estado === 'reservada' ? '#F59E0B' : '#6B7280'" stroke-width="1.5" viewBox="0 0 24 24">
                     <rect x="2" y="7" width="20" height="10" rx="2"/>
                     <path d="M6 7V5M18 7V5M6 17v2M18 17v2"/>
                 </svg>
 
-                <p style="font-size:22px; font-weight:700; color:#1E293B; margin:0;">{{ mesa.nombre }}</p>
-                <p style="font-size:13px; color:#64748B; margin:0;">{{ mesa.capacidad }} personas</p>
+                <p style="font-size:13px; font-weight:700; color:#1E293B; margin:0;">{{ mesa.nombre }}</p>
+                <p v-if="mesa.sucursal" style="font-size:9px; color:#94A3B8; margin:0; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">{{ mesa.sucursal.nombre }}</p>
+                <p style="font-size:11px; color:#64748B; margin:0;">{{ mesa.capacidad }} personas</p>
 
                 <span :style="badgeEstado(mesa.estado)">{{ mesa.estado }}</span>
             </div>
@@ -168,7 +172,8 @@
                     <div style="margin-bottom:1rem;">
                         <label style="font-size:14px; color:#64748B; display:block; margin-bottom:6px;">Numero *</label>
                         <input v-model="formMesa.numero" type="text"
-                            style="width:100%; padding:14px; border:2px solid #E2E8F0; border-radius:12px; font-size:16px; outline:none; box-sizing:border-box;"/>
+                            :style="{width:'100%', padding:'14px', border: formMesa.errors.numero ? '2px solid #EF4444' : '2px solid #E2E8F0', borderRadius:'12px', fontSize:'16px', outline:'none', boxSizing:'border-box'}"/>
+                        <p v-if="formMesa.errors.numero" style="font-size:13px; color:#EF4444; margin:6px 0 0;">{{ formMesa.errors.numero }}</p>
                     </div>
                     <div style="margin-bottom:1rem;">
                         <label style="font-size:14px; color:#64748B; display:block; margin-bottom:6px;">Nombre</label>
@@ -193,6 +198,14 @@
                             </select>
                         </div>
                     </div>
+                    <div v-if="mostrarSelectorSucursal" style="margin-bottom:1.5rem;">
+                        <label style="font-size:14px; color:#64748B; display:block; margin-bottom:6px;">Sucursal</label>
+                        <select v-model="formMesa.sucursal_id"
+                            style="width:100%; padding:14px; border:2px solid #E2E8F0; border-radius:12px; font-size:16px; outline:none; background:white; box-sizing:border-box;">
+                            <option :value="null">Sin asignar</option>
+                            <option v-for="s in sucursales" :key="s.id" :value="s.id">{{ s.nombre }}</option>
+                        </select>
+                    </div>
                     <div style="display:flex; gap:10px;">
                         <button type="button" @click="modalNueva=false"
                             style="flex:1; padding:14px; background:#F1F5F9; color:#64748B; border:none; border-radius:12px; font-size:16px; cursor:pointer;">
@@ -212,8 +225,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, usePage, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+
+const page = usePage()
+const esAdmin = computed(() => page.props.auth?.user?.rol === 'admin')
 
 let pollingInterval = null
 
@@ -228,11 +244,15 @@ onUnmounted(() => {
 })
 
 const props = defineProps({
-    mesas:   Array,
-    resumen: Object,
+    mesas:      Array,
+    resumen:    Object,
+    sucursales: Array,
 })
 
+const mostrarSelectorSucursal = computed(() => esAdmin.value && (props.sucursales || []).length > 1)
+
 const zonaActiva      = ref('todas')
+const sucursalActiva  = ref(props.sucursales && props.sucursales.length > 0 ? String(props.sucursales[0].id) : 'todas')
 const modalMesa       = ref(false)
 const modalNueva      = ref(false)
 const mesaSeleccionada= ref(null)
@@ -272,14 +292,22 @@ function separarMesa() {
     )
 }
 
-const formMesa = ref({ numero: '', nombre: '', capacidad: 4, zona: 'salon' })
+const formMesa = useForm({ numero: '', nombre: '', capacidad: 4, zona: 'salon', sucursal_id: null })
 
 const btnZona = { padding:'10px 18px', background:'white', color:'#64748B', border:'1px solid #E2E8F0', borderRadius:'10px', fontSize:'15px', cursor:'pointer', fontWeight:'400' }
 const btnZonaActivo = { padding:'10px 18px', background:'#2563EB', color:'white', border:'none', borderRadius:'10px', fontSize:'15px', cursor:'pointer', fontWeight:'600' }
 
 const mesasFiltradas = computed(() => {
-    if (zonaActiva.value === 'todas') return props.mesas || []
-    return (props.mesas || []).filter(m => m.zona === zonaActiva.value)
+    return (props.mesas || [])
+        .filter(m => zonaActiva.value === 'todas' || m.zona === zonaActiva.value)
+        .filter(m => sucursalActiva.value === 'todas' || String(m.sucursal_id) === sucursalActiva.value)
+        .sort((a, b) => {
+            if (a.zona === 'delivery' && b.zona !== 'delivery') return 1
+            if (a.zona !== 'delivery' && b.zona === 'delivery') return -1
+            const numA = parseInt(a.nombre.replace(/\D/g, '')) || 0
+            const numB = parseInt(b.nombre.replace(/\D/g, '')) || 0
+            return numA - numB
+        })
 })
 
 const estiloMesa = (mesa) => {
@@ -289,7 +317,11 @@ const estiloMesa = (mesa) => {
         reservada: { background:'#FFFBEB', border:'2px solid #F59E0B' },
         bloqueada: { background:'#F8FAFC', border:'2px solid #6B7280' },
     }
-    return colores[mesa.estado] || colores.libre
+    const base = colores[mesa.estado] || colores.libre
+    if (mesa.zona === 'delivery') {
+        return { ...base, border: '2px solid #3B82F6', background: mesa.estado === 'libre' ? '#EFF6FF' : base.background }
+    }
+    return base
 }
 
 const badgeEstado = (estado) => {
@@ -299,7 +331,7 @@ const badgeEstado = (estado) => {
         reservada: { background:'#FEF3C7', color:'#92400E' },
         bloqueada: { background:'#F1F5F9', color:'#475569' },
     }
-    return { ...(map[estado] || map.libre), fontSize:'13px', padding:'4px 12px', borderRadius:'20px', fontWeight:'600' }
+    return { ...(map[estado] || map.libre), fontSize:'10px', padding:'2px 8px', borderRadius:'20px', fontWeight:'600' }
 }
 
 const abrirMesa = (mesa) => {
@@ -308,7 +340,8 @@ const abrirMesa = (mesa) => {
 }
 
 const abrirModalNueva = () => {
-    formMesa.value = { numero: '', nombre: '', capacidad: 4, zona: 'salon' }
+    formMesa.reset()
+    formMesa.clearErrors()
     modalNueva.value = true
 }
 
@@ -319,7 +352,7 @@ const cambiarEstado = (estado) => {
 }
 
 const guardarMesa = () => {
-    router.post('/mesas', formMesa.value, {
+    formMesa.post('/mesas', {
         onSuccess: () => { modalNueva.value = false; router.visit('/mesas') }
     })
 }

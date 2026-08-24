@@ -17,7 +17,22 @@ class LoginController extends Controller
         if ($host === 'minimarket.nexposolution.com') {
             return Inertia::render('Auth/LoginMinimarket');
         }
-        return Inertia::render('Auth/Login');
+
+        $hostEmpresaMap = [
+            'pencuentro.nexposolution.com' => 23,
+        ];
+
+        $empresa = null;
+        if (isset($hostEmpresaMap[$host])) {
+            $empresa = \DB::table('empresas')
+                ->select('id', 'razon_social', 'nombre_comercial', 'logo')
+                ->where('id', $hostEmpresaMap[$host])
+                ->first();
+        }
+
+        return Inertia::render('Auth/Login', [
+            'empresa' => $empresa,
+        ]);
     }
 
  public function store(Request $request)

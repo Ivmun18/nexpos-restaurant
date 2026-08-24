@@ -74,7 +74,7 @@ class CajaRestauranteController extends Controller
     public function cobrar(Request $request, Mesa $mesa)
     {
         $request->validate([
-            'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin',
+            'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
             'monto_pagado'      => 'required|numeric|min:0',
             'descuento'        => 'nullable|numeric|min:0',
             'notas'             => 'nullable|string',
@@ -192,8 +192,9 @@ class CajaRestauranteController extends Controller
         $tipo = $request->tipo_comprobante ?? 'ninguno';
 
         if ($tipo === 'ninguno') {
-            return redirect()->route('mesas.index')
-                ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}");
+            return redirect()->route('tickets.show', $caja)
+                ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}")
+                ->with('imprimir', true);
         }
 
         // Si vienen datos del cliente, emitir comprobante directo sin redirigir
@@ -318,7 +319,7 @@ class CajaRestauranteController extends Controller
                     'aceptada_por_sunat'       => $aceptada ? 1 : 0,
                     'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                     'enlace_pdf'               => $pdfUrl,
-                    'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                    'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Error emitir comprobante cobro: ' . $e->getMessage());
@@ -364,7 +365,7 @@ class CajaRestauranteController extends Controller
     public function cobrarPlatos(Request $request, Mesa $mesa)
     {
         $request->validate([
-            'metodo_pago'      => 'required|in:efectivo,tarjeta,yape,plin',
+            'metodo_pago'      => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
             'detalle_ids'      => 'required|array|min:1',
             'detalle_ids.*'    => 'integer',
             'monto_pagado'     => 'required|numeric|min:0',
@@ -480,4 +481,15 @@ class CajaRestauranteController extends Controller
             ->with('tipo_comprobante', $tipo);
     }
 
+    /**
+     * Detalle de un ticket (cobro sin boleta/factura) para imprimir/compartir
+     */
+    public function ticketShow(CajaRestaurante $caja): Response
+    {
+        return Inertia::render('Tickets/Show', [
+            'caja'     => $caja->load('mesa', 'user'),
+            'empresa'  => auth()->user()->empresa,
+            'imprimir' => session('imprimir', false),
+        ]);
+    }
 }

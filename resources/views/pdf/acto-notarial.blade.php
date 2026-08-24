@@ -128,13 +128,48 @@
     <!-- TIPO DE ACTO -->
     <div class="tipo-acto">
         @switch($acto->tipo_acto)
-            @case('escritura_publica') ESCRITURA PÚBLICA @break
-            @case('poder') PODER NOTARIAL @break
-            @case('testamento') TESTAMENTO @break
-            @case('legalizacion') LEGALIZACIÓN @break
-            @case('carta_notarial') CARTA NOTARIAL @break
-            @case('protesto') PROTESTO @break
-            @case('acta_notarial') ACTA NOTARIAL @break
+            @case('compra_venta') Compra Venta @break
+            @case('compra_venta_bien_futuro') Compra Venta de Bien Futuro @break
+            @case('compra_venta_hipoteca') Compra Venta con Hipoteca @break
+            @case('compra_venta_alicuotas') Compra Venta de Alícuotas @break
+            @case('aclaracion_compra_venta') Aclaración de Compra Venta @break
+            @case('ratificacion_compra_venta') Ratificación de Compra Venta @break
+            @case('contrato_preparatorio') Contrato Preparatorio @break
+            @case('adjudicacion') Adjudicación @break
+            @case('rectificacion_area') Rectificación de Área @break
+            @case('particion') Partición @break
+            @case('prescripcion_dominio') Prescripción de Dominio @break
+            @case('donacion_inmueble') Donación de Inmueble @break
+            @case('donacion_alicuotas') Donación de Alícuotas @break
+            @case('donacion_vehiculo') Donación de Vehículo @break
+            @case('transferencia_vehicular') Transferencia Vehicular @break
+            @case('hipoteca') Hipoteca @break
+            @case('mutuo_hipoteca') Mutuo con Hipoteca @break
+            @case('poder') Poder @break
+            @case('ampliacion_poder') Ampliación de Poder @break
+            @case('revocatoria_poder') Revocatoria de Poder @break
+            @case('constitucion_sac') Constitución de S.A.C. @break
+            @case('constitucion_srl') Constitución de S.R.L. @break
+            @case('constitucion_asociacion') Constitución de Asociación @break
+            @case('aumento_capital') Aumento de Capital @break
+            @case('transformacion_empresa') Transformación de Empresa @break
+            @case('sustitucion_regimen') Sustitución de Régimen @break
+            @case('cese_regimen') Cese de Régimen @break
+            @case('testamento') Testamento @break
+            @case('reconocimiento_paternidad') Reconocimiento de Paternidad @break
+            @case('autorizacion_viaje') Autorización de Viaje @break
+            @case('autorizacion_viaje_ext') Autorización de Viaje al Extranjero @break
+            @case('divorcio') Divorcio @break
+            @case('sucesion_intestada') Sucesión Intestada @break
+            @case('certificacion_notarial') Certificación Notarial @break
+            @case('legalizacion') Legalización @break
+            @case('escritura_publica') Escritura Pública @break
+            @case('notificacion') Notificación @break
+            @case('certificado_domiciliario') Certificado Domiciliario @break
+            @case('acta_no_contenciosa') Acta No Contenciosa @break
+            @case('arrendamiento') Arrendamiento @break
+            @case('carta_notarial') Carta Notarial @break
+            @case('otro') Otro @break
             @default {{ strtoupper($acto->tipo_acto) }}
         @endswitch
     </div>

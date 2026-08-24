@@ -13,7 +13,7 @@ class Pedido extends Model
 
     protected $auditModulo = 'Pedidos';
     protected $fillable = [
-        'empresa_id', 'mesa_id', 'user_id', 'estado',
+        'empresa_id', 'sucursal_id', 'mesa_id', 'user_id', 'estado',
         'numero_ronda', 'notas', 'total',
     ];
 
@@ -25,6 +25,11 @@ class Pedido extends Model
     public function mesa(): BelongsTo
     {
         return $this->belongsTo(Mesa::class);
+    }
+
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class);
     }
 
     public function user(): BelongsTo

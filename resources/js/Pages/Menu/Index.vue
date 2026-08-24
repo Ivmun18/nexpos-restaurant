@@ -273,14 +273,14 @@ vWatch(modalProducto, (val) => {
                         </div>
 
                         <!-- Grid productos -->
-                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px;">
                             <div
                                 v-for="prod in categoriaSeleccionada.productos_activos"
                                 :key="prod.id"
                                 :style="{
                                     background: 'white',
                                     borderRadius: '16px',
-                                    padding: '20px',
+                                    padding: '16px',
                                     boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -292,8 +292,8 @@ vWatch(modalProducto, (val) => {
                             >
                                 <!-- Nombre y precio -->
                                 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
-                                    <h3 style="font-size:18px; font-weight:700; color:#1E293B; margin:0; line-height:1.3;">{{ prod.nombre }}</h3>
-                                    <span style="font-size:22px; font-weight:800; color:#14B8A6; white-space:nowrap;">S/ {{ Number(prod.precio).toFixed(2) }}</span>
+                                    <h3 style="font-size:16px; font-weight:700; color:#1E293B; margin:0; line-height:1.3;">{{ prod.nombre }}</h3>
+                                    <span style="font-size:20px; font-weight:800; color:#14B8A6; white-space:nowrap;">S/ {{ Number(prod.precio).toFixed(2) }}</span>
                                 </div>
 
                                 <!-- Descripción -->

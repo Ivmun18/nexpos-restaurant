@@ -78,6 +78,7 @@ class PosController extends Controller
 
     $pedido = Pedido::create([
         'empresa_id'   => auth()->user()->empresa_id,
+        'sucursal_id'  => $mesa->sucursal_id,
         'mesa_id'      => $mesa->id,
         'user_id'      => auth()->id(),
         'estado'       => 'enviado',

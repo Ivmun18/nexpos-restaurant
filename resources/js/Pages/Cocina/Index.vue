@@ -1,215 +1,410 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { router } from '@inertiajs/vue3'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import { router, Head } from '@inertiajs/vue3'
 
 const props = defineProps({
     pedidos: Array,
+    sucursalNombre: String,
 })
 
-// Auto-refresh cada 15 segundos
-let intervalo = null
+const pedidos = ref(props.pedidos)
+const horaActual = ref(new Date())
+
+const horaFormateada = computed(() =>
+    horaActual.value.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+)
+
+let relojIntervalo = null
+let refrescoIntervalo = null
+
+async function refrescar() {
+    try {
+        const res = await fetch('/cocina/polling', {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        })
+        if (res.ok) {
+            const data = await res.json()
+            pedidos.value = data.pedidos
+        }
+    } catch (e) {
+        // Silencioso: se reintenta en el siguiente ciclo de 15s.
+    }
+}
+
 onMounted(() => {
-    intervalo = setInterval(() => {
-        router.reload({ only: ['pedidos'] })
-    }, 15000)
+    relojIntervalo = setInterval(() => { horaActual.value = new Date() }, 1000)
+    refrescoIntervalo = setInterval(refrescar, 15000)
 })
-onUnmounted(() => clearInterval(intervalo))
 
-const tiempoTranscurrido = (fecha) => {
-    const diff = Math.floor((new Date() - new Date(fecha)) / 1000 / 60)
-    if (diff < 1) return 'Ahora mismo'
-    if (diff === 1) return '1 min'
-    return `${diff} min`
+onUnmounted(() => {
+    clearInterval(relojIntervalo)
+    clearInterval(refrescoIntervalo)
+})
+
+function minutosTranscurridos(fecha) {
+    return Math.max(0, Math.floor((horaActual.value - new Date(fecha)) / 1000 / 60))
 }
 
-const colorTiempo = (fecha) => {
-    const diff = Math.floor((new Date() - new Date(fecha)) / 1000 / 60)
-    if (diff < 10) return { bg: '#F0FDF4', color: '#166534', border: '#DCFCE7' }
-    if (diff < 20) return { bg: '#FFFBEB', color: '#92400E', border: '#FDE68A' }
-    return { bg: '#FEF2F2', color: '#991B1B', border: '#FECACA' }
+function colorTiempo(fecha) {
+    const diff = minutosTranscurridos(fecha)
+    if (diff < 10) return { texto: '#4ADE80', borde: '#166534', fondoHeader: '#0F2A1A' }
+    if (diff < 20) return { texto: '#FBBF24', borde: '#92400E', fondoHeader: '#2E2408' }
+    return { texto: '#F87171', borde: '#991B1B', fondoHeader: '#2E0F0F' }
 }
+
+function sucursalDePedido(pedido) {
+    return pedido.sucursal?.nombre || pedido.mesa?.sucursal?.nombre || null
+}
+
+const resumenProduccion = computed(() => {
+    const resumen = {}
+    pedidos.value.forEach(pedido => {
+        pedido.detalles.forEach(det => {
+            if (det.estado === 'listo') return
+            resumen[det.nombre_producto] = (resumen[det.nombre_producto] || 0) + det.cantidad
+        })
+    })
+    return Object.entries(resumen)
+})
 
 function marcarListo(pedido) {
     router.post(`/cocina/${pedido.id}/listo`, {}, {
-        onSuccess: () => router.reload({ only: ['pedidos'] }),
-        onError: (e) => console.log('Error:', e),
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => refrescar(),
     })
-}
-
-const resumenPlatos = computed(() => {
-    const resumen = {}
-    props.pedidos.forEach(pedido => {
-        pedido.detalles.forEach(det => {
-            if (resumen[det.nombre_producto]) {
-                resumen[det.nombre_producto] += det.cantidad
-            } else {
-                resumen[det.nombre_producto] = det.cantidad
-            }
-        })
-    })
-    return resumen
-})
-
-const actualizando = ref(false)
-function recargar() {
-    actualizando.value = true
-    router.reload({ only: ['pedidos'], onFinish: () => { actualizando.value = false } })
 }
 </script>
 
 <template>
-    <AppLayout title="🍳 Pantalla de Cocina">
-        <div style="max-width:1400px; margin:0 auto;">
+    <Head :title="`Cocina · ${sucursalNombre || ''}`" />
 
-            <!-- Header -->
+    <div class="kds-root">
+        <!-- Header -->
+        <header class="kds-header">
+            <div>
+                <p class="kds-header-title">🍳 {{ sucursalNombre || 'Cocina' }}</p>
+                <p class="kds-header-sub">
+                    {{ pedidos.length }} pedido{{ pedidos.length !== 1 ? 's' : '' }} pendiente{{ pedidos.length !== 1 ? 's' : '' }}
+                </p>
+            </div>
+            <div class="kds-clock">{{ horaFormateada }}</div>
+        </header>
 
-            <!-- ══ RESUMEN POR PLATO ══ -->
-<div v-if="pedidos.length" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; margin-bottom:24px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-    <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">📊 Resumen total de platos</p>
-    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">
-        <div
-            v-for="(cantidad, nombre) in resumenPlatos"
-            :key="nombre"
-            style="display:flex; align-items:center; justify-content:space-between; background:#F8FAFC; border-radius:14px; padding:14px 18px; border:2px solid #E2E8F0;"
-        >
-            <p style="font-size:16px; font-weight:600; color:#1E293B; margin:0;">{{ nombre }}</p>
-            <span style="font-size:24px; font-weight:800; color:white; background:linear-gradient(135deg,#14B8A6,#0F766E); padding:6px 14px; border-radius:10px; min-width:44px; text-align:center;">
-                x{{ cantidad }}
+        <!-- Resumen de producción -->
+        <div v-if="resumenProduccion.length" class="kds-resumen">
+            <span class="kds-resumen-label">📊 Resumen de producción</span>
+            <span v-for="[nombre, cantidad] in resumenProduccion" :key="nombre" class="kds-chip">
+                {{ nombre }}
+                <span class="kds-chip-badge">x{{ cantidad }}</span>
             </span>
         </div>
-    </div>
-</div>
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
-                <div>
-                    <h1 style="font-size:32px; font-weight:800; color:#1E293B; margin:0;">🍳 Cocina</h1>
-                    <p style="font-size:16px; color:#94A3B8; margin:4px 0 0;">
-                        {{ pedidos.length }} pedido{{ pedidos.length !== 1 ? 's' : '' }} pendiente{{ pedidos.length !== 1 ? 's' : '' }}
-                        · Se actualiza cada 15 seg
-                    </p>
+
+        <!-- Sin pedidos -->
+        <div v-if="!pedidos.length" class="kds-empty">
+            <p style="font-size:96px; margin:0 0 16px;">✅</p>
+            <p class="kds-empty-title">¡Todo listo!</p>
+            <p class="kds-empty-sub">No hay pedidos pendientes en cocina</p>
+        </div>
+
+        <!-- Grid de pedidos -->
+        <div v-else class="kds-grid">
+            <div
+                v-for="pedido in pedidos"
+                :key="pedido.id"
+                class="kds-card"
+                :style="{ borderColor: colorTiempo(pedido.created_at).borde }"
+            >
+                <!-- Header tarjeta -->
+                <div class="kds-card-header" :style="{ background: colorTiempo(pedido.created_at).fondoHeader }">
+                    <div>
+                        <p class="kds-mesa">🪑 Mesa {{ pedido.mesa?.numero ?? '?' }}</p>
+                        <div style="display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap;">
+                            <span class="kds-ronda">Ronda {{ pedido.numero_ronda }} · {{ pedido.detalles.length }} items</span>
+                            <span v-if="sucursalDePedido(pedido)" class="kds-badge-sucursal">{{ sucursalDePedido(pedido) }}</span>
+                        </div>
+                    </div>
+                    <div class="kds-tiempo" :style="{ color: colorTiempo(pedido.created_at).texto }">
+                        ⏱ {{ minutosTranscurridos(pedido.created_at) }} min
+                    </div>
                 </div>
-                <button
-                    @click="recargar"
-                    :style="{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: actualizando ? '#F1F5F9' : 'linear-gradient(135deg,#14B8A6,#0F766E)',
-                        color: actualizando ? '#94A3B8' : 'white',
-                        border: 'none',
-                        borderRadius: '14px',
-                        padding: '14px 24px',
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        boxShadow: actualizando ? 'none' : '0 4px 15px rgba(20,184,166,0.3)',
-                    }"
-                >
-                    {{ actualizando ? '⏳ Actualizando...' : '🔄 Actualizar' }}
+
+                <!-- Items -->
+                <div class="kds-items">
+                    <div v-for="det in pedido.detalles" :key="det.id" class="kds-item">
+                        <div class="kds-item-cant">{{ det.cantidad }}</div>
+                        <div style="flex:1; min-width:0;">
+                            <p class="kds-item-nombre">{{ det.nombre_producto }}</p>
+                            <p v-if="det.notas" class="kds-item-nota">📝 {{ det.notas }}</p>
+                        </div>
+                        <span class="kds-item-estado" :class="`kds-item-estado--${det.estado}`">
+                            {{ det.estado === 'listo' ? '✅' : det.estado === 'en_preparacion' ? '👨‍🍳' : '⏳' }}
+                        </span>
+                    </div>
+
+                    <div v-if="pedido.notas" class="kds-nota-pedido">📝 {{ pedido.notas }}</div>
+                </div>
+
+                <!-- Botón listo -->
+                <button class="kds-btn-listo" @click="marcarListo(pedido)">
+                    ✅ LISTO
                 </button>
             </div>
-
-            <!-- Sin pedidos -->
-            <div v-if="!pedidos.length"
-                style="text-align:center; padding:100px 0; background:white; border-radius:24px; border:2px dashed #E2E8F0;">
-                <p style="font-size:64px; margin:0 0 16px;">✅</p>
-                <p style="font-size:24px; font-weight:700; color:#1E293B; margin:0 0 8px;">¡Todo listo!</p>
-                <p style="font-size:16px; color:#94A3B8; margin:0;">No hay pedidos pendientes en cocina</p>
-            </div>
-
-            <!-- Grid de pedidos -->
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
-                <div
-                    v-for="pedido in pedidos"
-                    :key="pedido.id"
-                    :style="{
-                        background: 'white',
-                        borderRadius: '20px',
-                        overflow: 'hidden',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                        border: `2px solid ${colorTiempo(pedido.created_at).border}`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }"
-                >
-                    <!-- Header tarjeta -->
-                    <div :style="{
-                        background: colorTiempo(pedido.created_at).bg,
-                        padding: '18px 20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        borderBottom: `2px solid ${colorTiempo(pedido.created_at).border}`,
-                    }">
-                        <div>
-                            <p style="font-size:26px; font-weight:800; color:#1E293B; margin:0;">
-                                🪑 Mesa {{ pedido.mesa?.numero ?? '?' }}
-                            </p>
-                            <p style="font-size:15px; color:#64748B; margin:4px 0 0;">
-                                Ronda {{ pedido.numero_ronda }} · {{ pedido.detalles.length }} items
-                            </p>
-                        </div>
-                        <div style="text-align:right;">
-                            <p :style="{
-                                fontSize: '22px',
-                                fontWeight: '800',
-                                color: colorTiempo(pedido.created_at).color,
-                                margin: '0',
-                            }">⏱ {{ tiempoTranscurrido(pedido.created_at) }}</p>
-                            <p style="font-size:13px; color:#94A3B8; margin:4px 0 0;">desde el pedido</p>
-                        </div>
-                    </div>
-
-                    <!-- Items -->
-                    <div style="padding:16px 20px; flex:1;">
-                        <div
-                            v-for="det in pedido.detalles"
-                            :key="det.id"
-                            style="display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #F1F5F9;"
-                        >
-                            <!-- Cantidad -->
-                            <div style="width:44px; height:44px; background:#F1F5F9; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#1E293B; flex-shrink:0;">
-                                {{ det.cantidad }}
-                            </div>
-
-                            <!-- Nombre -->
-                            <div style="flex:1; min-width:0;">
-                                <p style="font-size:17px; font-weight:700; color:#1E293B; margin:0; line-height:1.3;">{{ det.nombre_producto }}</p>
-                                <p v-if="det.notas" style="font-size:13px; color:#F59E0B; margin:4px 0 0; font-weight:600;">📝 {{ det.notas }}</p>
-                            </div>
-
-                            <!-- Estado -->
-                            <span :style="{
-                                padding: '6px 12px',
-                                borderRadius: '10px',
-                                fontSize: '13px',
-                                fontWeight: '700',
-                                background: det.estado === 'listo' ? '#DCFCE7' : det.estado === 'en_preparacion' ? '#FEF3C7' : '#F1F5F9',
-                                color: det.estado === 'listo' ? '#166534' : det.estado === 'en_preparacion' ? '#92400E' : '#64748B',
-                            }">
-                                {{ det.estado === 'listo' ? '✅ Listo' : det.estado === 'en_preparacion' ? '👨‍🍳 Prep.' : '⏳ Pendiente' }}
-                            </span>
-                        </div>
-
-                        <!-- Notas del pedido -->
-                        <div v-if="pedido.notas" style="margin-top:12px; padding:12px; background:#FFFBEB; border-radius:12px; border:1px solid #FDE68A;">
-                            <p style="font-size:14px; color:#92400E; margin:0; font-weight:600;">📝 {{ pedido.notas }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Botón listo -->
-                    <div style="padding:16px 20px; border-top:2px solid #F1F5F9;">
-                        <button
-                            @click="marcarListo(pedido)"
-                            style="width:100%; padding:16px; background:linear-gradient(135deg,#14B8A6,#0F766E); color:white; border:none; border-radius:14px; font-size:18px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(20,184,166,0.3); transition:transform 0.15s;"
-                            @mousedown="$event.currentTarget.style.transform='scale(0.97)'"
-                            @mouseup="$event.currentTarget.style.transform='scale(1)'"
-                        >
-                            ✅ Marcar como listo
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
-    </AppLayout>
+    </div>
 </template>
+
+<style scoped>
+.kds-root {
+    min-height: 100vh;
+    background: #0B1220;
+    color: #F1F5F9;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.kds-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #111827;
+    border: 1px solid #1F2937;
+    border-radius: 14px;
+    padding: 12px 20px;
+    margin-bottom: 14px;
+}
+
+.kds-header-title {
+    font-size: 19px;
+    font-weight: 800;
+    margin: 0;
+    color: #F8FAFC;
+}
+
+.kds-header-sub {
+    font-size: 13px;
+    color: #94A3B8;
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+.kds-clock {
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #14B8A6;
+}
+
+.kds-resumen {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-height: 60px;
+    background: #182238;
+    border: 1px solid #253352;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+}
+
+.kds-resumen-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #F1F5F9;
+    white-space: nowrap;
+    margin-right: 2px;
+    flex-shrink: 0;
+}
+
+.kds-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #253352;
+    color: #F1F5F9;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.kds-chip-badge {
+    background: #14B8A6;
+    color: #0F172A;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: 999px;
+}
+
+.kds-empty {
+    text-align: center;
+    padding: 140px 0;
+    background: #111827;
+    border: 2px dashed #1F2937;
+    border-radius: 24px;
+}
+
+.kds-empty-title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #F8FAFC;
+    margin: 0 0 8px;
+}
+
+.kds-empty-sub {
+    font-size: 18px;
+    color: #94A3B8;
+    margin: 0;
+}
+
+.kds-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+@media (min-width: 1100px) {
+    .kds-grid {
+        grid-template-columns: repeat(3, minmax(280px, 1fr));
+    }
+}
+
+.kds-card {
+    background: #111827;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid #1F2937;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.kds-card-header {
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 2px solid rgba(255,255,255,0.06);
+}
+
+.kds-mesa {
+    font-size: 18px;
+    font-weight: 800;
+    color: #F8FAFC;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.kds-ronda {
+    font-size: 11px;
+    color: #94A3B8;
+    font-weight: 600;
+}
+
+.kds-badge-sucursal {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #0F172A;
+    background: #14B8A6;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.kds-tiempo {
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.kds-items {
+    padding: 10px 14px;
+    flex: 1;
+}
+
+.kds-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1F2937;
+}
+
+.kds-item:last-child {
+    border-bottom: none;
+}
+
+.kds-item-cant {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    background: #1F2937;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #F8FAFC;
+}
+
+.kds-item-nombre {
+    font-size: 14px;
+    font-weight: 700;
+    color: #F1F5F9;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.kds-item-nota {
+    font-size: 12px;
+    color: #FBBF24;
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+.kds-item-estado {
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.kds-nota-pedido {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #2E2408;
+    border: 1px solid #92400E;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #FBBF24;
+    font-weight: 600;
+}
+
+.kds-btn-listo {
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #22C55E, #15803D);
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.1s;
+}
+
+.kds-btn-listo:active {
+    transform: scale(0.97);
+}
+</style>

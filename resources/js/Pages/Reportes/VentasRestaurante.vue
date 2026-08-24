@@ -16,6 +16,18 @@
         <!-- ===== TAB VENTAS ===== -->
         <div v-show="tab==='ventas'">
 
+        <!-- SELECTOR DE SUCURSAL (solo admin) -->
+        <div v-if="es_admin && sucursales.length > 1" style="display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;">
+            <button @click="seleccionarSucursal('')"
+                :style="{padding:'8px 18px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'700', background: !filtros.sucursal_id ? '#1E293B' : '#F1F5F9', color: !filtros.sucursal_id ? 'white' : '#475569'}">
+                🏬 Todos los locales
+            </button>
+            <button v-for="s in sucursales" :key="s.id" @click="seleccionarSucursal(s.id)"
+                :style="{padding:'8px 18px', borderRadius:'10px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'700', background: String(filtros.sucursal_id)===String(s.id) ? '#1E293B' : '#F1F5F9', color: String(filtros.sucursal_id)===String(s.id) ? 'white' : '#475569'}">
+                {{ s.nombre }}
+            </button>
+        </div>
+
         <!-- FILTROS -->
         <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.2rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
             <div>
@@ -320,6 +332,7 @@ const props = defineProps({
     por_dia:    { type: Array,  default: () => [] },
     top_mozos:  { type: Array,  default: () => [] },
     mozos:      { type: Array,  default: () => [] },
+    sucursales: { type: Array,  default: () => [] },
     filtros:    { type: Object, default: () => ({}) },
     es_admin:   { type: Boolean, default: false },
     ganancias:  { type: Object, default: null },
@@ -363,12 +376,18 @@ const ventasFiltradas = computed(() => {
 
 function buscar() {
     const params = new URLSearchParams()
-    params.set('desde',   filtros.value.desde   || '')
-    params.set('hasta',   filtros.value.hasta   || '')
-    params.set('metodo',  filtros.value.metodo  || '')
-    params.set('mozo_id', filtros.value.mozo_id || '')
+    params.set('desde',       filtros.value.desde       || '')
+    params.set('hasta',       filtros.value.hasta       || '')
+    params.set('metodo',      filtros.value.metodo      || '')
+    params.set('mozo_id',     filtros.value.mozo_id     || '')
+    params.set('sucursal_id', filtros.value.sucursal_id || '')
     const url = '/reportes-restaurante?' + params.toString()
     router.visit(url, { preserveScroll: true })
+}
+
+function seleccionarSucursal(id) {
+    filtros.value.sucursal_id = id
+    buscar()
 }
 
 function hoy() {

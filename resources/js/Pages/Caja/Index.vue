@@ -169,6 +169,15 @@
                         </div>
                     </div>
 
+                    <div v-if="desglosePagos.length" style="margin-bottom:12px;">
+                        <p style="font-weight:600; font-size:13px; margin-bottom:6px;">Desglose por método de pago:</p>
+                        <div v-for="item in desglosePagos" :key="item.metodo_pago"
+                             style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                            <span style="text-transform:capitalize;">{{ item.metodo_pago }} ({{ item.cantidad }})</span>
+                            <span>S/ {{ Number(item.total).toFixed(2) }}</span>
+                        </div>
+                    </div>
+
                     <div style="margin-bottom:1rem;">
                         <label style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Monto contado físicamente (S/)</label>
                         <input v-model="montoCierreReal" type="number" step="0.01" min="0"
@@ -307,9 +316,10 @@ import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
-    caja:         Object,
-    sesionActiva: Object,
-    historial:    Array,
+    caja:          Object,
+    sesionActiva:  Object,
+    historial:     Array,
+    desglosePagos: { type: Array, default: () => [] },
 })
 
 const montoApertura      = ref(0)

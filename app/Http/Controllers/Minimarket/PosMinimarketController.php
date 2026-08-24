@@ -319,12 +319,12 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         'cbc:ID'                   => ['_text' => $venta->serie . '-' . str_pad($venta->correlativo, 8, '0', STR_PAD_LEFT)],
         'cbc:IssueDate'            => ['_text' => \Carbon\Carbon::parse($venta->fecha_emision ?? now())->format('Y-m-d')],
         'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoDoc],
-        'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetrasMinimarket($total)],
+        'cbc:Note'                 => [['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetrasMinimarket($total)]],
         'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
-        'cac:PaymentTerms'         => [
+        'cac:PaymentTerms'         => [[
             'cbc:ID'             => ['_text' => 'FormaPago'],
             'cbc:PaymentMeansID' => ['_text' => 'Contado'],
-        ],
+        ]],
         'cac:AccountingSupplierParty' => [
             'cac:Party' => [
                 'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],

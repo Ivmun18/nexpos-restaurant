@@ -24,6 +24,7 @@ const props = defineProps({
     total_pendiente:   { type: Number, default: null },
     platos_pendientes: { type: Number, default: 0 },
     platos_pagados:    { type: Number, default: 0 },
+    empresa: Object,
 })
 
 const form = useForm({
@@ -129,6 +130,7 @@ const metodos = [
     { key: 'yape',     label: 'Yape',     icon: '📱' },
     { key: 'plin',     label: 'Plin',     icon: '📲' },
     { key: 'tarjeta',  label: 'Tarjeta',  icon: '💳' },
+    { key: 'transferencia', label: 'Transferencia', icon: '🏦' },
 ]
 
 const parteActual = computed(() => {
@@ -268,23 +270,24 @@ function cobrar() {
                         </div>
                     </div>
 
-                    <!-- Total -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-top:3px solid #E2E8F0; margin-top:8px;">
-                        <!-- Descuento -->
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; padding:10px 14px; background:#fefce8; border-radius:10px; border:1px solid #fde68a;">
-                            <span style="font-size:13px; font-weight:600; color:#92400e;">🏷️ Descuento</span>
-                            <div style="display:flex; gap:6px; margin-left:auto;">
-                                <button v-for="pct in [0,5,10,15,20]" :key="pct"
-                                    @click="descuentoPct=pct; form.monto_pagado=saldoReal.toFixed(2)"
-                                    :style="descuentoPct===pct ? 'background:#f59e0b; color:white; border:none;' : 'background:white; color:#92400e; border:1px solid #fde68a;'"
-                                    style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
-                                    {{ pct }}%
-                                </button>
-                            </div>
-                            <span v-if="descuentoPct>0" style="font-size:13px; color:#dc2626; font-weight:600; margin-left:8px;">
-                                -S/ {{ form.descuento.toFixed(2) }}
-                            </span>
+                    <!-- Descuento -->
+                    <div style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:10px 14px; background:#fefce8; border-radius:10px; border:1px solid #fde68a;">
+                        <span style="font-size:13px; font-weight:600; color:#92400e;">🏷️ Descuento</span>
+                        <div style="display:flex; gap:6px; margin-left:auto;">
+                            <button v-for="pct in [0,5,10,15,20]" :key="pct"
+                                @click="descuentoPct=pct; form.monto_pagado=saldoReal.toFixed(2)"
+                                :style="descuentoPct===pct ? 'background:#f59e0b; color:white; border:none;' : 'background:white; color:#92400e; border:1px solid #fde68a;'"
+                                style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                                {{ pct }}%
+                            </button>
                         </div>
+                        <span v-if="descuentoPct>0" style="font-size:13px; color:#dc2626; font-weight:600; margin-left:8px;">
+                            -S/ {{ form.descuento.toFixed(2) }}
+                        </span>
+                    </div>
+
+                    <!-- Total -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px solid #e5e7eb;">
                         <span style="font-size:22px; font-weight:800; color:#1E293B;">TOTAL</span>
                         <span style="font-size:32px; font-weight:800; color:#14B8A6;">S/ {{ Number(total).toFixed(2) }}</span>
                     </div>
@@ -574,21 +577,29 @@ function cobrar() {
         </div>
         <!-- PRE-CUENTA IMPRIMIBLE -->
         <div id="precuenta-print" class="precuenta-print">
-            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
-                <div style="font-size:16px; font-weight:bold;">PRE-CUENTA</div>
-                <div style="font-size:13px;">Mesa {{ mesa.numero }}</div>
-                <div style="font-size:10px;">{{ horaImpresion }}</div>
-                <div style="font-size:10px; font-style:italic;">No es comprobante de pago</div>
+            <div style="text-align:center; margin-bottom:8px;">
+                <div style="font-size:16px; font-weight:700;">{{ empresa?.nombre_comercial ?? empresa?.razon_social ?? 'PUNTO DE ENCUENTRO' }}</div>
+                <div style="font-size:11px;">{{ empresa?.direccion ?? '' }}</div>
+                <div style="font-size:11px;">RUC: {{ empresa?.ruc ?? '' }}</div>
             </div>
-            <div v-for="p in platos" :key="'pp'+p.id" style="font-size:12px; display:flex; justify-content:space-between; margin:3px 0;">
+            <div style="text-align:center; border-top:1px dashed #000; border-bottom:1px dashed #000; padding:4px 0; margin-bottom:8px;">
+                <div style="font-size:14px; font-weight:700;">CUENTA PRELIMINAR</div>
+                <div style="font-size:11px;">No es comprobante de pago</div>
+            </div>
+            <div style="font-size:11px; margin-bottom:8px;">
+                <div>Mesa: {{ mesa.nombre }}</div>
+                <div>Fecha: {{ horaImpresion }}</div>
+            </div>
+            <div style="border-top:1px dashed #000; margin-bottom:4px;"></div>
+            <div v-for="p in platos" :key="'pp'+p.id" style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:2px;">
                 <span>{{ p.cantidad }}x {{ p.nombre }}</span>
                 <span>S/ {{ p.subtotal.toFixed(2) }}</span>
             </div>
-            <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; display:flex; justify-content:space-between; font-size:15px; font-weight:bold;">
+            <div style="border-top:1px dashed #000; margin-top:4px; padding-top:4px; font-size:14px; font-weight:700; display:flex; justify-content:space-between;">
                 <span>TOTAL</span>
                 <span>S/ {{ Number(total).toFixed(2) }}</span>
             </div>
-            <div style="text-align:center; font-size:10px; margin-top:10px;">¡Gracias por su visita!</div>
+            <div style="text-align:center; font-size:11px; margin-top:8px;">¡Gracias por su visita!</div>
         </div>
 
     </AppLayout>
@@ -604,11 +615,9 @@ function cobrar() {
         display: block !important;
         position: absolute;
         left: 0; top: 0;
-        width: 280px;
-        padding: 8px;
-        font-family: 'Courier New', monospace;
-        color: #000;
+        width: 80mm;
+        padding: 4mm;
+        font-family: monospace;
     }
-    @page { margin: 4mm; }
 }
 </style>

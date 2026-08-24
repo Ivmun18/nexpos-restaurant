@@ -212,7 +212,8 @@ class CajaNotariaController extends Controller
         }
 
         // Solo emitir comprobante cuando el expediente está TOTALMENTE pagado
-        if ($estadoPago === 'pagado' && $request->tipo_comprobante && $request->cliente_nombre) {
+        // y el usuario autenticado tiene permiso de facturar.
+        if ($estadoPago === 'pagado' && $request->tipo_comprobante && $request->cliente_nombre && auth()->user()->puedeFacturar()) {
             $resultado = app(\App\Http\Controllers\Notaria\ComprobantesNotariaController::class)->emitir($request, $acto);
             $data = $resultado->getData(true);
             return response()->json([
@@ -245,6 +246,11 @@ class CajaNotariaController extends Controller
             'cliente_nombre'   => 'nullable|string',
             'cliente_documento'=> 'nullable|string',
         ]);
+
+        // Servicio Rápido siempre emite comprobante, así que requiere permiso de facturar.
+        if (!auth()->user()->puedeFacturar()) {
+            return response()->json(['success' => false, 'mensaje' => 'No tiene permiso para emitir comprobantes.']);
+        }
 
         if (!SesionCaja::join('caja', 'sesiones_caja.caja_id', '=', 'caja.id')->where('sesiones_caja.estado', 'abierta')->where('caja.empresa_id', auth()->user()->empresa->id)->exists()) {
             return response()->json(['success' => false, 'mensaje' => 'No hay caja abierta.']);

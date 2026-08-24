@@ -20,15 +20,79 @@ class ComprobanteSunatController extends Controller
         $empresaId = auth()->user()->empresa_id;
 
         $comprobantes = ComprobanteSunat::where('empresa_id', $empresaId)
-            ->with(['caja.mesa'])
-            ->when($request->tipo, fn($q, $t) => $q->where('tipo_comprobante', $t))
+            ->with(['caja.mesa', 'caja.user'])
             ->when($request->desde, fn($q, $d) => $q->whereDate('fecha_emision', '>=', $d))
             ->when($request->hasta, fn($q, $h) => $q->whereDate('fecha_emision', '<=', $h))
+            ->when($request->tipo && $request->tipo !== 'ticket', fn($q, $t) => $q->where('tipo_comprobante', $t))
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->get()
+            ->map(fn($c) => [
+                'id'          => 'sunat-' . $c->id,
+                'tipo'        => match ($c->tipo_comprobante) {
+                    '01'    => 'Factura',
+                    '03'    => 'Boleta',
+                    '07'    => 'Nota Crédito',
+                    default => 'Comprobante',
+                },
+                'numero'      => $c->numero_completo,
+                'fecha'       => $c->fecha_emision,
+                'created_at'  => $c->created_at,
+                'cliente'     => $c->cliente_nombre,
+                'cajero'      => $c->caja?->user?->name ?? '—',
+                'total'       => $c->total,
+                'estado'      => $c->estado,
+                'mesa'        => $c->caja?->mesa?->nombre,
+                'metodo_pago' => $c->caja?->metodo_pago,
+                'source'      => 'sunat',
+                'source_id'   => $c->id,
+            ]);
+
+        $tickets = \App\Models\CajaRestaurante::where('empresa_id', $empresaId)
+            ->where('tipo_comprobante', 'ninguno')
+            ->whereDoesntHave('comprobante')
+            ->with(['mesa', 'user'])
+            ->when($request->desde, fn($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($request->hasta, fn($q, $h) => $q->whereDate('created_at', '<=', $h))
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($t) => [
+                'id'          => 'ticket-' . $t->id,
+                'tipo'        => 'Ticket',
+                'numero'      => '—',
+                'fecha'       => $t->created_at,
+                'created_at'  => $t->created_at,
+                'cliente'     => $t->user?->name ?? '—',
+                'cajero'      => $t->user?->name ?? '—',
+                'total'       => $t->total,
+                'estado'      => 'ticket',
+                'mesa'        => $t->mesa?->nombre,
+                'metodo_pago' => $t->metodo_pago,
+                'source'      => 'ticket',
+                'source_id'   => $t->id,
+            ]);
+
+        // Solo incluir tickets si el filtro tipo es 'ticket' o no hay filtro
+        $todos = match (true) {
+            $request->tipo === 'ticket' => $tickets,
+            !$request->tipo             => $comprobantes->concat($tickets),
+            default                     => $comprobantes,
+        };
+
+        $todos = $todos->sortByDesc('created_at')->values();
+
+        // Paginar manualmente (colección combinada de dos tablas distintas)
+        $page      = (int) $request->input('page', 1);
+        $perPage   = 20;
+        $resultado = new \Illuminate\Pagination\LengthAwarePaginator(
+            $todos->slice(($page - 1) * $perPage, $perPage)->values(),
+            $todos->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url()]
+        );
 
         return Inertia::render('Comprobantes/Index', [
-            'comprobantes' => $comprobantes,
+            'comprobantes' => $resultado,
             'filtros' => [
                 'tipo'  => $request->tipo,
                 'desde' => $request->desde,
@@ -123,7 +187,7 @@ class ComprobanteSunatController extends Controller
 
         $lineas = [[
             'cbc:ID'                  => ['_text' => '1'],
-            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'NIU'], '_text' => '1'],
             'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
             'cac:PricingReference'    => [
                 'cac:AlternativeConditionPrice' => [
@@ -161,6 +225,7 @@ class ComprobanteSunatController extends Controller
             'cbc:CustomizationID'      => ['_text' => '2.0'],
             'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
             'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
+            'cbc:IssueTime'            => ['_text' => now()->format('H:i:s')],
             'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => '03'],
             'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)],
             'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
@@ -240,7 +305,7 @@ class ComprobanteSunatController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
             ]);
 
             return redirect()->route('comprobantes.show', $comprobante)
@@ -264,10 +329,18 @@ class ComprobanteSunatController extends Controller
             'cliente_email'        => 'nullable|email',
         ]);
 
-        $empresa = auth()->user()->empresa;
-        $total   = round(floatval($caja->total), 2);
-        $gravada = round($total / 1.18, 2);
-        $igv     = round($total - $gravada, 2);
+        $empresa   = auth()->user()->empresa;
+        $exonerada = $empresa->zona_exonerada ?? false;
+        $total     = round(floatval($caja->total), 2);
+
+        if ($exonerada) {
+            $gravada = 0;
+            $igv     = 0;
+        } else {
+            $gravada = round($total / 1.18, 2);
+            $igv     = round($total - $gravada, 2);
+        }
+        $baseImponible = $exonerada ? $total : $gravada;
 
         if (!$empresa->apisunat_token) {
             return back()->withErrors(['error' => 'No hay token de facturación configurado.']);
@@ -282,12 +355,12 @@ class ComprobanteSunatController extends Controller
         $mesaNumero  = $caja->mesa->numero ?? 'S/N';
         $descripcion = 'Consumo en Mesa ' . $mesaNumero;
 
-        $valUnit = round($total / 1.18, 4);
-        $igvItem = round($total - $valUnit, 2);
+        $valUnit = $exonerada ? $total : round($total / 1.18, 4);
+        $igvItem = $exonerada ? 0 : round($total - $valUnit, 2);
 
         $lineas = [[
             'cbc:ID'                  => ['_text' => '1'],
-            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'NIU'], '_text' => '1'],
             'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
             'cac:PricingReference'    => [
                 'cac:AlternativeConditionPrice' => [
@@ -301,11 +374,11 @@ class ComprobanteSunatController extends Controller
                     'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
                     'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                     'cac:TaxCategory'   => [
-                        'cbc:Percent'                => ['_text' => '18'],
-                        'cbc:TaxExemptionReasonCode' => ['_text' => '10'],
+                        'cbc:Percent'                => ['_text' => $exonerada ? '0' : '18'],
+                        'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
                         'cac:TaxScheme' => [
-                            'cbc:ID'          => ['_text' => '1000'],
-                            'cbc:Name'        => ['_text' => 'IGV'],
+                            'cbc:ID'          => ['_text' => $exonerada ? '9997' : '1000'],
+                            'cbc:Name'        => ['_text' => $exonerada ? 'EXO' : 'IGV'],
                             'cbc:TaxTypeCode' => ['_text' => 'VAT'],
                         ],
                     ],
@@ -356,19 +429,19 @@ class ComprobanteSunatController extends Controller
             'cac:TaxTotal' => [
                 'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
                 'cac:TaxSubtotal' => [[
-                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $gravada],
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
                     'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
                     'cac:TaxCategory'   => [
                         'cac:TaxScheme' => [
-                            'cbc:ID'          => ['_text' => '1000'],
-                            'cbc:Name'        => ['_text' => 'IGV'],
+                            'cbc:ID'          => ['_text' => $exonerada ? '9997' : '1000'],
+                            'cbc:Name'        => ['_text' => $exonerada ? 'EXO' : 'IGV'],
                             'cbc:TaxTypeCode' => ['_text' => 'VAT'],
                         ],
                     ],
                 ]],
             ],
             'cac:LegalMonetaryTotal' => [
-                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $gravada],
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
                 'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
                 'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
             ],
@@ -411,7 +484,7 @@ class ComprobanteSunatController extends Controller
                 'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                 'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
                 'enlace_pdf'               => $pdfUrl,
-                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
             ]);
 
             return redirect()->route('comprobantes.show', $comprobante)
@@ -419,6 +492,228 @@ class ComprobanteSunatController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error emitirFactura restaurante: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al emitir: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Formulario para emitir nota de crédito sobre un comprobante existente
+     */
+    public function crearNotaCredito($id)
+    {
+        $empresa = auth()->user()->empresa;
+        $comprobante = ComprobanteSunat::where('id', $id)
+            ->where('empresa_id', $empresa->id)
+            ->with('caja.mesa')
+            ->firstOrFail();
+
+        return Inertia::render('Comprobantes/NotaCreditoCrear', [
+            'comprobante' => $comprobante,
+        ]);
+    }
+
+    /**
+     * Emitir nota de crédito referenciando un comprobante existente
+     */
+    public function emitirNotaCredito(Request $request, $id)
+    {
+        $request->validate([
+            'motivo_codigo'      => 'required|string|max:2',
+            'motivo_descripcion' => 'required|string|max:200',
+        ]);
+
+        $empresa  = auth()->user()->empresa;
+        $original = ComprobanteSunat::where('id', $id)
+            ->where('empresa_id', $empresa->id)
+            ->first();
+
+        if (!$original) {
+            return back()->withErrors(['error' => 'Comprobante original no encontrado']);
+        }
+
+        if (!in_array($original->tipo_comprobante, ['01', '03'])) {
+            return back()->withErrors(['error' => 'Solo se puede emitir nota de crédito sobre una boleta o factura']);
+        }
+
+        $exonerada = $empresa->zona_exonerada ?? false;
+        $total     = round(floatval($original->total), 2);
+        $gravada   = round(floatval($original->total_gravada), 2);
+        $igv       = round(floatval($original->total_igv), 2);
+
+        // Serie y correlativo según tipo del comprobante original
+        if ($original->tipo_comprobante === '03') {
+            $serie       = $empresa->serie_nota_credito ?? 'BC01';
+            $correlativo = ($empresa->ultimo_num_nota_credito ?? 0) + 1;
+            $empresa->increment('ultimo_num_nota_credito');
+        } else {
+            $serie       = $empresa->serie_nota_credito_factura ?? 'FC01';
+            $correlativo = ($empresa->ultimo_num_nota_credito_factura ?? 0) + 1;
+            $empresa->increment('ultimo_num_nota_credito_factura');
+        }
+
+        $fileName = $empresa->ruc . '-07-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
+
+        // Sin token ApiSunat → guardar local
+        if (!$empresa->apisunat_token) {
+            $comprobante = ComprobanteSunat::create([
+                'empresa_id'               => $empresa->id,
+                'caja_restaurante_id'      => $original->caja_restaurante_id,
+                'tipo_comprobante'         => '07',
+                'serie'                    => $serie,
+                'numero'                   => $correlativo,
+                'fecha_emision'            => now(),
+                'cliente_tipo_documento'   => $original->cliente_tipo_documento,
+                'cliente_numero_documento' => $original->cliente_numero_documento,
+                'cliente_nombre'           => $original->cliente_nombre,
+                'cliente_direccion'        => $original->cliente_direccion,
+                'cliente_email'            => $original->cliente_email,
+                'total_gravada'            => $gravada,
+                'total_igv'                => $igv,
+                'total'                    => $total,
+                'estado'                   => 'emitido',
+            ]);
+
+            return redirect()->route('comprobantes.show', $comprobante)
+                ->with('success', 'Nota de crédito registrada localmente.')
+                ->with('imprimir', true);
+        }
+
+        $mesaNumero  = $original->caja->mesa->numero ?? 'S/N';
+        $descripcion = 'Consumo en Mesa ' . $mesaNumero;
+
+        $valUnit = $exonerada ? $total : round($total / 1.18, 4);
+        $igvItem = $exonerada ? 0 : round($total - $valUnit, 2);
+
+        $taxCategory = [
+            'cbc:Percent'                => ['_text' => $exonerada ? '0' : '18'],
+            'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
+            'cac:TaxScheme' => [
+                'cbc:ID'          => ['_text' => $exonerada ? '9997' : '1000'],
+                'cbc:Name'        => ['_text' => $exonerada ? 'EXO' : 'IGV'],
+                'cbc:TaxTypeCode' => ['_text' => 'VAT'],
+            ],
+        ];
+
+        $lineas = [[
+            'cbc:ID'                  => ['_text' => '1'],
+            'cbc:CreditedQuantity'    => ['_attributes' => ['unitCode' => 'NIU'], '_text' => '1'],
+            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+            'cac:TaxTotal' => [
+                'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                'cac:TaxSubtotal' => [[
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                    'cac:TaxCategory'   => $taxCategory,
+                ]],
+            ],
+            'cac:Item' => [
+                'cbc:Description'               => ['_text' => $descripcion],
+                'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']],
+            ],
+            'cac:Price' => [
+                'cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+            ],
+        ]];
+
+        $clienteParty = [
+            'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $original->cliente_tipo_documento], '_text' => $original->cliente_numero_documento]],
+            'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($original->cliente_nombre)]],
+        ];
+        if ($original->cliente_direccion) {
+            $clienteParty['cac:PartyLegalEntity']['cac:RegistrationAddress'] = [
+                'cbc:AddressTypeCode' => ['_text' => '0000'],
+                'cac:AddressLine'     => ['cbc:Line' => ['_text' => $original->cliente_direccion]],
+            ];
+        }
+
+        $documentBody = [
+            'cbc:UBLVersionID'         => ['_text' => '2.1'],
+            'cbc:CustomizationID'      => ['_text' => '2.0'],
+            'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
+            'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
+            'cbc:IssueTime'            => ['_text' => now()->format('H:i:s')],
+            'cbc:Note'                 => [['_attributes' => ['languageLocaleID' => '1000'], '_text' => $this->numeroALetras($total)]],
+            'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+            'cac:DiscrepancyResponse' => [
+                'cbc:ResponseCode' => ['_text' => $request->motivo_codigo],
+                'cbc:Description'  => ['_text' => $request->motivo_descripcion],
+            ],
+            'cac:BillingReference' => [
+                'cac:InvoiceDocumentReference' => [
+                    'cbc:ID'               => ['_text' => $original->numero_completo],
+                    'cbc:DocumentTypeCode' => ['_text' => $original->tipo_comprobante],
+                ],
+            ],
+            'cac:AccountingSupplierParty' => ['cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
+                'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                'cac:PartyLegalEntity'    => [
+                    'cbc:RegistrationName'    => ['_text' => $empresa->razon_social],
+                    'cac:RegistrationAddress' => [
+                        'cbc:AddressTypeCode' => ['_text' => '0000'],
+                        'cac:AddressLine'     => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']],
+                    ],
+                ],
+            ]],
+            'cac:AccountingCustomerParty' => ['cac:Party' => $clienteParty],
+            'cac:TaxTotal' => [
+                'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                'cac:TaxSubtotal' => [[
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $gravada],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                    'cac:TaxCategory'   => $taxCategory,
+                ]],
+            ],
+            'cac:LegalMonetaryTotal' => [
+                'cbc:PayableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $total],
+            ],
+            'cac:CreditNoteLine' => $lineas,
+        ];
+
+        try {
+            $response = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout(60)
+                ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'fileName'     => $fileName,
+                    'documentBody' => $documentBody,
+                ]);
+
+            $data      = $response->json();
+            Log::info('ApiSunat emitirNotaCredito response: ' . json_encode($data));
+
+            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
+            $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+
+            $comprobante = ComprobanteSunat::create([
+                'empresa_id'               => $empresa->id,
+                'caja_restaurante_id'      => $original->caja_restaurante_id,
+                'tipo_comprobante'         => '07',
+                'serie'                    => $serie,
+                'numero'                   => $correlativo,
+                'fecha_emision'            => now()->toDateString(),
+                'cliente_tipo_documento'   => $original->cliente_tipo_documento,
+                'cliente_numero_documento' => $original->cliente_numero_documento,
+                'cliente_nombre'           => $original->cliente_nombre,
+                'cliente_direccion'        => $original->cliente_direccion,
+                'cliente_email'            => $original->cliente_email,
+                'total_gravada'            => $gravada,
+                'total_igv'                => $igv,
+                'total'                    => $total,
+                'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+                'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
+                'enlace_xml'               => $pendiente && isset($data['xml']) ? $data['xml'] : null,
+                'enlace_pdf'               => $pdfUrl,
+                'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
+            ]);
+
+            return redirect()->route('comprobantes.show', $comprobante)
+                ->with('success', $aceptada ? '¡Nota de crédito emitida y aceptada por SUNAT!' : '¡Nota de crédito emitida!');
+
+        } catch (\Exception $e) {
+            Log::error('Error emitirNotaCredito restaurante: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Error al emitir: ' . $e->getMessage()]);
         }
     }
@@ -451,7 +746,7 @@ class ComprobanteSunatController extends Controller
 
         $lineas = [[
             'cbc:ID'                  => ['_text' => '1'],
-            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'NIU'], '_text' => '1'],
             'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
             'cac:PricingReference'    => [
                 'cac:AlternativeConditionPrice' => [
@@ -552,7 +847,7 @@ class ComprobanteSunatController extends Controller
             \DB::table('comprobantes_sunat')->where('id', $id)->update([
                 'aceptada_por_sunat' => $aceptada ? 1 : 0,
                 'sunat_descripcion'  => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
-                'estado'             => $aceptada ? 'aceptado' : ($pendiente ? 'aceptado' : 'rechazado'),
+                'estado'             => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 'updated_at'         => now(),
             ]);
 
@@ -627,11 +922,74 @@ class ComprobanteSunatController extends Controller
     }
 
     /**
+     * Consultar estado de un comprobante en ApiSunat/SUNAT
+     */
+    public function consultarEstado($id)
+    {
+        $comprobante = ComprobanteSunat::with('empresa')->find($id);
+
+        if (!$comprobante) {
+            return response()->json(['success' => false, 'mensaje' => 'Comprobante no encontrado'], 404);
+        }
+
+        if (auth()->check() && $comprobante->empresa_id !== auth()->user()->empresa_id) {
+            return response()->json(['success' => false, 'mensaje' => 'No autorizado'], 403);
+        }
+
+        $empresa = $comprobante->empresa;
+
+        if (!$empresa || !$empresa->apisunat_token) {
+            return response()->json(['success' => false, 'mensaje' => 'Empresa sin token ApiSunat configurado'], 422);
+        }
+
+        $fileName = $empresa->ruc . '-' . $comprobante->tipo_comprobante . '-' . $comprobante->serie
+            . '-' . str_pad($comprobante->numero, 8, '0', STR_PAD_LEFT);
+
+        try {
+            $response = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout(30)
+                ->post('https://back.apisunat.com/personas/v1/getDocument', [
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'fileName'     => $fileName,
+                ]);
+
+            $data = $response->json();
+            Log::info("consultarEstado comprobante {$comprobante->id} ({$fileName}): " . json_encode($data));
+
+            $status = $data['status'] ?? null;
+
+            if ($status === 'ACEPTADA' || isset($data['sunatResponse'])) {
+                $comprobante->update([
+                    'estado'             => 'aceptado',
+                    'aceptada_por_sunat' => 1,
+                    'sunat_descripcion'  => 'Aceptada',
+                ]);
+            } elseif ($status === 'RECHAZADA') {
+                $comprobante->update([
+                    'estado'            => 'rechazado',
+                    'sunat_descripcion' => json_encode($data),
+                ]);
+            }
+
+            return response()->json([
+                'success'         => true,
+                'estado'          => $comprobante->fresh()->estado,
+                'status_apisunat' => $status,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Error consultarEstado comprobante {$id}: " . $e->getMessage());
+            return response()->json(['success' => false, 'mensaje' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Ver detalle de comprobante
      */
     public function show(ComprobanteSunat $comprobante)
     {
-        $comprobante->load(['caja.mesa', 'empresa']);
+        $comprobante->load(['caja.mesa', 'caja.user', 'empresa']);
 
         $pedidos = [];
         if ($comprobante->caja_restaurante_id) {

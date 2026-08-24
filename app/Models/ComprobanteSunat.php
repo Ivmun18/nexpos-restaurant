@@ -45,6 +45,11 @@ class ComprobanteSunat extends Model
         'aceptada_por_sunat' => 'boolean',
     ];
 
+    protected $appends = [
+        'numero_completo',
+        'tipo_comprobante_nombre',
+    ];
+
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);

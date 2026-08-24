@@ -293,7 +293,10 @@ const abrirModalNuevaHora = (hora) => {
 
 const searchPaciente = async () => {
   if (buscarPaciente.value.length < 2) { resultadosPaciente.value = []; return }
-  const r = await fetch('/odontologia/pacientes/buscar?q=' + buscarPaciente.value, { credentials: 'include' })
+  const r = await fetch('/odontologia/pacientes/buscar?q=' + buscarPaciente.value, {
+      credentials: 'include',
+      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '', 'Accept': 'application/json' }
+    })
   resultadosPaciente.value = await r.json()
 }
 

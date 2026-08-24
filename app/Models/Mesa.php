@@ -14,6 +14,7 @@ class Mesa extends Model
 
     protected $fillable = [
         'empresa_id',
+        'sucursal_id',
         'numero',
         'nombre',
         'capacidad',
@@ -32,6 +33,11 @@ class Mesa extends Model
     public function mozo()
     {
         return $this->belongsTo(User::class, 'mozo_id');
+    }
+
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class);
     }
 
     public function getColorEstadoAttribute(): string

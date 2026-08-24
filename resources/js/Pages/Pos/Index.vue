@@ -14,6 +14,20 @@ const props = defineProps({
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
+
+const productosGridWrapRef = ref(null)
+
+// En móvil, categorías y productos son dos vistas separadas (no dos paneles superpuestos)
+const showCategorias = ref(true)
+
+function seleccionarCategoria(catId) {
+    categoriaActiva.value = catId
+    busqueda.value = ''
+    showCategorias.value = false
+    if (productosGridWrapRef.value) {
+        productosGridWrapRef.value.scrollTop = 0
+    }
+}
 const horaActual = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
 
 const windowWidth = ref(window.innerWidth)
@@ -28,6 +42,9 @@ const isDesktop = computed(() => windowWidth.value >= 1100)
 // En móvil y tablet usamos tabs
 const tabMovil = ref('carta')
 const isMobilePOS = computed(() => windowWidth.value < 1100)
+
+// En celular (<768px) el pedido es un drawer fijo abajo en vez de un tab
+const drawerAbierto = ref(false)
 
 // Ancho del panel carta según pantalla
 const cartaWidth = computed(() => {
@@ -64,12 +81,19 @@ const categoriaSeleccionada = computed(() =>
     props.categorias.find(c => c.id === categoriaActiva.value)
 )
 
+const buscando = computed(() => busqueda.value.trim().length > 0)
+
+const todosLosProductosActivos = computed(() =>
+    props.categorias.flatMap(cat => cat.productos_activos || [])
+)
+
 const productosFiltrados = computed(() => {
+    if (buscando.value) {
+        const q = busqueda.value.toLowerCase()
+        return todosLosProductosActivos.value.filter(p => p.nombre.toLowerCase().includes(q))
+    }
     if (!categoriaSeleccionada.value) return []
-    if (!busqueda.value) return categoriaSeleccionada.value.productos_activos
-    return categoriaSeleccionada.value.productos_activos.filter(p =>
-        p.nombre.toLowerCase().includes(busqueda.value.toLowerCase())
-    )
+    return categoriaSeleccionada.value.productos_activos
 })
 
 const puedeCobar = computed(() => {
@@ -117,13 +141,23 @@ function eliminarItem(index) {
 }
 
 const enviando = ref(false)
+const mostrarConfirmacion = ref(false)
+
+function abrirConfirmacion() {
+    if (!carrito.value.length) return
+    mostrarConfirmacion.value = true
+}
+
+function cerrarConfirmacion() {
+    mostrarConfirmacion.value = false
+}
 
 function enviarACocina() {
     if (!carrito.value.length) return
     enviando.value = true
     const form = useForm({ items: carrito.value, notas: notasPedido.value })
     form.post(`/pos/${props.mesa.id}`, {
-        onSuccess: () => { enviando.value = false },
+        onSuccess: () => { enviando.value = false; mostrarConfirmacion.value = false },
         onError:   () => { enviando.value = false },
     })
 }
@@ -136,8 +170,8 @@ function cerrarMesa() {
 <template>
     <AppLayout :title="`🍽️ Mesa ${mesa.numero} · POS`">
 
-        <!-- ══ TABS (móvil y tablet) ══ -->
-        <div v-if="isMobilePOS" class="pos-tabs">
+        <!-- ══ TABS (solo tablet: el celular usa el drawer fijo de abajo) ══ -->
+        <div v-if="isMobilePOS && !isMobile" class="pos-tabs">
             <button @click="tabMovil='carta'" :class="['pos-tab', tabMovil==='carta' ? 'pos-tab--active' : '']">
                 🍽️ Carta
             </button>
@@ -152,7 +186,7 @@ function cerrarMesa() {
 
             <!-- ══ PANEL CARTA ══ -->
             <div class="panel-carta"
-                :class="{ 'panel--hidden': isMobilePOS && tabMovil === 'pedido' }"
+                :class="{ 'panel--hidden': isMobilePOS && !isMobile && tabMovil === 'pedido', 'panel-carta--movil': isMobile }"
                 :style="{ width: isDesktop ? cartaWidth : undefined }">
 
                 <!-- Búsqueda -->
@@ -160,11 +194,11 @@ function cerrarMesa() {
                     <input v-model="busqueda" type="text" placeholder="🔍 Buscar producto..." class="search-input" />
                 </div>
 
-                <!-- Categorías -->
-                <div class="categorias-bar">
+                <!-- Categorías (en móvil: vista propia, oculta al ver productos o al buscar) -->
+                <div v-if="!isMobile || (showCategorias && !buscando)" class="categorias-bar">
                     <button
                         v-for="cat in categorias" :key="cat.id"
-                        @click="categoriaActiva = cat.id; busqueda = ''"
+                        @click="seleccionarCategoria(cat.id)"
                         class="cat-btn"
                         :class="{ 'cat-btn--active': categoriaActiva === cat.id }"
                         :style="categoriaActiva === cat.id ? { background: cat.color || '#14B8A6' } : {}"
@@ -174,8 +208,13 @@ function cerrarMesa() {
                     </button>
                 </div>
 
-                <!-- Grid productos -->
-                <div class="productos-grid-wrap">
+                <!-- Volver a categorías (solo móvil, viendo productos, sin búsqueda activa) -->
+                <div v-if="isMobile && !showCategorias && !buscando" class="volver-categorias-wrap">
+                    <button @click="showCategorias = true" class="volver-categorias-btn">← Categorías</button>
+                </div>
+
+                <!-- Grid productos (en móvil: si ya se eligió categoría o si hay búsqueda activa) -->
+                <div v-if="!isMobile || !showCategorias || buscando" class="productos-grid-wrap" ref="productosGridWrapRef">
                     <div class="productos-grid">
                         <button
                             v-for="prod in productosFiltrados" :key="prod.id"
@@ -186,22 +225,46 @@ function cerrarMesa() {
                             <p class="prod-nombre">{{ prod.nombre }}</p>
                             <p v-if="prod.descripcion" class="prod-desc">{{ prod.descripcion }}</p>
                             <div class="prod-footer">
-                                <span class="prod-precio">S/ {{ Number(prod.precio).toFixed(2) }}</span>
-                                <span class="prod-tiempo">⏱ {{ prod.tiempo_preparacion }}min</span>
+                                <div>
+                                    <span class="prod-precio">S/ {{ Number(prod.precio).toFixed(2) }}</span>
+                                    <span class="prod-tiempo">⏱ {{ prod.tiempo_preparacion }}min</span>
+                                </div>
+                                <span class="prod-add-btn" @click.stop="agregarProducto(prod)" aria-label="Agregar">+</span>
                             </div>
                         </button>
                     </div>
                     <div v-if="!productosFiltrados.length" class="productos-vacio">
                         <p style="font-size:40px; margin:0 0 10px;">🍽️</p>
-                        <p>Sin productos en esta categoría</p>
+                        <p>{{ buscando ? `Sin resultados para "${busqueda}"` : 'Sin productos en esta categoría' }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- ══ PANEL PEDIDO ══ -->
             <div class="panel-pedido"
-                :class="{ 'panel--hidden': isMobilePOS && tabMovil === 'carta' }"
+                :class="{
+                    'panel--hidden': isMobilePOS && !isMobile && tabMovil === 'carta',
+                    'drawer-movil': isMobile,
+                    'drawer-movil--abierto': isMobile && drawerAbierto,
+                }"
                 :style="{ width: isDesktop ? pedidoWidth : undefined }">
+
+                <!-- Barra fija del drawer (solo celular): resumen + enviar, siempre visible -->
+                <div v-if="isMobile" class="drawer-handle" @click="drawerAbierto = !drawerAbierto">
+                    <div class="drawer-handle-bar"></div>
+                    <div class="drawer-resumen">
+                        <span>🛒 {{ carrito.length }} item{{ carrito.length !== 1 ? 's' : '' }} · Total mesa <strong>S/ {{ totalGeneral.toFixed(2) }}</strong></span>
+                        <span class="drawer-chevron">{{ drawerAbierto ? '⌄' : '⌃' }}</span>
+                    </div>
+                    <button
+                        @click.stop="abrirConfirmacion"
+                        :disabled="!carrito.length || enviando"
+                        class="drawer-enviar-btn"
+                        :class="{ 'enviar-btn--disabled': !carrito.length }"
+                    >
+                        {{ enviando ? '⏳ Enviando...' : '🍳 ENVIAR A COCINA' }}
+                    </button>
+                </div>
 
                 <!-- Header mesa -->
                 <div class="mesa-header">
@@ -282,9 +345,9 @@ function cerrarMesa() {
                         </div>
                     </div>
 
-                    <!-- Enviar -->
-                    <div class="enviar-wrap">
-                        <button @click="enviarACocina" :disabled="!carrito.length || enviando" class="enviar-btn" :class="{ 'enviar-btn--disabled': !carrito.length }">
+                    <!-- Enviar (en celular ya está el botón fijo del drawer arriba) -->
+                    <div v-if="!isMobile" class="enviar-wrap">
+                        <button @click="abrirConfirmacion" :disabled="!carrito.length || enviando" class="enviar-btn" :class="{ 'enviar-btn--disabled': !carrito.length }">
                             {{ enviando ? '⏳ Enviando...' : '🍳 Enviar a cocina' }}
                         </button>
                     </div>
@@ -292,19 +355,49 @@ function cerrarMesa() {
             </div>
         </div>
 
-        <!-- Botón flotante carta → pedido (móvil/tablet) -->
-        <div v-if="isMobilePOS && carrito.length && tabMovil === 'carta'" class="fab-pedido">
+        <!-- Botón flotante carta → pedido (solo tablet: el celular usa el drawer fijo) -->
+        <div v-if="isMobilePOS && !isMobile && carrito.length && tabMovil === 'carta'" class="fab-pedido">
             <button @click="tabMovil = 'pedido'" class="fab-btn">
                 🛒 Ver pedido ({{ carrito.length }}) — S/ {{ totalCarrito.toFixed(2) }}
             </button>
         </div>
 
-        <!-- Botones flotantes en tab Pedido (móvil/tablet) -->
-        <div v-if="isMobilePOS && tabMovil === 'pedido'" class="fab-pedido-btns">
+        <!-- Botones flotantes en tab Pedido (solo tablet) -->
+        <div v-if="isMobilePOS && !isMobile && tabMovil === 'pedido'" class="fab-pedido-btns">
             <button @click="tabMovil = 'carta'" class="fab-volver">← Carta</button>
             <button v-if="puedeCobar" @click="cerrarMesa" class="fab-cobrar">
                 💳 Cobrar S/ {{ totalGeneral.toFixed(2) }}
             </button>
+        </div>
+
+        <!-- MODAL CONFIRMACIÓN DE PEDIDO -->
+        <div v-if="mostrarConfirmacion" class="confirmacion-overlay" @click.self="cerrarConfirmacion">
+            <div class="confirmacion-modal">
+                <h3 class="confirmacion-titulo">🍳 Confirmar pedido</h3>
+                <p class="confirmacion-sub">Mesa {{ mesa.numero }} · Ronda {{ siguienteRonda }}</p>
+
+                <div class="confirmacion-items">
+                    <div v-for="(item, i) in carrito" :key="i" class="confirmacion-item">
+                        <span class="confirmacion-item-cant">{{ item.cantidad }}×</span>
+                        <span class="confirmacion-item-nombre">{{ item.nombre_producto }}</span>
+                        <span class="confirmacion-item-subtotal">S/ {{ item.subtotal.toFixed(2) }}</span>
+                    </div>
+                </div>
+
+                <p v-if="notasPedido" class="confirmacion-notas">📝 {{ notasPedido }}</p>
+
+                <div class="confirmacion-total">
+                    <span>Total esta ronda</span>
+                    <span>S/ {{ totalCarrito.toFixed(2) }}</span>
+                </div>
+
+                <div class="confirmacion-btns">
+                    <button @click="cerrarConfirmacion" class="confirmacion-btn confirmacion-btn--modificar">✏️ Modificar</button>
+                    <button @click="enviarACocina" :disabled="enviando" class="confirmacion-btn confirmacion-btn--confirmar">
+                        {{ enviando ? '⏳ Enviando...' : '✅ Confirmar y enviar' }}
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- COMANDA IMPRIMIBLE -->
@@ -481,10 +574,60 @@ function cerrarMesa() {
 .prod-card--disabled { opacity: 0.4; pointer-events: none; }
 .prod-nombre { font-size: 15px; font-weight: 700; color: #1E293B; margin: 0 0 4px; line-height: 1.3; }
 .prod-desc { font-size: 12px; color: #94A3B8; margin: 0 0 10px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.prod-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
-.prod-precio { font-size: 18px; font-weight: 800; color: #14B8A6; }
+.prod-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; gap: 8px; }
+.prod-precio { font-size: 18px; font-weight: 800; color: #14B8A6; margin-right: 8px; }
 .prod-tiempo { font-size: 12px; color: #CBD5E1; background: #F8FAFC; padding: 3px 8px; border-radius: 6px; }
+.prod-add-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #14B8A6;
+    color: white;
+    font-size: 18px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
 .productos-vacio { text-align: center; padding: 50px 0; color: #CBD5E1; font-size: 16px; }
+
+.volver-categorias-wrap { padding: 10px 12px; border-bottom: 1px solid #F0F4F8; background: #FAFBFC; }
+.volver-categorias-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    min-height: 44px;
+    background: #F1F5F9;
+    color: #0F766E;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ══ MÓVIL (<768px): categorías 2x2, cards grandes, botón + táctil ══ */
+@media (max-width: 767px) {
+    /* Sin tabs arriba en celular (los tabs solo se muestran en tablet) */
+    .pos-container--mobile { height: calc(100vh - 80px); }
+
+    .categorias-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .cat-btn { min-height: 64px; padding: 12px; border-radius: 14px; }
+    .cat-icon { font-size: 24px; }
+    .cat-nombre { font-size: 15px; }
+
+    .productos-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .prod-card { padding: 16px; border-radius: 16px; min-height: 96px; }
+    .prod-nombre { font-size: 16px; }
+    .prod-precio { font-size: 20px; }
+    .prod-add-btn { width: 48px; height: 48px; font-size: 24px; }
+
+    /* Espacio para que el drawer fijo (148px) no tape la ultima fila de productos */
+    .panel-carta--movil .productos-grid-wrap { padding-bottom: 200px; }
+}
 
 /* ══ PANEL PEDIDO ══ */
 .panel-pedido {
@@ -497,6 +640,66 @@ function cerrarMesa() {
 }
 @media (max-width: 1099px) {
     .panel-pedido { flex: 1; overflow-y: auto; }
+}
+
+/* ══ DRAWER FIJO DE PEDIDO (celular, <768px) ══ */
+@media (max-width: 767px) {
+    .drawer-movil {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 300;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+        max-height: 148px;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+        flex: none;
+    }
+    .drawer-movil--abierto {
+        max-height: 88vh;
+        overflow-y: auto;
+    }
+}
+
+.drawer-handle {
+    flex-shrink: 0;
+    padding: 8px 16px 14px;
+    cursor: pointer;
+    background: white;
+    border-bottom: 1px solid #F0F4F8;
+}
+.drawer-handle-bar {
+    width: 40px;
+    height: 4px;
+    background: #E2E8F0;
+    border-radius: 999px;
+    margin: 0 auto 10px;
+}
+.drawer-resumen {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #64748B;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.drawer-resumen strong { color: #1E293B; }
+.drawer-chevron { color: #94A3B8; font-size: 16px; flex-shrink: 0; margin-left: 8px; }
+.drawer-enviar-btn {
+    width: 100%;
+    min-height: 52px;
+    background: linear-gradient(135deg, #22C55E, #16A34A);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(34,197,94,0.4);
 }
 
 .mesa-header {
@@ -607,6 +810,42 @@ function cerrarMesa() {
 .fab-pedido-btns { position: fixed; bottom: 20px; left: 16px; right: 16px; z-index: 200; display: flex; gap: 10px; }
 .fab-volver { padding: 13px 18px; background: white; color: #0F766E; border: 2px solid #14B8A6; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 .fab-cobrar { flex: 1; padding: 13px 18px; background: linear-gradient(135deg,#14B8A6,#0F766E); color: white; border: none; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+/* ══ MODAL CONFIRMACIÓN DE PEDIDO ══ */
+.confirmacion-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 16px;
+}
+.confirmacion-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.confirmacion-titulo { font-size: 20px; font-weight: 800; color: #1E293B; margin: 0 0 2px; }
+.confirmacion-sub { font-size: 13px; color: #64748B; margin: 0 0 16px; }
+.confirmacion-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; max-height: 50vh; overflow-y: auto; }
+.confirmacion-item { display: flex; align-items: center; gap: 8px; background: #F8FAFC; border-radius: 10px; padding: 10px 12px; border: 1px solid #E2E8F0; }
+.confirmacion-item-cant { font-weight: 800; color: #14B8A6; flex-shrink: 0; }
+.confirmacion-item-nombre { flex: 1; font-size: 14px; font-weight: 600; color: #1E293B; }
+.confirmacion-item-subtotal { font-size: 14px; font-weight: 700; color: #1E293B; flex-shrink: 0; }
+.confirmacion-notas { font-size: 13px; color: #92400E; background: #FEF3C7; border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+.confirmacion-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #1E293B; padding-top: 12px; border-top: 2px solid #F0F4F8; margin-bottom: 18px; }
+.confirmacion-btns { display: flex; gap: 10px; }
+.confirmacion-btn { flex: 1; min-height: 52px; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; border: none; }
+.confirmacion-btn--modificar { background: #F1F5F9; color: #475569; }
+.confirmacion-btn--confirmar { background: linear-gradient(135deg, #22C55E, #16A34A); color: white; box-shadow: 0 4px 16px rgba(34,197,94,0.4); }
+.confirmacion-btn--confirmar:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ══ IMPRIMIR ══ */
 .comanda-print { display: none; }

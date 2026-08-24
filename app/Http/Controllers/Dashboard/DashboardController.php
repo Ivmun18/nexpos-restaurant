@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Helpers\EmpresaHelper;
 use App\Http\Controllers\Controller;
-use App\Models\Compra;
-use App\Models\Venta;
-use App\Models\CuentaPorPagar;
-use App\Models\Producto;
-use App\Models\AuditLog;
-use Illuminate\Support\Facades\DB;
+use App\Models\CajaRestaurante;
+use App\Models\Mesa;
+use App\Models\Pedido;
+use App\Models\PedidoDetalle;
+use App\Models\Sucursal;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -18,115 +17,73 @@ class DashboardController extends Controller
     {
         $empresaId = EmpresaHelper::id();
         $hoy = now()->toDateString();
-        $hace30Dias = now()->subDays(30)->toDateString();
 
-        // KPIs Principales
-        $kpis = [
-            'ventas_hoy' => $this->ventasHoy($empresaId),
-            'compras_hoy' => $this->comprasHoy($empresaId),
-            'cuentas_vencidas' => $this->cuentasVencidas($empresaId),
-            'stock_bajo' => $this->stockBajo($empresaId),
-        ];
+        // Ventas del dia = lo cobrado en caja_restaurante (mesas/POS), no la
+        // tabla generica "ventas" (esa es del flujo de facturacion retail y
+        // el restaurante no la usa para sus cobros de mesa).
+        $ventasHoy = CajaRestaurante::with('mesa:id,sucursal_id')
+            ->where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)
+            ->get();
 
-        // Datos para gráficos - Últimos 30 días
-        $ventasPorDia = $this->ventasPorDia($empresaId, $hace30Dias);
-        $comprasPorDia = $this->comprasPorDia($empresaId, $hace30Dias);
-        
-        // Cuentas por pagar próximas a vencer
-        $cuentasProximas = CuentaPorPagar::where('empresa_id', $empresaId)
-            ->porVencer()
-            ->with('proveedor')
+        $totalVentasHoy    = $ventasHoy->sum('total');
+        $cantidadVentasHoy = $ventasHoy->count();
+        $ticketPromedio    = $cantidadVentasHoy > 0 ? $totalVentasHoy / $cantidadVentasHoy : 0;
+
+        $totalMesas    = Mesa::where('empresa_id', $empresaId)->where('activo', true)->count();
+        $mesasOcupadas = Mesa::where('empresa_id', $empresaId)->where('activo', true)->where('estado', 'ocupada')->count();
+
+        $pedidosPendientesCocina = Pedido::where('empresa_id', $empresaId)->where('estado', 'enviado')->count();
+
+        $sucursales = Sucursal::where('empresa_id', $empresaId)->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']);
+        $ventasPorSucursal = $sucursales->map(function (Sucursal $s) use ($ventasHoy) {
+            $ventasSucursal = $ventasHoy->filter(fn($v) => $v->mesa && $v->mesa->sucursal_id === $s->id);
+            return [
+                'id'     => $s->id,
+                'nombre' => $s->nombre,
+                'total'  => round($ventasSucursal->sum('total'), 2),
+            ];
+        });
+
+        $ultimosPedidos = Pedido::with(['mesa:id,numero', 'detalles'])
+            ->where('empresa_id', $empresaId)
+            ->whereDate('created_at', $hoy)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get()
+            ->map(fn(Pedido $p) => [
+                'id'     => $p->id,
+                'mesa'   => $p->mesa->numero ?? '—',
+                'items'  => $p->detalles->count(),
+                'total'  => round($p->total, 2),
+                'estado' => $p->estado,
+            ]);
+
+        $topPlatos = PedidoDetalle::selectRaw('nombre_producto, SUM(cantidad) as total_cantidad')
+            ->whereHas('pedido', fn($q) => $q->where('empresa_id', $empresaId)->whereDate('created_at', $hoy))
+            ->groupBy('nombre_producto')
+            ->orderByDesc('total_cantidad')
             ->limit(5)
             ->get();
 
-        // Top 5 proveedores por monto
-        $topProveedores = $this->topProveedores($empresaId);
-
-        // Productos con stock bajo
-        $productosStockBajo = Producto::where('empresa_id', $empresaId)
-            ->where('controla_stock', true)
-            ->whereRaw('stock_actual <= stock_minimo')
-            ->orderBy('stock_actual', 'asc')
-            ->limit(10)
-            ->get();
-
-        // Actividad reciente (últimas 10 acciones)
-        $actividadReciente = AuditLog::where('empresa_id', $empresaId)
-            ->with('usuario')
-            ->latest()
-            ->limit(10)
-            ->get();
+        $porMetodoPago = $ventasHoy->groupBy('metodo_pago')->map(fn($g) => [
+            'cantidad' => $g->count(),
+            'total'    => round($g->sum('total'), 2),
+        ]);
 
         return Inertia::render('Dashboard/Index', [
-            'kpis' => $kpis,
-            'ventasPorDia' => $ventasPorDia,
-            'comprasPorDia' => $comprasPorDia,
-            'cuentasProximas' => $cuentasProximas,
-            'topProveedores' => $topProveedores,
-            'productosStockBajo' => $productosStockBajo,
-            'actividadReciente' => $actividadReciente,
+            'kpis' => [
+                'ventas_hoy'                => round($totalVentasHoy, 2),
+                'cantidad_ventas_hoy'       => $cantidadVentasHoy,
+                'ticket_promedio'           => round($ticketPromedio, 2),
+                'mesas_ocupadas'            => $mesasOcupadas,
+                'total_mesas'               => $totalMesas,
+                'pedidos_pendientes_cocina' => $pedidosPendientesCocina,
+            ],
+            'ventas_por_sucursal' => $ventasPorSucursal,
+            'ultimos_pedidos'     => $ultimosPedidos,
+            'top_platos'          => $topPlatos,
+            'por_metodo_pago'     => $porMetodoPago,
         ]);
-    }
-
-    private function ventasHoy($empresaId)
-    {
-        return Venta::where('empresa_id', $empresaId)
-            ->whereDate('created_at', now())
-            ->sum('total');
-    }
-
-    private function comprasHoy($empresaId)
-    {
-        return Compra::where('empresa_id', $empresaId)
-            ->whereDate('created_at', now())
-            ->sum('total');
-    }
-
-    private function cuentasVencidas($empresaId)
-    {
-        return CuentaPorPagar::where('empresa_id', $empresaId)
-            ->vencido()
-            ->count();
-    }
-
-    private function stockBajo($empresaId)
-    {
-        return Producto::where('empresa_id', $empresaId)
-            ->where('controla_stock', true)
-            ->whereRaw('stock_actual <= stock_minimo')
-            ->count();
-    }
-
-    private function ventasPorDia($empresaId, $desde)
-    {
-        return Venta::where('empresa_id', $empresaId)
-            ->where('created_at', '>=', $desde)
-            ->selectRaw('DATE(created_at) as fecha, SUM(total) as total')
-            ->groupBy('fecha')
-            ->orderBy('fecha')
-            ->get()
-            ->pluck('total', 'fecha');
-    }
-
-    private function comprasPorDia($empresaId, $desde)
-    {
-        return Compra::where('empresa_id', $empresaId)
-            ->where('created_at', '>=', $desde)
-            ->selectRaw('DATE(created_at) as fecha, SUM(total) as total')
-            ->groupBy('fecha')
-            ->orderBy('fecha')
-            ->get()
-            ->pluck('total', 'fecha');
-    }
-
-    private function topProveedores($empresaId)
-    {
-        return Compra::where('empresa_id', $empresaId)
-            ->selectRaw('proveedor_id, SUM(total) as total_compras, COUNT(*) as cantidad')
-            ->with('proveedor')
-            ->groupBy('proveedor_id')
-            ->orderByDesc('total_compras')
-            ->limit(5)
-            ->get();
     }
 }

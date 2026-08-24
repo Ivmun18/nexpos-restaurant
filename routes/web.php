@@ -473,6 +473,12 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
     Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
     Route::patch('/usuarios/{usuario}/toggle', [UsuarioController::class, 'toggleActivo'])->name('usuarios.toggle');
 
+// Sucursales
+    Route::get('/admin/sucursales', [\App\Http\Controllers\Admin\SucursalController::class, 'dashboard'])->name('sucursales.dashboard')->middleware('rol:admin');
+    Route::post('/admin/sucursales', [\App\Http\Controllers\Admin\SucursalController::class, 'store'])->name('sucursales.store')->middleware('rol:admin');
+    Route::put('/admin/sucursales/{sucursal}', [\App\Http\Controllers\Admin\SucursalController::class, 'update'])->name('sucursales.update')->middleware('rol:admin');
+    Route::delete('/admin/sucursales/{sucursal}', [\App\Http\Controllers\Admin\SucursalController::class, 'destroy'])->name('sucursales.destroy')->middleware('rol:admin');
+
 // Compras
     Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');
     Route::get('/compras/crear', [CompraController::class, 'create'])->name('compras.create');
@@ -502,13 +508,6 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
    Route::get('/cotizaciones/{cotizacion}/pdf', [CotizacionController::class, 'pdf'])->name('cotizaciones.pdf');
   Route::post('/cotizaciones/{cotizacion}/estado', [CotizacionController::class, 'cambiarEstado'])->name('cotizaciones.estado');
 
-// Mesas
-    Route::get('/mesas', [MesaController::class, 'index'])->name('mesas.index');
-    Route::post('/mesas', [MesaController::class, 'store'])->name('mesas.store');
-    Route::put('/mesas/{mesa}', [MesaController::class, 'update'])->name('mesas.update');
-    Route::delete('/mesas/{mesa}', [MesaController::class, 'destroy'])->name('mesas.destroy');
-    Route::post('/mesas/{mesa}/estado', [MesaController::class, 'cambiarEstado'])->name('mesas.estado');
-
     // ── Menú / Carta ──────────────────────────────────────────
 Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
 
@@ -524,9 +523,6 @@ Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
     Route::delete('/productos/{menuProducto}',[MenuProductoController::class, 'destroy'])->name('productos.destroy');
     Route::patch('/productos/{menuProducto}/disponible', [MenuProductoController::class, 'toggleDisponible'])->name('productos.disponible');
 });
-
-// API pública para POS
-Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middleware('auth');
 
 // Mesas
     Route::get('/mesas', [MesaController::class, 'index'])->name('mesas.index');
@@ -551,6 +547,7 @@ Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->middlewa
 
 // Cocina
 Route::get('/cocina',                          [CocinaController::class, 'index'])->name('cocina.index')->middleware('rol:cocina,admin');
+Route::get('/cocina/polling',                  [CocinaController::class, 'polling'])->name('cocina.polling')->middleware('rol:cocina,admin');
 Route::post('/cocina/{pedido}/listo',          [CocinaController::class, 'marcarListo'])->name('cocina.listo')->middleware('rol:cocina,admin');
 Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, 'marcarDetalleListo'])->name('cocina.detalle.listo')->middleware('rol:cocina,admin');
 
@@ -558,6 +555,7 @@ Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, '
 Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');
 Route::post('/caja-restaurante/{mesa}',  [CajaRestauranteController::class, 'cobrar'])->name('caja-restaurante.cobrar');
 Route::post('/caja-restaurante/{mesa}/platos', [CajaRestauranteController::class, 'cobrarPlatos'])->name('caja-restaurante.cobrar-platos');
+Route::get('/tickets/{caja}', [CajaRestauranteController::class, 'ticketShow'])->name('tickets.show');
 
 // Turnos
 Route::get('/turnos',           [TurnoController::class, 'index'])->name('turnos.index');
@@ -617,6 +615,9 @@ Route::middleware(['auth'])->prefix('comprobantes')->group(function () {
     Route::get('/{comprobante}', [\App\Http\Controllers\ComprobanteSunatController::class, 'show'])->name('comprobantes.show');
     Route::post('/{id}/reenviar', [\App\Http\Controllers\ComprobanteSunatController::class, 'reenviar'])->name('comprobantes.reenviar');
     Route::post('/{id}/anular', [\App\Http\Controllers\ComprobanteSunatController::class, 'anular'])->name('comprobantes.anular');
+    Route::get('/{id}/nota-credito/crear', [\App\Http\Controllers\ComprobanteSunatController::class, 'crearNotaCredito'])->name('comprobantes.nota-credito.crear');
+    Route::post('/{id}/nota-credito', [\App\Http\Controllers\ComprobanteSunatController::class, 'emitirNotaCredito'])->name('comprobantes.nota-credito');
+    Route::get('/{id}/consultar-estado', [\App\Http\Controllers\ComprobanteSunatController::class, 'consultarEstado'])->name('comprobantes.consultar-estado');
 });
 
 // ==========================================
@@ -951,13 +952,13 @@ Route::middleware(['auth', 'notaria.rol'])->group(function () {
 });
 
 // Comprobantes Notaría
-Route::middleware(['auth', 'notaria.rol'])->post('/notaria/comprobantes/{acto}/emitir', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'emitir'])->name('notaria.comprobantes.emitir');
+Route::middleware(['auth', 'notaria.rol', 'puede.facturar'])->post('/notaria/comprobantes/{acto}/emitir', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'emitir'])->name('notaria.comprobantes.emitir');
 
 // Apertura y cierre caja notaría
 Route::middleware(['auth', 'notaria.rol'])->group(function () {
     Route::post('/notaria/caja/abrir', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'abrir'])->name('notaria.caja.abrir');
     Route::post('/notaria/caja/cerrar', [App\Http\Controllers\Notaria\CajaNotariaController::class, 'cerrar'])->name('notaria.caja.cerrar');
-    Route::post('/notaria/caja/venta-directa', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'ventaDirecta'])->name('notaria.caja.venta-directa');
+    Route::post('/notaria/caja/venta-directa', [App\Http\Controllers\Notaria\ComprobantesNotariaController::class, 'ventaDirecta'])->middleware('puede.facturar')->name('notaria.caja.venta-directa');
 });
 
 // Requisitos expediente
