@@ -253,16 +253,18 @@
                     <label style="font-size:13px; font-weight:600; color:#64748B; display:block; margin-bottom:6px;">
                         {{ crTipoComprobante === 'factura' ? 'RUC *' : 'DNI (opcional)' }}
                     </label>
-                    <div style="display:flex; gap:8px;">
+                    <div style="position:relative;">
                         <input v-model="crDocumento" type="text" inputmode="numeric"
                             :maxlength="crTipoComprobante === 'factura' ? 11 : 8"
                             :placeholder="crTipoComprobante === 'factura' ? '11 dígitos' : '8 dígitos'"
-                            @input="crDocumento = crDocumento.replace(/[^0-9]/g,''); crDocEncontrado=false; crDocError=''"
-                            style="flex:1; padding:12px 14px; border:2px solid #E2E8F0; border-radius:10px; font-size:15px; outline:none; box-sizing:border-box;"/>
-                        <button type="button" @click="buscarDocumentoRapido" :disabled="crBuscando"
-                            style="padding:0 18px; background:#1E293B; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap;">
-                            {{ crBuscando ? '⏳' : '🔍 Buscar' }}
-                        </button>
+                            @input="crDocumento = crDocumento.replace(/[^0-9]/g,'')"
+                            :style="{width:'100%', padding:'12px 44px 12px 14px', borderRadius:'10px', fontSize:'15px', outline:'none', boxSizing:'border-box',
+                                border: crDocEncontrado ? '2px solid #14B8A6' : crDocError ? '2px solid #EF4444' : '2px solid #E2E8F0'}"/>
+                        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:17px; pointer-events:none;">
+                            <span v-if="crBuscando">⏳</span>
+                            <span v-else-if="crDocEncontrado">✅</span>
+                            <span v-else-if="crDocError">❌</span>
+                        </span>
                     </div>
                     <p v-if="crDocEncontrado" style="font-size:12px; color:#0F766E; margin:6px 0 0;">✅ Encontrado</p>
                     <p v-if="crDocError" style="font-size:12px; color:#EF4444; margin:6px 0 0;">{{ crDocError }}</p>
@@ -326,7 +328,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { router, usePage, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
@@ -504,35 +506,40 @@ function cerrarModalCobroRapido() {
     modalCobroRapido.value = false
 }
 
-async function buscarDocumentoRapido() {
-    const doc = crDocumento.value.trim()
-    const esDni = doc.length === 8
-    const esRuc = doc.length === 11
+let crDocTimer = null
+
+watch(crDocumento, (nuevo) => {
     crDocEncontrado.value = false
     crDocError.value = ''
-    if (!esDni && !esRuc) {
-        crDocError.value = 'Ingresa 8 dígitos (DNI) u 11 dígitos (RUC)'
-        return
-    }
-    crBuscando.value = true
-    try {
-        const res = await fetch(`/api/consulta-documento?documento=${doc}`)
-        const data = await res.json()
-        if (esDni && data.nombre_completo) {
-            crNombre.value = data.nombre_completo
-            crDocEncontrado.value = true
-        } else if (esRuc && data.razonSocial) {
-            crNombre.value = data.razonSocial
-            crDocEncontrado.value = true
-        } else {
-            crDocError.value = esDni ? 'DNI no encontrado' : 'RUC no encontrado'
+    crBuscando.value = false
+    clearTimeout(crDocTimer)
+
+    const doc = (nuevo || '').trim()
+    const esDni = doc.length === 8
+    const esRuc = doc.length === 11
+    if (!esDni && !esRuc) return
+
+    crDocTimer = setTimeout(async () => {
+        crBuscando.value = true
+        try {
+            const res = await fetch(`/api/consulta-documento?documento=${doc}`)
+            const data = await res.json()
+            if (esDni && data.nombre_completo) {
+                crNombre.value = data.nombre_completo
+                crDocEncontrado.value = true
+            } else if (esRuc && data.razonSocial) {
+                crNombre.value = data.razonSocial
+                crDocEncontrado.value = true
+            } else {
+                crDocError.value = esDni ? 'DNI no encontrado' : 'RUC no encontrado'
+            }
+        } catch (e) {
+            crDocError.value = 'Error al consultar'
+        } finally {
+            crBuscando.value = false
         }
-    } catch (e) {
-        crDocError.value = 'Error al consultar'
-    } finally {
-        crBuscando.value = false
-    }
-}
+    }, 500)
+})
 
 async function emitirCobroRapido() {
     crError.value = ''
