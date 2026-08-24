@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'decolecta' => [
+        'token' => env('DECOLECTA_TOKEN'),
+    ],
+
 ];

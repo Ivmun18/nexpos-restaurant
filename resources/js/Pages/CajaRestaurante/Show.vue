@@ -25,6 +25,7 @@ const props = defineProps({
     platos_pendientes: { type: Number, default: 0 },
     platos_pagados:    { type: Number, default: 0 },
     empresa: Object,
+    clientes: { type: Array, default: () => [] },
 })
 
 const form = useForm({
@@ -66,6 +67,15 @@ function onDocInput() {
     const esRuc = doc.length === 11
     form.cliente_tipo_documento = esRuc ? '6' : '1'
     if (!esDni && !esRuc) return
+
+    // Si ya está registrado localmente, usar ese dato sin llamar a la API
+    const clienteLocal = props.clientes.find(c => c.numero_documento === doc)
+    if (clienteLocal) {
+        form.cliente_nombre = clienteLocal.razon_social
+        docEncontrado.value = true
+        return
+    }
+
     clearTimeout(docTimer)
     docTimer = setTimeout(async () => {
         buscandoDoc.value = true
@@ -75,8 +85,8 @@ function onDocInput() {
             if (esDni && data.nombre_completo) {
                 form.cliente_nombre = data.nombre_completo
                 docEncontrado.value = true
-            } else if (esRuc && data.razon_social) {
-                form.cliente_nombre = data.razon_social
+            } else if (esRuc && data.razonSocial) {
+                form.cliente_nombre = data.razonSocial
                 docEncontrado.value = true
             } else {
                 docError.value = esDni ? 'DNI no encontrado' : 'RUC no encontrado'

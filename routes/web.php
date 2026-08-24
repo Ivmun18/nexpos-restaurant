@@ -1136,7 +1136,7 @@ Route::get('/api/consulta-documento', function(\Illuminate\Http\Request $request
 
     if (strlen($doc) === 8) {
         $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => 'Bearer sk_16067.7KfoUTCobKF4t8DzL60X2e41GjM7gTQM',
+            'Authorization' => 'Bearer ' . config('services.decolecta.token'),
             'Accept' => 'application/json',
         ])->get('https://api.decolecta.com/v1/reniec/dni?numero=' . $doc);
         $data = $response->json();
@@ -1148,7 +1148,7 @@ Route::get('/api/consulta-documento', function(\Illuminate\Http\Request $request
         ]);
     } else {
         $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => 'Bearer sk_16067.7KfoUTCobKF4t8DzL60X2e41GjM7gTQM',
+            'Authorization' => 'Bearer ' . config('services.decolecta.token'),
             'Accept' => 'application/json',
         ])->get('https://api.decolecta.com/v1/sunat/ruc?numero=' . $doc);
         $data = $response->json();

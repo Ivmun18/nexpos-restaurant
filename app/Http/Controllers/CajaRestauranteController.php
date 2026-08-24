@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mesa;
 use App\Models\Pedido;
+use App\Models\Cliente;
 use App\Models\CajaRestaurante;
 use App\Models\CajaMovimiento;
 use App\Models\SesionCaja;
@@ -68,6 +69,8 @@ class CajaRestauranteController extends Controller
             'total_pagado_platos' => round($totalPagadoPlatos, 2),
             'platos_pendientes' => $platosPendientes,
             'platos_pagados'    => $platosPagados,
+            'clientes'          => Cliente::where('empresa_id', auth()->user()->empresa_id)
+                ->get(['id', 'numero_documento', 'razon_social', 'direccion', 'email']),
         ]);
     }
 
@@ -319,6 +322,7 @@ class CajaRestauranteController extends Controller
                     'aceptada_por_sunat'       => $aceptada ? 1 : 0,
                     'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
                     'enlace_pdf'               => $pdfUrl,
+                    'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                     'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 ]);
             } catch (\Exception $e) {
