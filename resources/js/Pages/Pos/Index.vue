@@ -289,12 +289,18 @@ function cerrarConfirmacion() {
 }
 
 function enviarACocina() {
+    if (enviando.value) return
     if (!carrito.value.length) return
     enviando.value = true
     const form = useForm({ items: carrito.value, notas: notasPedido.value })
     form.post(`/pos/${props.mesa.id}`, {
-        onSuccess: () => { enviando.value = false; mostrarConfirmacion.value = false },
-        onError:   () => { enviando.value = false },
+        onSuccess: () => {
+            mostrarConfirmacion.value = false
+            setTimeout(() => { enviando.value = false }, 3000)
+        },
+        onError: () => {
+            setTimeout(() => { enviando.value = false }, 3000)
+        },
     })
 }
 
