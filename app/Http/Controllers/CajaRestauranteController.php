@@ -486,6 +486,213 @@ class CajaRestauranteController extends Controller
     }
 
     /**
+     * Cobro rápido sin mesa asociada (mostrador). Valida caja abierta,
+     * registra el ingreso y emite boleta/factura a ApiSunat en el mismo
+     * request, devolviendo JSON para que el modal imprima sin navegar.
+     */
+    public function cobroRapido(Request $request)
+    {
+        $request->validate([
+            'tipo_comprobante'  => 'required|in:boleta,factura',
+            'cliente_documento' => 'nullable|string|max:11',
+            'cliente_nombre'    => 'required|string|max:255',
+            'descripcion'       => 'nullable|string|max:255',
+            'monto'             => 'required|numeric|min:0.01',
+        ]);
+
+        if ($request->tipo_comprobante === 'factura') {
+            $request->validate(['cliente_documento' => 'required|digits:11']);
+        }
+
+        $empresa = auth()->user()->empresa;
+
+        $cajaEmpresa = \App\Models\Caja::where('empresa_id', $empresa->id)->where('activo', true)->first();
+        $sesion = $cajaEmpresa
+            ? SesionCaja::where('caja_id', $cajaEmpresa->id)->where('estado', 'abierta')->first()
+            : null;
+
+        if (!$sesion) {
+            return response()->json(['success' => false, 'mensaje' => 'Debes abrir caja primero'], 422);
+        }
+
+        $totalMonto = round((float) $request->monto, 2);
+        $exonerada  = $empresa->zona_exonerada ?? false;
+
+        if ($exonerada) {
+            $gravada = 0;
+            $igv     = 0;
+        } else {
+            $gravada = round($totalMonto / 1.18, 2);
+            $igv     = round($totalMonto - $gravada, 2);
+        }
+        $baseImponible = $exonerada ? $totalMonto : $gravada;
+
+        $tipo     = $request->tipo_comprobante;
+        $tipoComp = $tipo === 'factura' ? '01' : '03';
+
+        if ($tipo === 'factura') {
+            $serie       = $empresa->serie_factura ?? 'F001';
+            $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
+            $empresa->increment('ultimo_num_factura');
+        } else {
+            $serie       = $empresa->serie_boleta ?? 'B001';
+            $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
+            $empresa->increment('ultimo_num_boleta');
+        }
+
+        $descripcion    = $request->descripcion ?: 'Consumo de alimentos';
+        $clienteDoc     = $request->cliente_documento ?? '';
+        $clienteNombre  = $request->cliente_nombre;
+        $tipoDocCliente = $tipo === 'factura'
+            ? '6'
+            : (strlen($clienteDoc) === 11 ? '6' : (strlen($clienteDoc) === 8 ? '1' : '0'));
+
+        $caja = CajaRestaurante::create([
+            'empresa_id'       => $empresa->id,
+            'mesa_id'          => null,
+            'user_id'          => auth()->id(),
+            'total'            => $totalMonto,
+            'monto_pagado'     => $totalMonto,
+            'vuelto'           => 0,
+            'descuento'        => 0,
+            'metodo_pago'      => 'efectivo',
+            'tipo_comprobante' => $tipo,
+            'notas'            => $descripcion,
+            'partes_total'     => 1,
+            'parte_numero'     => 1,
+            'cuenta_total'     => $totalMonto,
+            'pagado_acumulado' => $totalMonto,
+        ]);
+
+        CajaMovimiento::create([
+            'sesion_id'     => $sesion->id,
+            'usuario_id'    => auth()->id(),
+            'tipo'          => 'ingreso',
+            'concepto'      => 'Cobro rápido (' . $descripcion . ')',
+            'referencia_id' => $caja->id,
+            'monto'         => $totalMonto,
+            'observaciones' => null,
+        ]);
+
+        $fileName = $empresa->ruc . '-' . $tipoComp . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
+        $valUnit  = $exonerada ? $totalMonto : round($totalMonto / 1.18, 4);
+        $igvItem  = $exonerada ? 0 : round($totalMonto - $valUnit, 2);
+
+        $lineas = [[
+            'cbc:ID'                  => ['_text' => '1'],
+            'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
+            'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+            'cac:PricingReference'    => ['cac:AlternativeConditionPrice' => [
+                'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $totalMonto],
+                'cbc:PriceTypeCode' => ['_text' => '01'],
+            ]],
+            'cac:TaxTotal' => [
+                'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                'cac:TaxSubtotal' => [[
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
+                    'cac:TaxCategory'   => [
+                        'cbc:Percent'                => ['_text' => $exonerada ? '0' : '18'],
+                        'cbc:TaxExemptionReasonCode' => ['_text' => $exonerada ? '20' : '10'],
+                        'cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']],
+                    ],
+                ]],
+            ],
+            'cac:Item'  => ['cbc:Description' => ['_text' => $descripcion], 'cac:SellersItemIdentification' => ['cbc:ID' => ['_text' => 'S/C']]],
+            'cac:Price' => ['cbc:PriceAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit]],
+        ]];
+
+        $documentBody = [
+            'cbc:UBLVersionID'         => ['_text' => '2.1'],
+            'cbc:CustomizationID'      => ['_text' => '2.0'],
+            'cbc:ID'                   => ['_text' => $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT)],
+            'cbc:IssueDate'            => ['_text' => now()->format('Y-m-d')],
+            'cbc:InvoiceTypeCode'      => ['_attributes' => ['listID' => '0101'], '_text' => $tipoComp],
+            'cbc:Note'                 => ['_attributes' => ['languageLocaleID' => '1000'], '_text' => strtoupper($this->numeroALetras($totalMonto))],
+            'cbc:DocumentCurrencyCode' => ['_text' => 'PEN'],
+            'cac:PaymentTerms'         => ['cbc:ID' => ['_text' => 'FormaPago'], 'cbc:PaymentMeansID' => ['_text' => 'Contado']],
+            'cac:AccountingSupplierParty' => ['cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => '6'], '_text' => $empresa->ruc]],
+                'cac:PartyName'           => ['cbc:Name' => ['_text' => $empresa->nombre_comercial ?? $empresa->razon_social]],
+                'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => $empresa->razon_social], 'cac:RegistrationAddress' => ['cbc:AddressTypeCode' => ['_text' => '0000'], 'cac:AddressLine' => ['cbc:Line' => ['_text' => $empresa->direccion ?? '']]]],
+            ]],
+            'cac:AccountingCustomerParty' => ['cac:Party' => [
+                'cac:PartyIdentification' => ['cbc:ID' => ['_attributes' => ['schemeID' => $tipoDocCliente], '_text' => $clienteDoc]],
+                'cac:PartyLegalEntity'    => ['cbc:RegistrationName' => ['_text' => strtoupper($clienteNombre)]],
+            ]],
+            'cac:TaxTotal' => [
+                'cbc:TaxAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                'cac:TaxSubtotal' => [[
+                    'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                    'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igv],
+                    'cac:TaxCategory'   => ['cac:TaxScheme' => ['cbc:ID' => ['_text' => $exonerada ? '9997' : '1000'], 'cbc:Name' => ['_text' => $exonerada ? 'EXO' : 'IGV'], 'cbc:TaxTypeCode' => ['_text' => 'VAT']]],
+                ]],
+            ],
+            'cac:LegalMonetaryTotal' => [
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseImponible],
+                'cbc:TaxInclusiveAmount'  => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $totalMonto],
+                'cbc:PayableAmount'       => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $totalMonto],
+            ],
+            'cac:InvoiceLine' => $lineas,
+        ];
+
+        $data = [];
+        $aceptada = false;
+        $pendiente = false;
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout(60)
+                ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'fileName'     => $fileName,
+                    'documentBody' => $documentBody,
+                ]);
+
+            $data      = $response->json();
+            $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
+            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
+        } catch (\Exception $e) {
+            \Log::error('Error emitir comprobante cobro rápido: ' . $e->getMessage());
+        }
+
+        $comprobante = \App\Models\ComprobanteSunat::create([
+            'empresa_id'               => $empresa->id,
+            'caja_restaurante_id'      => $caja->id,
+            'tipo_comprobante'         => $tipoComp,
+            'serie'                    => $serie,
+            'numero'                   => $correlativo,
+            'fecha_emision'            => now()->toDateString(),
+            'cliente_tipo_documento'   => $tipoDocCliente,
+            'cliente_numero_documento' => $clienteDoc,
+            'cliente_nombre'           => strtoupper($clienteNombre),
+            'cliente_email'            => '',
+            'total_gravada'            => $gravada,
+            'total_igv'                => $igv,
+            'total'                    => $totalMonto,
+            'aceptada_por_sunat'       => $aceptada ? 1 : 0,
+            'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
+            'enlace_pdf'               => $data['sunatResponse']['enlace_del_pdf'] ?? null,
+            'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
+            'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
+        ]);
+
+        return response()->json([
+            'success'      => true,
+            'comprobante'  => $comprobante,
+            'caja'         => $caja,
+            'empresa'      => [
+                'nombre_comercial' => $empresa->nombre_comercial,
+                'razon_social'     => $empresa->razon_social,
+                'ruc'              => $empresa->ruc,
+                'direccion'        => $empresa->direccion,
+            ],
+        ]);
+    }
+
+    /**
      * Detalle de un ticket (cobro sin boleta/factura) para imprimir/compartir
      */
     public function ticketShow(CajaRestaurante $caja): Response

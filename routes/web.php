@@ -568,6 +568,11 @@ Route::post('/caja-restaurante/{mesa}',  [CajaRestauranteController::class, 'cob
 Route::post('/caja-restaurante/{mesa}/platos', [CajaRestauranteController::class, 'cobrarPlatos'])->name('caja-restaurante.cobrar-platos');
 Route::get('/tickets/{caja}', [CajaRestauranteController::class, 'ticketShow'])->name('tickets.show');
 
+// Cobro rápido (sin mesa)
+Route::middleware(['auth'])->group(function () {
+    Route::post('/caja/cobro-rapido', [CajaRestauranteController::class, 'cobroRapido'])->name('caja.cobro-rapido');
+});
+
 // Turnos
 Route::get('/turnos',           [TurnoController::class, 'index'])->name('turnos.index');
 Route::post('/turnos/abrir',    [TurnoController::class, 'abrir'])->name('turnos.abrir');
