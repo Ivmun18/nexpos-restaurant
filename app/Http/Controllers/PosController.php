@@ -71,6 +71,9 @@ class PosController extends Controller
         'items.*.notas'            => 'nullable|string',
         'items.*.modificadores'    => 'nullable|array',
         'items.*.modificadores.*'  => 'string',
+        'items.*.variantes'          => 'nullable|array',
+        'items.*.variantes.*.grupo'  => 'required_with:items.*.variantes|string',
+        'items.*.variantes.*.opcion' => 'required_with:items.*.variantes|string',
         'notas'                    => 'nullable|string',
     ]);
 
@@ -100,6 +103,7 @@ class PosController extends Controller
             'subtotal'         => $subtotal,
             'notas'            => $item['notas'] ?? null,
             'modificadores'    => $item['modificadores'] ?? null,
+            'variantes'        => $item['variantes'] ?? null,
             'estado'           => 'pendiente',
         ]);
     }

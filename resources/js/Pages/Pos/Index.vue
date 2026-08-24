@@ -32,6 +32,36 @@ async function cargarModificadores() {
     }
 }
 
+// Variantes de combo (ej: elegir Acompañamiento y Bebida, obligatorio)
+const variantesCache          = ref({}) // producto_id -> grupos[]
+const mostrarModalVariantes   = ref(false)
+const gruposVariantes         = ref([])
+const variantesSeleccionadas  = ref({}) // grupo_id -> nombre de opción
+
+async function obtenerVariantes(productoId) {
+    if (variantesCache.value[productoId] !== undefined) {
+        return variantesCache.value[productoId]
+    }
+    try {
+        const { data } = await axios.get('/api/producto-variantes', { params: { producto_id: productoId } })
+        variantesCache.value = { ...variantesCache.value, [productoId]: data }
+        return data
+    } catch (e) {
+        variantesCache.value = { ...variantesCache.value, [productoId]: [] }
+        return []
+    }
+}
+
+const variantesCompletas = computed(() =>
+    gruposVariantes.value
+        .filter(g => g.requerido)
+        .every(g => !!variantesSeleccionadas.value[g.id])
+)
+
+function seleccionarVariante(grupoId, opcionNombre) {
+    variantesSeleccionadas.value = { ...variantesSeleccionadas.value, [grupoId]: opcionNombre }
+}
+
 const productosGridWrapRef = ref(null)
 
 // En móvil, categorías y productos son dos vistas separadas (no dos paneles superpuestos)
@@ -133,10 +163,11 @@ function modificadoresDeCategoria(prod) {
     )
 }
 
-function agregarAlCarrito(prod, modificadores) {
+function agregarAlCarrito(prod, modificadores, variantes = []) {
     const existente = carrito.value.find(i =>
         i.menu_producto_id === prod.id &&
-        JSON.stringify(i.modificadores || []) === JSON.stringify(modificadores)
+        JSON.stringify(i.modificadores || []) === JSON.stringify(modificadores) &&
+        JSON.stringify(i.variantes || []) === JSON.stringify(variantes)
     )
     if (existente) {
         existente.cantidad++
@@ -150,11 +181,24 @@ function agregarAlCarrito(prod, modificadores) {
             subtotal:         Number(prod.precio),
             notas:            '',
             modificadores:    modificadores,
+            variantes:        variantes,
         })
     }
 }
 
-function agregarProducto(prod) {
+async function agregarProducto(prod) {
+    const grupos = await obtenerVariantes(prod.id)
+    if (grupos.length) {
+        productoPendiente.value = prod
+        gruposVariantes.value = grupos
+        variantesSeleccionadas.value = {}
+        mostrarModalVariantes.value = true
+        return
+    }
+    continuarConModificadores(prod)
+}
+
+function continuarConModificadores(prod) {
     const mods = modificadoresDeCategoria(prod)
     if (mods.length) {
         productoPendiente.value = prod
@@ -163,18 +207,44 @@ function agregarProducto(prod) {
         mostrarModalModificadores.value = true
         return
     }
-    agregarAlCarrito(prod, [])
+    finalizarAgregado(prod, [])
+}
+
+function confirmarVariantes() {
+    if (!variantesCompletas.value) return
+    mostrarModalVariantes.value = false
+    continuarConModificadores(productoPendiente.value)
+}
+
+function cancelarModalVariantes() {
+    mostrarModalVariantes.value = false
+    productoPendiente.value = null
+    gruposVariantes.value = []
+    variantesSeleccionadas.value = {}
 }
 
 function confirmarModificadores() {
-    agregarAlCarrito(productoPendiente.value, [...modificadoresSeleccionados.value])
-    mostrarModalModificadores.value = false
-    productoPendiente.value = null
+    finalizarAgregado(productoPendiente.value, [...modificadoresSeleccionados.value])
 }
 
 function cancelarModalModificadores() {
     mostrarModalModificadores.value = false
     productoPendiente.value = null
+    gruposVariantes.value = []
+    variantesSeleccionadas.value = {}
+}
+
+function finalizarAgregado(prod, modificadores) {
+    const variantes = gruposVariantes.value
+        .map(g => ({ grupo: g.nombre, opcion: variantesSeleccionadas.value[g.id] }))
+        .filter(v => !!v.opcion)
+
+    agregarAlCarrito(prod, modificadores, variantes)
+
+    mostrarModalModificadores.value = false
+    productoPendiente.value = null
+    gruposVariantes.value = []
+    variantesSeleccionadas.value = {}
 }
 
 function toggleModificador(nombre) {
@@ -353,6 +423,7 @@ function cerrarMesa() {
                             <span class="ronda-item-nombre" :class="{ 'ronda-item--anulado': det.anulado }">
                                 {{ det.cantidad }}× {{ det.nombre_producto }}
                                 <span v-if="det.anulado" class="anulado-label">(anulado: {{ det.motivo_anulacion }})</span>
+                                <span v-if="det.variantes?.length" class="ronda-item-variantes">{{ det.variantes.map(v => v.opcion).join(' · ') }}</span>
                                 <span v-if="det.modificadores?.length" class="ronda-item-mods">⚠ {{ det.modificadores.join(' · ') }}</span>
                             </span>
                             <span class="ronda-item-precio" :class="{ 'ronda-item--anulado': det.anulado }">
@@ -381,6 +452,7 @@ function cerrarMesa() {
                         <div v-for="(item, i) in carrito" :key="i" class="carrito-item">
                             <div class="carrito-item-info">
                                 <p class="carrito-item-nombre">{{ item.nombre_producto }}</p>
+                                <p v-if="item.variantes?.length" class="carrito-item-variantes">{{ item.variantes.map(v => v.opcion).join(' · ') }}</p>
                                 <p v-if="item.modificadores?.length" class="carrito-item-mods">⚠ {{ item.modificadores.join(' · ') }}</p>
                                 <p class="carrito-item-precio">S/ {{ item.precio_unitario.toFixed(2) }} c/u</p>
                             </div>
@@ -447,6 +519,7 @@ function cerrarMesa() {
                         <span class="confirmacion-item-cant">{{ item.cantidad }}×</span>
                         <div class="confirmacion-item-nombre">
                             {{ item.nombre_producto }}
+                            <p v-if="item.variantes?.length" class="confirmacion-item-variantes">{{ item.variantes.map(v => v.opcion).join(' · ') }}</p>
                             <p v-if="item.modificadores?.length" class="confirmacion-item-mods">⚠ {{ item.modificadores.join(' · ') }}</p>
                         </div>
                         <span class="confirmacion-item-subtotal">S/ {{ item.subtotal.toFixed(2) }}</span>
@@ -468,6 +541,45 @@ function cerrarMesa() {
                 </div>
             </div>
         </div>
+
+        <!-- MODAL VARIANTES DE COMBO (elección obligatoria) -->
+        <Transition name="mods-sheet">
+            <div v-if="mostrarModalVariantes" class="mods-overlay" @click.self="cancelarModalVariantes">
+                <div class="mods-modal">
+                    <div class="mods-header">
+                        <div class="mods-header-text">
+                            <p class="mods-titulo">{{ productoPendiente?.nombre }}</p>
+                            <p class="mods-sub">Elige las opciones de tu combo</p>
+                        </div>
+                        <button @click="cancelarModalVariantes" class="mods-cerrar" aria-label="Cerrar">✕</button>
+                    </div>
+
+                    <div class="mods-lista">
+                        <div v-for="g in gruposVariantes" :key="g.id" class="variantes-grupo">
+                            <p class="variantes-grupo-titulo">
+                                {{ g.nombre }}
+                                <span v-if="g.requerido" class="variantes-requerido">Obligatorio</span>
+                            </p>
+                            <div
+                                v-for="o in g.opciones" :key="o.id"
+                                @click="seleccionarVariante(g.id, o.nombre)"
+                                class="variantes-opcion"
+                                :class="{ 'variantes-opcion--activa': variantesSeleccionadas[g.id] === o.nombre }"
+                            >
+                                <span class="variantes-opcion-radio" :class="{ 'variantes-opcion-radio--activo': variantesSeleccionadas[g.id] === o.nombre }"></span>
+                                <span class="variantes-opcion-nombre">{{ o.nombre }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mods-footer">
+                        <button @click="confirmarVariantes" :disabled="!variantesCompletas" class="mods-confirmar" :class="{ 'mods-confirmar--disabled': !variantesCompletas }">
+                            Agregar al pedido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
 
         <!-- MODAL MODIFICADORES -->
         <Transition name="mods-sheet">
@@ -517,6 +629,7 @@ function cerrarMesa() {
                 <div style="font-size:11px; font-weight:bold; margin:6px 0 2px;">Ronda {{ pedido.numero_ronda }}</div>
                 <div v-for="det in pedido.detalles.filter(d => !d.anulado)" :key="'dc'+det.id" style="font-size:13px; margin:3px 0;">
                     <span style="font-weight:bold;">{{ det.cantidad }}x</span> {{ det.nombre_producto }}
+                    <div v-if="det.variantes?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">🍽 {{ det.variantes.map(v => v.opcion).join(' · ') }}</div>
                     <div v-if="det.modificadores?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">⚠ {{ det.modificadores.join(' · ') }}</div>
                     <div v-if="det.notas" style="font-size:11px; padding-left:14px; font-style:italic;">▸ {{ det.notas }}</div>
                 </div>
@@ -959,6 +1072,11 @@ function cerrarMesa() {
 .ronda-item-mods { display: block; font-size: 11px; color: #92400E; font-weight: 700; }
 .confirmacion-item-mods { font-size: 12px; color: #92400E; font-weight: 700; margin: 2px 0 0; }
 
+/* ══ VARIANTES DE COMBO (carrito / rondas / confirmación) ══ */
+.carrito-item-variantes { font-size: 12px; color: #94A3B8; margin: 2px 0 0; }
+.ronda-item-variantes { display: block; font-size: 11px; color: #94A3B8; }
+.confirmacion-item-variantes { font-size: 12px; color: #94A3B8; margin: 2px 0 0; }
+
 /* ══ MODAL MODIFICADORES ══ */
 .mods-overlay {
     position: fixed;
@@ -1078,6 +1196,12 @@ function cerrarMesa() {
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(20,184,166,0.4);
 }
+.mods-confirmar--disabled {
+    background: #E2E8F0;
+    color: #94A3B8;
+    box-shadow: none;
+    cursor: not-allowed;
+}
 
 /* Transición slide-up + fade */
 .mods-sheet-enter-active,
@@ -1110,6 +1234,73 @@ function cerrarMesa() {
     .mods-sheet-leave-to .mods-modal {
         transform: translateY(100%);
     }
+}
+
+/* ══ MODAL VARIANTES DE COMBO ══ */
+.variantes-grupo { margin-bottom: 18px; }
+.variantes-grupo:last-child { margin-bottom: 0; }
+.variantes-grupo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #1E293B;
+    margin: 0 0 10px;
+}
+.variantes-requerido {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #9A3412;
+    background: #FFEDD5;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.variantes-opcion {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 52px;
+    box-sizing: border-box;
+    background: #F8FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1E293B;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 8px;
+}
+.variantes-opcion:last-child { margin-bottom: 0; }
+.variantes-opcion--activa {
+    background: #F0FDFA;
+    border-color: #14B8A6;
+    color: #0F766E;
+}
+.variantes-opcion-nombre { flex: 1; }
+.variantes-opcion-radio {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #CBD5E1;
+    background: white;
+    position: relative;
+    transition: all 0.15s;
+}
+.variantes-opcion-radio--activo {
+    border-color: #14B8A6;
+}
+.variantes-opcion-radio--activo::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: #14B8A6;
 }
 
 /* ══ IMPRIMIR ══ */

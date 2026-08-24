@@ -9,7 +9,7 @@ class PedidoDetalle extends Model
 {
     protected $fillable = [
         'pedido_id', 'menu_producto_id', 'nombre_producto',
-        'cantidad', 'precio_unitario', 'subtotal', 'notas', 'modificadores', 'estado',
+        'cantidad', 'precio_unitario', 'subtotal', 'notas', 'modificadores', 'variantes', 'estado',
         'pagado', 'caja_detalle_id',
         'anulado', 'motivo_anulacion', 'anulado_por', 'anulado_at',
     ];
@@ -19,6 +19,7 @@ class PedidoDetalle extends Model
         'subtotal'        => 'decimal:2',
         'cantidad'        => 'integer',
         'modificadores'   => 'array',
+        'variantes'       => 'array',
         'pagado'          => 'boolean',
         'anulado'         => 'boolean',
         'anulado_at'      => 'datetime',
