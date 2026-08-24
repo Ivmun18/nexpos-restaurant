@@ -177,6 +177,15 @@ function cancelarModalModificadores() {
     productoPendiente.value = null
 }
 
+function toggleModificador(nombre) {
+    const i = modificadoresSeleccionados.value.indexOf(nombre)
+    if (i === -1) {
+        modificadoresSeleccionados.value.push(nombre)
+    } else {
+        modificadoresSeleccionados.value.splice(i, 1)
+    }
+}
+
 function incrementarItem(index) {
     carrito.value[index].cantidad++
     carrito.value[index].subtotal = carrito.value[index].cantidad * carrito.value[index].precio_unitario
@@ -461,24 +470,41 @@ function cerrarMesa() {
         </div>
 
         <!-- MODAL MODIFICADORES -->
-        <div v-if="mostrarModalModificadores" class="mods-overlay" @click.self="cancelarModalModificadores">
-            <div class="mods-modal">
-                <h3 class="mods-titulo">🧂 {{ productoPendiente?.nombre }}</h3>
-                <p class="mods-sub">Elige modificadores (opcional)</p>
+        <Transition name="mods-sheet">
+            <div v-if="mostrarModalModificadores" class="mods-overlay" @click.self="cancelarModalModificadores">
+                <div class="mods-modal">
+                    <div class="mods-header">
+                        <div class="mods-header-text">
+                            <p class="mods-titulo">{{ productoPendiente?.nombre }}</p>
+                            <p class="mods-sub">¿Alguna indicación?</p>
+                        </div>
+                        <button @click="cancelarModalModificadores" class="mods-cerrar" aria-label="Cerrar">✕</button>
+                    </div>
 
-                <div class="mods-lista">
-                    <label v-for="m in modificadoresParaElegir" :key="m.id" class="mods-check">
-                        <input type="checkbox" :value="m.nombre" v-model="modificadoresSeleccionados" />
-                        <span>{{ m.nombre }}</span>
-                    </label>
-                </div>
+                    <div class="mods-lista">
+                        <div
+                            v-for="m in modificadoresParaElegir" :key="m.id"
+                            @click="toggleModificador(m.nombre)"
+                            class="mods-opcion"
+                            :class="{ 'mods-opcion--activa': modificadoresSeleccionados.includes(m.nombre) }"
+                        >
+                            <span class="mods-opcion-nombre">{{ m.nombre }}</span>
+                            <span class="mods-opcion-check" :class="{ 'mods-opcion-check--activo': modificadoresSeleccionados.includes(m.nombre) }">
+                                <svg v-if="modificadoresSeleccionados.includes(m.nombre)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
 
-                <div class="mods-btns">
-                    <button @click="cancelarModalModificadores" class="mods-btn mods-btn--cancelar">Cancelar</button>
-                    <button @click="confirmarModificadores" class="mods-btn mods-btn--confirmar">Agregar al pedido</button>
+                    <div class="mods-footer">
+                        <button @click="confirmarModificadores" class="mods-confirmar">
+                            Agregar al pedido<span v-if="modificadoresSeleccionados.length"> ({{ modificadoresSeleccionados.length }})</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Transition>
 
         <!-- COMANDA IMPRIMIBLE -->
         <div id="comanda-print" class="comanda-print">
@@ -943,38 +969,148 @@ function cerrarMesa() {
     justify-content: center;
     z-index: 550;
     padding: 16px;
+    transition: opacity 0.3s ease;
 }
 .mods-modal {
     background: white;
     border-radius: 20px;
-    padding: 22px;
     width: 100%;
     max-width: 380px;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
 }
-.mods-titulo { font-size: 18px; font-weight: 800; color: #1E293B; margin: 0 0 2px; }
-.mods-sub { font-size: 13px; color: #64748B; margin: 0 0 16px; }
-.mods-lista { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-.mods-check {
+
+.mods-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 16px;
+    flex-shrink: 0;
+}
+.mods-header-text { min-width: 0; }
+.mods-titulo { font-size: 19px; font-weight: 800; color: #1E293B; margin: 0; line-height: 1.3; }
+.mods-sub { font-size: 13px; color: #64748B; margin: 4px 0 0; }
+.mods-cerrar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    color: #64748B;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
+}
+
+.mods-lista {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+    padding: 0 20px 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+.mods-opcion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 52px;
+    box-sizing: border-box;
     background: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 14px;
-    font-weight: 600;
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 700;
     color: #1E293B;
     cursor: pointer;
+    transition: all 0.15s;
 }
-.mods-check input { width: 18px; height: 18px; cursor: pointer; }
-.mods-btns { display: flex; gap: 10px; }
-.mods-btn { flex: 1; min-height: 48px; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; border: none; }
-.mods-btn--cancelar { background: #F1F5F9; color: #475569; }
-.mods-btn--confirmar { background: linear-gradient(135deg, #14B8A6, #0F766E); color: white; box-shadow: 0 4px 16px rgba(20,184,166,0.4); }
+.mods-opcion--activa {
+    background: #F0FDF4;
+    border-color: #22C55E;
+    color: #166534;
+}
+.mods-opcion-nombre { flex: 1; }
+.mods-opcion-check {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid #CBD5E1;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.15s;
+}
+.mods-opcion-check--activo {
+    background: #22C55E;
+    border-color: #22C55E;
+}
+
+.mods-footer {
+    flex-shrink: 0;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #F0F4F8;
+    background: white;
+}
+.mods-confirmar {
+    width: 100%;
+    min-height: 54px;
+    background: linear-gradient(135deg, #14B8A6, #0F766E);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(20,184,166,0.4);
+}
+
+/* Transición slide-up + fade */
+.mods-sheet-enter-active,
+.mods-sheet-leave-active {
+    transition: opacity 0.3s ease;
+}
+.mods-sheet-enter-from,
+.mods-sheet-leave-to {
+    opacity: 0;
+}
+.mods-sheet-enter-from .mods-modal,
+.mods-sheet-leave-to .mods-modal {
+    transform: translateY(40px);
+}
+
+/* ══ MOBILE (<768px): bottom sheet a pantalla completa ══ */
+@media (max-width: 767px) {
+    .mods-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .mods-modal {
+        max-width: 100%;
+        width: 100%;
+        height: 85vh;
+        max-height: 85vh;
+        border-radius: 24px 24px 0 0;
+    }
+    .mods-sheet-enter-from .mods-modal,
+    .mods-sheet-leave-to .mods-modal {
+        transform: translateY(100%);
+    }
+}
 
 /* ══ IMPRIMIR ══ */
 .comanda-print { display: none; }
