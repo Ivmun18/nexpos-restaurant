@@ -87,7 +87,7 @@
                                 style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #FEF3C7;">
                                 <div style="flex:1;">
                                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
-                                        {{ detalle.cantidad }}x {{ detalle.producto }}
+                                        {{ detalle.cantidad }}x {{ nombreCorto(detalle.producto) }}
                                     </p>
                                     <p v-if="detalle.nota_variante" style="font-size:11px; color:#92400E; background:#FEF3C7; border-radius:6px; padding:3px 8px; margin:3px 0 0; font-weight:700; display:inline-block;">
                                         📝 {{ detalle.nota_variante }}
@@ -158,7 +158,7 @@
                                     style="width:18px; height:18px; cursor:pointer;">
                                 <div style="flex:1;">
                                     <p :style="{fontSize:'14px', fontWeight:'600', color:'#1E293B', margin:'0', textDecoration: detalle.estado === 'listo' ? 'line-through' : 'none', opacity: detalle.estado === 'listo' ? '0.5' : '1'}">
-                                        {{ detalle.cantidad }}x {{ detalle.producto }}
+                                        {{ detalle.cantidad }}x {{ nombreCorto(detalle.producto) }}
                                     </p>
                                     <p v-if="detalle.nota_variante" style="font-size:11px; color:#92400E; background:#FEF3C7; border-radius:6px; padding:3px 8px; margin:3px 0 0; font-weight:700; display:inline-block;">
                                         📝 {{ detalle.nota_variante }}
@@ -225,7 +225,7 @@
                                 style="display:flex; justify-content:space-between; align-items:flex-start; padding:6px 0; border-bottom:1px solid #DCFCE7;">
                                 <div>
                                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
-                                        {{ detalle.cantidad }}x {{ detalle.producto }}
+                                        {{ detalle.cantidad }}x {{ nombreCorto(detalle.producto) }}
                                     </p>
                                     <p v-if="detalle.nota_variante" style="font-size:11px; color:#92400E; background:#FEF3C7; border-radius:6px; padding:3px 8px; margin:3px 0 0; font-weight:700; display:inline-block;">
                                         📝 {{ detalle.nota_variante }}
@@ -261,6 +261,10 @@ const props = defineProps({
     mozos: Array,
     filtros: Object,
 })
+
+function nombreCorto(nombre) {
+    return nombre.includes(' - ') ? nombre.split(' - ')[0] : nombre
+}
 
 const filtros = ref({
     mesa: props.filtros.mesa || '',

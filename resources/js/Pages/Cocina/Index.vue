@@ -68,6 +68,10 @@ const resumenProduccion = computed(() => {
     return Object.entries(resumen)
 })
 
+function nombreCorto(nombre) {
+    return nombre.includes(' - ') ? nombre.split(' - ')[0] : nombre
+}
+
 function marcarListo(pedido) {
     router.post(`/cocina/${pedido.id}/listo`, {}, {
         preserveScroll: true,
@@ -135,7 +139,7 @@ function marcarListo(pedido) {
                     <div v-for="det in pedido.detalles" :key="det.id" class="kds-item">
                         <div class="kds-item-cant">{{ det.cantidad }}</div>
                         <div style="flex:1; min-width:0;">
-                            <p class="kds-item-nombre">{{ det.nombre_producto }}</p>
+                            <p class="kds-item-nombre">{{ nombreCorto(det.nombre_producto) }}</p>
                             <p v-if="det.nota_variante" class="kds-item-nota-variante">📝 {{ det.nota_variante }}</p>
                             <p v-if="det.modificadores?.length" class="kds-item-mods">⚠ {{ det.modificadores.join(' · ') }}</p>
                             <p v-if="det.notas" class="kds-item-nota">📝 {{ det.notas }}</p>
