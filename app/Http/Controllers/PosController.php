@@ -69,6 +69,8 @@ class PosController extends Controller
         'items.*.cantidad'         => 'required|integer|min:1',
         'items.*.precio_unitario'  => 'required|numeric|min:0',
         'items.*.notas'            => 'nullable|string',
+        'items.*.modificadores'    => 'nullable|array',
+        'items.*.modificadores.*'  => 'string',
         'notas'                    => 'nullable|string',
     ]);
 
@@ -97,6 +99,7 @@ class PosController extends Controller
             'precio_unitario'  => $item['precio_unitario'],
             'subtotal'         => $subtotal,
             'notas'            => $item['notas'] ?? null,
+            'modificadores'    => $item['modificadores'] ?? null,
             'estado'           => 'pendiente',
         ]);
     }

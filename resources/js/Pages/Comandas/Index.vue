@@ -89,6 +89,9 @@
                                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
                                         {{ detalle.cantidad }}x {{ detalle.producto }}
                                     </p>
+                                    <p v-if="detalle.modificadores?.length" style="font-size:11px; color:#B45309; margin:2px 0 0; font-weight:700;">
+                                        ⚠ {{ detalle.modificadores.join(' · ') }}
+                                    </p>
                                     <p v-if="detalle.notas" style="font-size:11px; color:#64748B; margin:2px 0 0; font-style:italic;">
                                         📝 {{ detalle.notas }}
                                     </p>
@@ -154,6 +157,9 @@
                                     <p :style="{fontSize:'14px', fontWeight:'600', color:'#1E293B', margin:'0', textDecoration: detalle.estado === 'listo' ? 'line-through' : 'none', opacity: detalle.estado === 'listo' ? '0.5' : '1'}">
                                         {{ detalle.cantidad }}x {{ detalle.producto }}
                                     </p>
+                                    <p v-if="detalle.modificadores?.length" style="font-size:11px; color:#B91C1C; margin:2px 0 0; font-weight:700;">
+                                        ⚠ {{ detalle.modificadores.join(' · ') }}
+                                    </p>
                                     <p v-if="detalle.notas" style="font-size:11px; color:#64748B; margin:2px 0 0; font-style:italic;">
                                         📝 {{ detalle.notas }}
                                     </p>
@@ -210,10 +216,15 @@
                         <!-- Productos -->
                         <div style="background:white; border-radius:8px; padding:12px;">
                             <div v-for="detalle in comanda.detalles" :key="detalle.id"
-                                style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #DCFCE7;">
-                                <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
-                                    {{ detalle.cantidad }}x {{ detalle.producto }}
-                                </p>
+                                style="display:flex; justify-content:space-between; align-items:flex-start; padding:6px 0; border-bottom:1px solid #DCFCE7;">
+                                <div>
+                                    <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
+                                        {{ detalle.cantidad }}x {{ detalle.producto }}
+                                    </p>
+                                    <p v-if="detalle.modificadores?.length" style="font-size:11px; color:#047857; margin:2px 0 0; font-weight:700;">
+                                        ⚠ {{ detalle.modificadores.join(' · ') }}
+                                    </p>
+                                </div>
                                 <span style="color:#10B981; font-size:16px;">✓</span>
                             </div>
                         </div>

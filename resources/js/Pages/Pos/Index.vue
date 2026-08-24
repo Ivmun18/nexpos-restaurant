@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import axios from 'axios'
 
 const page = usePage()
 const props = defineProps({
@@ -14,6 +15,22 @@ const props = defineProps({
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
+
+// Modificadores por categoría (ej: "Sin ají", "Con chaufa")
+const todosModificadores       = ref([])
+const mostrarModalModificadores = ref(false)
+const productoPendiente        = ref(null)
+const modificadoresParaElegir  = ref([])
+const modificadoresSeleccionados = ref([])
+
+async function cargarModificadores() {
+    try {
+        const { data } = await axios.get('/api/modificadores')
+        todosModificadores.value = data
+    } catch (e) {
+        // Silencioso: si falla, el POS sigue funcionando sin modificadores.
+    }
+}
 
 const productosGridWrapRef = ref(null)
 
@@ -32,7 +49,7 @@ const horaActual = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-
 
 const windowWidth = ref(window.innerWidth)
 const onResize = () => { windowWidth.value = window.innerWidth }
-onMounted(() => window.addEventListener('resize', onResize))
+onMounted(() => { window.addEventListener('resize', onResize); cargarModificadores() })
 onUnmounted(() => window.removeEventListener('resize', onResize))
 
 const isMobile  = computed(() => windowWidth.value < 768)
@@ -110,8 +127,17 @@ const totalGeneral = computed(() => {
     return totalPedidos + totalCarrito.value
 })
 
-function agregarProducto(prod) {
-    const existente = carrito.value.find(i => i.menu_producto_id === prod.id)
+function modificadoresDeCategoria(prod) {
+    return todosModificadores.value.filter(m =>
+        m.categoria_id === prod.menu_categoria_id || m.categoria_id === null
+    )
+}
+
+function agregarAlCarrito(prod, modificadores) {
+    const existente = carrito.value.find(i =>
+        i.menu_producto_id === prod.id &&
+        JSON.stringify(i.modificadores || []) === JSON.stringify(modificadores)
+    )
     if (existente) {
         existente.cantidad++
         existente.subtotal = existente.cantidad * existente.precio_unitario
@@ -123,8 +149,37 @@ function agregarProducto(prod) {
             precio_unitario:  Number(prod.precio),
             subtotal:         Number(prod.precio),
             notas:            '',
+            modificadores:    modificadores,
         })
     }
+}
+
+function agregarProducto(prod) {
+    const mods = modificadoresDeCategoria(prod)
+    if (mods.length) {
+        productoPendiente.value = prod
+        modificadoresParaElegir.value = mods
+        modificadoresSeleccionados.value = []
+        mostrarModalModificadores.value = true
+        return
+    }
+    agregarAlCarrito(prod, [])
+}
+
+function confirmarModificadores() {
+    agregarAlCarrito(productoPendiente.value, [...modificadoresSeleccionados.value])
+    mostrarModalModificadores.value = false
+    productoPendiente.value = null
+}
+
+function cancelarModalModificadores() {
+    mostrarModalModificadores.value = false
+    productoPendiente.value = null
+}
+
+function incrementarItem(index) {
+    carrito.value[index].cantidad++
+    carrito.value[index].subtotal = carrito.value[index].cantidad * carrito.value[index].precio_unitario
 }
 
 function quitarProducto(index) {
@@ -289,6 +344,7 @@ function cerrarMesa() {
                             <span class="ronda-item-nombre" :class="{ 'ronda-item--anulado': det.anulado }">
                                 {{ det.cantidad }}× {{ det.nombre_producto }}
                                 <span v-if="det.anulado" class="anulado-label">(anulado: {{ det.motivo_anulacion }})</span>
+                                <span v-if="det.modificadores?.length" class="ronda-item-mods">⚠ {{ det.modificadores.join(' · ') }}</span>
                             </span>
                             <span class="ronda-item-precio" :class="{ 'ronda-item--anulado': det.anulado }">
                                 S/ {{ Number(det.subtotal).toFixed(2) }}
@@ -316,12 +372,13 @@ function cerrarMesa() {
                         <div v-for="(item, i) in carrito" :key="i" class="carrito-item">
                             <div class="carrito-item-info">
                                 <p class="carrito-item-nombre">{{ item.nombre_producto }}</p>
+                                <p v-if="item.modificadores?.length" class="carrito-item-mods">⚠ {{ item.modificadores.join(' · ') }}</p>
                                 <p class="carrito-item-precio">S/ {{ item.precio_unitario.toFixed(2) }} c/u</p>
                             </div>
                             <div class="cantidad-ctrl">
                                 <button @click="quitarProducto(i)" class="qty-btn">−</button>
                                 <span class="qty-num">{{ item.cantidad }}</span>
-                                <button @click="agregarProducto({id: item.menu_producto_id, nombre: item.nombre_producto, precio: item.precio_unitario})" class="qty-btn qty-btn--add">+</button>
+                                <button @click="incrementarItem(i)" class="qty-btn qty-btn--add">+</button>
                             </div>
                             <span class="carrito-item-subtotal">S/ {{ item.subtotal.toFixed(2) }}</span>
                             <button @click="eliminarItem(i)" class="eliminar-btn">✕</button>
@@ -379,7 +436,10 @@ function cerrarMesa() {
                 <div class="confirmacion-items">
                     <div v-for="(item, i) in carrito" :key="i" class="confirmacion-item">
                         <span class="confirmacion-item-cant">{{ item.cantidad }}×</span>
-                        <span class="confirmacion-item-nombre">{{ item.nombre_producto }}</span>
+                        <div class="confirmacion-item-nombre">
+                            {{ item.nombre_producto }}
+                            <p v-if="item.modificadores?.length" class="confirmacion-item-mods">⚠ {{ item.modificadores.join(' · ') }}</p>
+                        </div>
                         <span class="confirmacion-item-subtotal">S/ {{ item.subtotal.toFixed(2) }}</span>
                     </div>
                 </div>
@@ -400,6 +460,26 @@ function cerrarMesa() {
             </div>
         </div>
 
+        <!-- MODAL MODIFICADORES -->
+        <div v-if="mostrarModalModificadores" class="mods-overlay" @click.self="cancelarModalModificadores">
+            <div class="mods-modal">
+                <h3 class="mods-titulo">🧂 {{ productoPendiente?.nombre }}</h3>
+                <p class="mods-sub">Elige modificadores (opcional)</p>
+
+                <div class="mods-lista">
+                    <label v-for="m in modificadoresParaElegir" :key="m.id" class="mods-check">
+                        <input type="checkbox" :value="m.nombre" v-model="modificadoresSeleccionados" />
+                        <span>{{ m.nombre }}</span>
+                    </label>
+                </div>
+
+                <div class="mods-btns">
+                    <button @click="cancelarModalModificadores" class="mods-btn mods-btn--cancelar">Cancelar</button>
+                    <button @click="confirmarModificadores" class="mods-btn mods-btn--confirmar">Agregar al pedido</button>
+                </div>
+            </div>
+        </div>
+
         <!-- COMANDA IMPRIMIBLE -->
         <div id="comanda-print" class="comanda-print">
             <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
@@ -411,6 +491,7 @@ function cerrarMesa() {
                 <div style="font-size:11px; font-weight:bold; margin:6px 0 2px;">Ronda {{ pedido.numero_ronda }}</div>
                 <div v-for="det in pedido.detalles.filter(d => !d.anulado)" :key="'dc'+det.id" style="font-size:13px; margin:3px 0;">
                     <span style="font-weight:bold;">{{ det.cantidad }}x</span> {{ det.nombre_producto }}
+                    <div v-if="det.modificadores?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">⚠ {{ det.modificadores.join(' · ') }}</div>
                     <div v-if="det.notas" style="font-size:11px; padding-left:14px; font-style:italic;">▸ {{ det.notas }}</div>
                 </div>
             </div>
@@ -846,6 +927,54 @@ function cerrarMesa() {
 .confirmacion-btn--modificar { background: #F1F5F9; color: #475569; }
 .confirmacion-btn--confirmar { background: linear-gradient(135deg, #22C55E, #16A34A); color: white; box-shadow: 0 4px 16px rgba(34,197,94,0.4); }
 .confirmacion-btn--confirmar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ══ MODIFICADORES (carrito / rondas / confirmación) ══ */
+.carrito-item-mods { font-size: 12px; color: #92400E; font-weight: 700; margin: 2px 0 0; }
+.ronda-item-mods { display: block; font-size: 11px; color: #92400E; font-weight: 700; }
+.confirmacion-item-mods { font-size: 12px; color: #92400E; font-weight: 700; margin: 2px 0 0; }
+
+/* ══ MODAL MODIFICADORES ══ */
+.mods-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 550;
+    padding: 16px;
+}
+.mods-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.mods-titulo { font-size: 18px; font-weight: 800; color: #1E293B; margin: 0 0 2px; }
+.mods-sub { font-size: 13px; color: #64748B; margin: 0 0 16px; }
+.mods-lista { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.mods-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E293B;
+    cursor: pointer;
+}
+.mods-check input { width: 18px; height: 18px; cursor: pointer; }
+.mods-btns { display: flex; gap: 10px; }
+.mods-btn { flex: 1; min-height: 48px; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; border: none; }
+.mods-btn--cancelar { background: #F1F5F9; color: #475569; }
+.mods-btn--confirmar { background: linear-gradient(135deg, #14B8A6, #0F766E); color: white; box-shadow: 0 4px 16px rgba(20,184,166,0.4); }
 
 /* ══ IMPRIMIR ══ */
 .comanda-print { display: none; }

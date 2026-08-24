@@ -473,7 +473,8 @@ const allMenuItems = [
     { path: '/insumos',             icon: 'inventario', label: 'Inventario',         module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/recetas',             icon: 'receta',     label: 'Recetas',            module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/restaurante/auditoria', icon: 'auditoria', label: '🔍 Auditoría', module: 'pos_restaurante', section: 'RESTAURANTE' },
-    
+    { path: '/admin/modificadores', icon: 'categoria', label: '🧂 Modificadores', module: 'pos_restaurante', section: 'RESTAURANTE' },
+
     // SISTEMA
     { path: '/admin/mozos',         icon: 'mozo',         label: 'Mozos',         module: 'mozos',       section: 'SISTEMA' },
     { path: '/comprobantes',        icon: 'comprobante',  label: 'Comprobantes',  module: 'facturacion', section: 'SISTEMA' },

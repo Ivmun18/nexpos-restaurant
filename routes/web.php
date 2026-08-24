@@ -479,6 +479,12 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
     Route::put('/admin/sucursales/{sucursal}', [\App\Http\Controllers\Admin\SucursalController::class, 'update'])->name('sucursales.update')->middleware('rol:admin');
     Route::delete('/admin/sucursales/{sucursal}', [\App\Http\Controllers\Admin\SucursalController::class, 'destroy'])->name('sucursales.destroy')->middleware('rol:admin');
 
+// Modificadores
+    Route::get('/admin/modificadores', [\App\Http\Controllers\Admin\ModificadorController::class, 'index'])->name('modificadores.index')->middleware('rol:admin');
+    Route::post('/admin/modificadores', [\App\Http\Controllers\Admin\ModificadorController::class, 'store'])->name('modificadores.store')->middleware('rol:admin');
+    Route::put('/admin/modificadores/{modificador}', [\App\Http\Controllers\Admin\ModificadorController::class, 'update'])->name('modificadores.update')->middleware('rol:admin');
+    Route::delete('/admin/modificadores/{modificador}', [\App\Http\Controllers\Admin\ModificadorController::class, 'destroy'])->name('modificadores.destroy')->middleware('rol:admin');
+
 // Compras
     Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');
     Route::get('/compras/crear', [CompraController::class, 'create'])->name('compras.create');
@@ -544,6 +550,10 @@ Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
     Route::post('/pos/{mesa}/cerrar', [PosController::class, 'cerrar'])->name('pos.cerrar');
     Route::post('/pos/detalle/{detalle}/anular', [PosController::class, 'anularPlato'])->name('pos.anular-plato');
 
+// Modificadores (API para el POS)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/api/modificadores', [\App\Http\Controllers\Admin\ModificadorController::class, 'api'])->name('api.modificadores');
+});
 
 // Cocina
 Route::get('/cocina',                          [CocinaController::class, 'index'])->name('cocina.index')->middleware('rol:cocina,admin');
