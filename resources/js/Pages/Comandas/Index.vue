@@ -89,9 +89,6 @@
                                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
                                         {{ detalle.cantidad }}x {{ detalle.producto }}
                                     </p>
-                                    <p v-if="detalle.variantes?.length" style="font-size:11px; color:#B45309; margin:2px 0 0; font-weight:700;">
-                                        🍽 {{ detalle.variantes.map(v => v.opcion).join(' · ') }}
-                                    </p>
                                     <p v-if="detalle.nota_variante" style="font-size:11px; color:#92400E; background:#FEF3C7; border-radius:6px; padding:3px 8px; margin:3px 0 0; font-weight:700; display:inline-block;">
                                         📝 {{ detalle.nota_variante }}
                                     </p>
@@ -163,9 +160,6 @@
                                     <p :style="{fontSize:'14px', fontWeight:'600', color:'#1E293B', margin:'0', textDecoration: detalle.estado === 'listo' ? 'line-through' : 'none', opacity: detalle.estado === 'listo' ? '0.5' : '1'}">
                                         {{ detalle.cantidad }}x {{ detalle.producto }}
                                     </p>
-                                    <p v-if="detalle.variantes?.length" style="font-size:11px; color:#B91C1C; margin:2px 0 0; font-weight:700;">
-                                        🍽 {{ detalle.variantes.map(v => v.opcion).join(' · ') }}
-                                    </p>
                                     <p v-if="detalle.nota_variante" style="font-size:11px; color:#92400E; background:#FEF3C7; border-radius:6px; padding:3px 8px; margin:3px 0 0; font-weight:700; display:inline-block;">
                                         📝 {{ detalle.nota_variante }}
                                     </p>
@@ -232,9 +226,6 @@
                                 <div>
                                     <p style="font-size:14px; font-weight:600; color:#1E293B; margin:0;">
                                         {{ detalle.cantidad }}x {{ detalle.producto }}
-                                    </p>
-                                    <p v-if="detalle.variantes?.length" style="font-size:11px; color:#047857; margin:2px 0 0; font-weight:700;">
-                                        🍽 {{ detalle.variantes.map(v => v.opcion).join(' · ') }}
                                     </p>
                                     <p v-if="detalle.nota_variante" style="font-size:11px; color:#92400E; background:#FEF3C7; border-radius:6px; padding:3px 8px; margin:3px 0 0; font-weight:700; display:inline-block;">
                                         📝 {{ detalle.nota_variante }}
