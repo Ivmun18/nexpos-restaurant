@@ -295,14 +295,20 @@
 
                 <!-- Desglose IGV -->
                 <div style="background:#F8FAFC; border-radius:12px; padding:14px; margin-bottom:1.25rem;">
-                    <div style="display:flex; justify-content:space-between; font-size:13px; color:#64748B; margin-bottom:4px;">
-                        <span>Subtotal</span>
-                        <span>S/ {{ crSubtotal.toFixed(2) }}</span>
+                    <div v-if="crExonerada" style="display:flex; justify-content:space-between; font-size:13px; color:#64748B; margin-bottom:8px;">
+                        <span>Exonerado</span>
+                        <span>S/ 0.00</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; font-size:13px; color:#64748B; margin-bottom:8px;">
-                        <span>{{ crExonerada ? 'IGV (exonerado)' : 'IGV (18%)' }}</span>
-                        <span>S/ {{ crIgv.toFixed(2) }}</span>
-                    </div>
+                    <template v-else>
+                        <div style="display:flex; justify-content:space-between; font-size:13px; color:#64748B; margin-bottom:4px;">
+                            <span>Subtotal</span>
+                            <span>S/ {{ crSubtotal.toFixed(2) }}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:13px; color:#64748B; margin-bottom:8px;">
+                            <span>IGV (18%)</span>
+                            <span>S/ {{ crIgv.toFixed(2) }}</span>
+                        </div>
+                    </template>
                     <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:800; color:#1E293B; padding-top:8px; border-top:1px solid #E2E8F0;">
                         <span>Total</span>
                         <span>S/ {{ crTotal.toFixed(2) }}</span>
