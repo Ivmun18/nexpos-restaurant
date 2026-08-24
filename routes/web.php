@@ -556,10 +556,10 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Cocina
-Route::get('/cocina',                          [CocinaController::class, 'index'])->name('cocina.index')->middleware('rol:cocina,admin');
-Route::get('/cocina/polling',                  [CocinaController::class, 'polling'])->name('cocina.polling')->middleware('rol:cocina,admin');
-Route::post('/cocina/{pedido}/listo',          [CocinaController::class, 'marcarListo'])->name('cocina.listo')->middleware('rol:cocina,admin');
-Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, 'marcarDetalleListo'])->name('cocina.detalle.listo')->middleware('rol:cocina,admin');
+Route::get('/cocina',                          [CocinaController::class, 'index'])->name('cocina.index')->middleware('rol:cocina,admin,cajero,mozo');
+Route::get('/cocina/polling',                  [CocinaController::class, 'polling'])->name('cocina.polling')->middleware('rol:cocina,admin,cajero,mozo');
+Route::post('/cocina/{pedido}/listo',          [CocinaController::class, 'marcarListo'])->name('cocina.listo')->middleware('rol:cocina,admin,cajero,mozo');
+Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, 'marcarDetalleListo'])->name('cocina.detalle.listo')->middleware('rol:cocina,admin,cajero,mozo');
 
 // Caja Restaurante
 Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');
