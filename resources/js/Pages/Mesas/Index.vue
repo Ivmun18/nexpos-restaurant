@@ -548,13 +548,21 @@ async function emitirCobroRapido() {
         crError.value = 'El monto debe ser mayor a 0'
         return
     }
-    if (!crNombre.value.trim()) {
-        crError.value = crTipoComprobante.value === 'factura' ? 'La razón social es obligatoria' : 'El nombre es obligatorio'
-        return
+
+    // Boleta sin documento ni nombre → cliente genérico, no bloquea la emisión
+    if (crTipoComprobante.value === 'boleta' && !crDocumento.value.trim() && !crNombre.value.trim()) {
+        crNombre.value = 'CLIENTE GENERAL'
     }
-    if (crTipoComprobante.value === 'factura' && crDocumento.value.trim().length !== 11) {
-        crError.value = 'El RUC debe tener 11 dígitos'
-        return
+
+    if (crTipoComprobante.value === 'factura') {
+        if (crDocumento.value.trim().length !== 11) {
+            crError.value = 'El RUC debe tener 11 dígitos'
+            return
+        }
+        if (!crNombre.value.trim()) {
+            crError.value = 'La razón social es obligatoria'
+            return
+        }
     }
 
     crEnviando.value = true

@@ -495,13 +495,16 @@ class CajaRestauranteController extends Controller
         $request->validate([
             'tipo_comprobante'  => 'required|in:boleta,factura',
             'cliente_documento' => 'nullable|string|max:11',
-            'cliente_nombre'    => 'required|string|max:255',
+            'cliente_nombre'    => 'nullable|string|max:255',
             'descripcion'       => 'nullable|string|max:255',
             'monto'             => 'required|numeric|min:0.01',
         ]);
 
         if ($request->tipo_comprobante === 'factura') {
-            $request->validate(['cliente_documento' => 'required|digits:11']);
+            $request->validate([
+                'cliente_documento' => 'required|digits:11',
+                'cliente_nombre'    => 'required|string|max:255',
+            ]);
         }
 
         $empresa = auth()->user()->empresa;
@@ -542,7 +545,7 @@ class CajaRestauranteController extends Controller
 
         $descripcion    = $request->descripcion ?: 'Consumo de alimentos';
         $clienteDoc     = $request->cliente_documento ?? '';
-        $clienteNombre  = $request->cliente_nombre;
+        $clienteNombre  = trim($request->cliente_nombre ?? '') ?: 'CLIENTE GENERAL';
         $tipoDocCliente = $tipo === 'factura'
             ? '6'
             : (strlen($clienteDoc) === 11 ? '6' : (strlen($clienteDoc) === 8 ? '1' : '0'));
