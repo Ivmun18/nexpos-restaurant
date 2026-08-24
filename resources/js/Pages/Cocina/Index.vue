@@ -5,10 +5,21 @@ import { router, Head } from '@inertiajs/vue3'
 const props = defineProps({
     pedidos: Array,
     sucursalNombre: String,
+    sucursales: { type: Array, default: () => [] },
+    sucursalActual: { type: [Number, String], default: null },
+    esAdmin: { type: Boolean, default: false },
 })
 
 const pedidos = ref(props.pedidos)
 const horaActual = ref(new Date())
+
+const mostrarSelectorSucursal = computed(() =>
+    props.esAdmin && props.sucursales.length > 1 && !props.sucursalActual
+)
+
+function elegirSucursal(id) {
+    router.get('/cocina', { sucursal_id: id })
+}
 
 const horaFormateada = computed(() =>
     horaActual.value.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
@@ -18,8 +29,10 @@ let relojIntervalo = null
 let refrescoIntervalo = null
 
 async function refrescar() {
+    if (mostrarSelectorSucursal.value) return
     try {
-        const res = await fetch('/cocina/polling', {
+        const query = props.sucursalActual ? `?sucursal_id=${props.sucursalActual}` : ''
+        const res = await fetch(`/cocina/polling${query}`, {
             headers: { Accept: 'application/json' },
             credentials: 'same-origin',
         })
@@ -84,7 +97,22 @@ function marcarListo(pedido) {
 <template>
     <Head :title="`Cocina · ${sucursalNombre || ''}`" />
 
-    <div class="kds-root">
+    <!-- Selector de sucursal (solo admin con más de una sucursal) -->
+    <div v-if="mostrarSelectorSucursal" class="kds-selector-root">
+        <div class="kds-selector-card">
+            <p class="kds-selector-titulo">🍳 ¿Qué local querés ver?</p>
+            <p class="kds-selector-sub">Elige la sucursal para entrar a su cocina</p>
+            <button
+                v-for="s in sucursales" :key="s.id"
+                @click="elegirSucursal(s.id)"
+                class="kds-selector-btn"
+            >
+                {{ s.nombre }}
+            </button>
+        </div>
+    </div>
+
+    <div v-else class="kds-root">
         <!-- Header -->
         <header class="kds-header">
             <div>
@@ -163,6 +191,56 @@ function marcarListo(pedido) {
 </template>
 
 <style scoped>
+.kds-selector-root {
+    min-height: 100vh;
+    background: #0B1220;
+    color: #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+.kds-selector-card {
+    background: #111827;
+    border: 1px solid #1F2937;
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+}
+.kds-selector-titulo {
+    font-size: 22px;
+    font-weight: 800;
+    color: #F8FAFC;
+    margin: 0 0 6px;
+}
+.kds-selector-sub {
+    font-size: 14px;
+    color: #94A3B8;
+    margin: 0 0 24px;
+}
+.kds-selector-btn {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    background: #1F2937;
+    color: #F1F5F9;
+    border: 2px solid #253352;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all 0.15s;
+}
+.kds-selector-btn:hover {
+    border-color: #14B8A6;
+    background: #182238;
+}
+.kds-selector-btn:last-child { margin-bottom: 0; }
+
 .kds-root {
     min-height: 100vh;
     background: #0B1220;
