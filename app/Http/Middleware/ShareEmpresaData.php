@@ -27,6 +27,7 @@ class ShareEmpresaData
                 'nombre'          => $empresa->nombre_comercial,
                 'industry_type'   => $empresa->industry_type,
                 'modules_enabled' => $modules,
+                'zona_exonerada'  => (bool) $empresa->zona_exonerada,
             ]);
         }
 
