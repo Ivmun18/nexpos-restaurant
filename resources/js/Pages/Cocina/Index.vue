@@ -137,6 +137,7 @@ function marcarListo(pedido) {
                         <div style="flex:1; min-width:0;">
                             <p class="kds-item-nombre">{{ det.nombre_producto }}</p>
                             <p v-if="det.variantes?.length" class="kds-item-variantes">🍽 {{ det.variantes.map(v => v.opcion).join(' · ') }}</p>
+                            <p v-if="det.nota_variante" class="kds-item-nota-variante">📝 {{ det.nota_variante }}</p>
                             <p v-if="det.modificadores?.length" class="kds-item-mods">⚠ {{ det.modificadores.join(' · ') }}</p>
                             <p v-if="det.notas" class="kds-item-nota">📝 {{ det.notas }}</p>
                         </div>
@@ -372,6 +373,18 @@ function marcarListo(pedido) {
     color: #5EEAD4;
     margin: 2px 0 0;
     font-weight: 700;
+}
+
+.kds-item-nota-variante {
+    font-size: 12px;
+    color: #FBBF24;
+    background: #2E2408;
+    border: 1px solid #92400E;
+    border-radius: 6px;
+    padding: 3px 8px;
+    margin: 3px 0 0;
+    font-weight: 700;
+    display: inline-block;
 }
 
 .kds-item-mods {

@@ -37,6 +37,7 @@ const variantesCache          = ref({}) // producto_id -> grupos[]
 const mostrarModalVariantes   = ref(false)
 const gruposVariantes         = ref([])
 const variantesSeleccionadas  = ref({}) // grupo_id -> nombre de opción
+const notaVariante            = ref('')
 
 async function obtenerVariantes(productoId) {
     if (variantesCache.value[productoId] !== undefined) {
@@ -163,11 +164,12 @@ function modificadoresDeCategoria(prod) {
     )
 }
 
-function agregarAlCarrito(prod, modificadores, variantes = []) {
+function agregarAlCarrito(prod, modificadores, variantes = [], notaVarianteTexto = '') {
     const existente = carrito.value.find(i =>
         i.menu_producto_id === prod.id &&
         JSON.stringify(i.modificadores || []) === JSON.stringify(modificadores) &&
-        JSON.stringify(i.variantes || []) === JSON.stringify(variantes)
+        JSON.stringify(i.variantes || []) === JSON.stringify(variantes) &&
+        (i.nota_variante || '') === notaVarianteTexto
     )
     if (existente) {
         existente.cantidad++
@@ -182,6 +184,7 @@ function agregarAlCarrito(prod, modificadores, variantes = []) {
             notas:            '',
             modificadores:    modificadores,
             variantes:        variantes,
+            nota_variante:    notaVarianteTexto || null,
         })
     }
 }
@@ -192,6 +195,7 @@ async function agregarProducto(prod) {
         productoPendiente.value = prod
         gruposVariantes.value = grupos
         variantesSeleccionadas.value = {}
+        notaVariante.value = ''
         mostrarModalVariantes.value = true
         return
     }
@@ -221,6 +225,7 @@ function cancelarModalVariantes() {
     productoPendiente.value = null
     gruposVariantes.value = []
     variantesSeleccionadas.value = {}
+    notaVariante.value = ''
 }
 
 function confirmarModificadores() {
@@ -232,6 +237,7 @@ function cancelarModalModificadores() {
     productoPendiente.value = null
     gruposVariantes.value = []
     variantesSeleccionadas.value = {}
+    notaVariante.value = ''
 }
 
 function finalizarAgregado(prod, modificadores) {
@@ -239,12 +245,13 @@ function finalizarAgregado(prod, modificadores) {
         .map(g => ({ grupo: g.nombre, opcion: variantesSeleccionadas.value[g.id] }))
         .filter(v => !!v.opcion)
 
-    agregarAlCarrito(prod, modificadores, variantes)
+    agregarAlCarrito(prod, modificadores, variantes, notaVariante.value.trim())
 
     mostrarModalModificadores.value = false
     productoPendiente.value = null
     gruposVariantes.value = []
     variantesSeleccionadas.value = {}
+    notaVariante.value = ''
 }
 
 function toggleModificador(nombre) {
@@ -424,6 +431,7 @@ function cerrarMesa() {
                                 {{ det.cantidad }}× {{ det.nombre_producto }}
                                 <span v-if="det.anulado" class="anulado-label">(anulado: {{ det.motivo_anulacion }})</span>
                                 <span v-if="det.variantes?.length" class="ronda-item-variantes">{{ det.variantes.map(v => v.opcion).join(' · ') }}</span>
+                                <span v-if="det.nota_variante" class="ronda-item-nota-variante">📝 {{ det.nota_variante }}</span>
                                 <span v-if="det.modificadores?.length" class="ronda-item-mods">⚠ {{ det.modificadores.join(' · ') }}</span>
                             </span>
                             <span class="ronda-item-precio" :class="{ 'ronda-item--anulado': det.anulado }">
@@ -453,6 +461,7 @@ function cerrarMesa() {
                             <div class="carrito-item-info">
                                 <p class="carrito-item-nombre">{{ item.nombre_producto }}</p>
                                 <p v-if="item.variantes?.length" class="carrito-item-variantes">{{ item.variantes.map(v => v.opcion).join(' · ') }}</p>
+                                <p v-if="item.nota_variante" class="carrito-item-nota-variante">📝 {{ item.nota_variante }}</p>
                                 <p v-if="item.modificadores?.length" class="carrito-item-mods">⚠ {{ item.modificadores.join(' · ') }}</p>
                                 <p class="carrito-item-precio">S/ {{ item.precio_unitario.toFixed(2) }} c/u</p>
                             </div>
@@ -520,6 +529,7 @@ function cerrarMesa() {
                         <div class="confirmacion-item-nombre">
                             {{ item.nombre_producto }}
                             <p v-if="item.variantes?.length" class="confirmacion-item-variantes">{{ item.variantes.map(v => v.opcion).join(' · ') }}</p>
+                            <p v-if="item.nota_variante" class="confirmacion-item-nota-variante">📝 {{ item.nota_variante }}</p>
                             <p v-if="item.modificadores?.length" class="confirmacion-item-mods">⚠ {{ item.modificadores.join(' · ') }}</p>
                         </div>
                         <span class="confirmacion-item-subtotal">S/ {{ item.subtotal.toFixed(2) }}</span>
@@ -569,6 +579,16 @@ function cerrarMesa() {
                                 <span class="variantes-opcion-radio" :class="{ 'variantes-opcion-radio--activo': variantesSeleccionadas[g.id] === o.nombre }"></span>
                                 <span class="variantes-opcion-nombre">{{ o.nombre }}</span>
                             </div>
+                        </div>
+
+                        <div class="variantes-nota">
+                            <p class="variantes-nota-titulo">¿Algún cambio en el combo?</p>
+                            <textarea
+                                v-model="notaVariante"
+                                rows="2"
+                                placeholder="Ej: en vez de ceviche → leche de tigre"
+                                class="variantes-nota-textarea"
+                            ></textarea>
                         </div>
                     </div>
 
@@ -630,6 +650,7 @@ function cerrarMesa() {
                 <div v-for="det in pedido.detalles.filter(d => !d.anulado)" :key="'dc'+det.id" style="font-size:13px; margin:3px 0;">
                     <span style="font-weight:bold;">{{ det.cantidad }}x</span> {{ det.nombre_producto }}
                     <div v-if="det.variantes?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">🍽 {{ det.variantes.map(v => v.opcion).join(' · ') }}</div>
+                    <div v-if="det.nota_variante" style="font-size:11px; padding-left:14px; font-style:italic;">📝 {{ det.nota_variante }}</div>
                     <div v-if="det.modificadores?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">⚠ {{ det.modificadores.join(' · ') }}</div>
                     <div v-if="det.notas" style="font-size:11px; padding-left:14px; font-style:italic;">▸ {{ det.notas }}</div>
                 </div>
@@ -1076,6 +1097,9 @@ function cerrarMesa() {
 .carrito-item-variantes { font-size: 12px; color: #94A3B8; margin: 2px 0 0; }
 .ronda-item-variantes { display: block; font-size: 11px; color: #94A3B8; }
 .confirmacion-item-variantes { font-size: 12px; color: #94A3B8; margin: 2px 0 0; }
+.carrito-item-nota-variante { font-size: 12px; color: #B45309; font-weight: 700; margin: 2px 0 0; }
+.ronda-item-nota-variante { display: block; font-size: 11px; color: #B45309; font-weight: 700; }
+.confirmacion-item-nota-variante { font-size: 12px; color: #B45309; font-weight: 700; margin: 2px 0 0; }
 
 /* ══ MODAL MODIFICADORES ══ */
 .mods-overlay {
@@ -1302,6 +1326,24 @@ function cerrarMesa() {
     border-radius: 50%;
     background: #14B8A6;
 }
+
+.variantes-nota { margin-top: 4px; }
+.variantes-nota-titulo { font-size: 14px; font-weight: 800; color: #1E293B; margin: 0 0 10px; }
+.variantes-nota-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    background: #F8FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1E293B;
+    outline: none;
+}
+.variantes-nota-textarea:focus { border-color: #14B8A6; }
+.variantes-nota-textarea::placeholder { color: #94A3B8; }
 
 /* ══ IMPRIMIR ══ */
 .comanda-print { display: none; }

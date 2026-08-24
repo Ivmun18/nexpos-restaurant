@@ -87,6 +87,7 @@ class ComandaController extends Controller
                         'notas' => $detalle->notas,
                         'modificadores' => $detalle->modificadores,
                         'variantes' => $detalle->variantes,
+                        'nota_variante' => $detalle->nota_variante,
                         'estado' => $detalle->estado,
                     ];
                 }),

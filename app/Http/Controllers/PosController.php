@@ -74,6 +74,7 @@ class PosController extends Controller
         'items.*.variantes'          => 'nullable|array',
         'items.*.variantes.*.grupo'  => 'required_with:items.*.variantes|string',
         'items.*.variantes.*.opcion' => 'required_with:items.*.variantes|string',
+        'items.*.nota_variante'    => 'nullable|string',
         'notas'                    => 'nullable|string',
     ]);
 
@@ -104,6 +105,7 @@ class PosController extends Controller
             'notas'            => $item['notas'] ?? null,
             'modificadores'    => $item['modificadores'] ?? null,
             'variantes'        => $item['variantes'] ?? null,
+            'nota_variante'    => $item['nota_variante'] ?? null,
             'estado'           => 'pendiente',
         ]);
     }
