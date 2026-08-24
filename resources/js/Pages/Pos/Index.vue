@@ -185,6 +185,7 @@ function agregarAlCarrito(prod, modificadores, variantes = [], notaVarianteTexto
 
 async function agregarProducto(prod) {
     const grupos = await obtenerVariantes(prod.id)
+    console.log('VARIANTES producto', prod.id, prod.nombre, grupos)
     if (grupos.length) {
         productoPendiente.value = prod
         gruposVariantes.value = grupos
