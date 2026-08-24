@@ -126,16 +126,16 @@ const imprimir = () => {
     const contenido = `
         <div style="text-align:center;margin-bottom:6px;">
             ${logoUrl.value ? `<img src="${logoUrl.value}" style="max-width:120px;max-height:120px;margin:0 auto 4px;display:block;">` : ''}
-            <p style="font-size:16px;font-weight:bold;margin:0;font-family:'Georgia',serif;">${e.nombre_comercial || e.razon_social || 'RESTAURANTE'}</p>
-            <p style="font-size:10px;margin:2px 0;">RUC: ${e.ruc || ''}</p>
-            <p style="font-size:10px;margin:2px 0;">${e.direccion || ''}</p>
+            <p style="font-size:18px;font-weight:bold;margin:0;font-family:'Georgia',serif;">${e.nombre_comercial || e.razon_social || 'RESTAURANTE'}</p>
+            <p style="font-size:12px;font-weight:600;margin:2px 0;">RUC: ${e.ruc || ''}</p>
+            <p style="font-size:12px;font-weight:600;margin:2px 0;">${e.direccion || ''}</p>
         </div>
         <div style="border-top:1px dashed #000;margin:6px 0;"></div>
         <div style="text-align:center;margin-bottom:6px;">
-            <p style="font-size:12px;font-weight:bold;margin:0;">TICKET DE VENTA</p>
+            <p style="font-size:14px;font-weight:bold;margin:0;">TICKET DE VENTA</p>
             <p style="font-size:10px;margin:2px 0;">(sin comprobante electrónico)</p>
         </div>
-        <div style="font-size:10px;margin-bottom:6px;">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;"><span>FECHA:</span><span>${fechaStr}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>HORA:</span><span>${horaStr}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>MESA:</span><span>${mesa.nombre || mesa.numero || '-'}</span></div>
@@ -143,21 +143,21 @@ const imprimir = () => {
             <div style="display:flex;justify-content:space-between;"><span>MÉTODO PAGO:</span><span>${(c.metodo_pago || '-').toUpperCase()}</span></div>
         </div>
         <div style="border-top:1px dashed #000;margin:6px 0;"></div>
-        <div style="font-size:11px;">
+        <div style="font-size:13px;font-weight:700;">
             <div style="display:flex;justify-content:space-between;"><span>PAGADO:</span><span>S/ ${Number(c.monto_pagado || 0).toFixed(2)}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>VUELTO:</span><span>S/ ${Number(c.vuelto || 0).toFixed(2)}</span></div>
-            <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:13px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:16px;margin-top:4px;">
                 <span>TOTAL:</span><span>S/ ${Number(c.total || 0).toFixed(2)}</span>
             </div>
         </div>
         <div style="border-top:1px dashed #000;margin:8px 0;"></div>
-        <div style="text-align:center;font-size:9px;">
+        <div style="text-align:center;font-size:10px;">
             <p>Documento sin validez tributaria</p>
             <p style="margin-top:4px;">Sistema desarrollado por NEXPOS Solutions</p>
         </div>
     `
     const ventana = window.open('', '_blank')
-    ventana.document.write('<html><head><title>Ticket</title><style>body{font-family:monospace;padding:4px;max-width:80mm;margin:0 auto;font-size:11px;line-height:1.3;}*{box-sizing:border-box;margin:0;padding:0;}p{margin:1px 0;}@media print{@page{margin:2mm;size:80mm auto;}}</style></head><body>' + contenido + '</body></html>')
+    ventana.document.write('<html><head><title>Ticket</title><style>body{font-family:\'Arial\',sans-serif;padding:4px;max-width:80mm;margin:0 auto;font-size:13px;font-weight:600;line-height:1.5;}*{box-sizing:border-box;margin:0;padding:0;}p{margin:2px 0;}@media print{@page{margin:2mm;size:80mm auto;}}</style></head><body>' + contenido + '</body></html>')
     ventana.document.close()
     setTimeout(() => ventana.print(), 500)
 }

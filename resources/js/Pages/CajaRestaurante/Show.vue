@@ -583,7 +583,7 @@ function cobrar() {
                 <div style="font-size:11px;">RUC: {{ empresa?.ruc ?? '' }}</div>
             </div>
             <div style="text-align:center; border-top:1px dashed #000; border-bottom:1px dashed #000; padding:4px 0; margin-bottom:8px;">
-                <div style="font-size:14px; font-weight:700;">CUENTA PRELIMINAR</div>
+                <div class="titulo">CUENTA PRELIMINAR</div>
                 <div style="font-size:11px;">No es comprobante de pago</div>
             </div>
             <div style="font-size:11px; margin-bottom:8px;">
@@ -591,11 +591,11 @@ function cobrar() {
                 <div>Fecha: {{ horaImpresion }}</div>
             </div>
             <div style="border-top:1px dashed #000; margin-bottom:4px;"></div>
-            <div v-for="p in platos" :key="'pp'+p.id" style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:2px;">
+            <div v-for="p in platos" :key="'pp'+p.id" class="item" style="display:flex; justify-content:space-between; margin-bottom:2px;">
                 <span>{{ p.cantidad }}x {{ p.nombre }}</span>
                 <span>S/ {{ p.subtotal.toFixed(2) }}</span>
             </div>
-            <div style="border-top:1px dashed #000; margin-top:4px; padding-top:4px; font-size:14px; font-weight:700; display:flex; justify-content:space-between;">
+            <div class="total" style="border-top:1px dashed #000; margin-top:4px; padding-top:4px; display:flex; justify-content:space-between;">
                 <span>TOTAL</span>
                 <span>S/ {{ Number(total).toFixed(2) }}</span>
             </div>
@@ -618,6 +618,12 @@ function cobrar() {
         width: 80mm;
         padding: 4mm;
         font-family: monospace;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.5;
     }
+    .precuenta-print h2, .precuenta-print .titulo { font-size: 16px; font-weight: 800; }
+    .precuenta-print .total { font-size: 15px; font-weight: 800; }
+    .precuenta-print .item { font-size: 13px; font-weight: 600; }
 }
 </style>
