@@ -11,6 +11,7 @@ const props = defineProps({
     categorias:      Array,
     pedidosAbiertos: Array,
     siguienteRonda:  Number,
+    impresoraCocinaIp: String,
 })
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
