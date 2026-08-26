@@ -71,7 +71,7 @@ export async function imprimirComandaPorIp(nombreImpresora, contenido) {
     if (typeof window.qz === 'undefined' || !window.qz) return
     try {
         const config = window.qz.configs.create(nombreImpresora)
-        await window.qz.print(config, [{type: 'raw', format: 'plain', data: contenido}])
+        await window.qz.print(config, [{type: 'raw', format: 'command', data: contenido}])
     } catch(e) {
         console.error('Error impresión cocina:', e)
         alert('Error al imprimir comanda: ' + (e?.message || e))
