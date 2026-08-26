@@ -628,12 +628,12 @@ function cobrar() {
         width: 80mm;
         padding: 4mm;
         font-family: monospace;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 600;
         line-height: 1.5;
     }
-    .precuenta-print h2, .precuenta-print .titulo { font-size: 16px; font-weight: 800; }
-    .precuenta-print .total { font-size: 15px; font-weight: 800; }
-    .precuenta-print .item { font-size: 13px; font-weight: 600; }
+    .precuenta-print h2, .precuenta-print .titulo { font-size: 18px; font-weight: 800; }
+    .precuenta-print .total { font-size: 18px; font-weight: 800; }
+    .precuenta-print .item { font-size: 14px; font-weight: 600; }
 }
 </style>
