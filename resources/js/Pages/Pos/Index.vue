@@ -356,6 +356,11 @@ function elegirImpresora(nombre) {
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
+    if (props.mesa.sucursal_id === 5) {
+        document.body.classList.add('imprimir-nueva-orden')
+        window.print()
+        setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 500)
+    }
     enviarPedidoAlServidor()
 }
 
@@ -365,7 +370,6 @@ function enviarPedidoAlServidor() {
     form.post(`/pos/${props.mesa.id}`, {
         onSuccess: () => {
             mostrarConfirmacion.value = false
-            if (props.mesa.sucursal_id === 5) { window.print() }
             setTimeout(() => { enviando.value = false }, 3000)
         },
         onError: () => {
@@ -747,6 +751,24 @@ function cerrarMesa() {
                     <div v-if="det.notas" style="font-size:11px; padding-left:14px; font-style:italic;">▸ {{ det.notas }}</div>
                 </div>
             </div>
+            <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; text-align:center; font-size:10px;">- - - cocina - - -</div>
+        </div>
+
+        <!-- COMANDA DE LA ORDEN RECIEN AGREGADA (antes de enviar) -->
+        <div id="comanda-nueva-print" class="comanda-nueva-print">
+            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
+                <div style="font-size:18px; font-weight:bold;">COMANDA</div>
+                <div style="font-size:14px;">Mesa {{ mesa.numero }}</div>
+                <div style="font-size:11px;">{{ horaActual }}</div>
+            </div>
+            <div v-for="(item, i) in carrito" :key="'cn'+i" style="font-size:13px; margin:3px 0;">
+                <span style="font-weight:bold;">{{ item.cantidad }}x</span> {{ item.nombre_producto }}
+                <div v-if="item.variantes?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">🍽 {{ item.variantes.map(v => v.opcion).join(' · ') }}</div>
+                <div v-if="item.nota_variante" style="font-size:11px; padding-left:14px; font-style:italic;">📝 {{ item.nota_variante }}</div>
+                <div v-if="item.modificadores?.length" style="font-size:11px; padding-left:14px; font-weight:bold;">⚠ {{ item.modificadores.join(' · ') }}</div>
+                <div v-if="item.notas" style="font-size:11px; padding-left:14px; font-style:italic;">▸ {{ item.notas }}</div>
+            </div>
+            <div v-if="notasPedido" style="font-size:11px; padding-left:4px; font-style:italic; margin-top:4px;">Notas: {{ notasPedido }}</div>
             <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; text-align:center; font-size:10px;">- - - cocina - - -</div>
         </div>
 
@@ -1438,11 +1460,23 @@ function cerrarMesa() {
 .variantes-nota-textarea::placeholder { color: #94A3B8; }
 
 /* ══ IMPRIMIR ══ */
-.comanda-print { display: none; }
+.comanda-print, .comanda-nueva-print { display: none; }
 @media print {
     body * { visibility: hidden !important; }
-    .comanda-print, .comanda-print * { visibility: visible !important; }
-    .comanda-print {
+
+    body:not(.imprimir-nueva-orden) .comanda-print,
+    body:not(.imprimir-nueva-orden) .comanda-print * { visibility: visible !important; }
+    body:not(.imprimir-nueva-orden) .comanda-print {
+        display: block !important;
+        position: absolute; left: 0; top: 0;
+        width: 280px; padding: 8px;
+        font-family: 'Courier New', monospace;
+        color: #000;
+    }
+
+    body.imprimir-nueva-orden .comanda-nueva-print,
+    body.imprimir-nueva-orden .comanda-nueva-print * { visibility: visible !important; }
+    body.imprimir-nueva-orden .comanda-nueva-print {
         display: block !important;
         position: absolute; left: 0; top: 0;
         width: 280px; padding: 8px;
