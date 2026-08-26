@@ -70,9 +70,10 @@ export async function conectarQZ() {
 export async function imprimirComandaPorIp(nombreImpresora, contenido) {
     if (typeof window.qz === 'undefined' || !window.qz) return
     try {
-        const impresoras = await window.qz.printers.find('POS')
-        const impresora = Array.isArray(impresoras) ? impresoras[0] : impresoras
-        if (!impresora) { alert('No se encontró impresora POS'); return }
+        const impresoras = await window.qz.printers.find()
+        const lista = Array.isArray(impresoras) ? impresoras : [impresoras]
+        const impresora = lista.find(p => p && !p.includes('PDF') && !p.includes('OneNote') && !p.includes('Fax')) || lista[0]
+        if (!impresora) { alert('No se encontró impresora'); return }
         const config = window.qz.configs.create(impresora)
         await window.qz.print(config, [{type: 'raw', format: 'command', data: contenido}])
     } catch(e) {
