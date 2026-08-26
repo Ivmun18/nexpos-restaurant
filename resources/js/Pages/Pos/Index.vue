@@ -1474,12 +1474,15 @@ function cerrarMesa() {
         color: #000;
     }
 
-    body.imprimir-nueva-orden .comanda-nueva-print,
-    body.imprimir-nueva-orden .comanda-nueva-print * { visibility: visible !important; }
-    body.imprimir-nueva-orden .comanda-nueva-print {
+    body.imprimir-nueva-orden #comanda-nueva-print,
+    body.imprimir-nueva-orden #comanda-nueva-print * { visibility: visible !important; }
+    body.imprimir-nueva-orden #comanda-nueva-print {
         display: block !important;
-        position: absolute; left: 0; top: 0;
-        width: 280px; padding: 8px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 8px;
         font-family: 'Courier New', monospace;
         color: #000;
     }
