@@ -368,6 +368,7 @@ function enviarPedidoAlServidor() {
     form.post(`/pos/${props.mesa.id}`, {
         onSuccess: () => {
             mostrarConfirmacion.value = false
+            if (props.mesa.sucursal_id === 5) { window.print() }
             setTimeout(() => { enviando.value = false }, 3000)
         },
         onError: () => {
