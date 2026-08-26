@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CajaRestaurante extends Model
 {
@@ -42,5 +43,10 @@ class CajaRestaurante extends Model
     public function comprobante(): HasOne
     {
         return $this->hasOne(ComprobanteSunat::class, 'caja_restaurante_id');
+    }
+
+    public function pedidoDetalles(): HasMany
+    {
+        return $this->hasMany(PedidoDetalle::class, 'caja_detalle_id');
     }
 }

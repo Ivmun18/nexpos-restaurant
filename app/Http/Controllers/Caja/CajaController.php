@@ -8,6 +8,7 @@ use App\Models\SesionCaja;
 use App\Models\CajaMovimiento;
 use Illuminate\Http\Request;
 use App\Helpers\EmpresaHelper;
+use App\Helpers\SucursalHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,10 +17,14 @@ class CajaController extends Controller
 {
     public function index()
     {
-        $empresaId = auth()->user()->empresa_id;
-        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = SucursalHelper::id();
+        $caja = Caja::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->first();
         if (!$caja) {
-            $caja = Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+            $caja = Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
         }
         $sesionActiva = SesionCaja::where('caja_id', $caja->id)
             ->where('estado', 'abierta')
@@ -53,10 +58,14 @@ class CajaController extends Controller
             'monto_apertura' => 'required|numeric|min:0',
         ]);
 
-        $empresaId = auth()->user()->empresa_id;
-        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = SucursalHelper::id();
+        $caja = Caja::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->first();
         if (!$caja) {
-            $caja = Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+            $caja = Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
         }
 
         // Verificar que no haya sesión abierta
@@ -90,8 +99,12 @@ class CajaController extends Controller
             'monto'   => 'required|numeric|min:0.01',
         ]);
 
-        $empresaId = auth()->user()->empresa_id;
-        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = SucursalHelper::id();
+        $caja = Caja::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->first();
 
         $sesion = $caja
             ? SesionCaja::where('caja_id', $caja->id)->where('estado', 'abierta')->first()
@@ -115,8 +128,12 @@ class CajaController extends Controller
 
     public function cerrar(Request $request)
     {
-        $empresaId = auth()->user()->empresa_id;
-        $caja = Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = SucursalHelper::id();
+        $caja = Caja::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->first();
 
         $sesion = $caja
             ? SesionCaja::where('caja_id', $caja->id)->where('estado', 'abierta')->with('movimientos')->first()

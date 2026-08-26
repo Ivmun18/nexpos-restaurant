@@ -364,7 +364,7 @@ const props = defineProps({
 const mostrarSelectorSucursal = computed(() => esAdmin.value && (props.sucursales || []).length > 1)
 
 const zonaActiva      = ref('todas')
-const sucursalActiva  = ref(props.sucursales && props.sucursales.length > 0 ? String(props.sucursales[0].id) : 'todas')
+const sucursalActiva  = ref(String(page.props.auth?.user?.sucursal_id ?? (props.sucursales?.[0]?.id ?? 'todas')))
 const modalMesa       = ref(false)
 const modalNueva      = ref(false)
 const modalCobroRapido= ref(false)

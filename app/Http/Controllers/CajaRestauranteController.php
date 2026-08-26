@@ -303,6 +303,21 @@ class CajaRestauranteController extends Controller
                 $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
                 $aceptada  = $response->successful() && isset($data['sunatResponse']);
                 $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
+                // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
+                if (!$aceptada && $pendiente) {
+                    sleep(4);
+                    $response2 = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                        ->timeout(60)
+                        ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                            'personaId'    => $empresa->apisunat_ruc,
+                            'personaToken' => $empresa->apisunat_token,
+                            'fileName'     => $fileName,
+                            'documentBody' => $documentBody,
+                        ]);
+                    $data2    = $response2->json();
+                    $aceptada = $response2->successful() && isset($data2['sunatResponse']);
+                    if ($aceptada) { $data = $data2; $pendiente = false; }
+                }
                 $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
 
                 $comprobante = \App\Models\ComprobanteSunat::create([
@@ -657,6 +672,21 @@ class CajaRestauranteController extends Controller
             $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
             $aceptada  = $response->successful() && isset($data['sunatResponse']);
             $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
+            // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
+            if (!$aceptada && $pendiente) {
+                sleep(4);
+                $response2 = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->timeout(60)
+                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
+                        'personaId'    => $empresa->apisunat_ruc,
+                        'personaToken' => $empresa->apisunat_token,
+                        'fileName'     => $fileName,
+                        'documentBody' => $documentBody,
+                    ]);
+                $data2    = $response2->json();
+                $aceptada = $response2->successful() && isset($data2['sunatResponse']);
+                if ($aceptada) { $data = $data2; $pendiente = false; }
+            }
         } catch (\Exception $e) {
             \Log::error('Error emitir comprobante cobro rápido: ' . $e->getMessage());
         }
@@ -701,7 +731,7 @@ class CajaRestauranteController extends Controller
     public function ticketShow(CajaRestaurante $caja): Response
     {
         return Inertia::render('Tickets/Show', [
-            'caja'     => $caja->load('mesa', 'user'),
+            'caja'     => $caja->load('mesa', 'user', 'pedidoDetalles'),
             'empresa'  => auth()->user()->empresa,
             'imprimir' => session('imprimir', false),
         ]);

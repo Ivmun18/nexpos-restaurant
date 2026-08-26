@@ -6,6 +6,7 @@ use App\Models\Mesa;
 use App\Models\Pedido;
 use App\Models\PedidoDetalle;
 use App\Models\MenuCategoria;
+use App\Helpers\SucursalHelper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,11 +16,18 @@ class PosController extends Controller
     // Abre el POS de una mesa
     public function index(Mesa $mesa): Response
     {
+        // Cargar relación sucursal para impresora de cocina
+        $mesa->load('sucursal');
+
         // Verificar caja abierta
-        $empresaId = auth()->user()->empresa_id;
-        $caja = \App\Models\Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = SucursalHelper::id();
+        $caja = \App\Models\Caja::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->first();
         if (!$caja) {
-            $caja = \App\Models\Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+            $caja = \App\Models\Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'tienda_id' => 1, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
         }
         $sesionAbierta = \App\Models\SesionCaja::where('caja_id', $caja->id)
             ->where('estado', 'abierta')
@@ -48,11 +56,14 @@ class PosController extends Controller
             ->whereIn('estado', ['abierto', 'enviado'])
             ->max('numero_ronda') ?? 0;
 
+        $impresoraCocinaIp = $mesa->sucursal?->impresora_cocina_ip;
+
         return Inertia::render('Pos/Index', [
             'mesa'          => $mesa,
             'categorias'    => $categorias,
             'pedidosAbiertos' => $pedidosAbiertos,
             'siguienteRonda'  => $ultimaRonda + 1,
+            'impresoraCocinaIp' => $impresoraCocinaIp,
         ]);
     }
 

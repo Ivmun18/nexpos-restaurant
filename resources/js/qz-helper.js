@@ -54,3 +54,48 @@ export async function imprimirTicketQZ(venta, empresa) {
         await window.qz.websocket.disconnect()
     } catch (e) { console.warn('QZ Tray no disponible:', e) }
 }
+
+export async function imprimirComandaIP(ip, contenido) {
+    if (typeof window.qz === 'undefined' || !window.qz) return
+    try {
+        window.qz.security.setCertificatePromise(() => Promise.resolve(''))
+        window.qz.security.setSignatureAlgorithm('SHA512')
+        window.qz.security.setSignaturePromise(() => Promise.resolve(''))
+        if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
+        const config = window.qz.configs.create({ host: ip, port: { printer: 9100 } }, { encoding: 'ISO-8859-1' })
+        await window.qz.print(config, [contenido])
+        await window.qz.websocket.disconnect()
+    } catch (e) {
+        console.warn('Error imprimiendo comanda por IP ' + ip + ':', e)
+    }
+}
+
+export async function listarImpresorasQZ() {
+    if (typeof window.qz === 'undefined' || !window.qz) return []
+    try {
+        window.qz.security.setCertificatePromise(() => Promise.resolve(''))
+        window.qz.security.setSignatureAlgorithm('SHA512')
+        window.qz.security.setSignaturePromise(() => Promise.resolve(''))
+        if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
+        const impresoras = await window.qz.printers.find()
+        return Array.isArray(impresoras) ? impresoras : [impresoras]
+    } catch (e) {
+        console.warn('Error listando impresoras QZ:', e)
+        return []
+    }
+}
+
+export async function imprimirComandaPrinter(nombreImpresora, contenido) {
+    if (typeof window.qz === 'undefined' || !window.qz) return
+    try {
+        window.qz.security.setCertificatePromise(() => Promise.resolve(''))
+        window.qz.security.setSignatureAlgorithm('SHA512')
+        window.qz.security.setSignaturePromise(() => Promise.resolve(''))
+        if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
+        const config = window.qz.configs.create(nombreImpresora, { encoding: 'ISO-8859-1' })
+        await window.qz.print(config, [contenido])
+        await window.qz.websocket.disconnect()
+    } catch (e) {
+        console.warn('Error imprimiendo comanda en impresora ' + nombreImpresora + ':', e)
+    }
+}

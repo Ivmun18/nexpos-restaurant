@@ -598,7 +598,7 @@ const menuItems = computed(() => {
 
     // Módulos permitidos para CAJERO según industria
     const modulosCajeroPorIndustria = {
-        restaurante: ['/dashboard', '/mesas', '/caja', '/reportes-restaurante', '/cocina', '/comandas'],
+        restaurante: ['/dashboard', '/mesas', '/caja', '/reportes-restaurante', '/cocina', '/comandas', '/comprobantes'],
         farmacia:    ['/dashboard', '/farmacia/pos', '/farmacia/ventas', '/farmacia/caja', '/farmacia/cajero', '/farmacia/inventario-inicial', '/clientes'],
         minimarket:  ['/dashboard', '/minimarket/pos', '/minimarket/ventas', '/minimarket/caja', '/minimarket/cajero', '/clientes'],
         ferreteria:  ['/dashboard', '/ferreteria/pos', '/ferreteria/ventas', '/ferreteria/caja', '/ferreteria/cajero', '/clientes'],

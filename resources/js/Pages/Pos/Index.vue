@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/vue3'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
+import { imprimirComandaIP, listarImpresorasQZ, imprimirComandaPrinter } from '@/qz-helper'
 
 const page = usePage()
 const props = defineProps({
@@ -11,6 +12,7 @@ const props = defineProps({
     categorias:      Array,
     pedidosAbiertos: Array,
     siguienteRonda:  Number,
+    impresoraCocinaIp: String,
 })
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
@@ -288,9 +290,75 @@ function cerrarConfirmacion() {
     mostrarConfirmacion.value = false
 }
 
+function construirComandaESC(mesaNumero, items, notas) {
+    const ESC = String.fromCharCode(27)
+    const GS  = String.fromCharCode(29)
+    const sep = '-'.repeat(32) + String.fromCharCode(10)
+    const lineas = items.map(i => {
+        const nombre = (i.nombre_producto || '').substring(0, 28)
+        return ESC + String.fromCharCode(33, 16) +
+            i.cantidad + 'x ' + nombre + String.fromCharCode(10) +
+            ESC + String.fromCharCode(33, 0)
+    }).join('')
+    return [
+        ESC + String.fromCharCode(64),
+        ESC + String.fromCharCode(97, 1),
+        ESC + String.fromCharCode(33, 48),
+        'COMANDA' + String.fromCharCode(10),
+        ESC + String.fromCharCode(33, 16),
+        'Mesa ' + mesaNumero + String.fromCharCode(10),
+        ESC + String.fromCharCode(33, 0),
+        ESC + String.fromCharCode(97, 0),
+        sep,
+        lineas,
+        sep,
+        notas ? ('Notas: ' + notas + String.fromCharCode(10)) : '',
+        String.fromCharCode(10, 10, 10),
+        GS + String.fromCharCode(86, 66, 0),
+    ].join('')
+}
+
+const mostrarModalImpresoras = ref(false)
+const listaImpresoras        = ref([])
+const comandaParaImprimir    = ref('')
+const buscandoImpresoras     = ref(false)
+
+const IMPRESORA_STORAGE_KEY = 'pos_impresora_comanda'
+
+function abrirSelectorImpresora(contenido) {
+    comandaParaImprimir.value = contenido
+    listaImpresoras.value = []
+    buscandoImpresoras.value = true
+    mostrarModalImpresoras.value = true
+    listarImpresorasQZ().then(impresoras => {
+        buscandoImpresoras.value = false
+        listaImpresoras.value = impresoras
+        const guardada = localStorage.getItem(IMPRESORA_STORAGE_KEY)
+        if (guardada && impresoras.includes(guardada)) {
+            mostrarModalImpresoras.value = false
+            imprimirComandaPrinter(guardada, contenido)
+        }
+    })
+}
+
+function elegirImpresora(nombre) {
+    mostrarModalImpresoras.value = false
+    localStorage.setItem(IMPRESORA_STORAGE_KEY, nombre)
+    imprimirComandaPrinter(nombre, comandaParaImprimir.value)
+    enviarPedidoAlServidor()
+}
+
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
+    if (props.impresoraCocinaIp) {
+        abrirSelectorImpresora(construirComandaESC(props.mesa.numero, carrito.value, notasPedido.value))
+        return
+    }
+    enviarPedidoAlServidor()
+}
+
+function enviarPedidoAlServidor() {
     enviando.value = true
     const form = useForm({ items: carrito.value, notas: notasPedido.value })
     form.post(`/pos/${props.mesa.id}`, {
@@ -550,6 +618,27 @@ function cerrarMesa() {
                         {{ enviando ? '⏳ Enviando...' : '✅ Confirmar y enviar' }}
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div v-if="mostrarModalImpresoras" class="confirmacion-overlay" @click.self="mostrarModalImpresoras=false">
+            <div class="confirmacion-modal">
+                <h3 class="confirmacion-titulo">🖨️ Elegir impresora</h3>
+                <p class="confirmacion-sub">Comanda enviada · Mesa {{ mesa.numero }}</p>
+                <div v-if="buscandoImpresoras" style="padding:16px 0; text-align:center; color:#64748B;">
+                    Buscando impresoras…
+                </div>
+                <div v-else-if="!listaImpresoras.length" style="padding:16px 0; text-align:center; color:#64748B;">
+                    No se encontraron impresoras. Verifica que QZ Tray esté corriendo.
+                </div>
+                <div v-for="nombre in listaImpresoras" :key="nombre"
+                    @click="elegirImpresora(nombre)"
+                    style="padding:12px 16px; margin-bottom:8px; background:#F1F5F9; border-radius:10px; cursor:pointer; font-weight:600; color:#1E293B;">
+                    {{ nombre }}
+                </div>
+                <button @click="mostrarModalImpresoras=false; enviarPedidoAlServidor()" class="confirmacion-btn confirmacion-btn--modificar" style="width:100%; margin-top:8px;">
+                    Cancelar
+                </button>
             </div>
         </div>
 

@@ -19,10 +19,14 @@ class MesaController extends Controller
         }
 
         // Verificar caja abierta
-        $empresaId = auth()->user()->empresa_id;
-        $caja = \App\Models\Caja::where('empresa_id', $empresaId)->where('activo', true)->first();
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = SucursalHelper::id();
+        $caja = \App\Models\Caja::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->first();
         if (!$caja) {
-            $caja = \App\Models\Caja::create(['empresa_id' => $empresaId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
+            $caja = \App\Models\Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
         }
         $sesionAbierta = \App\Models\SesionCaja::where('caja_id', $caja->id)
             ->where('estado', 'abierta')->first();

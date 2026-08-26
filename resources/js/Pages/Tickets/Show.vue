@@ -33,6 +33,13 @@
                     </div>
                 </div>
 
+                <div v-if="caja.pedidoDetalles?.length" style="border-top:2px solid #F1F5F9; padding-top:16px; margin-top:16px; display:flex; flex-direction:column; gap:6px;">
+                    <div v-for="d in caja.pedidoDetalles" :key="d.id" style="display:flex; justify-content:space-between; font-size:14px;">
+                        <span style="color:#1E293B;">{{ d.cantidad }}x {{ d.nombre_producto }}</span>
+                        <span style="font-weight:600; color:#1E293B;">S/ {{ formatNumber(d.subtotal) }}</span>
+                    </div>
+                </div>
+
                 <div style="background:#F8FAFC; border-radius:12px; padding:16px; margin-top:16px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                         <span style="font-size:14px; color:#64748B;">Pagado</span>
@@ -143,6 +150,12 @@ const imprimir = () => {
             <div style="display:flex;justify-content:space-between;"><span>MÉTODO PAGO:</span><span>${(c.metodo_pago || '-').toUpperCase()}</span></div>
         </div>
         <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+        ${(c.pedidoDetalles?.length) ? `
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">
+            ${c.pedidoDetalles.map(d => `<div style="display:flex;justify-content:space-between;"><span>${d.cantidad}x ${d.nombre_producto}</span><span>S/ ${Number(d.subtotal || 0).toFixed(2)}</span></div>`).join('')}
+        </div>
+        <div style="border-top:1px dashed #000;margin:6px 0;"></div>
+        ` : ''}
         <div style="font-size:13px;font-weight:700;">
             <div style="display:flex;justify-content:space-between;"><span>PAGADO:</span><span>S/ ${Number(c.monto_pagado || 0).toFixed(2)}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>VUELTO:</span><span>S/ ${Number(c.vuelto || 0).toFixed(2)}</span></div>
