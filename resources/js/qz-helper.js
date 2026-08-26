@@ -67,6 +67,7 @@ export async function imprimirComandaPorIp(ip, contenido) {
         await window.qz.websocket.disconnect()
     } catch (e) {
         console.warn('Error imprimiendo comanda en POS-80C:', e)
+        alert('Error al imprimir comanda: ' + (e?.message || e))
     }
 }
 
