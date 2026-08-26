@@ -87,3 +87,41 @@
         display: none !important;
     }
 }
+
+/* ══ IMPRESION COMANDA POS (Pos/Index.vue) ══
+   Movido de <style scoped> a global: el CSS scoped de Vue agrega un
+   atributo data-v-xxxx solo a elementos del propio componente, asi que
+   "body *" scoped nunca ocultaba el chrome de AppLayout (nav/sidebar). */
+@media print {
+    body * { visibility: hidden !important; }
+
+    body:not(.imprimir-nueva-orden) #comanda-print,
+    body:not(.imprimir-nueva-orden) #comanda-print * { visibility: visible !important; }
+    body:not(.imprimir-nueva-orden) #comanda-print {
+        display: block !important;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 280px;
+        padding: 8px;
+        font-family: 'Courier New', monospace;
+        color: #000;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print,
+    body.imprimir-nueva-orden #comanda-nueva-print * { visibility: visible !important; }
+    body.imprimir-nueva-orden #comanda-nueva-print {
+        display: block !important;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 280px;
+        padding: 8px;
+        font-family: 'Courier New', monospace;
+        color: #000;
+    }
+
+    .confirmacion-overlay, .mods-overlay { display: none !important; }
+
+    @page { margin: 4mm; }
+}

@@ -1461,33 +1461,7 @@ function cerrarMesa() {
 
 /* ══ IMPRIMIR ══ */
 .comanda-print, .comanda-nueva-print { display: none; }
-@media print {
-    body * { visibility: hidden !important; }
-
-    body:not(.imprimir-nueva-orden) .comanda-print,
-    body:not(.imprimir-nueva-orden) .comanda-print * { visibility: visible !important; }
-    body:not(.imprimir-nueva-orden) .comanda-print {
-        display: block !important;
-        position: absolute; left: 0; top: 0;
-        width: 280px; padding: 8px;
-        font-family: 'Courier New', monospace;
-        color: #000;
-    }
-
-    body.imprimir-nueva-orden #comanda-nueva-print,
-    body.imprimir-nueva-orden #comanda-nueva-print * { visibility: visible !important; }
-    body.imprimir-nueva-orden #comanda-nueva-print {
-        display: block !important;
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 8px;
-        font-family: 'Courier New', monospace;
-        color: #000;
-    }
-    @page { margin: 4mm; }
-
-    .confirmacion-overlay, .mods-overlay { display: none !important; }
-}
+/* Reglas @media print movidas a resources/css/app.css (global) — el CSS
+   scoped de Vue no puede ocultar elementos fuera de este componente
+   (nav/sidebar de AppLayout), asi que "body *" scoped no funcionaba. */
 </style>
