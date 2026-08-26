@@ -588,7 +588,7 @@ function cobrar() {
         <!-- PRE-CUENTA IMPRIMIBLE -->
         <div id="precuenta-print" class="precuenta-print">
             <div style="text-align:center; margin-bottom:8px;">
-                <div style="font-size:16px; font-weight:700;">{{ empresa?.nombre_comercial ?? empresa?.razon_social ?? 'PUNTO DE ENCUENTRO' }}</div>
+                <div style="font-size:20px; font-weight:700;">{{ empresa?.nombre_comercial ?? empresa?.razon_social ?? 'PUNTO DE ENCUENTRO' }}</div>
                 <div style="font-size:11px;">{{ empresa?.direccion ?? '' }}</div>
                 <div style="font-size:11px;">RUC: {{ empresa?.ruc ?? '' }}</div>
             </div>
@@ -628,12 +628,12 @@ function cobrar() {
         width: 80mm;
         padding: 4mm;
         font-family: monospace;
-        font-size: 14px;
+        font-size: 18px;
         font-weight: 600;
         line-height: 1.5;
     }
-    .precuenta-print h2, .precuenta-print .titulo { font-size: 18px; font-weight: 800; }
-    .precuenta-print .total { font-size: 18px; font-weight: 800; }
-    .precuenta-print .item { font-size: 14px; font-weight: 600; }
+    .precuenta-print h2, .precuenta-print .titulo { font-size: 24px; font-weight: 800; }
+    .precuenta-print .total { font-size: 22px; font-weight: 800; }
+    .precuenta-print .item { font-size: 18px; font-weight: 600; }
 }
 </style>
