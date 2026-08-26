@@ -55,16 +55,23 @@ export async function imprimirTicketQZ(venta, empresa) {
     } catch (e) { console.warn('QZ Tray no disponible:', e) }
 }
 
-export async function imprimirComandaPorIp(nombreImpresora, contenido) {
+export async function conectarQZ() {
     if (typeof window.qz === 'undefined' || !window.qz) return
     try {
         window.qz.security.setCertificatePromise(() => Promise.resolve(''))
         window.qz.security.setSignatureAlgorithm('SHA512')
         window.qz.security.setSignaturePromise(() => Promise.resolve(''))
         if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
+    } catch (e) {
+        console.warn('No se pudo conectar a QZ Tray:', e)
+    }
+}
+
+export async function imprimirComandaPorIp(nombreImpresora, contenido) {
+    if (typeof window.qz === 'undefined' || !window.qz) return
+    try {
         const config = window.qz.configs.create(nombreImpresora)
         await window.qz.print(config, [contenido])
-        await window.qz.websocket.disconnect()
     } catch(e) {
         console.error('Error impresión cocina:', e)
         alert('Error al imprimir comanda: ' + (e?.message || e))

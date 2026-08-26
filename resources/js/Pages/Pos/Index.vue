@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/vue3'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
-import { imprimirComandaPorIp, listarImpresorasQZ, imprimirComandaPrinter } from '@/qz-helper'
+import { imprimirComandaPorIp, listarImpresorasQZ, imprimirComandaPrinter, conectarQZ } from '@/qz-helper'
 
 const page = usePage()
 const props = defineProps({
@@ -77,7 +77,11 @@ const horaActual = new Date().toLocaleString('es-PE', { day:'2-digit', month:'2-
 
 const windowWidth = ref(window.innerWidth)
 const onResize = () => { windowWidth.value = window.innerWidth }
-onMounted(() => { window.addEventListener('resize', onResize); cargarModificadores() })
+onMounted(() => {
+    window.addEventListener('resize', onResize)
+    cargarModificadores()
+    if (props.impresoraCocina) { conectarQZ() }
+})
 onUnmounted(() => window.removeEventListener('resize', onResize))
 
 const isMobile  = computed(() => windowWidth.value < 768)
