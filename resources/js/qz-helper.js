@@ -70,8 +70,15 @@ export async function conectarQZ() {
 export async function imprimirComandaPorIp(nombreImpresora, contenido) {
     if (typeof window.qz === 'undefined' || !window.qz) return
     try {
-        const config = window.qz.configs.create(nombreImpresora)
-        await window.qz.print(config, [{type: 'raw', format: 'command', data: contenido}])
+        window.qz.security.setCertificatePromise(() => Promise.resolve(''))
+        window.qz.security.setSignatureAlgorithm('SHA512')
+        window.qz.security.setSignaturePromise(() => Promise.resolve(''))
+        if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
+        const config = window.qz.configs.create(nombreImpresora, { encoding: 'ISO-8859-1' })
+        const lineas = contenido.split(String.fromCharCode(10))
+            .map((l, i, arr) => i < arr.length - 1 ? l + String.fromCharCode(10) : l)
+        await window.qz.print(config, lineas)
+        await window.qz.websocket.disconnect()
     } catch(e) {
         console.error('Error impresión cocina:', e)
         alert('Error al imprimir comanda: ' + (e?.message || e))
