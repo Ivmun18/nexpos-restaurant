@@ -17,6 +17,7 @@ class Sucursal extends Model
         'telefono',
         'activo',
         'impresora_cocina_ip',
+        'impresora_cocina_nombre',
     ];
 
     protected $casts = [

@@ -13,6 +13,7 @@ const props = defineProps({
     pedidosAbiertos: Array,
     siguienteRonda:  Number,
     impresoraCocinaIp: String,
+    impresoraCocina: String,
 })
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
@@ -351,8 +352,8 @@ function elegirImpresora(nombre) {
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
-    if (props.impresoraCocinaIp) {
-        imprimirComandaPorIp(props.impresoraCocinaIp, construirComandaESC(props.mesa.numero, carrito.value, notasPedido.value))
+    if (props.impresoraCocina) {
+        imprimirComandaPorIp(props.impresoraCocina, construirComandaESC(props.mesa.numero, carrito.value, notasPedido.value))
     }
     enviarPedidoAlServidor()
 }

@@ -62,11 +62,11 @@ export async function imprimirComandaPorIp(ip, contenido) {
         window.qz.security.setSignatureAlgorithm('SHA512')
         window.qz.security.setSignaturePromise(() => Promise.resolve(''))
         if (!window.qz.websocket.isActive()) { await window.qz.websocket.connect() }
-        const config = window.qz.configs.create('POS-80C (copy 1)')
+        const config = window.qz.configs.create(ip)
         await window.qz.print(config, [contenido])
         await window.qz.websocket.disconnect()
     } catch (e) {
-        console.warn('Error imprimiendo comanda en POS-80C (copy 1):', e)
+        console.warn('Error imprimiendo comanda en ' + ip + ':', e)
         alert('Error al imprimir comanda: ' + (e?.message || e))
     }
 }

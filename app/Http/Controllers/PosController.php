@@ -64,6 +64,7 @@ class PosController extends Controller
             'pedidosAbiertos' => $pedidosAbiertos,
             'siguienteRonda'  => $ultimaRonda + 1,
             'impresoraCocinaIp' => $impresoraCocinaIp,
+            'impresoraCocina' => $mesa->sucursal?->impresora_cocina_nombre,
         ]);
     }
 
