@@ -356,6 +356,7 @@ function elegirImpresora(nombre) {
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
+    enviando.value = true
     if (props.mesa.sucursal_id === 5) {
         document.body.classList.add('imprimir-nueva-orden')
         window.print()
@@ -365,7 +366,6 @@ function enviarACocina() {
 }
 
 function enviarPedidoAlServidor() {
-    enviando.value = true
     const form = useForm({ items: carrito.value, notas: notasPedido.value })
     form.post(`/pos/${props.mesa.id}`, {
         onSuccess: () => {
@@ -757,18 +757,18 @@ function cerrarMesa() {
         <!-- COMANDA DE LA ORDEN RECIEN AGREGADA (antes de enviar) -->
         <div id="comanda-nueva-print" class="comanda-nueva-print">
             <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
-                <div style="font-size:20px; font-weight:bold;">Pedido a cocina</div>
-                <div style="font-size:14px;">Mesa {{ mesa.numero }}</div>
-                <div style="font-size:11px;">{{ horaActual }}</div>
+                <div style="font-size:26px; font-weight:bold;">Pedido a cocina</div>
+                <div style="font-size:14px; font-weight:bold;">Mesa {{ mesa.numero }}</div>
+                <div style="font-size:11px; font-weight:bold;">{{ horaActual }}</div>
             </div>
-            <div v-for="(item, i) in carrito" :key="'cn'+i" style="font-size:16px; font-weight:bold; margin:5px 0;">
+            <div v-for="(item, i) in carrito" :key="'cn'+i" style="font-size:20px; font-weight:bold; margin:5px 0;">
                 {{ item.cantidad }}x {{ item.nombre_producto }}
                 <div v-if="item.variantes?.length" style="font-size:13px; padding-left:14px; font-weight:bold;">🍽 {{ item.variantes.map(v => v.opcion).join(' · ') }}</div>
-                <div v-if="item.nota_variante" style="font-size:13px; padding-left:14px; font-style:italic;">📝 {{ item.nota_variante }}</div>
+                <div v-if="item.nota_variante" style="font-size:13px; padding-left:14px; font-style:italic; font-weight:bold;">📝 {{ item.nota_variante }}</div>
                 <div v-if="item.modificadores?.length" style="font-size:13px; padding-left:14px; font-weight:bold;">⚠ {{ item.modificadores.join(' · ') }}</div>
-                <div v-if="item.notas" style="font-size:13px; padding-left:14px; font-style:italic;">▸ {{ item.notas }}</div>
+                <div v-if="item.notas" style="font-size:13px; padding-left:14px; font-style:italic; font-weight:bold;">▸ {{ item.notas }}</div>
             </div>
-            <div v-if="notasPedido" style="font-size:13px; padding-left:4px; font-style:italic; font-weight:600; margin-top:4px;">Notas: {{ notasPedido }}</div>
+            <div v-if="notasPedido" style="font-size:13px; padding-left:4px; font-style:italic; font-weight:bold; margin-top:4px;">Notas: {{ notasPedido }}</div>
             <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; text-align:center; font-size:10px;">- - - cocina - - -</div>
         </div>
 
