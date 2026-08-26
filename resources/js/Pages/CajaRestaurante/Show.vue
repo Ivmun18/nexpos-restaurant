@@ -302,6 +302,7 @@ function cobrar() {
                         <span style="font-size:32px; font-weight:800; color:#14B8A6;">S/ {{ Number(total).toFixed(2) }}</span>
                     </div>
                     <button @click="imprimirPrecuenta" style="width:100%; padding:12px; background:#F1F5F9; color:#0F766E; border:1px solid #14B8A6; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px;">🖨️ Imprimir pre-cuenta</button>
+                    <button v-if="mesa.sucursal_id === 5" @click="imprimirPrecuenta" style="width:100%; padding:12px; background:#F1F5F9; color:#0F766E; border:1px solid #14B8A6; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px;">🖨️ Imprimir comanda</button>
                 </div>
 
                 <!-- ══ COBRO ══ -->
