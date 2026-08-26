@@ -190,6 +190,9 @@ class CajaRestauranteController extends Controller
             ->whereIn('estado', ['enviado', 'listo'])
             ->update(['estado' => 'cerrado', 'caja_restaurante_id' => $caja->id]);
 
+        \App\Models\PedidoDetalle::whereIn('id', $pedidosItems->pluck('id'))
+            ->update(['pagado' => true, 'caja_detalle_id' => $caja->id]);
+
         Mesa::whereIn('id', $this->idsGrupoMesa($mesa))->update(['estado' => 'libre', 'mesa_principal_id' => null]);
 
         $tipo = $request->tipo_comprobante ?? 'ninguno';
