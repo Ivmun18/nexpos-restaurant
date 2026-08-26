@@ -55,7 +55,7 @@ export async function imprimirTicketQZ(venta, empresa) {
     } catch (e) { console.warn('QZ Tray no disponible:', e) }
 }
 
-export async function imprimirComandaIP(ip, contenido) {
+export async function imprimirComandaPorIp(ip, contenido) {
     if (typeof window.qz === 'undefined' || !window.qz) return
     try {
         window.qz.security.setCertificatePromise(() => Promise.resolve(''))

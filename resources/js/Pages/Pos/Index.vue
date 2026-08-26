@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/vue3'
 import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
-import { imprimirComandaIP, listarImpresorasQZ, imprimirComandaPrinter } from '@/qz-helper'
+import { imprimirComandaPorIp, listarImpresorasQZ, imprimirComandaPrinter } from '@/qz-helper'
 
 const page = usePage()
 const props = defineProps({
@@ -352,8 +352,7 @@ function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
     if (props.impresoraCocinaIp) {
-        abrirSelectorImpresora(construirComandaESC(props.mesa.numero, carrito.value, notasPedido.value))
-        return
+        imprimirComandaPorIp(props.impresoraCocinaIp, construirComandaESC(props.mesa.numero, carrito.value, notasPedido.value))
     }
     enviarPedidoAlServidor()
 }
