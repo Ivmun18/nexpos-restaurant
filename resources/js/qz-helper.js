@@ -70,7 +70,10 @@ export async function conectarQZ() {
 export async function imprimirComandaPorIp(nombreImpresora, contenido) {
     if (typeof window.qz === 'undefined' || !window.qz) return
     try {
-        const config = window.qz.configs.create(nombreImpresora)
+        const impresoras = await window.qz.printers.find('POS')
+        const impresora = Array.isArray(impresoras) ? impresoras[0] : impresoras
+        if (!impresora) { alert('No se encontró impresora POS'); return }
+        const config = window.qz.configs.create(impresora)
         await window.qz.print(config, [{type: 'raw', format: 'command', data: contenido}])
     } catch(e) {
         console.error('Error impresión cocina:', e)
