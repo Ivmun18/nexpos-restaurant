@@ -181,7 +181,7 @@ class PosMinimarketController extends Controller
         ->with('imprimir', true);
 }
 
-private function emitirNubefact($venta, $empresa)
+public function emitirNubefact($venta, $empresa)
 {
     $venta->load('detalle');
     $esRus     = $empresa->regimen_tributario === 'RUS' || $empresa->zona_exonerada;
