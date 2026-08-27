@@ -283,9 +283,14 @@ class ComprobanteSunatController extends Controller
             $data      = $response->json();
             Log::info('ApiSunat emitirBoleta response: ' . json_encode($data));
 
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
+            // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
+            // $aceptada quedaba siempre en false, así que un comprobante ya
+            // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+            $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
             $comprobante = ComprobanteSunat::create([
                 'empresa_id'               => $empresa->id,
@@ -462,9 +467,10 @@ class ComprobanteSunatController extends Controller
             $data      = $response->json();
             Log::info('ApiSunat emitirFactura response: ' . json_encode($data));
 
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+            $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
             $comprobante = ComprobanteSunat::create([
                 'empresa_id'               => $empresa->id,
@@ -685,9 +691,10 @@ class ComprobanteSunatController extends Controller
             $data      = $response->json();
             Log::info('ApiSunat emitirNotaCredito response: ' . json_encode($data));
 
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+            $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
             $comprobante = ComprobanteSunat::create([
                 'empresa_id'               => $empresa->id,
@@ -844,7 +851,8 @@ class ComprobanteSunatController extends Controller
             $data      = $response->json();
             Log::info('ApiSunat reenviar response: ' . json_encode($data));
 
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
 
             $updatePayload = [

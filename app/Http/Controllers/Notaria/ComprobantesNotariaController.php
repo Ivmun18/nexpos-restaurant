@@ -178,9 +178,14 @@ class ComprobantesNotariaController extends Controller
 
             $data      = $response->json();
             \Log::info("emitir response: " . json_encode($data));
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
+            // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
+            // $aceptada quedaba siempre en false, así que un comprobante ya
+            // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+            $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
             $filaComprobante = [
                 'empresa_id'               => $empresa->id,
@@ -468,9 +473,10 @@ class ComprobantesNotariaController extends Controller
             $data = $response->json();
             \Log::info('ApiSunat ventaDirecta response: ' . json_encode($data));
 
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            $pdfUrl    = null;
+            $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
             // Guardar comprobante
             $filaComprobante = [
@@ -684,7 +690,8 @@ class ComprobantesNotariaController extends Controller
             $data = $response->json();
             \Log::info('ApiSunat reenviar response: ' . json_encode($data));
 
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
 
             $estado     = $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado');
@@ -944,7 +951,8 @@ class ComprobantesNotariaController extends Controller
                     ]);
 
                 $result    = $response->json();
-                $aceptada  = $response->successful() && isset($result['sunatResponse']);
+                $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+                $aceptada  = $response->successful() && isset($result['status']) && in_array($result['status'], $estadosAceptado);
                 $pendiente = $response->successful() && isset($result['status']) && $result['status'] === 'PENDIENTE';
 
                 if (!$aceptada && !$pendiente) {

@@ -139,7 +139,12 @@ class ComprobanteController extends Controller
 
             $data = $response->json();
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
+            // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
+            // $aceptada quedaba siempre en false, así que un comprobante ya
+            // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
 
             $comp = \DB::table('odonto_comprobantes')->insertGetId([
                 'empresa_id'        => $empresaId,

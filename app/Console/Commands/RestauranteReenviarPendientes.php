@@ -125,9 +125,14 @@ class RestauranteReenviarPendientes extends Command
                 Log::info("restaurante:reenviar-pendientes response comprobante {$comp->id}: " . json_encode($data));
 
                 $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
-                $aceptada  = $response->successful() && isset($data['sunatResponse']);
+                // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
+                // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
+                // $aceptada quedaba siempre en false, así que un comprobante ya
+                // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
+                $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+                $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
                 $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
-                $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+                $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
                 DB::table('comprobantes_sunat')->where('id', $comp->id)->update([
                     'aceptada_por_sunat'   => $aceptada ? 1 : 0,

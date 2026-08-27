@@ -304,7 +304,12 @@ class CajaRestauranteController extends Controller
 
                 $data      = $response->json();
                 $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
-                $aceptada  = $response->successful() && isset($data['sunatResponse']);
+                // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
+                // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
+                // $aceptada quedaba siempre en false, así que un comprobante ya
+                // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
+                $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+                $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
                 $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
                 // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
                 if (!$aceptada && $pendiente) {
@@ -318,10 +323,10 @@ class CajaRestauranteController extends Controller
                             'documentBody' => $documentBody,
                         ]);
                     $data2    = $response2->json();
-                    $aceptada = $response2->successful() && isset($data2['sunatResponse']);
+                    $aceptada = $response2->successful() && isset($data2['status']) && in_array($data2['status'], $estadosAceptado);
                     if ($aceptada) { $data = $data2; $pendiente = false; }
                 }
-                $pdfUrl    = $data['sunatResponse']['enlace_del_pdf'] ?? null;
+                $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
                 $comprobante = \App\Models\ComprobanteSunat::create([
                     'empresa_id'               => $empresa->id,
@@ -673,7 +678,8 @@ class CajaRestauranteController extends Controller
 
             $data      = $response->json();
             $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
-            $aceptada  = $response->successful() && isset($data['sunatResponse']);
+            $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+            $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
             // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
             if (!$aceptada && $pendiente) {
@@ -687,7 +693,7 @@ class CajaRestauranteController extends Controller
                         'documentBody' => $documentBody,
                     ]);
                 $data2    = $response2->json();
-                $aceptada = $response2->successful() && isset($data2['sunatResponse']);
+                $aceptada = $response2->successful() && isset($data2['status']) && in_array($data2['status'], $estadosAceptado);
                 if ($aceptada) { $data = $data2; $pendiente = false; }
             }
         } catch (\Exception $e) {
@@ -710,7 +716,7 @@ class CajaRestauranteController extends Controller
             'total'                    => $totalMonto,
             'aceptada_por_sunat'       => $aceptada ? 1 : 0,
             'sunat_descripcion'        => $aceptada ? 'Aceptada' : ($pendiente ? 'Pendiente SUNAT' : json_encode($data)),
-            'enlace_pdf'               => $data['sunatResponse']['enlace_del_pdf'] ?? null,
+            'enlace_pdf'               => $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null,
             'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
             'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
         ]);

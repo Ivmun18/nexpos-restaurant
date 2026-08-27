@@ -380,12 +380,16 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
         $data = $response->json();
         \Log::info('ApiSunat minimarket response venta ' . $venta->id . ': ' . json_encode($data));
 
-        $aceptada  = $response->successful() && isset($data['sunatResponse']);
+        // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
+        // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
+        // $aceptada quedaba siempre en false, así que una venta ya ACEPTADA
+        // por SUNAT se guardaba igual como 'pendiente'.
+        $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
+        $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
         $pendiente = $response->successful() && !$aceptada && isset($data['pdf']) && isset($data['documentId']);
         $rechazada = !$aceptada && !$pendiente;
 
-        $pdfUrl = $data['sunatResponse']['enlace_del_pdf']
-            ?? $data['pdf']['80mm']
+        $pdfUrl = $data['pdf']['80mm']
             ?? $data['pdf']['A4']
             ?? null;
 
