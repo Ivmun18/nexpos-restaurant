@@ -30,9 +30,17 @@ class FacturacionService
                     'anticipo_regularizacion'    => false,
                     'anticipo_documento_serie'   => '',
                     'anticipo_documento_numero'  => '',
+                    // Código 20 (Exonerado - Operación Onerosa), no '40'
+                    // (Inafecto): $esRus incluye zona_exonerada además de
+                    // RUS real; con zona exonerada la línea debe declarar
+                    // el mismo tributo "EXO" que el total de cabecera, o
+                    // SUNAT rechaza con el error 2638 (mismo bug
+                    // encontrado y confirmado en PosMinimarketController,
+                    // usado por Farmacia/Minimarket/Ferretería vía este
+                    // servicio compartido).
                     'porcentaje_igv'             => 0,
-                    'codigo_tipo_afectacion_igv' => '40',
-                    'nombre_tributo'             => 'INA',
+                    'codigo_tipo_afectacion_igv' => '20',
+                    'nombre_tributo'             => 'EXO',
                 ];
             }
             $valorUnitario = round($item->precio_unitario / 1.18, 4);
