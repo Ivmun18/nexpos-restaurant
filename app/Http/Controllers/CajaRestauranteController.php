@@ -303,14 +303,13 @@ class CajaRestauranteController extends Controller
                     ]);
 
                 $data      = $response->json();
-                $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
                 // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
                 // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
                 // $aceptada quedaba siempre en false, así que un comprobante ya
                 // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
                 $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
                 $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
-                $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
+                $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
                 // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
                 if (!$aceptada && $pendiente) {
                     sleep(4);
@@ -677,10 +676,9 @@ class CajaRestauranteController extends Controller
                 ]);
 
             $data      = $response->json();
-            $estadosOk = ['PENDIENTE', 'aceptado', 'ACEPTADO'];
             $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
             $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
-            $pendiente = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosOk);
+            $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
             // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
             if (!$aceptada && $pendiente) {
                 sleep(4);
