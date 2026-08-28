@@ -353,6 +353,10 @@ function elegirImpresora(nombre) {
     enviarPedidoAlServidor()
 }
 
+function esCon(texto) {
+    return /^con\b/i.test((texto || '').trim())
+}
+
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
@@ -756,20 +760,46 @@ function cerrarMesa() {
 
         <!-- COMANDA DE LA ORDEN RECIEN AGREGADA (antes de enviar) -->
         <div id="comanda-nueva-print" class="comanda-nueva-print">
-            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:6px; margin-bottom:8px;">
-                <div style="font-size:26px; font-weight:bold;">Pedido a cocina</div>
-                <div style="font-size:14px; font-weight:bold;">Mesa {{ mesa.numero }}</div>
-                <div style="font-size:11px; font-weight:bold;">{{ horaActual }}</div>
+            <div class="cnp-sep-doble"></div>
+            <div class="cnp-titulo">Punto de Encuentro</div>
+            <div class="cnp-titulo">Pedido a cocina</div>
+            <div class="cnp-sep-doble"></div>
+
+            <div class="cnp-meta">
+                <span>Mesa {{ mesa.numero }}</span>
+                <span>{{ horaActual }}</span>
             </div>
-            <div v-for="(item, i) in carrito" :key="'cn'+i" style="font-size:20px; font-weight:bold; margin:5px 0;">
-                {{ item.cantidad }}x {{ item.nombre_producto }}
-                <div v-if="item.variantes?.length" style="font-size:13px; padding-left:14px; font-weight:bold;">🍽 {{ item.variantes.map(v => v.opcion).join(' · ') }}</div>
-                <div v-if="item.nota_variante" style="font-size:13px; padding-left:14px; font-style:italic; font-weight:bold;">📝 {{ item.nota_variante }}</div>
-                <div v-if="item.modificadores?.length" style="font-size:13px; padding-left:14px; font-weight:bold;">⚠ {{ item.modificadores.join(' · ') }}</div>
-                <div v-if="item.notas" style="font-size:13px; padding-left:14px; font-style:italic; font-weight:bold;">▸ {{ item.notas }}</div>
+
+            <div class="cnp-sep"></div>
+            <div class="cnp-tabla-header">
+                <span class="cnp-col-cant">Cant.</span>
+                <span class="cnp-col-prod">Producto</span>
             </div>
-            <div v-if="notasPedido" style="font-size:13px; padding-left:4px; font-style:italic; font-weight:bold; margin-top:4px;">Notas: {{ notasPedido }}</div>
-            <div style="border-top:1px dashed #000; margin-top:8px; padding-top:6px; text-align:center; font-size:10px;">- - - cocina - - -</div>
+            <div class="cnp-sep"></div>
+
+            <div v-for="(item, i) in carrito" :key="'cn'+i" class="cnp-item">
+                <div class="cnp-item-fila">
+                    <span class="cnp-col-cant">{{ item.cantidad }}</span>
+                    <span class="cnp-col-prod">{{ item.nombre_producto }}</span>
+                </div>
+                <div v-for="(v, vi) in item.variantes" :key="'v'+vi" class="cnp-detalle">
+                    <span v-if="esCon(v.opcion)">✓ </span>{{ v.opcion }}
+                </div>
+                <div v-if="item.nota_variante" class="cnp-detalle">{{ item.nota_variante }}</div>
+                <div v-for="(m, mi) in item.modificadores" :key="'m'+mi" class="cnp-detalle">
+                    <span v-if="esCon(m)">✓ </span>{{ m }}
+                </div>
+                <div v-if="item.notas" class="cnp-detalle">{{ item.notas }}</div>
+            </div>
+
+            <div class="cnp-sep"></div>
+            <template v-if="notasPedido">
+                <div class="cnp-nota-titulo">Nota:</div>
+                <div class="cnp-detalle" style="padding-left:0;">{{ notasPedido }}</div>
+                <div class="cnp-sep"></div>
+            </template>
+            <div class="cnp-titulo">*** Cocina ***</div>
+            <div class="cnp-sep-doble"></div>
         </div>
 
     </AppLayout>

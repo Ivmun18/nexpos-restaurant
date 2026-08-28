@@ -115,10 +115,67 @@
         position: fixed;
         left: 0;
         top: 0;
-        width: 280px;
+        width: 100%;
+        box-sizing: border-box;
         padding: 8px;
         font-family: 'Courier New', monospace;
         color: #000;
+        text-transform: uppercase;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-titulo {
+        font-size: 20px;
+        font-weight: 900;
+        text-align: center;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 700;
+        margin: 6px 0;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-tabla-header,
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-item-fila {
+        display: flex;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-col-cant {
+        width: 44px;
+        flex-shrink: 0;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-col-prod {
+        flex: 1;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-item {
+        margin-bottom: 18px;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-detalle {
+        font-size: 16px;
+        font-weight: 700;
+        padding-left: 44px;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-nota-titulo {
+        font-size: 16px;
+        font-weight: 900;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-sep {
+        border-top: 1px dashed #000;
+        margin: 6px 0;
+    }
+
+    body.imprimir-nueva-orden #comanda-nueva-print .cnp-sep-doble {
+        border-top: 3px double #000;
+        margin: 6px 0;
     }
 
     .confirmacion-overlay, .mods-overlay { display: none !important; }
