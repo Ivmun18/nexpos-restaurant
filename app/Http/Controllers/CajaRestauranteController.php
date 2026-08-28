@@ -335,6 +335,19 @@ class CajaRestauranteController extends Controller
                     'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
                     'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
                 ]);
+
+                // Mismo patron que ApiSunatService::procesarRespuesta() en
+                // llantaspucallpa: un rechazo real (no PENDIENTE, no timeout/
+                // transporte) lanza excepcion despues de guardar el comprobante,
+                // para que quede en el mismo log de errores en vez de perderse
+                // en silencio.
+                if (!$aceptada && !$pendiente && isset($data['status'])) {
+                    \Log::error('APISUNAT rechazó el comprobante', [
+                        'comprobante_id' => $comprobante->id,
+                        'respuesta'      => $data,
+                    ]);
+                    throw new \RuntimeException('APISUNAT rechazó el envío: ' . json_encode($data['error'] ?? $data));
+                }
             } catch (\Exception $e) {
                 \Log::error('Error emitir comprobante cobro: ' . $e->getMessage());
             }
@@ -735,6 +748,23 @@ class CajaRestauranteController extends Controller
             'apisunat_document_id'     => substr($data['documentId'] ?? '', 0, 100) ?: null,
             'estado'                   => $aceptada ? 'aceptado' : ($pendiente ? 'pendiente' : 'rechazado'),
         ]);
+
+        // Mismo patron que ApiSunatService::procesarRespuesta() en llantaspucallpa:
+        // un rechazo real se loguea con el detalle completo de la respuesta, no
+        // solo se guarda en la BD en silencio. Try/catch local (no uno ambiente
+        // como en cobrar()) porque cobroRapido() debe seguir devolviendo su JSON
+        // normal de exito aunque el comprobante haya sido rechazado por SUNAT.
+        if (!$aceptada && !$pendiente && isset($data['status'])) {
+            try {
+                \Log::error('APISUNAT rechazó el comprobante (cobro rápido)', [
+                    'comprobante_id' => $comprobante->id,
+                    'respuesta'      => $data,
+                ]);
+                throw new \RuntimeException('APISUNAT rechazó el envío: ' . json_encode($data['error'] ?? $data));
+            } catch (\Exception $e) {
+                \Log::error('Error emitir comprobante cobro rápido: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'success'      => true,
