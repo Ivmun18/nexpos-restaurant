@@ -18,6 +18,7 @@ const props = defineProps({
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
+const carritoParaImprimir = ref([]) // snapshot para #comanda-nueva-print: carrito ya puede estar vacio cuando llega el onSuccess de Inertia
 
 // Modificadores por categoría (ej: "Sin ají", "Con chaufa")
 const todosModificadores       = ref([])
@@ -366,6 +367,7 @@ function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
     enviando.value = true
+    carritoParaImprimir.value = [...carrito.value]
     enviarPedidoAlServidor(() => {
         if (props.mesa.sucursal_id === 5) {
             document.body.classList.add('imprimir-nueva-orden')
@@ -784,7 +786,7 @@ function cerrarMesa() {
             </div>
             <div class="cnp-sep"></div>
 
-            <div v-for="(item, i) in carrito" :key="'cn'+i" class="cnp-item">
+            <div v-for="(item, i) in carritoParaImprimir" :key="'cn'+i" class="cnp-item">
                 <div class="cnp-item-fila">
                     <span class="cnp-col-cant">{{ item.cantidad }}</span>
                     <span class="cnp-col-prod">{{ nombreComanda(item.nombre_producto) }}</span>
