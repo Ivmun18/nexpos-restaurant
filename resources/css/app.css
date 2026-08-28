@@ -119,7 +119,7 @@
         box-sizing: border-box;
         padding: 8px;
         font-family: 'Courier New', monospace;
-        color: #000;
+        color: #000 !important;
         text-transform: uppercase;
     }
 
