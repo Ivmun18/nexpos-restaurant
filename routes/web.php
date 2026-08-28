@@ -600,6 +600,11 @@ Route::middleware(['auth'])->prefix('reportes-restaurante')->group(function () {
     Route::get('/exportar-pdf', [\App\Http\Controllers\ReporteRestauranteController::class, 'exportarPdf'])->name('reportes.restaurante.pdf');
 });
 
+// Reporte de envios a cocina (comanda_logs)
+Route::middleware(['auth'])->prefix('reportes/comandas')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ComandaLogController::class, 'index'])->name('reportes.comandas');
+});
+
 // ==========================================
 // COMANDAS (Pantalla Kanban)
 // ==========================================

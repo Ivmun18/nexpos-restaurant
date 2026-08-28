@@ -468,6 +468,7 @@ const allMenuItems = [
     { path: '/comandas',            icon: 'comanda',    label: 'Comandas',           module: 'comandas',        section: 'RESTAURANTE' },
     { path: '/reportes-restaurante',icon: 'ventas',     label: 'Reporte ventas',     module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/reportes/turnos',     icon: 'reporte',    label: 'Reporte mozos',      module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/reportes/comandas',   icon: 'comanda',    label: 'Reporte cocina',     module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/compras',             icon: 'compras',    label: 'Compras',            module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/proveedores',         icon: 'proveedor',  label: 'Proveedores',        module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/insumos',             icon: 'inventario', label: 'Inventario',         module: 'pos_restaurante', section: 'RESTAURANTE' },

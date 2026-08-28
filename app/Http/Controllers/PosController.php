@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mesa;
+use App\Models\ComandaLog;
 use App\Models\Pedido;
 use App\Models\PedidoDetalle;
 use App\Models\MenuCategoria;
@@ -124,6 +125,16 @@ class PosController extends Controller
 
     $pedido->recalcularTotal();
     $mesa->update(['estado' => 'ocupada']);
+
+    ComandaLog::create([
+        'empresa_id'  => auth()->user()->empresa_id,
+        'sucursal_id' => $mesa->sucursal_id,
+        'mesa_id'     => $mesa->id,
+        'mesa_nombre' => $mesa->nombre ?: "Mesa {$mesa->numero}",
+        'mozo_id'     => auth()->id(),
+        'mozo_nombre' => auth()->user()->name,
+        'items'       => $validated['items'],
+    ]);
 
     return redirect()->route('mesas.index')
         ->with('success', "Pedido enviado a cocina. Mesa {$mesa->numero}");
