@@ -952,40 +952,64 @@ class ComprobanteSunatController extends Controller
             return response()->json(['success' => false, 'mensaje' => 'No autorizado'], 403);
         }
 
-        if (!$comprobante->apisunat_document_id) {
-            return response()->json(['success' => false, 'mensaje' => 'Comprobante sin document_id de ApiSunat, no se puede consultar'], 422);
-        }
-
         try {
-            $response = Http::timeout(30)
-                ->get("https://back.apisunat.com/documents/{$comprobante->apisunat_document_id}/getById");
+            if ($comprobante->apisunat_document_id) {
+                $response = Http::timeout(30)
+                    ->get("https://back.apisunat.com/documents/{$comprobante->apisunat_document_id}/getById");
+                $contexto = "doc {$comprobante->apisunat_document_id}";
+            } else {
+                // Sin document_id (ej. el sendBill original nunca devolvio uno,
+                // visto en producción el 2026-08-28) — fallback por serie/numero,
+                // mismo patron que ApiSunatService::consultarPorFileName() en
+                // llantaspucallpa. getAll devuelve un array (o vacio si SUNAT no
+                // tiene ningun documento con esa serie/numero).
+                $empresa = $comprobante->empresa;
+                if (!$empresa || !$empresa->apisunat_ruc || !$empresa->apisunat_token) {
+                    return response()->json(['success' => false, 'mensaje' => 'Comprobante sin document_id y empresa sin credenciales ApiSunat, no se puede consultar'], 422);
+                }
+
+                $response = Http::timeout(30)->get('https://back.apisunat.com/documents/getAll', [
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'type'         => $comprobante->tipo_comprobante,
+                    'serie'        => $comprobante->serie,
+                    'number'       => sprintf('%08d', $comprobante->numero),
+                    'limit'        => 1,
+                ]);
+                $contexto = "serie/numero {$comprobante->serie}-{$comprobante->numero}";
+            }
 
             if (!$response->successful()) {
-                Log::warning("consultarEstado comprobante {$comprobante->id} (doc {$comprobante->apisunat_document_id}): HTTP {$response->status()} - " . $response->body());
+                Log::warning("consultarEstado comprobante {$comprobante->id} ({$contexto}): HTTP {$response->status()} - " . $response->body());
                 return response()->json(['success' => false, 'mensaje' => 'Error HTTP ' . $response->status()], 502);
             }
 
             $data = $response->json();
-            Log::info("consultarEstado comprobante {$comprobante->id} (doc {$comprobante->apisunat_document_id}): " . json_encode($data));
+
+            if (!$comprobante->apisunat_document_id) {
+                $data = $data[0] ?? null;
+                if (!$data) {
+                    return response()->json(['success' => false, 'mensaje' => 'ApiSunat no tiene ningun documento con esa serie/numero - nunca se proceso realmente'], 404);
+                }
+            }
+
+            Log::info("consultarEstado comprobante {$comprobante->id} ({$contexto}): " . json_encode($data));
 
             $status = $data['status'] ?? null;
 
+            $updates = [];
             if ($status === 'ACEPTADO') {
-                $comprobante->update([
-                    'estado'             => 'aceptado',
-                    'aceptada_por_sunat' => 1,
-                    'sunat_descripcion'  => 'Aceptada',
-                ]);
+                $updates = ['estado' => 'aceptado', 'aceptada_por_sunat' => 1, 'sunat_descripcion' => 'Aceptada'];
             } elseif ($status === 'RECHAZADO') {
-                $comprobante->update([
-                    'estado'            => 'rechazado',
-                    'sunat_descripcion' => json_encode($data),
-                ]);
+                $updates = ['estado' => 'rechazado', 'sunat_descripcion' => json_encode($data)];
             } elseif ($status === 'EXCEPCION') {
-                $comprobante->update([
-                    'estado'            => 'rechazado',
-                    'sunat_descripcion' => 'Excepción: ' . json_encode($data),
-                ]);
+                $updates = ['estado' => 'rechazado', 'sunat_descripcion' => 'Excepción: ' . json_encode($data)];
+            }
+            if (!$comprobante->apisunat_document_id && ($data['id'] ?? $data['documentId'] ?? null)) {
+                $updates['apisunat_document_id'] = substr($data['id'] ?? $data['documentId'], 0, 100);
+            }
+            if ($updates) {
+                $comprobante->update($updates);
             }
 
             return response()->json([
