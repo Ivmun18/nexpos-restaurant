@@ -18,7 +18,6 @@ const props = defineProps({
 
 const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
-const carritoParaImprimir = ref([]) // snapshot para #comanda-nueva-print: carrito ya puede estar vacio cuando llega el onSuccess de Inertia
 
 // Pestana "Cocina" (solo Local 2, sucursal_id === 5): lista de comandas del
 // dia con reimpresion, reutilizando el mismo #comanda-nueva-print.
@@ -419,7 +418,7 @@ const datosTicket = computed(() => {
     return {
         mesaLabel: `Mesa ${props.mesa.numero}`,
         horaLabel: horaActual,
-        items:     carritoParaImprimir.value,
+        items:     carrito.value,
     }
 })
 
@@ -427,23 +426,20 @@ function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
     enviando.value = true
-    carritoParaImprimir.value = [...carrito.value]
-    enviarPedidoAlServidor(() => {
-        if (props.mesa.sucursal_id === 5) {
-            document.body.classList.add('imprimir-nueva-orden')
-            window.print()
-            setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 500)
-        }
-    })
+    if (props.mesa.sucursal_id === 5) {
+        document.body.classList.add('imprimir-nueva-orden')
+        window.print()
+        setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 500)
+    }
+    enviarPedidoAlServidor()
 }
 
-function enviarPedidoAlServidor(alExito) {
+function enviarPedidoAlServidor() {
     const form = useForm({ items: carrito.value, notas: notasPedido.value })
     form.post(`/pos/${props.mesa.id}`, {
         onSuccess: () => {
             mostrarConfirmacion.value = false
             setTimeout(() => { enviando.value = false }, 3000)
-            if (alExito) alExito()
         },
         onError: () => {
             setTimeout(() => { enviando.value = false }, 3000)
