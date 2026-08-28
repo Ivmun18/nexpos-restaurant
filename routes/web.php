@@ -554,6 +554,7 @@ Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/api/modificadores', [\App\Http\Controllers\Admin\ModificadorController::class, 'api'])->name('api.modificadores');
     Route::get('/api/producto-variantes', [\App\Http\Controllers\ProductoVarianteController::class, 'api'])->name('api.producto-variantes');
+    Route::get('/api/comanda-logs/hoy', [\App\Http\Controllers\ComandaLogController::class, 'hoy'])->name('api.comanda-logs.hoy');
 });
 
 // Cocina

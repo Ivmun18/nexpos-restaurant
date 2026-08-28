@@ -20,6 +20,13 @@ const categoriaActiva = ref(props.categorias[0]?.id ?? null)
 const carrito         = ref([])
 const carritoParaImprimir = ref([]) // snapshot para #comanda-nueva-print: carrito ya puede estar vacio cuando llega el onSuccess de Inertia
 
+// Pestana "Cocina" (solo Local 2, sucursal_id === 5): lista de comandas del
+// dia con reimpresion, reutilizando el mismo #comanda-nueva-print.
+const vistaPos       = ref('pedido')
+const comandasCocina = ref([])
+const cargandoCocina = ref(false)
+const ticketReimprimir = ref(null)
+
 // Modificadores por categoría (ej: "Sin ají", "Con chaufa")
 const todosModificadores       = ref([])
 const mostrarModalModificadores = ref(false)
@@ -363,6 +370,59 @@ function nombreComanda(nombre) {
     return (nombre || '').split(' - ')[0]
 }
 
+function formatHora(f) {
+    if (!f) return ''
+    return new Date(f).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+}
+
+function resumenItemsCocina(items) {
+    if (!items || !items.length) return '—'
+    const texto = items.map(it => `${it.cantidad}x ${nombreComanda(it.nombre_producto)}`).join(', ')
+    return texto.length > 60 ? texto.slice(0, 60) + '…' : texto
+}
+
+async function cargarComandasCocina() {
+    cargandoCocina.value = true
+    try {
+        const { data } = await axios.get('/api/comanda-logs/hoy', { params: { sucursal_id: props.mesa.sucursal_id } })
+        comandasCocina.value = data
+    } catch (e) {
+        comandasCocina.value = []
+    } finally {
+        cargandoCocina.value = false
+    }
+}
+
+function irACocina() {
+    vistaPos.value = 'cocina'
+    cargarComandasCocina()
+}
+
+function reimprimirComanda(log) {
+    ticketReimprimir.value = log
+    document.body.classList.add('imprimir-nueva-orden')
+    window.print()
+    setTimeout(() => {
+        document.body.classList.remove('imprimir-nueva-orden')
+        ticketReimprimir.value = null
+    }, 500)
+}
+
+const datosTicket = computed(() => {
+    if (ticketReimprimir.value) {
+        return {
+            mesaLabel: ticketReimprimir.value.mesa_nombre || '—',
+            horaLabel: formatHora(ticketReimprimir.value.created_at),
+            items:     ticketReimprimir.value.items || [],
+        }
+    }
+    return {
+        mesaLabel: `Mesa ${props.mesa.numero}`,
+        horaLabel: horaActual,
+        items:     carritoParaImprimir.value,
+    }
+})
+
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
@@ -398,6 +458,18 @@ function cerrarMesa() {
 
 <template>
     <AppLayout :title="`🍽️ Mesa ${mesa.numero} · POS`">
+
+        <!-- ══ TAB PEDIDO / COCINA (solo Local 2) ══ -->
+        <div v-if="mesa.sucursal_id === 5" class="pos-tabs" style="margin-bottom:10px;">
+            <button @click="vistaPos='pedido'" :class="['pos-tab', vistaPos==='pedido' ? 'pos-tab--active' : '']">
+                🍽️ Pedido
+            </button>
+            <button @click="irACocina" :class="['pos-tab', vistaPos==='cocina' ? 'pos-tab--active' : '']">
+                🍳 Cocina
+            </button>
+        </div>
+
+        <template v-if="vistaPos === 'pedido'">
 
         <!-- ══ TABS (solo tablet: el celular usa el drawer fijo de abajo) ══ -->
         <div v-if="isMobilePOS && !isMobile" class="pos-tabs">
@@ -605,6 +677,40 @@ function cerrarMesa() {
             </button>
         </div>
 
+        </template>
+
+        <!-- ══ PANEL COCINA (solo Local 2): comandas del dia + reimpresion ══ -->
+        <div v-else-if="vistaPos === 'cocina'" class="panel-cocina">
+            <div v-if="cargandoCocina" style="padding:2rem; text-align:center; color:#94A3B8;">Cargando comandas del día…</div>
+            <table v-else style="width:100%; border-collapse:collapse; font-size:13px; background:white; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
+                <thead>
+                    <tr style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
+                        <th style="text-align:left; padding:10px 16px; font-size:11px; color:#94A3B8; font-weight:700; text-transform:uppercase;">Hora</th>
+                        <th style="text-align:left; padding:10px 16px; font-size:11px; color:#94A3B8; font-weight:700; text-transform:uppercase;">Mesa</th>
+                        <th style="text-align:left; padding:10px 16px; font-size:11px; color:#94A3B8; font-weight:700; text-transform:uppercase;">Mozo</th>
+                        <th style="text-align:left; padding:10px 16px; font-size:11px; color:#94A3B8; font-weight:700; text-transform:uppercase;">Items</th>
+                        <th style="padding:10px 16px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="!comandasCocina.length">
+                        <td colspan="5" style="text-align:center; padding:2rem; color:#94A3B8;">No hay comandas enviadas hoy.</td>
+                    </tr>
+                    <tr v-for="log in comandasCocina" :key="log.id" style="border-bottom:1px solid #F1F5F9;">
+                        <td style="padding:10px 16px; color:#1E293B;">{{ formatHora(log.created_at) }}</td>
+                        <td style="padding:10px 16px; color:#1E293B; font-weight:600;">{{ log.mesa_nombre || '—' }}</td>
+                        <td style="padding:10px 16px; color:#1E293B;">{{ log.mozo_nombre || '—' }}</td>
+                        <td style="padding:10px 16px; color:#475569;">{{ resumenItemsCocina(log.items) }}</td>
+                        <td style="padding:10px 16px; text-align:right;">
+                            <button @click="reimprimirComanda(log)" style="padding:6px 14px; background:#F1F5F9; color:#1E293B; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                                🖨️ Reimprimir
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         <!-- MODAL CONFIRMACIÓN DE PEDIDO -->
         <div v-if="mostrarConfirmacion" class="confirmacion-overlay" @click.self="cerrarConfirmacion">
             <div class="confirmacion-modal">
@@ -775,8 +881,8 @@ function cerrarMesa() {
             <div class="cnp-sep-doble"></div>
 
             <div class="cnp-meta">
-                <span>Mesa {{ mesa.numero }}</span>
-                <span>{{ horaActual }}</span>
+                <span>{{ datosTicket.mesaLabel }}</span>
+                <span>{{ datosTicket.horaLabel }}</span>
             </div>
 
             <div class="cnp-sep"></div>
@@ -786,7 +892,7 @@ function cerrarMesa() {
             </div>
             <div class="cnp-sep"></div>
 
-            <div v-for="(item, i) in carritoParaImprimir" :key="'cn'+i" class="cnp-item">
+            <div v-for="(item, i) in datosTicket.items" :key="'cn'+i" class="cnp-item">
                 <div class="cnp-item-fila">
                     <span class="cnp-col-cant">{{ item.cantidad }}</span>
                     <span class="cnp-col-prod">{{ nombreComanda(item.nombre_producto) }}</span>
@@ -802,7 +908,7 @@ function cerrarMesa() {
             </div>
 
             <div class="cnp-sep"></div>
-            <template v-if="notasPedido">
+            <template v-if="!ticketReimprimir && notasPedido">
                 <div class="cnp-nota-titulo">Nota:</div>
                 <div class="cnp-detalle" style="padding-left:0;">{{ notasPedido }}</div>
                 <div class="cnp-sep"></div>

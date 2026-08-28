@@ -43,4 +43,21 @@ class ComandaLogController extends Controller
             ],
         ]);
     }
+
+    /**
+     * JSON de las comandas de hoy para una sucursal - usado por la pestana
+     * "Cocina" del POS (Pos/Index.vue) para reimprimir tickets ya enviados.
+     */
+    public function hoy(Request $request)
+    {
+        $sucursal_id = $request->get('sucursal_id');
+
+        $logs = ComandaLog::where('empresa_id', auth()->user()->empresa_id)
+            ->where('sucursal_id', $sucursal_id)
+            ->whereDate('created_at', now()->toDateString())
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'mesa_nombre', 'mozo_nombre', 'items', 'created_at']);
+
+        return response()->json($logs);
+    }
 }
