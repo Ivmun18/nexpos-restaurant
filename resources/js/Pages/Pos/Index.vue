@@ -357,6 +357,11 @@ function esCon(texto) {
     return /^con\b/i.test((texto || '').trim())
 }
 
+// Comanda de cocina: solo el nombre corto (ej. "COMBO 5 - CEVICHE + ARROZ" -> "COMBO 5").
+function nombreComanda(nombre) {
+    return (nombre || '').split(' - ')[0]
+}
+
 function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
@@ -780,7 +785,7 @@ function cerrarMesa() {
             <div v-for="(item, i) in carrito" :key="'cn'+i" class="cnp-item">
                 <div class="cnp-item-fila">
                     <span class="cnp-col-cant">{{ item.cantidad }}</span>
-                    <span class="cnp-col-prod">{{ item.nombre_producto }}</span>
+                    <span class="cnp-col-prod">{{ nombreComanda(item.nombre_producto) }}</span>
                 </div>
                 <div v-for="(v, vi) in item.variantes" :key="'v'+vi" class="cnp-detalle">
                     <span v-if="esCon(v.opcion)">✓ </span>{{ v.opcion }}

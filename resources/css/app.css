@@ -140,6 +140,7 @@
     body.imprimir-nueva-orden #comanda-nueva-print .cnp-tabla-header,
     body.imprimir-nueva-orden #comanda-nueva-print .cnp-item-fila {
         display: flex;
+        gap: 6px;
         font-size: 18px;
         font-weight: 900;
     }
