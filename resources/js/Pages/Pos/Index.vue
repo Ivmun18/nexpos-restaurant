@@ -366,20 +366,22 @@ function enviarACocina() {
     if (enviando.value) return
     if (!carrito.value.length) return
     enviando.value = true
-    if (props.mesa.sucursal_id === 5) {
-        document.body.classList.add('imprimir-nueva-orden')
-        window.print()
-        setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 500)
-    }
-    enviarPedidoAlServidor()
+    enviarPedidoAlServidor(() => {
+        if (props.mesa.sucursal_id === 5) {
+            document.body.classList.add('imprimir-nueva-orden')
+            window.print()
+            setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 500)
+        }
+    })
 }
 
-function enviarPedidoAlServidor() {
+function enviarPedidoAlServidor(alExito) {
     const form = useForm({ items: carrito.value, notas: notasPedido.value })
     form.post(`/pos/${props.mesa.id}`, {
         onSuccess: () => {
             mostrarConfirmacion.value = false
             setTimeout(() => { enviando.value = false }, 3000)
+            if (alExito) alExito()
         },
         onError: () => {
             setTimeout(() => { enviando.value = false }, 3000)
