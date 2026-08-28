@@ -429,7 +429,7 @@ function enviarACocina() {
     if (props.mesa.sucursal_id === 5) {
         document.body.classList.add('imprimir-nueva-orden')
         window.print()
-        document.body.classList.remove('imprimir-nueva-orden')
+        setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 3000)
     }
     enviarPedidoAlServidor()
 }
