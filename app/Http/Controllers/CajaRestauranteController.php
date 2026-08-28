@@ -293,38 +293,26 @@ class CajaRestauranteController extends Controller
             ];
 
             try {
-                $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->timeout(60)
-                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
-                        'personaId'    => $empresa->apisunat_ruc,
-                        'personaToken' => $empresa->apisunat_token,
-                        'fileName'     => $fileName,
-                        'documentBody' => $documentBody,
-                    ]);
+                $response = $this->enviarASunatConReintento([
+                    'personaId'    => $empresa->apisunat_ruc,
+                    'personaToken' => $empresa->apisunat_token,
+                    'fileName'     => $fileName,
+                    'documentBody' => $documentBody,
+                ]);
 
-                $data      = $response->json();
+                $data = $response->json();
                 // La respuesta real de APISUNAT nunca trae 'sunatResponse' (usa
                 // 'status'/'documentId'/'pdf'/'xml'/'cdr') — con isset('sunatResponse')
                 // $aceptada quedaba siempre en false, así que un comprobante ya
                 // ACEPTADO por SUNAT se guardaba igual como 'pendiente'.
+                // PENDIENTE ya no se reintenta al toque: reenviar sendBill sobre un
+                // documento que SUNAT ya está procesando lo rechaza por numeración
+                // repetida (visto en producción el 2026-08-28). Se reconcilia después
+                // vía consultarEstadoSunat()/apisunat_document_id, igual que en
+                // llantaspucallpa (ApiSunatService::consultarEstado()).
                 $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
                 $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
                 $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-                // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
-                if (!$aceptada && $pendiente) {
-                    sleep(4);
-                    $response2 = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                        ->timeout(60)
-                        ->post('https://back.apisunat.com/personas/v1/sendBill', [
-                            'personaId'    => $empresa->apisunat_ruc,
-                            'personaToken' => $empresa->apisunat_token,
-                            'fileName'     => $fileName,
-                            'documentBody' => $documentBody,
-                        ]);
-                    $data2    = $response2->json();
-                    $aceptada = $response2->successful() && isset($data2['status']) && in_array($data2['status'], $estadosAceptado);
-                    if ($aceptada) { $data = $data2; $pendiente = false; }
-                }
                 $pdfUrl    = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
 
                 $comprobante = \App\Models\ComprobanteSunat::create([
@@ -360,6 +348,52 @@ class CajaRestauranteController extends Controller
         return redirect()->route('comprobantes.crear', $caja)
             ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}")
             ->with('tipo_comprobante', $tipo);
+    }
+
+    /**
+     * Reintentos ante una falla de TRANSPORTE (timeout, error de conexión) o
+     * un 'StorageError' de APISUNAT (falla transitoria de su storage interno,
+     * no un rechazo real del documento) — mismo patrón que ApiSunatService en
+     * llantaspucallpa. Un rechazo real (numeración repetida, dato inválido,
+     * etc.) o un PENDIENTE genuino no se reintenta: no cambia entre intentos
+     * y solo demora la respuesta al cajero.
+     */
+    private const APISUNAT_MAX_INTENTOS = 3;
+
+    private function enviarASunatConReintento(array $payload): \Illuminate\Http\Client\Response
+    {
+        $intento = 1;
+
+        while (true) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
+                    ->timeout(60)
+                    ->post('https://back.apisunat.com/personas/v1/sendBill', $payload);
+            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                if ($intento >= self::APISUNAT_MAX_INTENTOS) {
+                    throw $e;
+                }
+                \Log::warning('ApiSunat: timeout/conexión al enviar, reintentando.', ['intento' => $intento]);
+                sleep($intento * 2);
+                $intento++;
+                continue;
+            }
+
+            $data = $response->json() ?? [];
+            $esStorageError = ($data['status'] ?? null) === 'ERROR' && ($data['error']['name'] ?? null) === 'StorageError';
+
+            if ($esStorageError && $intento < self::APISUNAT_MAX_INTENTOS) {
+                \Log::warning('ApiSunat: error transitorio (StorageError), reintentando.', [
+                    'intento' => $intento,
+                    'error'   => $data['error'] ?? $data,
+                ]);
+                sleep($intento * 2);
+                $intento++;
+                continue;
+            }
+
+            return $response;
+        }
     }
 
     private function numeroALetras($numero)
@@ -666,34 +700,17 @@ class CajaRestauranteController extends Controller
         $pendiente = false;
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(60)
-                ->post('https://back.apisunat.com/personas/v1/sendBill', [
-                    'personaId'    => $empresa->apisunat_ruc,
-                    'personaToken' => $empresa->apisunat_token,
-                    'fileName'     => $fileName,
-                    'documentBody' => $documentBody,
-                ]);
+            $response = $this->enviarASunatConReintento([
+                'personaId'    => $empresa->apisunat_ruc,
+                'personaToken' => $empresa->apisunat_token,
+                'fileName'     => $fileName,
+                'documentBody' => $documentBody,
+            ]);
 
-            $data      = $response->json();
+            $data = $response->json();
             $estadosAceptado = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES'];
             $aceptada  = $response->successful() && isset($data['status']) && in_array($data['status'], $estadosAceptado);
             $pendiente = $response->successful() && isset($data['status']) && $data['status'] === 'PENDIENTE';
-            // Si SUNAT responde PENDIENTE, reintentar una vez tras 4 segundos
-            if (!$aceptada && $pendiente) {
-                sleep(4);
-                $response2 = \Illuminate\Support\Facades\Http::withHeaders(['Content-Type' => 'application/json'])
-                    ->timeout(60)
-                    ->post('https://back.apisunat.com/personas/v1/sendBill', [
-                        'personaId'    => $empresa->apisunat_ruc,
-                        'personaToken' => $empresa->apisunat_token,
-                        'fileName'     => $fileName,
-                        'documentBody' => $documentBody,
-                    ]);
-                $data2    = $response2->json();
-                $aceptada = $response2->successful() && isset($data2['status']) && in_array($data2['status'], $estadosAceptado);
-                if ($aceptada) { $data = $data2; $pendiente = false; }
-            }
         } catch (\Exception $e) {
             \Log::error('Error emitir comprobante cobro rápido: ' . $e->getMessage());
         }
