@@ -578,7 +578,7 @@ function cerrarMesa() {
                 <div v-if="pedidosAbiertos.length" class="rondas-card">
                     <div class="rondas-header">
                         <p class="rondas-titulo">Rondas anteriores</p>
-                        <button @click="imprimirComanda" class="comanda-btn">🖨️ Comanda</button>
+                        <button v-if="mesa.sucursal_id !== 5" @click="imprimirComanda" class="comanda-btn">🖨️ Comanda</button>
                     </div>
                     <div v-for="pedido in pedidosAbiertos" :key="pedido.id" class="ronda-grupo">
                         <p class="ronda-num">Ronda {{ pedido.numero_ronda }}</p>
