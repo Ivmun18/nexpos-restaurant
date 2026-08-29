@@ -427,9 +427,8 @@ function enviarACocina() {
     if (!carrito.value.length) return
     enviando.value = true
     if (props.mesa.sucursal_id === 5) {
-        document.body.classList.add('imprimir-nueva-orden')
-        window.print()
-        setTimeout(() => document.body.classList.remove('imprimir-nueva-orden'), 3000)
+        abrirSelectorImpresora(construirComandaESC(props.mesa.numero, carrito.value, notasPedido.value))
+        return
     }
     enviarPedidoAlServidor()
 }
