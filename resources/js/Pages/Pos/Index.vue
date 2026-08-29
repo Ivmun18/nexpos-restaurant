@@ -349,7 +349,6 @@ function abrirSelectorImpresora(contenido) {
         if (guardada && impresoras.includes(guardada)) {
             mostrarModalImpresoras.value = false
             imprimirComandaPrinter(guardada, contenido)
-            enviarPedidoAlServidor()
         }
     })
 }
