@@ -60,6 +60,7 @@ class ReporteRestauranteController extends Controller
         ])->sortByDesc('total')->values();
 
         $mozos = \App\Models\User::whereIn('rol', ['mozo', 'admin'])
+            ->where('empresa_id', $empresaId)
             ->select('id', 'name', 'rol')
             ->orderBy('name')
             ->get();
@@ -92,7 +93,8 @@ class ReporteRestauranteController extends Controller
                 ->select(DB::raw("$fmtV as periodo"), DB::raw("SUM(total) as total"))
                 ->groupBy('periodo')->pluck('total', 'periodo');
 
-            $gg = Compra::whereBetween('fecha_emision', [$ini, $fin])
+            $gg = Compra::where('empresa_id', $empresaId)
+                ->whereBetween('fecha_emision', [$ini, $fin])
                 ->where('estado', '!=', 'anulado')
                 ->select(DB::raw("$fmtG as periodo"), DB::raw("SUM(total) as total"))
                 ->groupBy('periodo')->pluck('total', 'periodo');
@@ -105,7 +107,7 @@ class ReporteRestauranteController extends Controller
                 });
 
             $totV = (float) CajaRestaurante::where('empresa_id', $empresaId)->whereBetween('created_at', [$ini, $fin])->sum('total');
-            $totG = (float) Compra::whereBetween('fecha_emision', [$ini, $fin])->where('estado', '!=', 'anulado')->sum('total');
+            $totG = (float) Compra::where('empresa_id', $empresaId)->whereBetween('fecha_emision', [$ini, $fin])->where('estado', '!=', 'anulado')->sum('total');
 
             $ganancias = [
                 'vista'   => $vista,

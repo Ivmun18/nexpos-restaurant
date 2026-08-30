@@ -63,6 +63,10 @@ class MesaController extends Controller
 
     public function cambiarEstado(Request $request, Mesa $mesa)
     {
+        if ($mesa->empresa_id !== EmpresaHelper::id()) {
+            abort(403);
+        }
+
         $request->validate([
             'estado' => 'required|in:libre,ocupada,reservada,bloqueada',
         ]);
@@ -121,6 +125,10 @@ class MesaController extends Controller
 
     public function update(Request $request, Mesa $mesa)
     {
+        if ($mesa->empresa_id !== EmpresaHelper::id()) {
+            abort(403);
+        }
+
         $request->validate([
             'nombre'   => 'required|max:50',
             'capacidad'=> 'required|integer|min:1|max:20',
@@ -139,6 +147,10 @@ class MesaController extends Controller
 
     public function destroy(Mesa $mesa)
     {
+        if ($mesa->empresa_id !== EmpresaHelper::id()) {
+            abort(403);
+        }
+
         $mesa->delete();
         return back()->with('success', 'Mesa eliminada.');
     }
@@ -146,11 +158,27 @@ class MesaController extends Controller
     // Transferir los pedidos abiertos de una mesa a otra
     public function transferir(Request $request, Mesa $mesa)
     {
+        if ($mesa->empresa_id !== EmpresaHelper::id()) {
+            abort(403);
+        }
+
         $request->validate([
             'destino_id' => 'required|exists:mesas,id|different:id',
         ]);
 
-        $destino = Mesa::findOrFail($request->destino_id);
+        // exists:mesas,id solo confirma que el id existe en la tabla (de
+        // cualquier empresa/sucursal) — sin este chequeo se podían mover
+        // pedidos de una mesa hacia una mesa de OTRA empresa, o de otra
+        // sucursal dentro de la misma empresa (mismo problema de fondo que
+        // el bug de caja entre Local 1 y Local 2).
+        $destino = Mesa::where('id', $request->destino_id)
+            ->where('empresa_id', $mesa->empresa_id)
+            ->where('sucursal_id', $mesa->sucursal_id)
+            ->first();
+
+        if (! $destino) {
+            return back()->with('error', 'La mesa destino no existe en esta sucursal.');
+        }
 
         if ($destino->estado !== 'libre') {
             return back()->with('error', "La mesa {$destino->numero} no esta libre.");
@@ -171,11 +199,22 @@ class MesaController extends Controller
     // Unir una mesa secundaria a una principal (cuenta combinada)
     public function unir(Request $request, Mesa $mesa)
     {
+        if ($mesa->empresa_id !== EmpresaHelper::id()) {
+            abort(403);
+        }
+
         $request->validate([
             'secundaria_id' => 'required|exists:mesas,id|different:id',
         ]);
 
-        $secundaria = Mesa::findOrFail($request->secundaria_id);
+        $secundaria = Mesa::where('id', $request->secundaria_id)
+            ->where('empresa_id', $mesa->empresa_id)
+            ->where('sucursal_id', $mesa->sucursal_id)
+            ->first();
+
+        if (! $secundaria) {
+            return back()->with('error', 'La mesa secundaria no existe en esta sucursal.');
+        }
 
         // La principal es $mesa; la secundaria se enlaza a ella
         $secundaria->update([
@@ -190,6 +229,10 @@ class MesaController extends Controller
     // Separar (deshacer union)
     public function separar(Mesa $mesa)
     {
+        if ($mesa->empresa_id !== EmpresaHelper::id()) {
+            abort(403);
+        }
+
         // Si es secundaria, se desenlaza
         $mesa->update(['mesa_principal_id' => null]);
 

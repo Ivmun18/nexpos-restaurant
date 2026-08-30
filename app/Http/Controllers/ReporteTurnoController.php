@@ -61,6 +61,7 @@ class ReporteTurnoController extends Controller
 
         // Mozos para filtro
         $mozos = User::whereIn('rol', ['mozo', 'admin'])
+            ->where('empresa_id', $empresaId)
             ->select('id', 'name', 'rol')
             ->orderBy('name')
             ->get();

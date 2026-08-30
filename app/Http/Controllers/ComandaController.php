@@ -104,6 +104,10 @@ class ComandaController extends Controller
      */
     public function cambiarEstado(Pedido $pedido, Request $request)
     {
+        if ($pedido->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $request->validate([
             'estado' => 'required|in:enviado,en_preparacion,listo',
         ]);
@@ -120,6 +124,10 @@ class ComandaController extends Controller
      */
     public function marcarPlatoListo(PedidoDetalle $detalle)
     {
+        if ($detalle->pedido->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $detalle->update(['estado' => 'listo']);
 
         // Si todos los platos del pedido están listos, marcar el pedido como listo
@@ -142,6 +150,10 @@ class ComandaController extends Controller
      */
     public function marcarPlatoEnPreparacion(PedidoDetalle $detalle)
     {
+        if ($detalle->pedido->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $detalle->update(['estado' => 'en_preparacion']);
 
         // Actualizar el pedido a en_preparacion si no lo está ya

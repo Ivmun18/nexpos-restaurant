@@ -55,6 +55,10 @@ class UsuarioController extends Controller
 
     public function update(Request $request, User $usuario)
     {
+        if ($usuario->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $esNotaria = auth()->user()->empresa->industry_type === 'notaria';
 
         $request->validate([
@@ -94,6 +98,10 @@ class UsuarioController extends Controller
 
     public function toggleActivo(User $usuario)
     {
+        if ($usuario->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         if ($usuario->id === auth()->id()) {
             return back()->with('error', 'No puedes desactivar tu propio usuario.');
         }
@@ -106,6 +114,10 @@ class UsuarioController extends Controller
 
     public function destroy(User $usuario)
     {
+        if ($usuario->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         if ($usuario->id === auth()->id()) {
             return back()->with('error', 'No puedes eliminar tu propio usuario.');
         }
