@@ -129,7 +129,10 @@ class CajaRestauranteController extends Controller
             'pagado_acumulado' => round($pagadoAcumulado, 2),
         ]);
 
-        $cajaEmpresa = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)->first();
+        $sucursalId = auth()->user()->sucursal_id ?? $mesa->sucursal_id;
+        $cajaEmpresa = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)
+            ->where('sucursal_id', $sucursalId)
+            ->first();
         $sesion = $cajaEmpresa
             ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresa->id)->first()
             : null;
@@ -484,7 +487,10 @@ class CajaRestauranteController extends Controller
         \App\Models\PedidoDetalle::whereIn('id', $detalles->pluck('id'))
             ->update(['pagado' => true, 'caja_detalle_id' => $caja->id]);
 
-        $cajaEmpresaPlatos = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)->first();
+        $sucursalIdPlatos = auth()->user()->sucursal_id ?? $mesa->sucursal_id;
+        $cajaEmpresaPlatos = \App\Models\Caja::where('empresa_id', auth()->user()->empresa_id)
+            ->where('sucursal_id', $sucursalIdPlatos)
+            ->first();
         $sesion = $cajaEmpresaPlatos
             ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresaPlatos->id)->first()
             : null;
@@ -578,7 +584,11 @@ class CajaRestauranteController extends Controller
 
         $empresa = auth()->user()->empresa;
 
-        $cajaEmpresa = \App\Models\Caja::where('empresa_id', $empresa->id)->where('activo', true)->first();
+        $sucursalId = auth()->user()->sucursal_id;
+        $cajaEmpresa = \App\Models\Caja::where('empresa_id', $empresa->id)
+            ->where('activo', true)
+            ->when($sucursalId !== null, fn ($q) => $q->where('sucursal_id', $sucursalId))
+            ->first();
         $sesion = $cajaEmpresa
             ? SesionCaja::where('caja_id', $cajaEmpresa->id)->where('estado', 'abierta')->first()
             : null;
