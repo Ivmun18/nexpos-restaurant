@@ -17,6 +17,10 @@ class PosController extends Controller
     // Abre el POS de una mesa
     public function index(Mesa $mesa): Response
     {
+        if ($mesa->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         // Cargar relación sucursal para impresora de cocina
         $mesa->load('sucursal');
 
@@ -71,6 +75,10 @@ class PosController extends Controller
 
     public function store(Request $request, Mesa $mesa)
 {
+    if ($mesa->empresa_id !== auth()->user()->empresa_id) {
+        abort(403);
+    }
+
        \Log::info('POS store llamado', [
         'items' => $request->items,
         'notas' => $request->notas,
@@ -144,6 +152,10 @@ class PosController extends Controller
     // Cerrar todos los pedidos de la mesa
     public function cerrar(Mesa $mesa)
     {
+        if ($mesa->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         Pedido::where('mesa_id', $mesa->id)
             ->whereIn('estado', ['abierto', 'enviado', 'listo'])
             ->update(['estado' => 'cerrado']);
@@ -157,6 +169,10 @@ class PosController extends Controller
     // Anular un plato (queda registrado quien, cuando y por que)
     public function anularPlato(Request $request, PedidoDetalle $detalle)
     {
+        if ($detalle->pedido->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $request->validate([
             'motivo' => 'required|string|max:255',
         ]);

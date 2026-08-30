@@ -134,7 +134,7 @@
                     <h3 style="font-size:18px; font-weight:700; color:#1E293B; margin:0 0 20px;">Documentos Disponibles</h3>
                     <div style="display:grid; gap:12px;">
                         <a v-for="doc in acto.documentos" :key="doc.id"
-                            :href="`/portal-cliente/documento/${doc.id}/descargar`"
+                            :href="`/portal-cliente/documento/${doc.id}/descargar?numero_documento=${encodeURIComponent(cliente.numero_documento)}`"
                             style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:#F8FAFC; border-radius:12px; text-decoration:none; transition:all 0.2s; border:2px solid transparent;"
                             @mouseover="$event.target.style.borderColor='#14B8A6'; $event.target.style.background='#F0FDFA'"
                             @mouseout="$event.target.style.borderColor='transparent'; $event.target.style.background='#F8FAFC'">

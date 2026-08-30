@@ -14,6 +14,14 @@ class ActoRequisitoController extends Controller
      */
     public function store(Request $request, ActoNotarial $acto)
     {
+        // El route-model-binding de {acto} no filtra por empresa: sin este
+        // chequeo, cualquier usuario autenticado de OTRA notaría podía
+        // adivinar/enumerar un id de expediente ajeno y agregarle
+        // requisitos.
+        if ($acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'documento' => 'required|string|max:255',
             'observacion' => 'nullable|string',
@@ -35,6 +43,10 @@ class ActoRequisitoController extends Controller
      */
     public function toggle(ActoRequisito $requisito)
     {
+        if ($requisito->acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $requisito->update([
             'entregado' => !$requisito->entregado,
         ]);
@@ -47,6 +59,10 @@ class ActoRequisitoController extends Controller
      */
     public function destroy(ActoRequisito $requisito)
     {
+        if ($requisito->acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $requisito->delete();
 
         return back()->with('success', 'Requisito eliminado');

@@ -77,6 +77,10 @@ class InsumoController extends Controller
 
     public function update(Request $request, Insumo $insumo)
     {
+        if ($insumo->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $request->validate([
             'nombre'        => 'required|string|max:150',
             'categoria'     => 'nullable|string|max:80',
@@ -91,6 +95,10 @@ class InsumoController extends Controller
 
     public function movimiento(Request $request, Insumo $insumo)
     {
+        if ($insumo->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $request->validate([
             'tipo'           => 'required|in:entrada,salida,ajuste',
             'cantidad'       => 'required|numeric|min:0.001',
@@ -140,6 +148,10 @@ class InsumoController extends Controller
 
     public function destroy(Insumo $insumo)
     {
+        if ($insumo->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $insumo->update(['activo' => false]);
         return back()->with('success', 'Insumo desactivado.');
     }

@@ -22,17 +22,18 @@ class PortalClienteController extends Controller
             'numero_expediente' => 'required|string',
         ]);
 
-        // Buscar el cliente por número de documento
-        $cliente = Cliente::where('numero_documento', $request->numero_documento)->first();
-
-        if (!$cliente) {
-            return back()->withErrors(['numero_documento' => 'No se encontró ningún cliente con ese documento.']);
-        }
-
-        // Buscar el acto notarial
+        // El portal es una sola URL compartida por todas las notarías del
+        // sistema (sin subdominio por empresa), así que numero_documento por
+        // sí solo no identifica una empresa: dos notarías distintas pueden
+        // tener cada una un cliente con el mismo DNI. Se exige que el
+        // expediente Y el documento del cliente coincidan en el mismo
+        // registro para evitar devolver el expediente de la empresa
+        // equivocada cuando el DNI se repite entre notarías.
         $acto = ActoNotarial::where('numero_expediente', $request->numero_expediente)
-            ->where('cliente_id', $cliente->id)
-            ->with(['seguimientos' => function($q) {
+            ->whereHas('cliente', function ($q) use ($request) {
+                $q->where('numero_documento', $request->numero_documento);
+            })
+            ->with(['cliente', 'seguimientos' => function($q) {
                 $q->orderBy('created_at', 'desc');
             }, 'documentos', 'requisitos', 'usuario'])
             ->first();
@@ -40,6 +41,8 @@ class PortalClienteController extends Controller
         if (!$acto) {
             return back()->withErrors(['numero_expediente' => 'No se encontró el expediente o no pertenece a este cliente.']);
         }
+
+        $cliente = $acto->cliente;
 
         // Mapear el tipo de acto a texto legible
         $tiposActo = [
@@ -66,12 +69,21 @@ class PortalClienteController extends Controller
         ]);
     }
 
-    public function descargarDocumento($documentoId)
+    public function descargarDocumento(Request $request, $documentoId)
     {
-        $documento = \App\Models\ActoDocumento::findOrFail($documentoId);
+        $request->validate([
+            'numero_documento' => 'required|string',
+        ]);
 
-        // Verificar que el documento esté marcado como público/descargable
-        // Aquí puedes agregar lógica adicional de permisos si lo necesitas
+        $documento = \App\Models\ActoDocumento::with('acto.cliente')->findOrFail($documentoId);
+
+        // Sin esto, cualquiera que adivine/enumere el id del documento
+        // (correlativo, fácil de recorrer) podía descargar el archivo de
+        // CUALQUIER expediente de CUALQUIER notaría del sistema — el portal
+        // es público y no valida identidad más allá de este número.
+        if ($documento->acto?->cliente?->numero_documento !== $request->numero_documento) {
+            abort(403);
+        }
 
         if (!file_exists(storage_path('app/' . $documento->ruta))) {
             abort(404, 'Archivo no encontrado');

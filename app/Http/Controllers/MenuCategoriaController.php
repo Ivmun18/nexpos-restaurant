@@ -42,6 +42,10 @@ class MenuCategoriaController extends Controller
 
     public function update(Request $request, MenuCategoria $menuCategoria)
     {
+        if ($menuCategoria->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'nombre'      => 'required|string|max:100',
             'descripcion' => 'nullable|string|max:255',
@@ -58,6 +62,10 @@ class MenuCategoriaController extends Controller
 
     public function destroy(MenuCategoria $menuCategoria)
     {
+        if ($menuCategoria->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $menuCategoria->delete();
         return redirect()->back()->with('success', 'Categoría eliminada.');
     }

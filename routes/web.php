@@ -467,11 +467,15 @@ $pedidosCocina = \App\Models\Pedido::whereIn('mesa_id', $mesasEmpresa)->where('e
     Route::get('/configuracion/nubefact/test', [ConfiguracionController::class, 'testNubefact'])->name('configuracion.nubefact.test');
 
 // Usuarios
-    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
-    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update');
-    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
-    Route::patch('/usuarios/{usuario}/toggle', [UsuarioController::class, 'toggleActivo'])->name('usuarios.toggle');
+// only.admin: sin esto, cualquier rol autenticado (cajero, mozo...) podía
+// editar cualquier usuario por id, incluyéndose a sí mismo con rol=admin
+// (auto-escalada de privilegios), o el usuario de OTRA empresa (el
+// controller tampoco validaba empresa_id en update/toggle/destroy).
+    Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index')->middleware('only.admin');
+    Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store')->middleware('only.admin');
+    Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update')->middleware('only.admin');
+    Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy')->middleware('only.admin');
+    Route::patch('/usuarios/{usuario}/toggle', [UsuarioController::class, 'toggleActivo'])->name('usuarios.toggle')->middleware('only.admin');
 
 // Sucursales
     Route::get('/admin/sucursales', [\App\Http\Controllers\Admin\SucursalController::class, 'dashboard'])->name('sucursales.dashboard')->middleware('rol:admin');
@@ -530,7 +534,13 @@ Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
     Route::patch('/productos/{menuProducto}/disponible', [MenuProductoController::class, 'toggleDisponible'])->name('productos.disponible');
 });
 
-// Mesas
+// Mesas, Menú/Carta, POS
+// Estas rutas habían quedado fuera de cualquier Route::middleware(['auth'])
+// por un problema de anidación de llaves en este archivo (el grupo 'menu'
+// de arriba se cerraba en 531, y el siguiente grupo 'auth' recién volvía a
+// abrir en la línea de Modificadores) — quedaban 100% públicas: cualquiera
+// sin sesión podía crear/editar/borrar mesas y usar el POS.
+Route::middleware(['auth'])->group(function () {
     Route::get('/mesas', [MesaController::class, 'index'])->name('mesas.index');
     Route::post('/mesas', [MesaController::class, 'store'])->name('mesas.store');
     Route::put('/mesas/{mesa}', [MesaController::class, 'update'])->name('mesas.update');
@@ -541,7 +551,6 @@ Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
     Route::post('/mesas/{mesa}/separar', [MesaController::class, 'separar'])->name('mesas.separar');
 
     // Menú / Carta
-
     Route::get('/api/carta', [MenuCategoriaController::class, 'apiCarta'])->name('api.carta');
 
     // POS
@@ -549,6 +558,7 @@ Route::prefix('menu')->name('menu.')->middleware(['auth'])->group(function () {
     Route::post('/pos/{mesa}',  [PosController::class, 'store'])->name('pos.store');
     Route::post('/pos/{mesa}/cerrar', [PosController::class, 'cerrar'])->name('pos.cerrar');
     Route::post('/pos/detalle/{detalle}/anular', [PosController::class, 'anularPlato'])->name('pos.anular-plato');
+});
 
 // Modificadores (API para el POS)
 Route::middleware(['auth'])->group(function () {
@@ -563,22 +573,26 @@ Route::get('/cocina/polling',                  [CocinaController::class, 'pollin
 Route::post('/cocina/{pedido}/listo',          [CocinaController::class, 'marcarListo'])->name('cocina.listo')->middleware('rol:cocina,admin,cajero,mozo');
 Route::post('/cocina/detalle/{pedidoDetalle}/listo', [CocinaController::class, 'marcarDetalleListo'])->name('cocina.detalle.listo')->middleware('rol:cocina,admin,cajero,mozo');
 
-// Caja Restaurante
-Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');
-Route::post('/caja-restaurante/{mesa}',  [CajaRestauranteController::class, 'cobrar'])->name('caja-restaurante.cobrar');
-Route::post('/caja-restaurante/{mesa}/platos', [CajaRestauranteController::class, 'cobrarPlatos'])->name('caja-restaurante.cobrar-platos');
-Route::get('/tickets/{caja}', [CajaRestauranteController::class, 'ticketShow'])->name('tickets.show');
-
-// Cobro rápido (sin mesa)
+// Caja Restaurante, cobro rápido y Turnos
+// Mismo problema de anidación que Mesas/POS arriba: 'show'/'cobrar'/
+// 'cobrarPlatos'/'ticketShow' y todo Turnos quedaban sin 'auth' — se podía
+// cobrar una mesa (dinero real) o ver el ticket de otra sin haber iniciado
+// sesión.
 Route::middleware(['auth'])->group(function () {
-    Route::post('/caja/cobro-rapido', [CajaRestauranteController::class, 'cobroRapido'])->name('caja.cobro-rapido');
-});
+    Route::get('/caja-restaurante/{mesa}',   [CajaRestauranteController::class, 'show'])->name('caja-restaurante.show');
+    Route::post('/caja-restaurante/{mesa}',  [CajaRestauranteController::class, 'cobrar'])->name('caja-restaurante.cobrar');
+    Route::post('/caja-restaurante/{mesa}/platos', [CajaRestauranteController::class, 'cobrarPlatos'])->name('caja-restaurante.cobrar-platos');
+    Route::get('/tickets/{caja}', [CajaRestauranteController::class, 'ticketShow'])->name('tickets.show');
 
-// Turnos
-Route::get('/turnos',           [TurnoController::class, 'index'])->name('turnos.index');
-Route::post('/turnos/abrir',    [TurnoController::class, 'abrir'])->name('turnos.abrir');
-Route::post('/turnos/{turno}/cerrar', [TurnoController::class, 'cerrar'])->name('turnos.cerrar');
-Route::get('/turnos/{turno}',   [TurnoController::class, 'show'])->name('turnos.show');
+    // Cobro rápido (sin mesa)
+    Route::post('/caja/cobro-rapido', [CajaRestauranteController::class, 'cobroRapido'])->name('caja.cobro-rapido');
+
+    // Turnos
+    Route::get('/turnos',           [TurnoController::class, 'index'])->name('turnos.index');
+    Route::post('/turnos/abrir',    [TurnoController::class, 'abrir'])->name('turnos.abrir');
+    Route::post('/turnos/{turno}/cerrar', [TurnoController::class, 'cerrar'])->name('turnos.cerrar');
+    Route::get('/turnos/{turno}',   [TurnoController::class, 'show'])->name('turnos.show');
+});
 
 
 Route::middleware(['auth'])
@@ -1090,7 +1104,10 @@ Route::middleware(['auth', 'verified'])->prefix('gimnasio')->name('gimnasio.')->
 });
 
 // Auditoría por industria
-Route::middleware(['auth'])->group(function () {
+// only.admin: igual que Farmacia\AuditoriaController (ver esa ruta) — el
+// log de auditoría no debe ser visible para roles no-admin (mozo, cajero,
+// etc.), solo estas 4 rutas quedaban sin esa restricción.
+Route::middleware(['auth', 'only.admin'])->group(function () {
     Route::get('/restaurante/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('restaurante.auditoria.index');
     Route::get('/minimarket/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('minimarket.auditoria.index');
     Route::get('/ferreteria/auditoria', [App\Http\Controllers\Auditoria\AuditoriaController::class, 'index'])->name('ferreteria.auditoria.index');

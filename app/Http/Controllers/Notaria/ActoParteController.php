@@ -14,6 +14,10 @@ class ActoParteController extends Controller
      */
     public function store(Request $request, ActoNotarial $acto)
     {
+        if ($acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'tipo_persona' => 'required|in:natural,juridica',
             'tipo_documento' => 'required|in:1,4,6,7',
@@ -57,6 +61,10 @@ class ActoParteController extends Controller
      */
     public function update(Request $request, ActoParte $parte)
     {
+        if ($parte->acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'tipo_persona' => 'required|in:natural,juridica',
             'tipo_documento' => 'required|in:1,4,6,7',
@@ -96,6 +104,10 @@ class ActoParteController extends Controller
      */
     public function destroy(ActoParte $parte)
     {
+        if ($parte->acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $parte->delete();
         return back()->with('success', 'Parte interviniente eliminada');
     }
@@ -105,10 +117,24 @@ class ActoParteController extends Controller
      */
     public function reordenar(Request $request, ActoNotarial $acto)
     {
+        if ($acto->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $orden = $request->validate([
             'orden' => 'required|array',
+            // exists:acto_partes,id no bastaba: validaba que el id exista en
+            // la tabla (de cualquier acto/empresa), no que pertenezca a
+            // $acto. Se restringe explícitamente abajo.
             'orden.*' => 'required|integer|exists:acto_partes,id',
         ])['orden'];
+
+        $idsValidos = $acto->partes()->pluck('id');
+        foreach ($orden as $parteId) {
+            if (! $idsValidos->contains((int) $parteId)) {
+                abort(403);
+            }
+        }
 
         foreach ($orden as $index => $parteId) {
             ActoParte::where('id', $parteId)->update(['orden' => $index + 1]);

@@ -88,6 +88,10 @@ class CocinaController extends Controller
 
     public function marcarListo(Pedido $pedido)
     {
+        if ($pedido->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $pedido->update(['estado' => 'listo']);
 
         return redirect()->back()->with('success', "Pedido listo.");
@@ -95,6 +99,10 @@ class CocinaController extends Controller
 
     public function marcarDetalleListo(PedidoDetalle $pedidoDetalle)
     {
+        if ($pedidoDetalle->pedido->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $pedidoDetalle->update(['estado' => 'listo']);
 
         return response()->json(['estado' => 'listo']);

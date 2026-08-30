@@ -60,12 +60,24 @@ class TurnoController extends Controller
 
     public function cerrar(Turno $turno)
     {
-        // Calcular totales del turno
-        $totalVentas = CajaRestaurante::where('user_id', auth()->id())
+        // Los turnos son por usuario: sin este chequeo, cualquier usuario
+        // autenticado podía cerrar (y sobreescribir los totales de) el
+        // turno de OTRO usuario con solo cambiar el id en la URL.
+        if ($turno->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+        if ($turno->user_id !== auth()->id() && ! auth()->user()->esAdmin()) {
+            abort(403);
+        }
+
+        // Calcular totales del turno (del dueño del turno, no de quien lo
+        // cierra — antes usaba auth()->id() siempre, así que si un admin
+        // cerraba el turno de otro usuario, el total quedaba en cero/mal).
+        $totalVentas = CajaRestaurante::where('user_id', $turno->user_id)
             ->whereBetween('created_at', [$turno->apertura, now()])
             ->sum('total');
 
-        $totalMesas = CajaRestaurante::where('user_id', auth()->id())
+        $totalMesas = CajaRestaurante::where('user_id', $turno->user_id)
             ->whereBetween('created_at', [$turno->apertura, now()])
             ->count();
 
@@ -81,6 +93,13 @@ class TurnoController extends Controller
 
     public function show(Turno $turno): Response
     {
+        if ($turno->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+        if ($turno->user_id !== auth()->id() && ! auth()->user()->esAdmin()) {
+            abort(403);
+        }
+
         $turno->load('user');
 
         $cobros = CajaRestaurante::with('mesa')
