@@ -45,6 +45,20 @@ class PosMinimarketController extends Controller
 
     public function store(Request $request)
 {
+    $empresa = auth()->user()->empresa;
+
+    // store() es el endpoint real que registra la venta; index() ya
+    // bloqueaba la navegación al POS sin caja abierta, pero no había
+    // ningún chequeo aquí — si la caja se cerraba con el POS ya cargado,
+    // igual se podía vender sin caja abierta.
+    $cajaAbierta = \App\Models\CajaMinimarket::where('empresa_id', $empresa->id)
+        ->where('estado', 'abierta')
+        ->exists();
+
+    if (!$cajaAbierta) {
+        return back()->with('error', 'No hay una caja abierta. Abre caja antes de vender.');
+    }
+
     $request->validate([
         'items'             => 'required|array|min:1',
         'items.*.id'        => 'required|integer',
@@ -52,11 +66,9 @@ class PosMinimarketController extends Controller
         'metodo_pago'       => 'required|string',
         'total'             => 'required|numeric',
         'monto_pagado'      => 'nullable|numeric',
-        'institucion_id'    => 'nullable|exists:instituciones_minimarket,id',
+        'institucion_id'    => ['nullable', \Illuminate\Validation\Rule::exists('instituciones_minimarket', 'id')->where('empresa_id', $empresa->id)],
         'recargo_monto'     => 'nullable|numeric',
     ]);
-
-    $empresa = auth()->user()->empresa;
     $tipoComprobante = $request->tipo_comprobante ?? 'ninguno';
 
     $venta = DB::transaction(function () use ($request, $empresa, $tipoComprobante) {

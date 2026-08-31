@@ -43,7 +43,7 @@ class ProductosMinimarketController extends Controller
             'stock_actual' => 'nullable|numeric|min:0',
             'stock_minimo' => 'nullable|numeric|min:0',
             'codigo_barras'=> 'nullable|string|max:100',
-            'categoria_id' => 'nullable|exists:categorias_minimarket,id',
+            'categoria_id' => ['nullable', \Illuminate\Validation\Rule::exists('categorias_minimarket', 'id')->where('empresa_id', $empresa_id)],
         ]);
 
         $producto = Producto::create([
@@ -86,7 +86,8 @@ class ProductosMinimarketController extends Controller
 
     public function update(Request $request, Producto $producto)
     {
-        abort_if($producto->empresa_id !== auth()->user()->empresa_id, 403);
+        $empresa_id = auth()->user()->empresa_id;
+        abort_if($producto->empresa_id !== $empresa_id, 403);
 
         $request->validate([
             'descripcion'  => 'required|string|max:255',
@@ -95,7 +96,7 @@ class ProductosMinimarketController extends Controller
             'precio_compra'=> 'nullable|numeric|min:0',
             'stock_minimo' => 'nullable|numeric|min:0',
             'codigo_barras'=> 'nullable|string|max:100',
-            'categoria_id' => 'nullable|exists:categorias_minimarket,id',
+            'categoria_id' => ['nullable', \Illuminate\Validation\Rule::exists('categorias_minimarket', 'id')->where('empresa_id', $empresa_id)],
         ]);
 
         $producto->update([

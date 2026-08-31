@@ -96,6 +96,38 @@ public function reciboTicket($id)
     return $pdf->stream('ticket-' . $serie . '-' . $numero . '.pdf');
 }
 
+public function anular(\App\Models\Venta $venta)
+{
+    // Las rutas minimarket.ventas.anular/reintentar apuntaban a estos
+    // métodos, pero no existían (BadMethodCallException) — "anular
+    // venta" y "reintentar SUNAT" estaban completamente rotos en
+    // Minimarket. Se implementan verificando empresa_id, que era
+    // justamente lo que faltaba en el equivalente de Farmacia.
+    if ($venta->empresa_id !== auth()->user()->empresa_id) {
+        abort(403);
+    }
+
+    if ($venta->estado === 'anulado') {
+        return back()->with('error', 'La venta ya está anulada.');
+    }
+
+    $venta->update(['estado' => 'anulado']);
+
+    return back()->with('success', 'Venta anulada correctamente.');
+}
+
+public function reintentar(\App\Models\Venta $venta)
+{
+    if ($venta->empresa_id !== auth()->user()->empresa_id) {
+        abort(403);
+    }
+
+    $empresa = auth()->user()->empresa;
+    (new PosMinimarketController())->emitirNubefact($venta, $empresa);
+
+    return back()->with('success', 'Reintento de envío a SUNAT realizado.');
+}
+
 private function numeroALetrasMinimarket($numero)
 {
     $entero  = (int) floor($numero);

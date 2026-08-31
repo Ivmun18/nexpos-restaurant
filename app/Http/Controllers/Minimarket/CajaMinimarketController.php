@@ -75,7 +75,13 @@ class CajaMinimarketController extends Controller
 
     public function corregir(Request $request)
     {
-        $request->validate(['monto_final' => 'required|numeric|min:0']);
+        // El frontend actual (Minimarket/Caja.vue) no manda "motivo" todavía
+        // — se deja opcional para no romper esa pantalla; igual se registra
+        // quién y cuándo corrigió, que es el dato que faltaba capturar.
+        $request->validate([
+            'monto_final' => 'required|numeric|min:0',
+            'motivo'      => 'nullable|string|max:500',
+        ]);
 
         $empresaId = auth()->user()->empresa_id;
 
@@ -104,14 +110,17 @@ class CajaMinimarketController extends Controller
         $diferencia    = $montoFinal - ($caja->monto_inicial + $totalEfectivo);
 
         $caja->update([
-            'total_efectivo'  => $totalEfectivo,
-            'total_yape'      => $totalYape,
-            'total_plin'      => $totalPlin,
-            'total_tarjeta'   => $totalTarjeta,
-            'total_ventas'    => $totalVentas,
-            'cantidad_ventas' => $ventas->count(),
-            'monto_final'     => $montoFinal,
-            'diferencia'      => $diferencia,
+            'total_efectivo'    => $totalEfectivo,
+            'total_yape'        => $totalYape,
+            'total_plin'        => $totalPlin,
+            'total_tarjeta'     => $totalTarjeta,
+            'total_ventas'      => $totalVentas,
+            'cantidad_ventas'   => $ventas->count(),
+            'monto_final'       => $montoFinal,
+            'diferencia'        => $diferencia,
+            'motivo_correccion' => $request->motivo,
+            'corregido_por_id'  => auth()->id(),
+            'corregido_at'      => now(),
         ]);
 
         return redirect()->route('minimarket.caja')->with('success', 'Caja corregida correctamente');
@@ -146,6 +155,10 @@ class CajaMinimarketController extends Controller
 
     public function cerrar(Request $request, CajaMinimarket $caja)
     {
+        if ($caja->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         $request->validate([
             'monto_final'   => 'required|numeric|min:0',
             'observaciones' => 'nullable|string',

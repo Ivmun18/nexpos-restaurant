@@ -721,25 +721,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/minimarket/caja', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'index'])->name('minimarket.caja');
     Route::post('/minimarket/caja/abrir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'abrir'])->name('minimarket.caja.abrir');
     Route::post('/minimarket/caja/{caja}/cerrar', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'cerrar'])->name('minimarket.caja.cerrar');
-    Route::post('/minimarket/caja/corregir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'corregir'])->name('minimarket.caja.corregir');
+    Route::post('/minimarket/caja/corregir', [\App\Http\Controllers\Minimarket\CajaMinimarketController::class, 'corregir'])->name('minimarket.caja.corregir')->middleware('only.admin');
 });
 
-// Reportes Minimarket
-Route::middleware(['auth'])->group(function () {
-    Route::get('/minimarket/reportes', [\App\Http\Controllers\Minimarket\ReportesMinimarketController::class, 'index'])->name('minimarket.reportes');
-
-// Proveedores y Clientes Minimarket
-Route::middleware(['auth'])->group(function () {
-    Route::get('/minimarket/proveedores',                [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'index'])->name('minimarket.proveedores');
-    Route::post('/minimarket/proveedores',               [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'store'])->name('minimarket.proveedores.store');
-    Route::put('/minimarket/proveedores/{proveedor}',    [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'update'])->name('minimarket.proveedores.update');
-    Route::delete('/minimarket/proveedores/{proveedor}', [AppHttpControllersMinimarketProveedoresMinimarketController::class, 'destroy'])->name('minimarket.proveedores.destroy');
-    Route::get('/minimarket/clientes',                   [AppHttpControllersMinimarketClientesMinimarketController::class, 'index'])->name('minimarket.clientes');
-    Route::post('/minimarket/clientes',                  [AppHttpControllersMinimarketClientesMinimarketController::class, 'store'])->name('minimarket.clientes.store');
-    Route::put('/minimarket/clientes/{cliente}',         [AppHttpControllersMinimarketClientesMinimarketController::class, 'update'])->name('minimarket.clientes.update');
-    Route::delete('/minimarket/clientes/{cliente}',      [AppHttpControllersMinimarketClientesMinimarketController::class, 'destroy'])->name('minimarket.clientes.destroy');
-});
-});
+// (Los bloques "Reportes Minimarket" y "Proveedores y Clientes Minimarket"
+// que estaban aquí eran duplicados: minimarket.reportes ya se registra
+// arriba con solo_admin, y como Laravel indexa las rutas por método+URI la
+// última definición pisa a la primera, este duplicado (sin solo_admin)
+// dejaba /minimarket/reportes accesible a cualquier rol autenticado en
+// vivo. El de proveedores/clientes además referenciaba una clase mal
+// escrita sin namespace — la versión real y correcta ya existe más abajo.)
 
 // Proveedores
 Route::middleware(['auth'])->group(function () {
