@@ -127,12 +127,17 @@ class CajaFarmaciaController extends Controller
 
     public function cerrar(Request $request, CajaMinimarket $caja)
     {
+        $empresaId = auth()->user()->empresa_id;
+
+        if ($caja->empresa_id !== $empresaId) {
+            abort(403);
+        }
+
         $request->validate([
             'monto_final'   => 'required|numeric|min:0',
             'observaciones' => 'nullable|string',
         ]);
 
-        $empresaId = auth()->user()->empresa_id;
         $hoy = now()->toDateString();
 
         $ventasHoy = Venta::where('empresa_id', $empresaId)
@@ -162,9 +167,13 @@ class CajaFarmaciaController extends Controller
             'cierre_at'       => now(),
         ]);
         
-        $diferencia = ($caja->monto_final_real ?? 0) - ($caja->monto_final_sistema ?? 0);
+        // monto_final_real/monto_final_sistema no existen en el modelo (no
+        // son columnas de cajas_minimarket); ese cálculo siempre daba 0 y
+        // pisaba la $diferencia real ya calculada arriba, así que el log de
+        // auditoría quedaba siempre en severidad 'info' con montos null,
+        // ocultando descuadres reales de caja.
         $severidad = abs($diferencia) > 10 ? 'warning' : 'info';
-        
+
         \App\Models\AuditoriaLog::registrar(
             'caja',
             'cerrada',
@@ -172,7 +181,7 @@ class CajaFarmaciaController extends Controller
             $caja->id,
             'Cierre de caja',
             null,
-            ['monto_sistema' => $caja->monto_final_sistema, 'monto_real' => $caja->monto_final_real, 'diferencia' => $diferencia],
+            ['monto_sistema' => $efectivoEsperado, 'monto_real' => $request->monto_final, 'diferencia' => $diferencia],
             'Caja cerrada por ' . auth()->user()->name . ($diferencia != 0 ? ' · Descuadre: S/ ' . number_format($diferencia, 2) : ''),
             $severidad
         );
