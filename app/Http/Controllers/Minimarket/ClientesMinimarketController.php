@@ -29,12 +29,26 @@ class ClientesMinimarketController extends Controller
 
     public function update(Request $request, Cliente $cliente)
     {
-        $cliente->update($request->all());
+        abort_if($cliente->empresa_id !== auth()->user()->empresa_id, 403);
+
+        $request->validate(['razon_social' => 'required', 'numero_documento' => 'required']);
+
+        // $request->all() antes se pasaba directo a update(): como
+        // empresa_id es fillable en el modelo, cualquiera podía reasignar
+        // el cliente de otra empresa a la propia con solo mandar ese campo
+        // en el POST. Se restringe a los campos reales del formulario.
+        $cliente->update($request->only([
+            'tipo_documento', 'numero_documento', 'razon_social',
+            'nombre_comercial', 'celular', 'email', 'direccion',
+        ]));
+
         return back()->with('success', 'Cliente actualizado');
     }
 
     public function destroy(Cliente $cliente)
     {
+        abort_if($cliente->empresa_id !== auth()->user()->empresa_id, 403);
+
         $cliente->delete();
         return back()->with('success', 'Cliente eliminado');
     }

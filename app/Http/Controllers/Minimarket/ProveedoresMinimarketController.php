@@ -25,12 +25,26 @@ class ProveedoresMinimarketController extends Controller
 
     public function update(Request $request, Proveedor $proveedor)
     {
-        $proveedor->update($request->all());
+        abort_if($proveedor->empresa_id !== auth()->user()->empresa_id, 403);
+
+        $request->validate(['razon_social' => 'required', 'numero_documento' => 'required']);
+
+        // Mismo problema que en ClientesMinimarketController: empresa_id es
+        // fillable, así que $request->all() dejaba reasignar el proveedor
+        // de otra empresa a la propia.
+        $proveedor->update($request->only([
+            'tipo_documento', 'numero_documento', 'razon_social', 'nombre_comercial',
+            'direccion', 'distrito', 'telefono', 'email', 'contacto_nombre',
+            'dias_credito', 'agente_retencion',
+        ]));
+
         return back()->with('success', 'Proveedor actualizado');
     }
 
     public function destroy(Proveedor $proveedor)
     {
+        abort_if($proveedor->empresa_id !== auth()->user()->empresa_id, 403);
+
         $proveedor->delete();
         return back()->with('success', 'Proveedor eliminado');
     }
