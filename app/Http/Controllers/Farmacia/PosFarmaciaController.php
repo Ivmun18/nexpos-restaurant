@@ -241,6 +241,12 @@ private function emitirNubefact($venta, $empresa)
 {
     $venta->load('detalle');
     $proveedor = $empresa->proveedor_facturacion ?? 'apisunat';
+    // $esRus faltaba aquí: la closure lo capturaba con use($esRus) sin que
+    // existiera ninguna variable local con ese nombre, así que siempre
+    // llegaba como null/false — toda venta de una empresa RUS o exonerada
+    // se emitía con los códigos de tributo de régimen general (IGV 18%)
+    // en vez de EXO, lo que SUNAT rechaza (error 2638).
+    $esRus = $empresa->regimen_tributario === 'RUS' || $empresa->zona_exonerada;
 
     // Formatear items según régimen
     $items = $venta->detalle->map(function($item) use ($esRus) {

@@ -37,6 +37,27 @@ class CajeroFarmaciaController extends Controller
 
     public function cobrar(Request $request, Venta $venta)
     {
+        $empresaId = auth()->user()->empresa_id;
+
+        // Sin este chequeo, cualquier usuario autenticado podía cobrar (y
+        // disparar la emisión SUNAT con las credenciales de SU empresa) la
+        // venta de otra empresa con solo cambiar el id en la URL.
+        if ($venta->empresa_id !== $empresaId) {
+            abort(403);
+        }
+
+        if ($venta->estado !== 'pendiente') {
+            return back()->with('error', 'Esta venta ya fue procesada.');
+        }
+
+        $cajaAbierta = Caja::where('empresa_id', $empresaId)
+            ->where('estado', 'abierta')
+            ->exists();
+
+        if (!$cajaAbierta) {
+            return back()->with('error', 'No hay una caja abierta. Abre caja antes de cobrar.');
+        }
+
         $request->validate([
             'metodo_pago' => 'required|string',
         ]);

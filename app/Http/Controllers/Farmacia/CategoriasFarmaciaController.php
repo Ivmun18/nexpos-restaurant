@@ -42,6 +42,8 @@ class CategoriasFarmaciaController extends Controller
 
     public function update(Request $request, CategoriaMinimarket $categoria)
     {
+        abort_if($categoria->empresa_id !== auth()->user()->empresa_id, 403);
+
         $request->validate([
             'nombre' => 'required|string|max:100',
             'icono'  => 'nullable|string|max:10',
@@ -60,6 +62,8 @@ class CategoriasFarmaciaController extends Controller
 
     public function destroy(CategoriaMinimarket $categoria)
     {
+        abort_if($categoria->empresa_id !== auth()->user()->empresa_id, 403);
+
         if ($categoria->productos()->count() > 0) {
             return back()->with('error', 'No puedes eliminar una categoría con productos asignados.');
         }

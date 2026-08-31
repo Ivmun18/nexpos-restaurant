@@ -79,48 +79,56 @@ class ReportesFarmaciaController extends Controller
                 ];
             })->values();
 
-        // ===== GANANCIAS (ventas - costo) =====
-        $vistaG = $request->get('vista_ganancia', 'dia');
+        // ===== GANANCIAS (ventas - costo, solo admin) =====
+        // Igual que ReporteRestauranteController: el costo/margen es dato
+        // sensible y solo se calcula (y se envía a la vista) si el usuario
+        // es admin. Antes se armaba y enviaba siempre, exponiendo el costo
+        // de compra y el margen a cualquier cajero que abriera /farmacia/reportes.
+        $esAdmin = auth()->user()->rol === 'admin';
+        $ganancias = null;
+        if ($esAdmin) {
+            $vistaG = $request->get('vista_ganancia', 'dia');
 
-        // Traer detalles del periodo con su producto (para el costo)
-        $detallesG = VentaDetalle::whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId)
-                ->whereDate('fecha_emision', '>=', $desde)
-                ->whereDate('fecha_emision', '<=', $hasta)
-                ->where('estado', '!=', 'anulado'))
-            ->with(['venta:id,fecha_emision,created_at', 'producto:id,precio_compra'])
-            ->get();
+            // Traer detalles del periodo con su producto (para el costo)
+            $detallesG = VentaDetalle::whereHas('venta', fn($q) => $q->where('empresa_id', $empresaId)
+                    ->whereDate('fecha_emision', '>=', $desde)
+                    ->whereDate('fecha_emision', '<=', $hasta)
+                    ->where('estado', '!=', 'anulado'))
+                ->with(['venta:id,fecha_emision,created_at', 'producto:id,precio_compra'])
+                ->get();
 
-        // Agrupar por periodo segun la vista
-        $agrupado = $detallesG->groupBy(function ($d) use ($vistaG) {
-            $fecha = $d->venta->created_at;
-            if ($vistaG === 'semana') return $fecha->format('o-\SW');
-            if ($vistaG === 'mes')    return $fecha->format('Y-m');
-            return $fecha->format('Y-m-d');
-        });
+            // Agrupar por periodo segun la vista
+            $agrupado = $detallesG->groupBy(function ($d) use ($vistaG) {
+                $fecha = $d->venta->created_at;
+                if ($vistaG === 'semana') return $fecha->format('o-\SW');
+                if ($vistaG === 'mes')    return $fecha->format('Y-m');
+                return $fecha->format('Y-m-d');
+            });
 
-        $filasG = $agrupado->map(function ($items, $periodo) {
-            $venta = $items->sum('total');
-            $costo = $items->sum(fn($d) => ($d->producto->precio_compra ?? 0) * $d->cantidad);
-            return [
-                'periodo'  => $periodo,
-                'ventas'   => round($venta, 2),
-                'costo'    => round($costo, 2),
-                'ganancia' => round($venta - $costo, 2),
+            $filasG = $agrupado->map(function ($items, $periodo) {
+                $venta = $items->sum('total');
+                $costo = $items->sum(fn($d) => ($d->producto->precio_compra ?? 0) * $d->cantidad);
+                return [
+                    'periodo'  => $periodo,
+                    'ventas'   => round($venta, 2),
+                    'costo'    => round($costo, 2),
+                    'ganancia' => round($venta - $costo, 2),
+                ];
+            })->sortByDesc('periodo')->values();
+
+            $totVentaG = $detallesG->sum('total');
+            $totCostoG = $detallesG->sum(fn($d) => ($d->producto->precio_compra ?? 0) * $d->cantidad);
+
+            $ganancias = [
+                'vista'   => $vistaG,
+                'resumen' => [
+                    'ventas'   => round($totVentaG, 2),
+                    'costo'    => round($totCostoG, 2),
+                    'ganancia' => round($totVentaG - $totCostoG, 2),
+                ],
+                'filas'   => $filasG,
             ];
-        })->sortByDesc('periodo')->values();
-
-        $totVentaG = $detallesG->sum('total');
-        $totCostoG = $detallesG->sum(fn($d) => ($d->producto->precio_compra ?? 0) * $d->cantidad);
-
-        $ganancias = [
-            'vista'   => $vistaG,
-            'resumen' => [
-                'ventas'   => round($totVentaG, 2),
-                'costo'    => round($totCostoG, 2),
-                'ganancia' => round($totVentaG - $totCostoG, 2),
-            ],
-            'filas'   => $filasG,
-        ];
+        }
 
         return Inertia::render('Farmacia/Reportes', [
             'resumen' => [
@@ -163,7 +171,14 @@ class ReportesFarmaciaController extends Controller
 
     public function show($id)
     {
-        $venta   = \App\Models\Venta::with('detalle')->findOrFail($id);
+        $empresaId = auth()->user()->empresa_id;
+
+        // Sin el where empresa_id, cualquier usuario autenticado podía ver
+        // el detalle completo (cliente, montos, receta) de la venta de
+        // cualquier empresa con solo cambiar el id en la URL.
+        $venta   = \App\Models\Venta::with('detalle')
+            ->where('empresa_id', $empresaId)
+            ->findOrFail($id);
         $empresa = auth()->user()->empresa;
         return \Inertia\Inertia::render('Farmacia/VentaDetalle', [
             'venta'   => $venta,
@@ -173,6 +188,10 @@ class ReportesFarmaciaController extends Controller
 
     public function anular(\App\Models\Venta $venta)
     {
+        if ($venta->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
         if ($venta->estado === 'anulado') {
             return back()->with('error', 'La venta ya está anulada.');
         }
@@ -182,6 +201,15 @@ class ReportesFarmaciaController extends Controller
 
     public function reintentar(\App\Models\Venta $venta)
     {
-        return back()->with('info', 'Reintento de envío a SUNAT iniciado.');
+        if ($venta->empresa_id !== auth()->user()->empresa_id) {
+            abort(403);
+        }
+
+        $empresa = auth()->user()->empresa;
+        if ($empresa->nubefact_token) {
+            (new \App\Services\FacturacionService())->emitir($venta, $empresa);
+        }
+
+        return back()->with('success', 'Reintento de envío a SUNAT realizado.');
     }
 }

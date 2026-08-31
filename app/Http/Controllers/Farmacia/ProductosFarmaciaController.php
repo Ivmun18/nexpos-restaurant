@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\CategoriaMinimarket as Categoria;
 use Illuminate\Http\Request;
 use App\Models\AuditoriaLog;
+use App\Helpers\EmpresaHelper;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -28,11 +29,14 @@ class ProductosFarmaciaController extends Controller
 
     public function store(Request $request)
     {
+        $empresa_id = auth()->user()->empresa_id;
+
         $request->validate([
             'descripcion'      => 'required|string|max:255',
             'precio_venta'     => 'required|numeric|min:0',
             'stock_actual'     => 'required|integer|min:0',
             'fecha_vencimiento'=> 'nullable|date',
+            'categoria_id'     => ['nullable', \Illuminate\Validation\Rule::exists('categorias_minimarket', 'id')->where('empresa_id', $empresa_id)],
         ]);
 
         $datos = $request->all();
@@ -61,8 +65,29 @@ class ProductosFarmaciaController extends Controller
 
     public function update(Request $request, Producto $producto)
     {
+        $empresa_id = auth()->user()->empresa_id;
+        abort_if($producto->empresa_id !== $empresa_id, 403);
+
+        $request->validate([
+            'descripcion'      => 'required|string|max:255',
+            'precio_venta'     => 'required|numeric|min:0',
+            'fecha_vencimiento'=> 'nullable|date',
+            'categoria_id'     => ['nullable', \Illuminate\Validation\Rule::exists('categorias_minimarket', 'id')->where('empresa_id', $empresa_id)],
+        ]);
+
         $datosAntes = $producto->only(['descripcion', 'precio_venta', 'precio_compra', 'stock_actual', 'lote', 'fecha_vencimiento', 'codigo_barras']);
-        $datos = $request->all();
+
+        // $request->all() antes se pasaba directo a update(): empresa_id es
+        // fillable en Producto, así que cualquiera podía no solo editar el
+        // producto de otra empresa (sin el abort_if de arriba, que también
+        // faltaba), sino reasignarlo a la propia empresa cambiando ese
+        // campo en el POST. Se restringe a los campos reales del formulario
+        // (Farmacia/Productos.vue → guardar()).
+        $datos = $request->only([
+            'descripcion', 'codigo', 'codigo_barras', 'precio_compra', 'precio_venta',
+            'stock_minimo', 'categoria_id', 'lote', 'fecha_vencimiento',
+            'laboratorio', 'principio_activo', 'presentacion', 'concentracion', 'requiere_receta',
+        ]);
         if (empty($datos['codigo'])) {
             $datos['codigo'] = $producto->codigo ?: 'FAR-' . str_pad($producto->id, 5, '0', STR_PAD_LEFT);
         }
@@ -95,6 +120,8 @@ class ProductosFarmaciaController extends Controller
 
     public function destroy(Producto $producto)
     {
+        abort_if($producto->empresa_id !== auth()->user()->empresa_id, 403);
+
         AuditoriaLog::registrar(
             'producto',
             'eliminado',
@@ -113,6 +140,10 @@ class ProductosFarmaciaController extends Controller
 
     public function actualizarStock(Request $request, Producto $producto)
     {
+        abort_if($producto->empresa_id !== auth()->user()->empresa_id, 403);
+
+        $request->validate(['cantidad' => 'required|numeric']);
+
         $stockAnterior = $producto->stock_actual;
         $producto->increment('stock_actual', $request->cantidad);
         
