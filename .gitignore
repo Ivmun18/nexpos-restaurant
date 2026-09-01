@@ -1,5 +1,6 @@
+*.bak
 *.bak-*
-*.bak-divcuenta
+*.backup
 *.log
 .DS_Store
 .env
