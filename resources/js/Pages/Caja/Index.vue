@@ -1,6 +1,13 @@
 <template>
     <AppLayout title="Caja" subtitle="Control de apertura y cierre de caja">
 
+        <div v-if="sucursales.length > 1" style="display:flex; gap:8px; margin-bottom:1.25rem;">
+            <button v-for="s in sucursales" :key="s.id" type="button" @click="cambiarSucursal(s.id)"
+                :style="caja?.sucursal_id === s.id ? btnZonaActivo : btnZona">
+                {{ s.nombre }}
+            </button>
+        </div>
+
         <div style="display:grid; grid-template-columns:1fr 360px; gap:1.5rem; align-items:start;">
 
             <!-- Panel izquierdo -->
@@ -320,6 +327,7 @@ const props = defineProps({
     sesionActiva:  Object,
     historial:     Array,
     desglosePagos: { type: Array, default: () => [] },
+    sucursales:    { type: Array, default: () => [] },
 })
 
 const montoApertura      = ref(0)
@@ -342,6 +350,13 @@ const btnEgreso   = tipoEgreso
 
 const tipoIngresoBadge = { fontSize:'11px', background:'#F0FDF4', color:'#166534', padding:'2px 8px', borderRadius:'20px' }
 const tipoEgresoBadge  = { fontSize:'11px', background:'#FEF2F2', color:'#991B1B', padding:'2px 8px', borderRadius:'20px' }
+
+const btnZona       = { padding:'10px 18px', background:'white', color:'#64748B', border:'1px solid #E2E8F0', borderRadius:'10px', fontSize:'14px', cursor:'pointer', fontWeight:'400' }
+const btnZonaActivo = { padding:'10px 18px', background:'#2563EB', color:'white', border:'none', borderRadius:'10px', fontSize:'14px', cursor:'pointer', fontWeight:'600' }
+
+const cambiarSucursal = (sucursalId) => {
+    router.get('/caja', { sucursal_id: sucursalId }, { preserveScroll: true })
+}
 
 const totalIngresos = computed(() => {
     if (!props.sesionActiva?.movimientos) return 0
@@ -382,7 +397,7 @@ const formatHora = (fecha) => {
 
 const abrirCaja = () => {
     if (!montoApertura.value && montoApertura.value !== 0) return
-    router.post('/caja/abrir', { monto_apertura: montoApertura.value })
+    router.post('/caja/abrir', { monto_apertura: montoApertura.value, sucursal_id: props.caja?.sucursal_id })
 }
 
 const guardarMovimiento = () => {
@@ -396,7 +411,7 @@ const guardarMovimiento = () => {
         'Fondo de cambio',
     ]
 
-    router.post('/caja/movimiento', movForm.value, {
+    router.post('/caja/movimiento', { ...movForm.value, sucursal_id: props.caja?.sucursal_id }, {
         onSuccess: () => {
             modalMovimiento.value = false
             movForm.value = { tipo:'ingreso', concepto:'', monto:'', observaciones:'' }
@@ -409,6 +424,7 @@ const cerrarCaja = () => {
     router.post('/caja/cerrar', {
         monto_cierre_real: montoCierreReal.value || saldoActual.value,
         observaciones:     observacionesCierre.value,
+        sucursal_id:       props.caja?.sucursal_id,
     })
 }
 

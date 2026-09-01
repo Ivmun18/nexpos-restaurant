@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Caja;
 use App\Models\SesionCaja;
 use App\Models\CajaMovimiento;
+use App\Models\Sucursal;
 use Illuminate\Http\Request;
 use App\Helpers\EmpresaHelper;
 use App\Helpers\SucursalHelper;
@@ -15,15 +16,36 @@ use Inertia\Inertia;
 
 class CajaController extends Controller
 {
-    public function index()
+    /**
+     * Sucursal efectiva para resolver la caja: la del usuario si esta
+     * acotado a una, o la que el admin haya elegido en el selector
+     * (?sucursal_id=/sucursal_id en el body) si puede ver todas.
+     */
+    private function resolverSucursalId(Request $request): ?int
     {
-        $empresaId  = auth()->user()->empresa_id;
         $sucursalId = SucursalHelper::id();
-        $caja = Caja::where('empresa_id', $empresaId)
+
+        if (SucursalHelper::verTodas() && $request->filled('sucursal_id')) {
+            $sucursalId = (int) $request->sucursal_id;
+        }
+
+        return $sucursalId;
+    }
+
+    private function resolverCaja(int $empresaId, ?int $sucursalId): ?Caja
+    {
+        return Caja::where('empresa_id', $empresaId)
             ->where('activo', true)
             ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
             ->orderBy('id')
             ->first();
+    }
+
+    public function index(Request $request)
+    {
+        $empresaId  = auth()->user()->empresa_id;
+        $sucursalId = $this->resolverSucursalId($request);
+        $caja = $this->resolverCaja($empresaId, $sucursalId);
         if (!$caja) {
             $caja = Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
         }
@@ -53,6 +75,9 @@ class CajaController extends Controller
             'sesionActiva'  => $sesionActiva,
             'historial'     => $historial,
             'desglosePagos' => $desglosePagos,
+            'sucursales'    => SucursalHelper::verTodas()
+                ? Sucursal::where('empresa_id', $empresaId)->where('activo', true)->orderBy('nombre')->get(['id', 'nombre'])
+                : [],
         ]);
     }
 
@@ -63,12 +88,8 @@ class CajaController extends Controller
         ]);
 
         $empresaId  = auth()->user()->empresa_id;
-        $sucursalId = SucursalHelper::id();
-        $caja = Caja::where('empresa_id', $empresaId)
-            ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
-            ->orderBy('id')
-            ->first();
+        $sucursalId = $this->resolverSucursalId($request);
+        $caja = $this->resolverCaja($empresaId, $sucursalId);
         if (!$caja) {
             $caja = Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
         }
@@ -105,12 +126,8 @@ class CajaController extends Controller
         ]);
 
         $empresaId  = auth()->user()->empresa_id;
-        $sucursalId = SucursalHelper::id();
-        $caja = Caja::where('empresa_id', $empresaId)
-            ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
-            ->orderBy('id')
-            ->first();
+        $sucursalId = $this->resolverSucursalId($request);
+        $caja = $this->resolverCaja($empresaId, $sucursalId);
 
         $sesion = $caja
             ? SesionCaja::where('caja_id', $caja->id)->where('estado', 'abierta')->first()
@@ -135,12 +152,8 @@ class CajaController extends Controller
     public function cerrar(Request $request)
     {
         $empresaId  = auth()->user()->empresa_id;
-        $sucursalId = SucursalHelper::id();
-        $caja = Caja::where('empresa_id', $empresaId)
-            ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
-            ->orderBy('id')
-            ->first();
+        $sucursalId = $this->resolverSucursalId($request);
+        $caja = $this->resolverCaja($empresaId, $sucursalId);
 
         $sesion = $caja
             ? SesionCaja::where('caja_id', $caja->id)->where('estado', 'abierta')->with('movimientos')->first()
