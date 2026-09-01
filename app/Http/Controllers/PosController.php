@@ -29,7 +29,8 @@ class PosController extends Controller
         $sucursalId = SucursalHelper::id();
         $caja = \App\Models\Caja::where('empresa_id', $empresaId)
             ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
+            ->orderBy('id')
             ->first();
         if (!$caja) {
             $caja = \App\Models\Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'tienda_id' => 1, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);

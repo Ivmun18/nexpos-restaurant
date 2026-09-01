@@ -21,7 +21,8 @@ class CajaController extends Controller
         $sucursalId = SucursalHelper::id();
         $caja = Caja::where('empresa_id', $empresaId)
             ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
+            ->orderBy('id')
             ->first();
         if (!$caja) {
             $caja = Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
@@ -65,7 +66,8 @@ class CajaController extends Controller
         $sucursalId = SucursalHelper::id();
         $caja = Caja::where('empresa_id', $empresaId)
             ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
+            ->orderBy('id')
             ->first();
         if (!$caja) {
             $caja = Caja::create(['empresa_id' => $empresaId, 'sucursal_id' => $sucursalId, 'codigo' => 'CAJA01', 'nombre' => 'Caja Principal', 'activo' => true]);
@@ -106,7 +108,8 @@ class CajaController extends Controller
         $sucursalId = SucursalHelper::id();
         $caja = Caja::where('empresa_id', $empresaId)
             ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
+            ->orderBy('id')
             ->first();
 
         $sesion = $caja
@@ -135,7 +138,8 @@ class CajaController extends Controller
         $sucursalId = SucursalHelper::id();
         $caja = Caja::where('empresa_id', $empresaId)
             ->where('activo', true)
-            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId), fn($q) => $q->whereNull('sucursal_id'))
+            ->when($sucursalId !== null, fn($q) => $q->where('sucursal_id', $sucursalId))
+            ->orderBy('id')
             ->first();
 
         $sesion = $caja
