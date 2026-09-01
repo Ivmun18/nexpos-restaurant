@@ -32,6 +32,8 @@ class CajaRestauranteController extends Controller
     // Vista de cobro de una mesa
     public function show(Mesa $mesa): Response
     {
+        abort_if($mesa->empresa_id !== auth()->user()->empresa_id, 403);
+
         $mesaIds = $this->idsGrupoMesa($mesa);
 
         $pedidos = Pedido::with('detalles')
@@ -76,6 +78,8 @@ class CajaRestauranteController extends Controller
 
     public function cobrar(Request $request, Mesa $mesa)
     {
+        abort_if($mesa->empresa_id !== auth()->user()->empresa_id, 403);
+
         $request->validate([
             'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
             'monto_pagado'      => 'required|numeric|min:0',
@@ -440,6 +444,8 @@ class CajaRestauranteController extends Controller
     // Cobrar solo los platos seleccionados (division por platos)
     public function cobrarPlatos(Request $request, Mesa $mesa)
     {
+        abort_if($mesa->empresa_id !== auth()->user()->empresa_id, 403);
+
         $request->validate([
             'metodo_pago'      => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
             'detalle_ids'      => 'required|array|min:1',
@@ -794,6 +800,8 @@ class CajaRestauranteController extends Controller
      */
     public function ticketShow(CajaRestaurante $caja): Response
     {
+        abort_if($caja->empresa_id !== auth()->user()->empresa_id, 403);
+
         return Inertia::render('Tickets/Show', [
             'caja'     => $caja->load('mesa', 'user', 'pedidoDetalles'),
             'empresa'  => auth()->user()->empresa,

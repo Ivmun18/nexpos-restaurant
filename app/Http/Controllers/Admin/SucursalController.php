@@ -69,6 +69,8 @@ class SucursalController extends Controller
 
     public function update(Request $request, Sucursal $sucursal)
     {
+        abort_if($sucursal->empresa_id !== EmpresaHelper::id(), 403);
+
         $request->validate([
             'nombre'    => 'required|max:100',
             'direccion' => 'nullable|max:300',
@@ -83,6 +85,8 @@ class SucursalController extends Controller
 
     public function destroy(Sucursal $sucursal)
     {
+        abort_if($sucursal->empresa_id !== EmpresaHelper::id(), 403);
+
         $tieneDependientes = Mesa::where('sucursal_id', $sucursal->id)->exists()
             || Pedido::where('sucursal_id', $sucursal->id)->exists()
             || \App\Models\User::where('sucursal_id', $sucursal->id)->exists();

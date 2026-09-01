@@ -106,6 +106,8 @@ class ComprobanteSunatController extends Controller
      */
     public function crear(CajaRestaurante $caja)
     {
+        abort_if($caja->empresa_id !== auth()->user()->empresa_id, 403);
+
         $comprobanteExistente = ComprobanteSunat::where('caja_restaurante_id', $caja->id)->first();
 
         if ($comprobanteExistente) {
@@ -123,6 +125,8 @@ class ComprobanteSunatController extends Controller
      */
     public function emitirBoleta(Request $request, CajaRestaurante $caja)
     {
+        abort_if($caja->empresa_id !== auth()->user()->empresa_id, 403);
+
         $request->validate([
             'cliente_tipo_documento' => 'required|in:0,1,6',
             'cliente_documento'      => 'required|string|max:11',
@@ -328,6 +332,8 @@ class ComprobanteSunatController extends Controller
      */
     public function emitirFactura(Request $request, CajaRestaurante $caja)
     {
+        abort_if($caja->empresa_id !== auth()->user()->empresa_id, 403);
+
         $request->validate([
             'cliente_ruc'          => 'required|string|size:11',
             'cliente_razon_social' => 'required|string|max:255',
