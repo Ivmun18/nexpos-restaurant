@@ -1173,6 +1173,9 @@ Route::get('/api/consulta-documento', function(\Illuminate\Http\Request $request
         $data = $response->json();
         return response()->json([
             'razonSocial' => $data['razon_social'] ?? $data['nombre_comercial'] ?? null,
+            'direccion'   => $data['direccion'] ?? null,
+            'estado'      => $data['estado'] ?? null,
+            'condicion'   => $data['condicion'] ?? null,
         ]);
     }
 })->middleware('web');

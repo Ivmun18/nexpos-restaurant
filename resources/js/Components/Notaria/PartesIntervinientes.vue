@@ -137,8 +137,11 @@
                         </div>
                         <div>
                             <label style="font-size:12px; color:#64748B; display:block; margin-bottom:6px; font-weight:600;">NÚMERO *</label>
-                            <input v-model="formParte.numero_documento" type="text" required
+                            <input v-model="formParte.numero_documento" type="text" required @input="onDocumentoInput"
                                 style="width:100%; padding:10px; border:1px solid #E2E8F0; border-radius:8px; font-size:14px;" />
+                            <p v-if="buscandoDoc" style="font-size:11px; color:#64748B; margin:4px 0 0;">🔍 Consultando...</p>
+                            <p v-else-if="docEncontrado" style="font-size:11px; color:#0F766E; margin:4px 0 0;">✅ Datos obtenidos automáticamente</p>
+                            <p v-else-if="docError" style="font-size:11px; color:#B91C1C; margin:4px 0 0;">{{ docError }}</p>
                         </div>
                     </div>
 
@@ -265,6 +268,11 @@ const modalAbierto = ref(false)
 const parteEditando = ref(null)
 const guardando = ref(false)
 
+const buscandoDoc = ref(false)
+const docEncontrado = ref(false)
+const docError = ref('')
+let docTimer = null
+
 const formParte = ref({
     tipo_persona: 'natural',
     tipo_documento: '1',
@@ -286,6 +294,46 @@ const formParte = ref({
 function abrirModal() {
     resetForm()
     modalAbierto.value = true
+}
+
+function onDocumentoInput() {
+    docEncontrado.value = false
+    docError.value = ''
+    const doc = (formParte.value.numero_documento || '').replace(/\D/g, '')
+    formParte.value.numero_documento = doc
+    const esDni = doc.length === 8
+    const esRuc = doc.length === 11
+    if (!esDni && !esRuc) return
+
+    formParte.value.tipo_documento = esDni ? '1' : '6'
+    formParte.value.tipo_persona   = esDni ? 'natural' : 'juridica'
+
+    clearTimeout(docTimer)
+    docTimer = setTimeout(async () => {
+        buscandoDoc.value = true
+        try {
+            const res  = await fetch('/api/consulta-documento?documento=' + doc)
+            const data = await res.json()
+            if (esDni && data.nombres) {
+                formParte.value.nombres          = data.nombres
+                formParte.value.apellido_paterno = data.apellidoPaterno || ''
+                formParte.value.apellido_materno = data.apellidoMaterno || ''
+                docEncontrado.value = true
+            } else if (esRuc && data.razonSocial) {
+                formParte.value.razon_social = data.razonSocial
+                if (data.direccion && data.direccion !== '-') {
+                    formParte.value.domicilio = data.direccion
+                }
+                docEncontrado.value = true
+            } else {
+                docError.value = esDni ? 'DNI no encontrado en RENIEC' : 'RUC no encontrado en SUNAT'
+            }
+        } catch (e) {
+            docError.value = 'Error al consultar, ingresa los datos manualmente'
+        } finally {
+            buscandoDoc.value = false
+        }
+    }, 600)
 }
 
 function guardarParte() {

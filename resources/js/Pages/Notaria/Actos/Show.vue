@@ -230,7 +230,7 @@
                 </div>
 
                 <!-- Partes Intervinientes -->
-                <!-- <PartesIntervinientes :acto="acto" :partes="acto.partes || []" /> -->
+                <PartesIntervinientes :acto="acto" :partes="acto.partes || []" />
 
                 <!-- SEGUIMIENTO -->
                 <div style="background:white; border-radius:12px; border:1px solid #E2E8F0; padding:1.25rem;">
@@ -376,12 +376,12 @@
                     </div>
                     <template v-if="formDoc.vendedor_tipo==='empresa' && tipoDoc==='minuta-compraventa'">
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Razón Social *</label><input v-model="formDoc.vendedor_razon_social" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">RUC *</label><input v-model="formDoc.vendedor_ruc" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">RUC *</label><input v-model="formDoc.vendedor_ruc" type="text" @input="onVendedorRucInput" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio *</label><input v-model="formDoc.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Partida registral</label><input v-model="formDoc.vendedor_partida_registral" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Cargo representante</label><input v-model="formDoc.representante_cargo" type="text" placeholder="Gerente General" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre representante *</label><input v-model="formDoc.representante_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI representante *</label><input v-model="formDoc.representante_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI representante *</label><input v-model="formDoc.representante_dni" type="text" @input="onRepresentanteDniInput" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil rep.</label><input v-model="formDoc.representante_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión rep.</label><input v-model="formDoc.representante_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio representante *</label><input v-model="formDoc.representante_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
@@ -466,7 +466,7 @@
 </template>
                     <template v-else>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre completo *</label><input v-model="formDoc.vendedor_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI *</label><input v-model="formDoc.vendedor_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                        <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI *</label><input v-model="formDoc.vendedor_dni" type="text" @input="onVendedorDniInput" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil</label><input v-model="formDoc.vendedor_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión</label><input v-model="formDoc.vendedor_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                         <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio</label><input v-model="formDoc.vendedor_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
@@ -557,7 +557,7 @@
                 <p style="font-size:12px; font-weight:700; color:#1D4ED8; margin:0 0 8px;">COMPRADOR</p>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre completo *</label><input v-model="formDoc.comprador_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI *</label><input v-model="formDoc.comprador_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI *</label><input v-model="formDoc.comprador_dni" type="text" @input="onCompradorDniInput" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                     <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil</label><input v-model="formDoc.comprador_estado_civil" type="text" placeholder="soltero" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                     <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión</label><input v-model="formDoc.comprador_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                     <div style="grid-column:1/-1;"><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Domicilio</label><input v-model="formDoc.comprador_domicilio" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
@@ -569,7 +569,7 @@
                 <p style="font-size:12px; font-weight:700; color:#1D4ED8; margin:0 0 8px;">COMPRADOR 2 (opcional)</p>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Nombre</label><input v-model="formDoc.comprador2_nombre" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
-                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI</label><input v-model="formDoc.comprador2_dni" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
+                    <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">DNI</label><input v-model="formDoc.comprador2_dni" type="text" @input="onComprador2DniInput" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                     <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Estado civil</label><input v-model="formDoc.comprador2_estado_civil" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                     <div><label style="font-size:11px; font-weight:600; color:#64748B; display:block; margin-bottom:4px;">Profesión</label><input v-model="formDoc.comprador2_profesion" type="text" style="width:100%; padding:8px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; box-sizing:border-box;"></div>
                 </div>
@@ -1034,6 +1034,37 @@ const formDoc = ref({
     // Solo parte
     anotacion: '',
 })
+
+// ── CONSULTA DNI/RUC (RENIEC/SUNAT) para vendedor/comprador/representante ──
+function crearBuscadorDoc(campoDoc, campoNombre, campoDomicilio = null) {
+    let timer = null
+    return function () {
+        const doc = (formDoc.value[campoDoc] || '').replace(/\D/g, '')
+        formDoc.value[campoDoc] = doc
+        if (doc.length !== 8 && doc.length !== 11) return
+        clearTimeout(timer)
+        timer = setTimeout(async () => {
+            try {
+                const res  = await fetch('/api/consulta-documento?documento=' + doc)
+                const data = await res.json()
+                if (doc.length === 8 && data.nombre_completo) {
+                    formDoc.value[campoNombre] = data.nombre_completo
+                } else if (doc.length === 11 && data.razonSocial) {
+                    formDoc.value[campoNombre] = data.razonSocial
+                    if (campoDomicilio && data.direccion && data.direccion !== '-') {
+                        formDoc.value[campoDomicilio] = data.direccion
+                    }
+                }
+            } catch (e) { /* sin conexion: el usuario completa manualmente */ }
+        }, 600)
+    }
+}
+
+const onVendedorDniInput      = crearBuscadorDoc('vendedor_dni', 'vendedor_nombre')
+const onVendedorRucInput      = crearBuscadorDoc('vendedor_ruc', 'vendedor_razon_social', 'vendedor_domicilio')
+const onRepresentanteDniInput = crearBuscadorDoc('representante_dni', 'representante_nombre')
+const onCompradorDniInput     = crearBuscadorDoc('comprador_dni', 'comprador_nombre', 'comprador_domicilio')
+const onComprador2DniInput    = crearBuscadorDoc('comprador2_dni', 'comprador2_nombre')
 
 function fechaALetras(fecha) {
     const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ',

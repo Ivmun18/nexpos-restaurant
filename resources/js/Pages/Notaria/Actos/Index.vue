@@ -268,9 +268,11 @@
                             <option value="1">DNI</option>
                             <option value="6">RUC</option>
                         </select>
-                        <input v-model="formCliente.numero_documento" type="text" :placeholder="formCliente.tipo_documento==='6' ? 'RUC 20xxxxxxxxx' : 'DNI 12345678'"
+                        <input v-model="formCliente.numero_documento" type="text" @input="onDocumentoClienteInput" :placeholder="formCliente.tipo_documento==='6' ? 'RUC 20xxxxxxxxx' : 'DNI 12345678'"
                             style="flex:1; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none;" />
                     </div>
+                    <p v-if="buscandoDocCliente" style="font-size:11px; color:#64748B; margin:0;">🔍 Consultando RENIEC/SUNAT...</p>
+                    <p v-else-if="docClienteEncontrado" style="font-size:11px; color:#0F766E; margin:0;">✅ Datos obtenidos automáticamente</p>
                     <input v-model="formCliente.razon_social" type="text" placeholder="Nombre o Razón Social *"
                         style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                     <input v-model="formCliente.direccion" type="text" placeholder="Dirección (opcional)"
@@ -313,6 +315,42 @@ const modalCliente    = ref(false)
 const formCliente     = ref({ tipo_documento: '1', numero_documento: '', razon_social: '', direccion: '', email: '', telefono: '' })
 const errorCliente    = ref('')
 const guardandoCliente = ref(false)
+
+// ── CONSULTA DNI/RUC (RENIEC/SUNAT) ──
+const buscandoDocCliente   = ref(false)
+const docClienteEncontrado = ref(false)
+let docClienteTimer = null
+
+function onDocumentoClienteInput() {
+    docClienteEncontrado.value = false
+    const doc = (formCliente.value.numero_documento || '').replace(/\D/g, '')
+    formCliente.value.numero_documento = doc
+    const esDni = doc.length === 8
+    const esRuc = doc.length === 11
+    if (!esDni && !esRuc) return
+
+    formCliente.value.tipo_documento = esDni ? '1' : '6'
+
+    clearTimeout(docClienteTimer)
+    docClienteTimer = setTimeout(async () => {
+        buscandoDocCliente.value = true
+        try {
+            const res  = await fetch('/api/consulta-documento?documento=' + doc)
+            const data = await res.json()
+            if (esDni && data.nombre_completo) {
+                formCliente.value.razon_social = data.nombre_completo
+                docClienteEncontrado.value = true
+            } else if (esRuc && data.razonSocial) {
+                formCliente.value.razon_social = data.razonSocial
+                if (data.direccion && data.direccion !== '-') {
+                    formCliente.value.direccion = data.direccion
+                }
+                docClienteEncontrado.value = true
+            }
+        } catch (e) { /* sin conexion: el usuario completa manualmente */ }
+        buscandoDocCliente.value = false
+    }, 600)
+}
 
 async function guardarCliente() {
     if (!formCliente.value.razon_social || !formCliente.value.numero_documento) {
