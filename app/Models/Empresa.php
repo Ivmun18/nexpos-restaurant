@@ -53,6 +53,7 @@ class Empresa extends Model
         'nubefact_token',
         'nubefact_demo',
         'zona_exonerada',
+        'emitir_boleta_por_defecto',
         'regimen_tributario',
         'modalidad_cobro',
         'proveedor_facturacion',
@@ -80,6 +81,7 @@ class Empresa extends Model
         'nubefact_demo' => 'boolean',
         'apisunat_demo' => 'boolean',
         'zona_exonerada' => 'boolean',
+        'emitir_boleta_por_defecto' => 'boolean',
     ];
 
     public function users(): HasMany
