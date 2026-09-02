@@ -97,6 +97,14 @@ class CajaRestauranteController extends Controller
             ->all();
         $metodosTexto = collect($pagos)->pluck('metodo')->unique()->implode(' + ');
 
+        // Punto de Encuentro (empresa 23): nunca generar ticket interno, siempre
+        // emitir boleta electronica aunque el cajero no pida datos del cliente.
+        $emiteBoletaSiempre = auth()->user()->empresa_id === 23;
+        $tipo = $request->tipo_comprobante ?? 'ninguno';
+        if ($tipo === 'ninguno' && $emiteBoletaSiempre) {
+            $tipo = 'boleta';
+        }
+
         $pedidos = Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
             ->whereIn('estado', ['enviado', 'listo'])
             ->get();
@@ -133,7 +141,7 @@ class CajaRestauranteController extends Controller
             'descuento'        => $descuento,
             'metodo_pago'      => $pagos[0]['metodo'],
             'pagos'            => $pagos,
-            'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
+            'tipo_comprobante' => $tipo,
             'notas'            => $request->notas,
             'partes_total'     => $partesTotal,
             'parte_numero'     => $parteNumero,
@@ -210,8 +218,6 @@ class CajaRestauranteController extends Controller
 
         Mesa::whereIn('id', $this->idsGrupoMesa($mesa))->update(['estado' => 'libre', 'mesa_principal_id' => null]);
 
-        $tipo = $request->tipo_comprobante ?? 'ninguno';
-
         if ($tipo === 'ninguno') {
             return redirect()->route('tickets.show', $caja)
                 ->with('success', "Mesa {$mesa->numero} cobrada. Vuelto: S/ {$vuelto}")
@@ -222,6 +228,13 @@ class CajaRestauranteController extends Controller
         $clienteDoc  = $request->cliente_documento ?? '';
         $clienteNombre = $request->cliente_nombre ?? '';
         $clienteEmail  = $request->cliente_email ?? '';
+
+        // Punto de Encuentro (empresa 23): sin datos de cliente, usar el
+        // equivalente a consumidor final que acepta ApiSunat.
+        if ($emiteBoletaSiempre) {
+            $clienteDoc    = $clienteDoc ?: '00000000';
+            $clienteNombre = $clienteNombre ?: 'CLIENTE VARIOS';
+        }
 
         if ($clienteDoc && $clienteNombre) {
             $empresa   = auth()->user()->empresa;
