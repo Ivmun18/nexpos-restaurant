@@ -27,7 +27,14 @@
                         <span style="color:#64748B;">Cajero</span>
                         <span style="font-weight:600; color:#1E293B;">{{ caja.user?.name || '-' }}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <div v-if="pagosDesglose.length > 1" style="display:flex; flex-direction:column; gap:4px;">
+                        <span style="font-size:14px; color:#64748B;">Método de pago</span>
+                        <div v-for="(p, i) in pagosDesglose" :key="i" style="display:flex; justify-content:space-between; font-size:13px; padding-left:8px;">
+                            <span style="color:#1E293B; text-transform:capitalize;">{{ p.metodo }}</span>
+                            <span style="font-weight:600; color:#1E293B;">S/ {{ formatNumber(p.monto) }}</span>
+                        </div>
+                    </div>
+                    <div v-else style="display:flex; justify-content:space-between; font-size:14px;">
                         <span style="color:#64748B;">Método de pago</span>
                         <span style="font-weight:600; color:#1E293B; text-transform:capitalize;">{{ caja.metodo_pago }}</span>
                     </div>
@@ -101,6 +108,11 @@ const props = defineProps({
     imprimir: { type: Boolean, default: false },
 })
 
+// Desglose de métodos cuando el cobro fue mixto (efectivo + yape, etc.)
+const pagosDesglose = computed(() => {
+    return Array.isArray(props.caja?.pagos) ? props.caja.pagos : []
+})
+
 const logoUrl = computed(() => {
     const logo = props.empresa?.logo
     if (!logo) return ''
@@ -147,7 +159,10 @@ const imprimir = () => {
             <div style="display:flex;justify-content:space-between;"><span>HORA:</span><span>${horaStr}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>MESA:</span><span>${mesa.nombre || mesa.numero || '-'}</span></div>
             <div style="display:flex;justify-content:space-between;"><span>CAJERO:</span><span>${cajero}</span></div>
-            <div style="display:flex;justify-content:space-between;"><span>MÉTODO PAGO:</span><span>${(c.metodo_pago || '-').toUpperCase()}</span></div>
+            ${(Array.isArray(c.pagos) && c.pagos.length > 1)
+                ? `<div>MÉTODO PAGO:</div>` + c.pagos.map(p => `<div style="display:flex;justify-content:space-between;padding-left:8px;"><span>${(p.metodo || '-').toUpperCase()}</span><span>S/ ${Number(p.monto || 0).toFixed(2)}</span></div>`).join('')
+                : `<div style="display:flex;justify-content:space-between;"><span>MÉTODO PAGO:</span><span>${(c.metodo_pago || '-').toUpperCase()}</span></div>`
+            }
         </div>
         <div style="border-top:1px dashed #000;margin:6px 0;"></div>
         ${(c.pedido_detalles?.length) ? `
@@ -185,7 +200,10 @@ const whatsappUrl = computed(() => {
     const c = props.caja
     const mesaNombre = c.mesa?.nombre || c.mesa?.numero || '-'
     const fechaStr = new Date(c.created_at).toLocaleDateString('es-PE')
-    const mensaje = '*Ticket NEXPOS*\n\nMesa: ' + mesaNombre + '\nFecha: ' + fechaStr + '\nMétodo de pago: ' + (c.metodo_pago || '-') + '\n\n*TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita'
+    const metodoTexto = (Array.isArray(c.pagos) && c.pagos.length > 1)
+        ? c.pagos.map(p => `${p.metodo} S/ ${Number(p.monto || 0).toFixed(2)}`).join(' + ')
+        : (c.metodo_pago || '-')
+    const mensaje = '*Ticket NEXPOS*\n\nMesa: ' + mesaNombre + '\nFecha: ' + fechaStr + '\nMétodo de pago: ' + metodoTexto + '\n\n*TOTAL: S/ ' + Number(c.total).toFixed(2) + '*\n\nGracias por su visita'
     return 'https://wa.me/' + numeroFinal + '?text=' + encodeURIComponent(mensaje)
 })
 

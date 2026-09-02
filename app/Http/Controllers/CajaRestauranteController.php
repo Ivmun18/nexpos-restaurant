@@ -81,14 +81,21 @@ class CajaRestauranteController extends Controller
         abort_if($mesa->empresa_id !== auth()->user()->empresa_id, 403);
 
         $request->validate([
-            'metodo_pago'       => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
-            'monto_pagado'      => 'required|numeric|min:0',
+            'pagos'             => 'required|array|min:1',
+            'pagos.*.metodo'    => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
+            'pagos.*.monto'     => 'required|numeric|min:0.01',
             'descuento'        => 'nullable|numeric|min:0',
             'notas'             => 'nullable|string',
             'tipo_comprobante'  => 'nullable|in:boleta,factura,ninguno',
             'partes_total'      => 'nullable|integer|min:1',
             'parte_numero'      => 'nullable|integer|min:1',
         ]);
+
+        $pagos = collect($request->pagos)
+            ->map(fn ($p) => ['metodo' => $p['metodo'], 'monto' => round((float) $p['monto'], 2)])
+            ->values()
+            ->all();
+        $metodosTexto = collect($pagos)->pluck('metodo')->unique()->implode(' + ');
 
         $pedidos = Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
             ->whereIn('estado', ['enviado', 'listo'])
@@ -107,7 +114,7 @@ class CajaRestauranteController extends Controller
         $partesTotal = (int) ($request->partes_total ?? 1);
         $parteNumero = (int) ($request->parte_numero ?? 1);
 
-        $montoPagado     = (float) $request->monto_pagado;
+        $montoPagado     = round(collect($pagos)->sum('monto'), 2);
         $pagadoAcumulado = $pagadoPrevio + $montoPagado;
         $saldoPendiente  = round($total - $pagadoAcumulado, 2);
 
@@ -124,7 +131,8 @@ class CajaRestauranteController extends Controller
             'monto_pagado'     => $montoPagado,
             'vuelto'           => $vuelto,
             'descuento'        => $descuento,
-            'metodo_pago'      => $request->metodo_pago,
+            'metodo_pago'      => $pagos[0]['metodo'],
+            'pagos'            => $pagos,
             'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
             'notas'            => $request->notas,
             'partes_total'     => $partesTotal,
@@ -141,7 +149,7 @@ class CajaRestauranteController extends Controller
             ? SesionCaja::where('estado', 'abierta')->where('caja_id', $cajaEmpresa->id)->first()
             : null;
         if ($sesion) {
-            $concepto = 'Cobro Mesa ' . $mesa->numero . ' (' . $request->metodo_pago . ')';
+            $concepto = 'Cobro Mesa ' . $mesa->numero . ' (' . $metodosTexto . ')';
             if ($partesTotal > 1) {
                 $concepto .= " - parte {$parteNumero}/{$partesTotal}";
             }
@@ -447,13 +455,21 @@ class CajaRestauranteController extends Controller
         abort_if($mesa->empresa_id !== auth()->user()->empresa_id, 403);
 
         $request->validate([
-            'metodo_pago'      => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
+            'pagos'            => 'required|array|min:1',
+            'pagos.*.metodo'   => 'required|in:efectivo,tarjeta,yape,plin,transferencia',
+            'pagos.*.monto'    => 'required|numeric|min:0.01',
             'detalle_ids'      => 'required|array|min:1',
             'detalle_ids.*'    => 'integer',
-            'monto_pagado'     => 'required|numeric|min:0',
             'notas'            => 'nullable|string',
             'tipo_comprobante' => 'nullable|in:boleta,factura,ninguno',
         ]);
+
+        $pagos = collect($request->pagos)
+            ->map(fn ($p) => ['metodo' => $p['metodo'], 'monto' => round((float) $p['monto'], 2)])
+            ->values()
+            ->all();
+        $montoPagadoPlatos = round(collect($pagos)->sum('monto'), 2);
+        $metodosTextoPlatos = collect($pagos)->pluck('metodo')->unique()->implode(' + ');
 
         $pedidoIds = Pedido::whereIn('mesa_id', $this->idsGrupoMesa($mesa))
             ->whereIn('estado', ['enviado', 'listo'])
@@ -471,7 +487,7 @@ class CajaRestauranteController extends Controller
         }
 
         $subtotal = $detalles->sum('subtotal');
-        $vuelto   = max(0, $request->monto_pagado - $subtotal);
+        $vuelto   = max(0, $montoPagadoPlatos - $subtotal);
 
         $descuentoPlatos = (float) ($request->descuento ?? 0);
         $caja = CajaRestaurante::create([
@@ -479,9 +495,10 @@ class CajaRestauranteController extends Controller
             'mesa_id'          => $mesa->id,
             'user_id'          => auth()->id(),
             'total'            => $subtotal,
-            'monto_pagado'     => $request->monto_pagado,
+            'monto_pagado'     => $montoPagadoPlatos,
             'vuelto'           => $vuelto,
-            'metodo_pago'      => $request->metodo_pago,
+            'metodo_pago'      => $pagos[0]['metodo'],
+            'pagos'            => $pagos,
             'tipo_comprobante' => $request->tipo_comprobante ?? 'ninguno',
             'notas'            => $request->notas,
             'partes_total'     => 0,
@@ -505,7 +522,7 @@ class CajaRestauranteController extends Controller
                 'sesion_id'    => $sesion->id,
                 'usuario_id'   => auth()->id(),
                 'tipo'         => 'ingreso',
-                'concepto'     => 'Cobro Mesa ' . $mesa->numero . ' (' . $request->metodo_pago . ') - por platos',
+                'concepto'     => 'Cobro Mesa ' . $mesa->numero . ' (' . $metodosTextoPlatos . ') - por platos',
                 'referencia_id'=> $caja->id,
                 'monto'        => $subtotal,
                 'observaciones'=> $request->notas ?? null,

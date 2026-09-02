@@ -29,8 +29,7 @@ const props = defineProps({
 })
 
 const form = useForm({
-    metodo_pago:          'efectivo',
-    monto_pagado:         props.total ? Number(props.total).toFixed(2) : '',
+    pagos:                [{ metodo: 'efectivo', monto: props.total ? Number(props.total).toFixed(2) : '' }],
     tipo_comprobante:     'ninguno',
     notas:                '',
     partes_total:         1,
@@ -122,17 +121,31 @@ const objetivoCobro = computed(() => {
     return n > 1 ? montoPorParte.value : saldoReal.value
 })
 
+// Suma de todas las filas de pago ingresadas (mixto: efectivo + yape + ...)
+const totalIngresado = computed(() => {
+    return form.pagos.reduce((s, p) => s + (parseFloat(p.monto) || 0), 0)
+})
+
+// En modo 'platos' el objetivo es lo seleccionado, no el saldo de toda la mesa
+const objetivoActual = computed(() => {
+    return modoCobro.value === 'platos' ? totalSeleccionado.value : objetivoCobro.value
+})
+
 const vuelto = computed(() => {
-    const monto = parseFloat(form.monto_pagado) || 0
     // Solo hay vuelto si es el ultimo pago que salda la cuenta
-    const diff = monto - saldoReal.value
+    const diff = totalIngresado.value - saldoReal.value
     return (diff > 0 && (parseInt(form.partes_total) || 1) <= 1) ? diff : 0
 })
 
 const faltante = computed(() => {
-    const monto = parseFloat(form.monto_pagado) || 0
-    const diff  = objetivoCobro.value - monto
+    const diff = objetivoActual.value - totalIngresado.value
     return diff > 0 ? diff : 0
+})
+
+// Habilita el botón Cobrar solo cuando lo ingresado cubre el objetivo actual
+const puedeCobrar = computed(() => {
+    if (modoCobro.value === 'platos' && seleccionados.value.length === 0) return false
+    return form.pagos.length > 0 && faltante.value <= 0
 })
 
 const metodos = [
@@ -142,6 +155,26 @@ const metodos = [
     { key: 'tarjeta',  label: 'Tarjeta',  icon: '💳' },
     { key: 'transferencia', label: 'Transferencia', icon: '🏦' },
 ]
+
+// Agrega una fila de pago con el método elegido (pago mixto: varias filas)
+function agregarPago(metodoKey) {
+    form.pagos.push({ metodo: metodoKey, monto: '' })
+}
+
+function quitarPago(i) {
+    form.pagos.splice(i, 1)
+}
+
+function tieneMetodo(key) {
+    return form.pagos.some(p => p.metodo === key)
+}
+
+// Reemplaza las filas de pago por una sola fila con el monto objetivo
+// (usada por los atajos de descuento/partes/modo, igual que antes con monto_pagado)
+function fijarMontoObjetivo(valor) {
+    const metodoActual = form.pagos[0]?.metodo || 'efectivo'
+    form.pagos = [{ metodo: metodoActual, monto: valor > 0 ? valor.toFixed(2) : '' }]
+}
 
 const parteActual = computed(() => {
     // Cuantas partes ya se pagaron + 1
@@ -192,7 +225,7 @@ function togglePlato(id) {
     if (i === -1) seleccionados.value.push(id)
     else seleccionados.value.splice(i, 1)
     // Autocompletar el monto con el total de lo seleccionado
-    form.monto_pagado = totalSeleccionado.value.toFixed(2)
+    fijarMontoObjetivo(totalSeleccionado.value)
 }
 
 // Suma de los platos seleccionados
@@ -206,15 +239,22 @@ const totalSeleccionado = computed(() => {
 const platosPendientesLista = computed(() => platos.value.filter(p => !p.pagado))
 const platosFaltan = computed(() => Number(props.platos_pendientes) || platosPendientesLista.value.length)
 
+// Filas de pago con monto > 0, normalizadas para enviar al backend
+function pagosValidos() {
+    return form.pagos
+        .map(p => ({ metodo: p.metodo, monto: parseFloat(p.monto) || 0 }))
+        .filter(p => p.monto > 0)
+}
+
 function cobrarPlatos() {
     if (seleccionados.value.length === 0) {
         alert('Selecciona al menos un plato para cobrar.')
         return
     }
-    // El monto se cobra exacto por los platos seleccionados
-    form.monto_pagado = totalSeleccionado.value.toFixed(2)
+    if (faltante.value > 0) return
     form.transform(data => ({
         ...data,
+        pagos: pagosValidos(),
         detalle_ids: seleccionados.value,
     })).post(`/caja-restaurante/${props.mesa.id}/platos`, {
         onSuccess: () => { seleccionados.value = [] },
@@ -223,22 +263,12 @@ function cobrarPlatos() {
 
 function cobrar() {
     const n = parseInt(form.partes_total) || 1
-    const objetivo = objetivoCobro.value
-    const monto = parseFloat(form.monto_pagado) || 0
-
-    if (n > 1) {
-        // Cobro por partes: el monto debe cubrir al menos la parte
-        if (monto < objetivo - 0.01) {
-            if (!confirm(`El monto es menor a la parte (S/ ${objetivo.toFixed(2)}). ¿Continuar?`)) return
-        }
-        form.parte_numero = parteActual.value
-    } else {
-        if (!form.monto_pagado || monto < saldoReal.value - 0.01) {
-            if (!confirm('El monto es menor al total. ¿Desea continuar de todas formas?')) return
-        }
-        form.parte_numero = 1
-    }
-    form.post(`/caja-restaurante/${props.mesa.id}`)
+    if (faltante.value > 0) return
+    form.parte_numero = n > 1 ? parteActual.value : 1
+    form.transform(data => ({
+        ...data,
+        pagos: pagosValidos(),
+    })).post(`/caja-restaurante/${props.mesa.id}`)
 }
 
 </script>
@@ -285,7 +315,7 @@ function cobrar() {
                         <span style="font-size:13px; font-weight:600; color:#92400e;">🏷️ Descuento</span>
                         <div style="display:flex; gap:6px; margin-left:auto;">
                             <button v-for="pct in [0,5,10,15,20]" :key="pct"
-                                @click="descuentoPct=pct; form.monto_pagado=saldoReal.toFixed(2)"
+                                @click="descuentoPct=pct; fijarMontoObjetivo(saldoReal)"
                                 :style="descuentoPct===pct ? 'background:#f59e0b; color:white; border:none;' : 'background:white; color:#92400e; border:1px solid #fde68a;'"
                                 style="padding:4px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
                                 {{ pct }}%
@@ -311,46 +341,63 @@ function cobrar() {
                     <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
                         <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">🧾 ¿Cómo se cobra?</p>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(90px, 1fr)); gap:8px;">
-                            <button @click="modoCobro='todo'; form.partes_total=1; seleccionados=[]; form.monto_pagado=saldoReal.toFixed(2)"
+                            <button @click="modoCobro='todo'; form.partes_total=1; seleccionados=[]; fijarMontoObjetivo(saldoReal)"
                                 :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='todo' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='todo' ? 'white' : '#475569'}">
                                 💳 Pagar todo
                             </button>
-                            <button @click="modoCobro='partes'; seleccionados=[]; form.partes_total=2; form.monto_pagado=montoPorParte.toFixed(2)"
+                            <button @click="modoCobro='partes'; seleccionados=[]; form.partes_total=2; fijarMontoObjetivo(montoPorParte)"
                                 :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='partes' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='partes' ? 'white' : '#475569'}">
                                 🧮 Partes iguales
                             </button>
-                            <button @click="modoCobro='platos'; form.partes_total=1; form.monto_pagado=''"
+                            <button @click="modoCobro='platos'; form.partes_total=1; form.pagos=[]"
                                 :style="{padding:'14px 8px', borderRadius:'12px', border:'none', cursor:'pointer', fontSize:'13px', fontWeight:'800', background: modoCobro==='platos' ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9', color: modoCobro==='platos' ? 'white' : '#475569'}">
                                 🍽️ Por platos
                             </button>
                         </div>
                     </div>
 
-                    <!-- Método de pago -->
+                    <!-- Método(s) de pago -->
                     <div style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-                        <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💳 Método de pago</p>
+                        <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💳 Método(s) de pago</p>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
                             <button
                                 v-for="m in metodos"
                                 :key="m.key"
-                                @click="form.metodo_pago = m.key"
+                                @click="agregarPago(m.key)"
                                 :style="{
                                     padding: '16px',
                                     borderRadius: '14px',
-                                    border: 'none',
+                                    border: tieneMetodo(m.key) ? '2px solid #14B8A6' : '2px solid transparent',
                                     cursor: 'pointer',
                                     fontSize: '16px',
                                     fontWeight: '700',
                                     transition: 'all 0.15s',
-                                    background: form.metodo_pago === m.key ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#F1F5F9',
-                                    color: form.metodo_pago === m.key ? 'white' : '#475569',
-                                    boxShadow: form.metodo_pago === m.key ? '0 4px 15px rgba(20,184,166,0.3)' : 'none',
-                                    transform: form.metodo_pago === m.key ? 'scale(1.03)' : 'scale(1)',
+                                    background: tieneMetodo(m.key) ? '#F0FDFA' : '#F1F5F9',
+                                    color: tieneMetodo(m.key) ? '#0F766E' : '#475569',
                                 }"
                             >
-                                {{ m.icon }} {{ m.label }}
+                                {{ m.icon }} {{ m.label }} <span style="font-weight:800;">＋</span>
                             </button>
                         </div>
+
+                        <!-- Filas de pago agregadas (permite mixto: p.ej. efectivo + yape) -->
+                        <div v-if="form.pagos.length" style="display:flex; flex-direction:column; gap:10px; margin-top:18px;">
+                            <div v-for="(pago, i) in form.pagos" :key="i"
+                                style="display:flex; align-items:center; gap:10px; background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:10px 14px;">
+                                <span style="font-size:20px;">{{ metodos.find(x => x.key === pago.metodo)?.icon }}</span>
+                                <span style="flex:1; font-size:15px; font-weight:700; color:#1E293B; text-transform:capitalize;">{{ pago.metodo }}</span>
+                                <input
+                                    v-model="pago.monto"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0.00"
+                                    style="width:110px; padding:10px; border:2px solid #E2E8F0; border-radius:10px; font-size:16px; font-weight:700; text-align:right; outline:none; box-sizing:border-box;"
+                                />
+                                <button @click="quitarPago(i)" style="background:none; border:none; color:#EF4444; font-size:18px; cursor:pointer; padding:4px;">✕</button>
+                            </div>
+                        </div>
+                        <p v-else style="margin:16px 0 0; font-size:14px; color:#94A3B8;">Toca un método arriba para agregarlo al cobro.</p>
                     </div>
 
                     <!-- Dividir cuenta -->
@@ -360,7 +407,7 @@ function cobrar() {
                             <button
                                 v-for="n in [1,2,3,4,5,6]"
                                 :key="n"
-                                @click="form.partes_total = n; form.monto_pagado = n > 1 ? montoPorParte.toFixed(2) : ''"
+                                @click="form.partes_total = n; n > 1 ? fijarMontoObjetivo(montoPorParte) : fijarMontoObjetivo(saldoReal)"
                                 :style="{
                                     padding: '12px 0', width:'46px', borderRadius:'12px', border:'none', cursor:'pointer',
                                     fontSize:'16px', fontWeight:'800',
@@ -419,23 +466,17 @@ function cobrar() {
                         <p v-if="platosFaltan === 0" style="margin-top:14px; text-align:center; color:#166534; font-weight:700;">Todos los platos estan pagados 🎉</p>
                     </div>
 
-                    <!-- Monto y vuelto -->
+                    <!-- Resumen del cobro -->
                     <div v-if="$page.props.auth.user.rol !== 'mozo'" style="background:white; border-radius:20px; padding:24px; border:1px solid #E2E8F0; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
-                        <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💵 Monto recibido</p>
+                        <p style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 16px;">💵 Resumen del cobro</p>
 
-                        <input
-                            v-model="form.monto_pagado"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            style="width:100%; padding:18px; border:3px solid #E2E8F0; border-radius:14px; font-size:28px; font-weight:800; outline:none; box-sizing:border-box; text-align:center; color:#1E293B;"
-                            @focus="$event.target.style.borderColor='#14B8A6'"
-                            @blur="$event.target.style.borderColor='#E2E8F0'"
-                        />
+                        <div style="display:flex; justify-content:space-between; font-size:15px; color:#475569; font-weight:600; margin-bottom:4px;">
+                            <span>Ingresado</span>
+                            <span>S/ {{ totalIngresado.toFixed(2) }}</span>
+                        </div>
 
-                        <!-- Vuelto -->
-                        <div v-if="form.monto_pagado" style="margin-top:16px;">
+                        <!-- Vuelto / Falta -->
+                        <div v-if="form.pagos.length" style="margin-top:16px;">
                             <div v-if="vuelto > 0"
                                 style="background:#F0FDF4; border:2px solid #DCFCE7; border-radius:14px; padding:16px; text-align:center;">
                                 <p style="font-size:14px; color:#166534; font-weight:600; margin:0 0 4px;">💚 Vuelto a dar</p>
@@ -467,18 +508,18 @@ function cobrar() {
                     <button
                         @click="modoCobro==='platos' ? cobrarPlatos() : cobrar()"
                         v-if="$page.props.auth.user.rol !== 'mozo'"
-                        :disabled="form.processing || (modoCobro==='platos' ? seleccionados.length===0 : !form.monto_pagado)"
+                        :disabled="form.processing || !puedeCobrar"
                         :style="{
                             width: '100%',
                             padding: '22px',
-                            background: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#E2E8F0',
-                            color: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? 'white' : '#94A3B8',
+                            background: puedeCobrar ? 'linear-gradient(135deg,#14B8A6,#0F766E)' : '#E2E8F0',
+                            color: puedeCobrar ? 'white' : '#94A3B8',
                             border: 'none',
                             borderRadius: '16px',
                             fontSize: '22px',
                             fontWeight: '800',
-                            cursor: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? 'pointer' : 'not-allowed',
-                            boxShadow: (modoCobro==='platos' ? seleccionados.length>0 : form.monto_pagado) ? '0 6px 20px rgba(20,184,166,0.4)' : 'none',
+                            cursor: puedeCobrar ? 'pointer' : 'not-allowed',
+                            boxShadow: puedeCobrar ? '0 6px 20px rgba(20,184,166,0.4)' : 'none',
                         }"
                     >
                         <template v-if="form.processing">⏳ Procesando...</template>

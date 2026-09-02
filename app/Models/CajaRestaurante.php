@@ -17,7 +17,7 @@ class CajaRestaurante extends Model
 
     protected $fillable = [
         'empresa_id', 'mesa_id', 'user_id', 'total',
-        'monto_pagado', 'vuelto', 'descuento', 'metodo_pago', 'tipo_comprobante', 'notas',
+        'monto_pagado', 'vuelto', 'descuento', 'metodo_pago', 'pagos', 'tipo_comprobante', 'notas',
         'partes_total', 'parte_numero', 'cuenta_total', 'pagado_acumulado',
     ];
 
@@ -28,6 +28,7 @@ class CajaRestaurante extends Model
         'descuento'    => 'decimal:2',
         'cuenta_total'     => 'decimal:2',
         'pagado_acumulado' => 'decimal:2',
+        'pagos'            => 'array',
     ];
 
     public function mesa(): BelongsTo
