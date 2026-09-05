@@ -531,7 +531,7 @@ function cobrar() {
                     <!-- Tipo comprobante -->
                     <div style="margin-top:16px;">
                         <p style="font-size:14px; font-weight:600; color:#64748B; margin:0 0 10px;">📄 Tipo de comprobante</p>
-                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
                             <button @click="onTipoComprobante('boleta')"
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='boleta' ? '2px solid #14B8A6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='boleta' ? '#F0FDFA' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='boleta' ? '#0F766E' : '#64748B'}">
                                 🧾 Boleta
@@ -540,13 +540,17 @@ function cobrar() {
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='factura' ? '2px solid #3B82F6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='factura' ? '#EFF6FF' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='factura' ? '#1D4ED8' : '#64748B'}">
                                 🏢 Factura
                             </button>
+                            <button @click="onTipoComprobante('ticket')"
+                                :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='ticket' ? '2px solid #14B8A6' : '2px solid #E2E8F0', background: form.tipo_comprobante==='ticket' ? '#F0FDFA' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='ticket' ? '#0F766E' : '#64748B'}">
+                                🎫 Ticket
+                            </button>
                             <button @click="form.tipo_comprobante='ninguno'; mostrarModalCliente=false"
                                 :style="{padding:'10px', borderRadius:'10px', border: form.tipo_comprobante==='ninguno' ? '2px solid #94A3B8' : '2px solid #E2E8F0', background: form.tipo_comprobante==='ninguno' ? '#F8FAFC' : 'white', cursor:'pointer', fontSize:'13px', fontWeight:'700', color: form.tipo_comprobante==='ninguno' ? '#475569' : '#64748B'}">
                                 🚫 Sin boleta
                             </button>
                         </div>
                         <!-- Resumen cliente seleccionado -->
-                        <div v-if="form.cliente_nombre" style="margin-top:8px; padding:8px 12px; background:#F0FDFA; border-radius:8px; border:1px solid #CCFBF1; display:flex; justify-content:space-between; align-items:center;">
+                        <div v-if="form.cliente_nombre && form.tipo_comprobante !== 'ticket'" style="margin-top:8px; padding:8px 12px; background:#F0FDFA; border-radius:8px; border:1px solid #CCFBF1; display:flex; justify-content:space-between; align-items:center;">
                             <div>
                                 <p style="margin:0; font-size:13px; font-weight:600; color:#0F766E;">{{ form.cliente_nombre }}</p>
                                 <p style="margin:0; font-size:11px; color:#64748B;">{{ form.cliente_tipo_documento === '6' ? 'RUC' : 'DNI' }}: {{ form.cliente_documento }}</p>

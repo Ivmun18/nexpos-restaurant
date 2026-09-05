@@ -204,11 +204,13 @@ const tipoComprobanteTexto = (tipo) => ({
     '01': 'FACTURA ELECTRÓNICA',
     '03': 'BOLETA DE VENTA ELECTRÓNICA',
     '07': 'NOTA DE CRÉDITO ELECTRÓNICA',
+    '00': 'TICKET',
 }[tipo] || 'COMPROBANTE ELECTRÓNICO')
 
 const representacionTexto = (tipo) => ({
     '01': 'Representación Impresa de la Factura Electrónica',
     '07': 'Representación Impresa de la Nota de Crédito Electrónica',
+    '00': 'Comprobante interno — no es un documento tributario',
 }[tipo] || 'Representación Impresa de la Boleta Electrónica')
 
 const enLetras = (n) => {

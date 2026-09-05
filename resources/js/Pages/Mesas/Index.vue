@@ -231,7 +231,7 @@
                 <p style="font-size:13px; color:#64748B; margin:0 0 1.5rem;">Emite un comprobante sin asociarlo a una mesa</p>
 
                 <!-- Tipo de comprobante -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.25rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1.25rem;">
                     <button type="button" @click="crTipoComprobante='boleta'"
                         :style="{padding:'14px', borderRadius:'12px', fontSize:'16px', fontWeight:'700', cursor:'pointer',
                             background: crTipoComprobante==='boleta' ? '#F0FDFA' : '#F8FAFC',
@@ -246,10 +246,17 @@
                             color: crTipoComprobante==='factura' ? '#0F766E' : '#64748B'}">
                         📄 Factura
                     </button>
+                    <button type="button" @click="crTipoComprobante='ticket'"
+                        :style="{padding:'14px', borderRadius:'12px', fontSize:'16px', fontWeight:'700', cursor:'pointer',
+                            background: crTipoComprobante==='ticket' ? '#F0FDFA' : '#F8FAFC',
+                            border: crTipoComprobante==='ticket' ? '2px solid #14B8A6' : '2px solid #E2E8F0',
+                            color: crTipoComprobante==='ticket' ? '#0F766E' : '#64748B'}">
+                        🎫 Ticket
+                    </button>
                 </div>
 
                 <!-- Documento -->
-                <div style="margin-bottom:1rem;">
+                <div v-if="crTipoComprobante !== 'ticket'" style="margin-bottom:1rem;">
                     <label style="font-size:13px; font-weight:600; color:#64748B; display:block; margin-bottom:6px;">
                         {{ crTipoComprobante === 'factura' ? 'RUC *' : 'DNI (opcional)' }}
                     </label>
@@ -271,7 +278,7 @@
                 </div>
 
                 <!-- Nombre / razón social -->
-                <div style="margin-bottom:1rem;">
+                <div v-if="crTipoComprobante !== 'ticket'" style="margin-bottom:1rem;">
                     <label style="font-size:13px; font-weight:600; color:#64748B; display:block; margin-bottom:6px;">
                         {{ crTipoComprobante === 'factura' ? 'Razón social *' : 'Nombre *' }}
                     </label>
@@ -609,7 +616,7 @@ function imprimirCobroRapido(data) {
         </div>
         <div style="border-top:1px dashed #000;margin:6px 0;"></div>
         <div style="text-align:center;margin-bottom:6px;">
-            <p style="font-size:14px;font-weight:bold;margin:0;">${comp.tipo_comprobante === '01' ? 'FACTURA' : 'BOLETA'} ${comp.serie}-${String(comp.numero).padStart(8,'0')}</p>
+            <p style="font-size:14px;font-weight:bold;margin:0;">${comp.tipo_comprobante === '01' ? 'FACTURA' : (comp.tipo_comprobante === '00' ? 'TICKET' : 'BOLETA')} ${comp.serie}-${String(comp.numero).padStart(8,'0')}</p>
             <p style="font-size:10px;margin:2px 0;">Cobro rápido</p>
         </div>
         <div style="font-size:12px;font-weight:600;margin-bottom:6px;">
@@ -628,7 +635,7 @@ function imprimirCobroRapido(data) {
         </div>
         <div style="border-top:1px dashed #000;margin:8px 0;"></div>
         <div style="text-align:center;font-size:10px;">
-            <p>${comp.estado === 'aceptado' ? 'Comprobante aceptado por SUNAT' : 'Comprobante pendiente de validación SUNAT'}</p>
+            <p>${comp.estado === 'ticket' ? 'Comprobante interno' : (comp.estado === 'aceptado' ? 'Comprobante aceptado por SUNAT' : 'Comprobante pendiente de validación SUNAT')}</p>
             <p style="margin-top:4px;">Sistema desarrollado por NEXPOS Solutions</p>
         </div>
     `

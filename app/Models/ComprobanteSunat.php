@@ -16,6 +16,7 @@ class ComprobanteSunat extends Model
     protected $fillable = [
         'empresa_id',
         'caja_restaurante_id',
+        'usuario_id',
         'tipo_comprobante',
         'serie',
         'numero',
@@ -66,6 +67,7 @@ class ComprobanteSunat extends Model
             '01' => 'Factura',
             '03' => 'Boleta',
             '07' => 'Nota de Crédito',
+            '00' => 'Ticket',
             default => 'Desconocido',
         };
     }
