@@ -47,7 +47,8 @@ class ComprobantesNotariaController extends Controller
 
         // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10, excepto trámite registral)
         $esTramiteRegistral = stripos($acto->asunto ?? '', 'tramite registral') !== false
-                           || stripos($acto->asunto ?? '', 'trámite registral') !== false;
+                           || stripos($acto->asunto ?? '', 'trámite registral') !== false
+                           || stripos($acto->asunto ?? '', 'copia simple') !== false;
         $huella       = (!$esTramiteRegistral && $total >= 10) ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
@@ -322,7 +323,7 @@ class ComprobantesNotariaController extends Controller
         $esTramiteRegistralVD = false;
         foreach ($request->items as $itm) {
             $desc = strtolower($itm['descripcion'] ?? '');
-            if (str_contains($desc, 'tramite registral') || str_contains($desc, 'trámite registral')) {
+            if (str_contains($desc, 'tramite registral') || str_contains($desc, 'trámite registral') || str_contains($desc, 'copia simple')) {
                 $esTramiteRegistralVD = true; break;
             }
         }
