@@ -49,7 +49,13 @@ class ComprobantesNotariaController extends Controller
         $esTramiteRegistral = stripos($acto->asunto ?? '', 'tramite registral') !== false
                            || stripos($acto->asunto ?? '', 'trámite registral') !== false
                            || stripos($acto->asunto ?? '', 'copia simple') !== false;
-        $huella       = (!$esTramiteRegistral && $total >= 10) ? 1.50 : 0;
+        // Notaria Alex Herrera (empresa_id=15): Copias Certificadas y Legalizacion de
+        // Copias no requiere verificacion biometrica.
+        $esCopiasCertificadasSinBiometrico = (int) $acto->empresa_id === 15
+                           && (stripos($acto->asunto ?? '', 'copias certificadas') !== false
+                           || stripos($acto->asunto ?? '', 'legalización de copias') !== false
+                           || stripos($acto->asunto ?? '', 'legalizacion de copias') !== false);
+        $huella       = (!$esTramiteRegistral && !$esCopiasCertificadasSinBiometrico && $total >= 10) ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
@@ -314,21 +320,38 @@ class ComprobantesNotariaController extends Controller
             $empresa->increment('ultimo_num_boleta');
         }
 
+        // Notaria Alex Herrera (empresa_id=15): si el comprobante incluye "Copias
+        // Certificadas" o "Legalizacion de Copias", excluir cualquier item de uso
+        // biometrico (no se requiere verificacion biometrica ni se cobra).
+        $itemsSolicitados = (array) $request->items;
+        $esCopiasCertificadasVD = (int) $empresa->id === 15 && collect($itemsSolicitados)->contains(function ($i) {
+            $desc = strtolower($i['descripcion'] ?? '');
+            return str_contains($desc, 'copias certificadas')
+                || str_contains($desc, 'legalización de copias')
+                || str_contains($desc, 'legalizacion de copias');
+        });
+        if ($esCopiasCertificadasVD) {
+            $itemsSolicitados = array_values(array_filter($itemsSolicitados, function ($i) {
+                $desc = strtolower($i['descripcion'] ?? '');
+                return !str_contains($desc, 'biométrico') && !str_contains($desc, 'biometrico');
+            }));
+        }
+
         // Totales
-        $total      = round(collect($request->items)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
+        $total      = round(collect($itemsSolicitados)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
         $exonerada  = $empresa->zona_exonerada;
 
         // Agregar biométrico automáticamente si aplica (>= S/10 y no es trámite registral)
         // El biométrico se descuenta del primer item, el total NO cambia
         $esTramiteRegistralVD = false;
-        foreach ($request->items as $itm) {
+        foreach ($itemsSolicitados as $itm) {
             $desc = strtolower($itm['descripcion'] ?? '');
             if (str_contains($desc, 'tramite registral') || str_contains($desc, 'trámite registral') || str_contains($desc, 'copia simple')) {
                 $esTramiteRegistralVD = true; break;
             }
         }
-        $huellaVD = (!$esTramiteRegistralVD && $total >= 10) ? 1.50 : 0;
-        $itemsConHuella = (array)$request->items;
+        $huellaVD = (!$esTramiteRegistralVD && !$esCopiasCertificadasVD && $total >= 10) ? 1.50 : 0;
+        $itemsConHuella = $itemsSolicitados;
 
         // Limpiar items: quitar el item interno __biometrico__ del frontend
         $itemsConHuella = array_values(array_filter($itemsConHuella, function($i) {
