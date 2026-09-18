@@ -9,13 +9,15 @@ use Illuminate\Support\Facades\Log;
 
 class ApiSunatEstadoService
 {
-    private const ESTADOS_ACEPTADO = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES', 'ACEPTADA'];
-    private const ESTADOS_RECHAZADO = ['RECHAZADO', 'RECHAZADA'];
-
     /**
      * Consulta en ApiSunat el estado actual de una venta que quedó en
      * nubefact_estado = 'pendiente' y actualiza el registro si ya se
      * resolvió (aceptado/rechazado). No hace nada si sigue pendiente.
+     *
+     * Usa GET /documents/getAll por type/serie/number — igual que
+     * ComprobanteSunatController::consultarEstado (Notaría), que es el
+     * patron probado en producción. /personas/v1/getDocument no existe
+     * (da 404 "no method handling POST /v1/getDocument").
      */
     public function consultarYActualizar(Venta $venta, Empresa $empresa): array
     {
@@ -23,37 +25,44 @@ class ApiSunatEstadoService
             return ['success' => false, 'mensaje' => 'Empresa sin credenciales ApiSunat'];
         }
 
-        $fileName = $empresa->ruc . '-' . $venta->tipo_comprobante . '-' . $venta->serie
-            . '-' . str_pad((string) $venta->correlativo, 8, '0', STR_PAD_LEFT);
-
         try {
-            $response = Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(30)
-                ->post('https://back.apisunat.com/personas/v1/getDocument', [
-                    'personaId'    => $empresa->apisunat_ruc,
-                    'personaToken' => $empresa->apisunat_token,
-                    'fileName'     => $fileName,
-                ]);
+            $response = Http::timeout(30)->get('https://back.apisunat.com/documents/getAll', [
+                'personaId'    => $empresa->apisunat_ruc,
+                'personaToken' => $empresa->apisunat_token,
+                'type'         => $venta->tipo_comprobante,
+                'serie'        => $venta->serie,
+                'number'       => sprintf('%08d', $venta->correlativo),
+                'limit'        => 1,
+            ]);
 
-            $data = $response->json();
-            Log::info("ApiSunatEstadoService: venta {$venta->id} ({$fileName}): " . json_encode($data));
-
-            $status = strtoupper((string) ($data['status'] ?? ''));
-            $aceptada  = $response->successful() && in_array($status, self::ESTADOS_ACEPTADO, true);
-            $rechazada = $response->successful() && in_array($status, self::ESTADOS_RECHAZADO, true);
-
-            if (!$aceptada && !$rechazada) {
-                return ['success' => true, 'estado' => 'pendiente', 'status_apisunat' => $status];
+            if (!$response->successful()) {
+                Log::warning("ApiSunatEstadoService: venta {$venta->id} ({$venta->serie}-{$venta->correlativo}): HTTP {$response->status()} - " . $response->body());
+                return ['success' => false, 'mensaje' => 'Error HTTP ' . $response->status()];
             }
 
-            $pdfUrl = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? $venta->nubefact_id;
+            $data = $response->json()[0] ?? null;
+            if (!$data) {
+                return ['success' => true, 'estado' => 'pendiente', 'status_apisunat' => null];
+            }
 
-            $venta->update([
-                'nubefact_id'     => $pdfUrl,
-                'nubefact_estado' => $aceptada ? 'aceptado' : 'rechazado',
-                'estado'          => $aceptada ? 'aceptado' : $venta->estado,
-                'observaciones'   => json_encode($data),
-            ]);
+            Log::info("ApiSunatEstadoService: venta {$venta->id} ({$venta->serie}-{$venta->correlativo}): " . json_encode($data));
+
+            $status = $data['status'] ?? null;
+
+            $updates = [];
+            if ($status === 'ACEPTADO') {
+                $updates = ['nubefact_estado' => 'aceptado', 'estado' => 'aceptado', 'observaciones' => json_encode($data)];
+            } elseif ($status === 'RECHAZADO' || $status === 'EXCEPCION') {
+                $updates = ['nubefact_estado' => 'rechazado', 'observaciones' => json_encode($data)];
+            }
+
+            if ($updates) {
+                $pdfUrl = $data['pdf']['80mm'] ?? $data['pdf']['A4'] ?? null;
+                if ($pdfUrl) {
+                    $updates['nubefact_id'] = $pdfUrl;
+                }
+                $venta->update($updates);
+            }
 
             return ['success' => true, 'estado' => $venta->nubefact_estado, 'status_apisunat' => $status];
         } catch (\Exception $e) {
