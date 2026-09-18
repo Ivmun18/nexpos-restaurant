@@ -356,7 +356,6 @@ const imprimir = async () => {
             ${c.codigo_hash ? `<p style="word-break:break-all;">Código Hash: ${c.codigo_hash}</p>` : ''}
             ${amazoniaTexto}
             <p style="margin-top:4px;">Consulte su Comprobante en https://cpe.appfact.pe</p>
-            <p style="margin-top:4px;">Sistema desarrollado por NEXPOS Solutions</p>
         </div>
     `
     const ventana = window.open('', '_blank')

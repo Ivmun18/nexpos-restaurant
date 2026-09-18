@@ -126,7 +126,7 @@
 </div>
 
 <div class="footer">
-    NEXPOS · Sistema de Gestión · nexposolution.com &nbsp;|&nbsp; Reporte generado el {{ now()->format('d/m/Y \a \l\a\s H:i') }}
+    Reporte generado el {{ now()->format('d/m/Y \a \l\a\s H:i') }}
 </div>
 
 </body>

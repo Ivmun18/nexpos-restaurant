@@ -636,7 +636,6 @@ function imprimirCobroRapido(data) {
         <div style="border-top:1px dashed #000;margin:8px 0;"></div>
         <div style="text-align:center;font-size:10px;">
             <p>${comp.estado === 'ticket' ? 'Comprobante interno' : (comp.estado === 'aceptado' ? 'Comprobante aceptado por SUNAT' : 'Comprobante pendiente de validación SUNAT')}</p>
-            <p style="margin-top:4px;">Sistema desarrollado por NEXPOS Solutions</p>
         </div>
     `
     const ventana = window.open('', '_blank')

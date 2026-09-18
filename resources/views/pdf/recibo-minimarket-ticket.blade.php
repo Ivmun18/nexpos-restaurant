@@ -124,10 +124,5 @@
         <p class="small" style="margin:2px 0;">Consulta en: factura.sunat.gob.pe</p>
         <p style="margin:2px 0;">GRACIAS POR SU COMPRA</p>
     </div>
-
-    <div class="center small mt">
-        <p style="margin:4px 0;">DESARROLLADO POR:</p>
-        <p style="margin:2px 0;">https://nexposolution.com</p>
-    </div>
 </body>
 </html>

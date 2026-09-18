@@ -277,7 +277,6 @@ const imprimirTicket = (item) => {
         <div style="border-top:1px dashed #000;margin:8px 0;"></div>
         <div style="text-align:center;font-size:9px;">
             <p>Documento sin validez tributaria</p>
-            <p style="margin-top:4px;">Sistema desarrollado por NEXPOS Solutions</p>
         </div>
     `
     const ventana = window.open('', '_blank')
