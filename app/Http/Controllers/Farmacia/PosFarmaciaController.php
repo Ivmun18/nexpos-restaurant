@@ -355,9 +355,23 @@ private function emitirApisunat($venta, $empresa, $items, $esRus)
 
     if ($response->successful()) {
         $data = $response->json();
+
+        // ApiSunat es asíncrono: un HTTP 200 solo confirma que recibió el
+        // documento, no que SUNAT ya lo aceptó (mismo bug corregido en
+        // PosMinimarketController::emitirApisunat, que sí revisa el campo
+        // "status" en vez de asumir 'aceptado' con cualquier 2xx). Sin un
+        // status explícito de aceptación, se guarda 'pendiente' para que
+        // ventas:sincronizar-pendientes lo resuelva después.
+        $status = strtoupper((string) ($data['status'] ?? ''));
+        $estadosAceptado  = ['ACEPTADO', 'ACEPTADO CON OBSERVACIONES', 'ACEPTADA'];
+        $estadosRechazado = ['RECHAZADO', 'RECHAZADA'];
+        $nuevoEstado = in_array($status, $estadosAceptado, true)
+            ? 'aceptado'
+            : (in_array($status, $estadosRechazado, true) ? 'rechazado' : 'pendiente');
+
         $venta->update([
-            'nubefact_id'     => $data['payload']['pdf'] ?? null,
-            'nubefact_estado' => 'aceptado',
+            'nubefact_id'     => $data['payload']['pdf'] ?? $data['pdf'] ?? null,
+            'nubefact_estado' => $nuevoEstado,
             'observaciones'   => json_encode($data),
         ]);
     } else {

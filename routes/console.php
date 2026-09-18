@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('notaria:sincronizar-caja')->everyFiveMinutes();
 Schedule::command('notaria:consultar-pendientes')->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command('nexpos:sincronizar-comprobantes')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('ventas:sincronizar-pendientes')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('backup:clean')->daily()->at('01:00');
 Schedule::command('backup:run')->daily()->at('02:00');
 
