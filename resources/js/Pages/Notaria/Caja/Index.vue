@@ -274,7 +274,11 @@
                                 <div v-for="(it, idx) in itemsRapido" :key="idx" style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-top:1px solid #F1F5F9;">
                                     <div style="flex:1;">
                                         <p style="margin:0; font-size:12px; font-weight:600;" :style="{color: it._esHuella ? '#D97706' : '#1E293B'}">
-                                            <span v-if="it._esHuella">🖐 Uso biométrico</span>
+                                            <span v-if="it._esHuella" style="display:inline-flex; align-items:center; gap:5px;">
+                                                🖐 Uso biométrico ×
+                                                <input :value="it.cantidad" @change="actualizarCantidadBiometrico($event.target.value)" type="number" min="1" step="1"
+                                                    style="width:44px; padding:2px 4px; border:1px solid #FBBF24; border-radius:4px; font-size:12px; text-align:center;" />
+                                            </span>
                                             <span v-else>{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</span>
                                         </p>
                                         <p style="margin:0; font-size:11px; color:#64748B;">{{ it.cantidad }} × S/ {{ Number(it.precio_unitario).toFixed(2) }}</p>
@@ -780,6 +784,7 @@ const formRapido = ref({
 })
 const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
 const itemsRapido = ref([])
+const cantidadBiometricoManual = ref(1)
 const totalRapido = computed(() => itemsRapido.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0))
 
 function seleccionarServicio(nombre) {
@@ -816,19 +821,26 @@ function recalcularBiometrico() {
     })
     // Agregar biométrico si aplica: descontarlo del primer item
     if (!esTramite && totalReal >= 10) {
+        const cantidad = Math.max(Number(cantidadBiometricoManual.value) || 1, 1)
+        const totalBiometrico = Number((cantidad * 1.50).toFixed(2))
         const primero = itemsRapido.value.find(i => !i._esHuella)
-        if (primero && Number(primero.precio_unitario) > 1.50) {
+        if (primero && Number(primero.precio_unitario) > totalBiometrico) {
             primero._precioOriginal = Number(primero.precio_unitario)
-            primero.precio_unitario = Number((primero.precio_unitario - 1.50).toFixed(2))
+            primero.precio_unitario = Number((primero.precio_unitario - totalBiometrico).toFixed(2))
         }
         itemsRapido.value.push({
             tipo_servicio: '__biometrico__',
             tipo_servicio_custom: '',
-            cantidad: 1,
+            cantidad: cantidad,
             precio_unitario: 1.50,
             _esHuella: true
         })
     }
+}
+
+function actualizarCantidadBiometrico(nuevaCantidad) {
+    cantidadBiometricoManual.value = Math.max(Number(nuevaCantidad) || 1, 1)
+    recalcularBiometrico()
 }
 
 function agregarItem() {
@@ -865,7 +877,9 @@ async function cobrarServicioRapido() {
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content
         const items = itemsRapido.value.map(it => {
-            const desc = it.tipo_servicio === '__otro__' ? (it.tipo_servicio_custom || 'Servicio notarial') : it.tipo_servicio
+            const desc = it.tipo_servicio === '__otro__' ? (it.tipo_servicio_custom || 'Servicio notarial')
+                : it.tipo_servicio === '__biometrico__' ? 'Uso biométrico'
+                : it.tipo_servicio
             return {
                 tipo_servicio: desc,
                 descripcion: desc,
@@ -903,6 +917,7 @@ async function cobrarServicioRapido() {
             formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', forma_pago: 'Contado', cuotas: [] }
             itemsRapido.value = []
             itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
+            cantidadBiometricoManual.value = 1
             router.reload({ only: ['resumenCaja'] })
         } else {
             alert('❌ ' + data.mensaje)
@@ -932,12 +947,14 @@ function recalcularBiometricoExp() {
     const totalReal = itemsExp.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0)
     const esTramite = itemsExp.value.some(i => (i.descripcion||'').toLowerCase().includes('tramite registral') || (i.descripcion||'').toLowerCase().includes('trámite registral'))
     if (!esTramite && totalReal >= 10) {
+        const cantidadBiometricos = Math.max(Number(expedienteSeleccionado.value?.cantidad_biometricos) || 1, 1)
+        const totalBiometrico = Number((cantidadBiometricos * 1.50).toFixed(2))
         const p = itemsExp.value.find(i => !i._esHuella)
-        if (p && Number(p.precio_unitario) > 1.50) {
+        if (p && Number(p.precio_unitario) > totalBiometrico) {
             p._precioOriginal = Number(p.precio_unitario)
-            p.precio_unitario = Number((p.precio_unitario - 1.50).toFixed(2))
+            p.precio_unitario = Number((p.precio_unitario - totalBiometrico).toFixed(2))
         }
-        itemsExp.value.push({ descripcion: 'Verificación biométrica RENIEC', cantidad: 1, precio_unitario: 1.50, _esHuella: true })
+        itemsExp.value.push({ descripcion: 'Verificación biométrica RENIEC', cantidad: cantidadBiometricos, precio_unitario: 1.50, _esHuella: true })
     }
 }
 

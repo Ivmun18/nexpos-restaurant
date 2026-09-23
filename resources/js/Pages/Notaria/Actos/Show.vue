@@ -181,6 +181,10 @@
                         <input v-model="formEditar.monto_cobrar" type="number" step="0.01" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                     </div>
                     <div>
+                        <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Cantidad de biométricos</label>
+                        <input v-model.number="formEditar.cantidad_biometricos" type="number" step="1" min="1" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                    </div>
+                    <div>
                         <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Observaciones</label>
                         <input v-model="formEditar.observaciones" type="text" style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                     </div>
@@ -2091,6 +2095,7 @@ function abrirEditar() {
         fecha_ingreso: props.acto.fecha_ingreso?.slice(0, 10),
         fecha_entrega: props.acto.fecha_entrega?.slice(0, 10) || '',
         monto_cobrar: props.acto.monto_cobrar,
+        cantidad_biometricos: props.acto.cantidad_biometricos || 1,
         observaciones: props.acto.observaciones || '',
     }
     formDatosEditar.value = { ...props.datos }

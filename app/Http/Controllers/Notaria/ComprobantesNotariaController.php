@@ -766,18 +766,26 @@ class ComprobantesNotariaController extends Controller
             ], $itemsGuardados);
         } else {
             // Fallback para comprobantes anteriores sin items_json
-            $huella = $total >= 10 ? 1.50 : 0;
-            $montoServicio = round($total - $huella, 2);
             $asunto = 'Servicio notarial';
+            $cantidadBiometricos = 1;
             if ($comp->acto_id) {
                 $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
-                if ($acto) $asunto = $acto->asunto;
+                if ($acto) {
+                    $asunto = $acto->asunto;
+                    $cantidadBiometricos = max((int) ($acto->cantidad_biometricos ?? 1), 1);
+                }
             } elseif ($comp->enlace_cdr) {
                 $asunto = $comp->enlace_cdr;
             }
+            $esCopiasLegalizadas = stripos($asunto, 'copias legalizadas') !== false
+                || stripos($asunto, 'legalización de copias') !== false
+                || stripos($asunto, 'legalizacion de copias') !== false;
+
+            $huella = (!$esCopiasLegalizadas && $total >= 10) ? round($cantidadBiometricos * 1.50, 2) : 0;
+            $montoServicio = round($total - $huella, 2);
             $items = array_filter([
                 ['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $montoServicio, 'total' => $montoServicio],
-                ...($huella > 0 ? [['descripcion' => 'Uso biométrico', 'cantidad' => 1, 'precio_unitario' => $huella, 'total' => $huella]] : []),
+                ...($huella > 0 ? [['descripcion' => 'Uso biométrico', 'cantidad' => $cantidadBiometricos, 'precio_unitario' => 1.50, 'total' => $huella]] : []),
             ], fn($item) => $item['precio_unitario'] > 0);
             if (empty($items)) {
                 $items = [['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $total, 'total' => $total]];

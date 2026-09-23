@@ -73,6 +73,7 @@ class ActoNotarialController extends Controller
             'monto_cobrar'          => 'required|numeric|min:0',
             'partes_intervinientes' => 'nullable|string',
             'observaciones'         => 'nullable|string',
+            'cantidad_biometricos'  => 'nullable|integer|min:1',
         ]);
 
         // Roles restringidos a un subconjunto de tipo_acto (ver User::TIPOS_ACTO_POR_ROL)
@@ -96,6 +97,7 @@ class ActoNotarialController extends Controller
             'estado_pago'           => 'pendiente',
             'partes_intervinientes' => $request->partes_intervinientes,
             'observaciones'         => $request->observaciones,
+            'cantidad_biometricos'  => $request->cantidad_biometricos ?: 1,
         ]);
 
         ActoSeguimiento::create([
@@ -123,12 +125,17 @@ class ActoNotarialController extends Controller
 
     public function editar(Request $request, ActoNotarial $acto)
     {
+        $request->validate([
+            'cantidad_biometricos' => 'nullable|integer|min:1',
+        ]);
+
         $acto->update([
-            'asunto'       => $request->asunto,
-            'fecha_ingreso'=> $request->fecha_ingreso,
-            'fecha_entrega'=> $request->fecha_entrega ?: null,
-            'monto_cobrar' => $request->monto_cobrar,
-            'observaciones'=> $request->observaciones,
+            'asunto'               => $request->asunto,
+            'fecha_ingreso'        => $request->fecha_ingreso,
+            'fecha_entrega'        => $request->fecha_entrega ?: null,
+            'monto_cobrar'         => $request->monto_cobrar,
+            'observaciones'        => $request->observaciones,
+            'cantidad_biometricos' => $request->cantidad_biometricos ?: 1,
         ]);
 
         if ($request->has('datos') && is_array($request->datos)) {
