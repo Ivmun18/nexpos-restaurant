@@ -46,6 +46,7 @@ class CajaNotariaController extends Controller
                 'partes_intervinientes' => $a->partes_intervinientes,
                 'monto_cobrar'       => $a->monto_cobrar,
                 'monto_pagado'       => $a->monto_pagado,
+                'cantidad_biometricos' => $a->cantidad_biometricos,
                 'saldo'              => round($a->monto_cobrar - $a->monto_pagado, 2),
                 'estado_pago'        => $a->estado_pago,
                 'estado'             => $a->estado,

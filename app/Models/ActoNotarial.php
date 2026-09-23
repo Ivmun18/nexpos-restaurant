@@ -16,7 +16,7 @@ class ActoNotarial extends Model
         'empresa_id', 'numero_expediente', 'tipo_acto', 'asunto',
         'cliente_id', 'usuario_id', 'estado', 'fecha_ingreso',
         'fecha_entrega', 'monto_cobrar', 'monto_pagado', 'estado_pago',
-        'observaciones', 'partes_intervinientes',
+        'observaciones', 'partes_intervinientes', 'cantidad_biometricos',
     ];
 
     protected $casts = [

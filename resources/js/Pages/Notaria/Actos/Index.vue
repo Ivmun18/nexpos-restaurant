@@ -153,6 +153,11 @@
                                 <input v-model="formNuevo.monto_cobrar" type="number" step="0.01" min="0"
                                     style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
                             </div>
+                            <div>
+                                <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Cantidad de biométricos</label>
+                                <input v-model.number="formNuevo.cantidad_biometricos" type="number" step="1" min="1"
+                                    style="width:100%; padding:9px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
+                            </div>
                             <div style="grid-column:1/-1;">
                                 <label style="font-size:11px; color:#64748B; display:block; margin-bottom:3px; font-weight:600;">Cliente registrado</label>
                                 <select v-model="formNuevo.cliente_id"
@@ -436,7 +441,7 @@ async function generarMinuta() {
 
 const modalPago       = ref(false)
 const actoSeleccionado = ref(null)
-const formNuevo = ref({ tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' })
+const formNuevo = ref({ tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cantidad_biometricos: 1, cliente_id: '', observaciones: '' })
 const formPago  = ref({ monto: '' })
 
 const tiposActo = [
@@ -562,7 +567,7 @@ async function guardarNuevo() {
             URL.revokeObjectURL(url)
             modalNuevo.value = false
             pasoNuevo.value = 1
-            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' }
+            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cantidad_biometricos: 1, cliente_id: '', observaciones: '' }
             formDatosNuevo.value = {}
             router.reload({ preserveScroll: true })
         } else {
@@ -577,7 +582,7 @@ async function guardarNuevo() {
         onSuccess: () => {
             modalNuevo.value = false
             pasoNuevo.value = 1
-            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cliente_id: '', observaciones: '' }
+            formNuevo.value = { tipo_acto: '', asunto: '', partes_intervinientes: '', fecha_ingreso: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,10), fecha_entrega: '', monto_cobrar: '', cantidad_biometricos: 1, cliente_id: '', observaciones: '' }
             formDatosNuevo.value = {}
         }
     })
