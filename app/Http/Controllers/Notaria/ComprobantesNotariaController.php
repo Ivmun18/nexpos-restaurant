@@ -55,7 +55,12 @@ class ComprobantesNotariaController extends Controller
                            && (stripos($acto->asunto ?? '', 'copias certificadas') !== false
                            || stripos($acto->asunto ?? '', 'legalización de copias') !== false
                            || stripos($acto->asunto ?? '', 'legalizacion de copias') !== false);
-        $huella       = (!$esTramiteRegistral && !$esCopiasCertificadasSinBiometrico && $total >= 10) ? 1.50 : 0;
+        // Notaria Alex Herrera (empresa_id=15): Cartas Notariales no requiere
+        // verificacion biometrica.
+        $esCartaNotarialSinBiometrico = (int) $acto->empresa_id === 15
+                           && (stripos($acto->asunto ?? '', 'carta notarial') !== false
+                           || stripos($acto->asunto ?? '', 'cartas notariales') !== false);
+        $huella       = (!$esTramiteRegistral && !$esCopiasCertificadasSinBiometrico && !$esCartaNotarialSinBiometrico && $total >= 10) ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
@@ -330,7 +335,15 @@ class ComprobantesNotariaController extends Controller
                 || str_contains($desc, 'legalización de copias')
                 || str_contains($desc, 'legalizacion de copias');
         });
-        if ($esCopiasCertificadasVD) {
+        // Notaria Alex Herrera (empresa_id=15): si el comprobante incluye "Carta
+        // Notarial" o "Cartas Notariales", excluir cualquier item de uso
+        // biometrico (no se requiere verificacion biometrica ni se cobra).
+        $esCartaNotarialVD = (int) $empresa->id === 15 && collect($itemsSolicitados)->contains(function ($i) {
+            $desc = strtolower($i['descripcion'] ?? '');
+            return str_contains($desc, 'carta notarial')
+                || str_contains($desc, 'cartas notariales');
+        });
+        if ($esCopiasCertificadasVD || $esCartaNotarialVD) {
             $itemsSolicitados = array_values(array_filter($itemsSolicitados, function ($i) {
                 $desc = strtolower($i['descripcion'] ?? '');
                 return !str_contains($desc, 'biométrico') && !str_contains($desc, 'biometrico');
@@ -350,7 +363,7 @@ class ComprobantesNotariaController extends Controller
                 $esTramiteRegistralVD = true; break;
             }
         }
-        $huellaVD = (!$esTramiteRegistralVD && !$esCopiasCertificadasVD && $total >= 10) ? 1.50 : 0;
+        $huellaVD = (!$esTramiteRegistralVD && !$esCopiasCertificadasVD && !$esCartaNotarialVD && $total >= 10) ? 1.50 : 0;
         $itemsConHuella = $itemsSolicitados;
 
         // Limpiar items: quitar el item interno __biometrico__ del frontend
@@ -766,8 +779,6 @@ class ComprobantesNotariaController extends Controller
             ], $itemsGuardados);
         } else {
             // Fallback para comprobantes anteriores sin items_json
-            $huella = $total >= 10 ? 1.50 : 0;
-            $montoServicio = round($total - $huella, 2);
             $asunto = 'Servicio notarial';
             if ($comp->acto_id) {
                 $acto = \DB::table('actos_notariales')->where('id', $comp->acto_id)->first();
@@ -775,6 +786,13 @@ class ComprobantesNotariaController extends Controller
             } elseif ($comp->enlace_cdr) {
                 $asunto = $comp->enlace_cdr;
             }
+            // Notaria Alex Herrera (empresa_id=15): Cartas Notariales no requiere
+            // verificacion biometrica.
+            $esCartaNotarialSinBiometrico = (int) $empresa->id === 15
+                               && (stripos($asunto, 'carta notarial') !== false
+                               || stripos($asunto, 'cartas notariales') !== false);
+            $huella = (!$esCartaNotarialSinBiometrico && $total >= 10) ? 1.50 : 0;
+            $montoServicio = round($total - $huella, 2);
             $items = array_filter([
                 ['descripcion' => $asunto, 'cantidad' => 1, 'precio_unitario' => $montoServicio, 'total' => $montoServicio],
                 ...($huella > 0 ? [['descripcion' => 'Uso biométrico', 'cantidad' => 1, 'precio_unitario' => $huella, 'total' => $huella]] : []),
