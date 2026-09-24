@@ -153,6 +153,7 @@ class CajaNotariaController extends Controller
             'filtros'         => ['buscar' => $buscar],
             'historialCierres'=> $historialCierres,
             'serviciosNotaria' => \App\Models\NotariaServicio::where('empresa_id', $empresaId)->where('activo', true)->orderBy('nombre')->get(['id','nombre','precio']),
+            'palabrasExentasBiometrico' => \App\Http\Controllers\Notaria\ComprobantesNotariaController::palabrasExentasBiometrico($empresaId),
         ]);
     }
 
@@ -266,6 +267,7 @@ class CajaNotariaController extends Controller
             'cliente_nombre'           => $request->cliente_nombre ?? 'CLIENTES VARIOS',
             'cliente_email'            => '',
             'metodo_pago'              => $request->metodo_pago,
+            'total_declarado'          => round((float) $request->monto, 2),
             'items' => collect($request->items ?? [])->map(fn($it) => [
                 'descripcion' => $it['tipo_servicio'] ?? 'Servicio notarial',
                 'cantidad'    => $it['cantidad'] ?? 1,

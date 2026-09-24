@@ -685,6 +685,7 @@ const props = defineProps({
     historialCierres: { type: Array, default: () => [] },
     resumenCaja:   { type: Object,  default: null },
     serviciosNotaria: { type: Array, default: () => [] },
+    palabrasExentasBiometrico: { type: Array, default: () => [] },
 })
 
 const busqueda               = ref('')
@@ -814,13 +815,14 @@ function recalcularBiometrico() {
     itemsRapido.value = itemsRapido.value.filter(i => i.tipo_servicio !== '__biometrico__')
     // Calcular total real
     const totalReal = itemsRapido.value.reduce((s, i) => s + (Number(i.precio_unitario) * (Number(i.cantidad) || 1)), 0)
-    // Verificar si algún item es trámite registral
-    const esTramite = itemsRapido.value.some(i => {
-        const d = (i.tipo_servicio || '').toLowerCase()
-        return d.includes('tramite registral') || d.includes('trámite registral')
+    // Verificar si algún item corresponde a un servicio exento de biométrico
+    // (misma lista que usa el backend, ver palabrasExentasBiometrico)
+    const esExento = itemsRapido.value.some(i => {
+        const d = (i.tipo_servicio_custom || i.tipo_servicio || '').toLowerCase()
+        return props.palabrasExentasBiometrico.some(p => d.includes(p))
     })
     // Agregar biométrico si aplica: descontarlo del primer item
-    if (!esTramite && totalReal >= 10) {
+    if (!esExento && totalReal >= 10) {
         const cantidad = Math.max(Number(cantidadBiometricoManual.value) || 1, 1)
         const totalBiometrico = Number((cantidad * 1.50).toFixed(2))
         const primero = itemsRapido.value.find(i => !i._esHuella)

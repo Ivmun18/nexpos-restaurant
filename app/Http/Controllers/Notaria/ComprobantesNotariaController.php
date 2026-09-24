@@ -12,6 +12,34 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ComprobantesNotariaController extends Controller
 {
+    /**
+     * Unica fuente de verdad de que servicios no cobran "Uso biometrico".
+     * Se usa en backend (emitir, ventaDirecta) y se expone al frontend
+     * (Notaria/Caja/Index.vue) para que el modal decida lo mismo.
+     */
+    public static function palabrasExentasBiometrico(int $empresaId): array
+    {
+        $palabras = ['tramite registral', 'trámite registral', 'copia simple'];
+        if ($empresaId === 15) {
+            $palabras = array_merge($palabras, [
+                'copias certificadas', 'legalización de copias', 'legalizacion de copias',
+                'carta notarial', 'cartas notariales',
+            ]);
+        }
+        return $palabras;
+    }
+
+    private static function excluyeBiometrico(string $texto, int $empresaId): bool
+    {
+        $texto = mb_strtolower($texto);
+        foreach (self::palabrasExentasBiometrico($empresaId) as $palabra) {
+            if (str_contains($texto, $palabra)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function emitir(Request $request, ActoNotarial $acto)
     {
         $request->validate([
@@ -45,22 +73,9 @@ class ComprobantesNotariaController extends Controller
         $baseImponible = $exonerada ? $total : $gravada;
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10, excepto trámite registral)
-        $esTramiteRegistral = stripos($acto->asunto ?? '', 'tramite registral') !== false
-                           || stripos($acto->asunto ?? '', 'trámite registral') !== false
-                           || stripos($acto->asunto ?? '', 'copia simple') !== false;
-        // Notaria Alex Herrera (empresa_id=15): Copias Certificadas y Legalizacion de
-        // Copias no requiere verificacion biometrica.
-        $esCopiasCertificadasSinBiometrico = (int) $acto->empresa_id === 15
-                           && (stripos($acto->asunto ?? '', 'copias certificadas') !== false
-                           || stripos($acto->asunto ?? '', 'legalización de copias') !== false
-                           || stripos($acto->asunto ?? '', 'legalizacion de copias') !== false);
-        // Notaria Alex Herrera (empresa_id=15): Cartas Notariales no requiere
-        // verificacion biometrica.
-        $esCartaNotarialSinBiometrico = (int) $acto->empresa_id === 15
-                           && (stripos($acto->asunto ?? '', 'carta notarial') !== false
-                           || stripos($acto->asunto ?? '', 'cartas notariales') !== false);
-        $huella       = (!$esTramiteRegistral && !$esCopiasCertificadasSinBiometrico && !$esCartaNotarialSinBiometrico && $total >= 10) ? 1.50 : 0;
+        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10
+        // y el asunto no esta en la lista de servicios exentos de biometrico).
+        $huella        = (!self::excluyeBiometrico($acto->asunto ?? '', (int) $acto->empresa_id) && $total >= 10) ? 1.50 : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
@@ -312,9 +327,76 @@ class ComprobantesNotariaController extends Controller
             'metodo_pago'              => 'required|in:efectivo,yape,plin,transferencia,tarjeta',
         ]);
 
-        $empresa = auth()->user()->empresa;
+        $empresa   = auth()->user()->empresa;
+        $empresaId = (int) $empresa->id;
 
-        // Correlativo
+        // Limpiar el item interno __biometrico__ que usa el frontend para su
+        // propio estado (no debe llegar a la boleta).
+        $itemsSolicitados = array_values(array_filter((array) $request->items, function ($i) {
+            return ($i['descripcion'] ?? '') !== '__biometrico__';
+        }));
+
+        // Si algun item corresponde a un servicio exento de biometrico (ver
+        // palabrasExentasBiometrico), se descarta cualquier "Uso biometrico"
+        // que el frontend haya mandado por error. Red de seguridad: el
+        // frontend ya no deberia mandarlo en ese caso.
+        $excluyeBiometrico = collect($itemsSolicitados)->contains(function ($i) use ($empresaId) {
+            return self::excluyeBiometrico($i['descripcion'] ?? '', $empresaId);
+        });
+        if ($excluyeBiometrico) {
+            $itemsSolicitados = array_values(array_filter($itemsSolicitados, function ($i) {
+                $desc = strtolower($i['descripcion'] ?? '');
+                return !str_contains($desc, 'biométrico') && !str_contains($desc, 'biometrico');
+            }));
+        }
+
+        // Totales: se calculan sobre los items que realmente llegaron (con
+        // precios editados a mano, descuentos, etc. ya aplicados), nunca
+        // contra el precio de catalogo.
+        $total     = round(collect($itemsSolicitados)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
+        $exonerada = $empresa->zona_exonerada;
+
+        // Agregar biométrico automáticamente si aplica (>= S/10, no exento) y
+        // el frontend todavía no lo mandó como item.
+        $yaHuella = collect($itemsSolicitados)->contains(function ($i) {
+            return strtolower($i['descripcion'] ?? '') === 'uso biométrico' ||
+                   strtolower($i['descripcion'] ?? '') === 'uso biometrico';
+        });
+        $huellaVD       = (!$excluyeBiometrico && !$yaHuella && $total >= 10) ? 1.50 : 0;
+        $itemsConHuella = $itemsSolicitados;
+        if ($huellaVD > 0) {
+            $itemsConHuella[] = [
+                'tipo_servicio'   => 'Uso biométrico',
+                'descripcion'     => 'Uso biométrico',
+                'cantidad'        => 1,
+                'precio_unitario' => 1.50,
+                'precio'          => 1.50,
+                'monto'           => 1.50,
+            ];
+            $total = round($total + $huellaVD, 2);
+        }
+
+        // El total recalculado aqui a partir de los items debe coincidir con
+        // lo que se mostro en pantalla (y se cobro en caja). Si no coincide,
+        // no se emite: evita boletas por un monto distinto al cobrado.
+        if ($request->filled('total_declarado')) {
+            $totalDeclarado = round((float) $request->total_declarado, 2);
+            if (abs($totalDeclarado - $total) > 0.01) {
+                \Log::warning('ventaDirecta: total declarado no coincide con el recalculado', [
+                    'empresa_id'        => $empresaId,
+                    'total_declarado'   => $totalDeclarado,
+                    'total_recalculado' => $total,
+                    'items'             => $itemsConHuella,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'El total no coincide con los ítems, recargue e intente de nuevo.',
+                ]);
+            }
+        }
+
+        // Correlativo (recien aqui: si la validacion de arriba rechazo, no se
+        // consume un numero de serie).
         if ($request->tipo_comprobante === '01') {
             $serie       = $empresa->serie_factura ?? 'F001';
             $correlativo = ($empresa->ultimo_num_factura ?? 0) + 1;
@@ -325,68 +407,6 @@ class ComprobantesNotariaController extends Controller
             $empresa->increment('ultimo_num_boleta');
         }
 
-        // Notaria Alex Herrera (empresa_id=15): si el comprobante incluye "Copias
-        // Certificadas" o "Legalizacion de Copias", excluir cualquier item de uso
-        // biometrico (no se requiere verificacion biometrica ni se cobra).
-        $itemsSolicitados = (array) $request->items;
-        $esCopiasCertificadasVD = (int) $empresa->id === 15 && collect($itemsSolicitados)->contains(function ($i) {
-            $desc = strtolower($i['descripcion'] ?? '');
-            return str_contains($desc, 'copias certificadas')
-                || str_contains($desc, 'legalización de copias')
-                || str_contains($desc, 'legalizacion de copias');
-        });
-        // Notaria Alex Herrera (empresa_id=15): si el comprobante incluye "Carta
-        // Notarial" o "Cartas Notariales", excluir cualquier item de uso
-        // biometrico (no se requiere verificacion biometrica ni se cobra).
-        $esCartaNotarialVD = (int) $empresa->id === 15 && collect($itemsSolicitados)->contains(function ($i) {
-            $desc = strtolower($i['descripcion'] ?? '');
-            return str_contains($desc, 'carta notarial')
-                || str_contains($desc, 'cartas notariales');
-        });
-        if ($esCopiasCertificadasVD || $esCartaNotarialVD) {
-            $itemsSolicitados = array_values(array_filter($itemsSolicitados, function ($i) {
-                $desc = strtolower($i['descripcion'] ?? '');
-                return !str_contains($desc, 'biométrico') && !str_contains($desc, 'biometrico');
-            }));
-        }
-
-        // Totales
-        $total      = round(collect($itemsSolicitados)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
-        $exonerada  = $empresa->zona_exonerada;
-
-        // Agregar biométrico automáticamente si aplica (>= S/10 y no es trámite registral)
-        // El biométrico se descuenta del primer item, el total NO cambia
-        $esTramiteRegistralVD = false;
-        foreach ($itemsSolicitados as $itm) {
-            $desc = strtolower($itm['descripcion'] ?? '');
-            if (str_contains($desc, 'tramite registral') || str_contains($desc, 'trámite registral') || str_contains($desc, 'copia simple')) {
-                $esTramiteRegistralVD = true; break;
-            }
-        }
-        $huellaVD = (!$esTramiteRegistralVD && !$esCopiasCertificadasVD && !$esCartaNotarialVD && $total >= 10) ? 1.50 : 0;
-        $itemsConHuella = $itemsSolicitados;
-
-        // Limpiar items: quitar el item interno __biometrico__ del frontend
-        $itemsConHuella = array_values(array_filter($itemsConHuella, function($i) {
-            return ($i['descripcion'] ?? '') !== '__biometrico__';
-        }));
-
-        // Verificar si el frontend ya envió el biométrico como "Uso biométrico"
-        $yaHuella = collect($itemsConHuella)->contains(function($i) {
-            return strtolower($i['descripcion'] ?? '') === 'uso biométrico' ||
-                   strtolower($i['descripcion'] ?? '') === 'uso biometrico';
-        });
-
-        if ($huellaVD > 0 && !$yaHuella) {
-            $itemsConHuella = array_merge($itemsConHuella, [[
-                'tipo_servicio'  => 'Uso biométrico',
-                'descripcion'    => 'Uso biométrico',
-                'cantidad'       => 1,
-                'precio_unitario'=> 1.50,
-                'precio'         => 1.50,
-                'monto'          => 1.50,
-            ]]);
-        }
         if ($exonerada) {
             $gravada = 0;
             $igv     = 0;
