@@ -875,6 +875,16 @@ class ComprobantesNotariaController extends Controller
             if ($emisor) $vendedor = $emisor->name;
         }
 
+        // Alto dinamico segun contenido: la columna PRODUCTO ocupa ~20 caracteres
+        // por linea, cada linea de item ocupa ~18pt. Con setPaper fijo el pie
+        // (QR + "gracias por su compra") se pasaba a una segunda hoja casi en
+        // blanco cuando habia varios items.
+        $numLineas = 0;
+        foreach ($items as $item) {
+            $numLineas += max(1, (int) ceil(mb_strlen($item['descripcion'] ?? '') / 20));
+        }
+        $alturaTicket = max(500, 620 + ($numLineas * 18));
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.recibo-notaria-ticket', [
             'empresa'           => $empresa,
             'tipoDoc'           => $tipoDoc,
@@ -894,7 +904,7 @@ class ComprobantesNotariaController extends Controller
             'exonerada'         => $exonerada,
             'tipoComp'          => $comp->tipo_comprobante,
             'comp'              => $comp,
-        ])->setPaper([0, 0, 226.77, 700], 'portrait');
+        ])->setPaper([0, 0, 226.77, $alturaTicket], 'portrait');
 
         return $pdf->stream($serie . '-' . $numero . '.pdf');
     }
