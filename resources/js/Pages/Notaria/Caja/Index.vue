@@ -394,7 +394,14 @@
 
                             <!-- CLIENTE -->
                             <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:1rem;">
-                                <label style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Cliente</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Cliente</label>
+                                    <button v-if="formComp.tipo_comprobante !== '01'" type="button"
+                                        @click="formComp.cliente_tipo_documento='1'; formComp.cliente_numero_documento='00000000'; formComp.cliente_nombre='CLIENTES VARIOS'; formComp.cliente_email=''"
+                                        style="font-size:11px; padding:3px 8px; border:1px solid #E2E8F0; border-radius:6px; background:#F8FAFC; color:#0F766E; cursor:pointer; font-weight:600;">
+                                        Clientes Varios
+                                    </button>
+                                </div>
                                 <input v-model="formComp.cliente_numero_documento" type="text"
                                     @input="buscarCliente" placeholder="DNI (8 dígitos) o RUC (11 dígitos)"
                                     style="width:100%; padding:10px 12px; border:1px solid #E2E8F0; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;" />
@@ -1118,15 +1125,16 @@ async function confirmarCobro(boletaSimple = false) {
                 errorComp.value = 'Para Factura debe ingresar RUC y Razón Social'
                 return
             }
-        } else {
-            if (formComp.value.cliente_numero_documento && !formComp.value.cliente_nombre) {
-                errorComp.value = 'Ingrese el nombre del cliente'
+        } else if (!formComp.value.cliente_numero_documento) {
+            // Boleta sin documento: SUNAT permite "Clientes Varios" hasta S/ 700
+            const montoBoleta = Number(expedienteSeleccionado.value.monto_cobrar) || 0
+            if (montoBoleta > 700) {
+                errorComp.value = 'Para boletas mayores a S/ 700 SUNAT exige el DNI del cliente'
                 return
             }
-            if (formComp.value.cliente_nombre && !formComp.value.cliente_numero_documento) {
-                errorComp.value = 'Ingrese el DNI del cliente'
-                return
-            }
+            formComp.value.cliente_tipo_documento   = '1'
+            formComp.value.cliente_numero_documento = '00000000'
+            formComp.value.cliente_nombre           = formComp.value.cliente_nombre || 'CLIENTES VARIOS'
         }
     }
 

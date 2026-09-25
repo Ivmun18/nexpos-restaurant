@@ -44,9 +44,9 @@ class ComprobantesNotariaController extends Controller
     {
         $request->validate([
             'tipo_comprobante'         => 'required|in:01,03',
-            'cliente_tipo_documento'   => 'required|in:0,1,6',
-            'cliente_numero_documento' => 'required|string',
-            'cliente_nombre'           => 'required|string',
+            'cliente_tipo_documento'   => 'nullable|in:0,1,6',
+            'cliente_numero_documento' => 'nullable|string',
+            'cliente_nombre'           => 'nullable|string',
             'cliente_email'            => 'nullable|email',
             'forma_pago'               => 'nullable|in:Contado,Credito',
             'cuotas'                   => 'nullable|array',
@@ -56,6 +56,24 @@ class ComprobantesNotariaController extends Controller
 
         $empresa   = Empresa::find($acto->empresa_id);
         $exonerada = $empresa->zona_exonerada;
+        $total     = round(floatval($acto->monto_cobrar), 2);
+
+        // Boleta sin documento: SUNAT permite "Clientes Varios" hasta S/ 700.
+        // Se valida antes de consumir correlativo para no quemar un folio si se rechaza.
+        $sinDocumento = !$request->filled('cliente_numero_documento') || $request->cliente_numero_documento === '00000000';
+        if ($request->tipo_comprobante === '01') {
+            if (!$request->filled('cliente_numero_documento') || !$request->filled('cliente_nombre')) {
+                return response()->json(['success' => false, 'mensaje' => 'Para Factura debe ingresar RUC y Razón Social']);
+            }
+        } elseif ($sinDocumento && $total > 700) {
+            return response()->json(['success' => false, 'mensaje' => 'Para boletas mayores a S/ 700 SUNAT exige el DNI del cliente']);
+        }
+
+        $request->merge([
+            'cliente_tipo_documento'   => $sinDocumento ? '1' : ($request->cliente_tipo_documento ?: '1'),
+            'cliente_numero_documento' => $sinDocumento ? '00000000' : $request->cliente_numero_documento,
+            'cliente_nombre'           => $request->cliente_nombre ?: 'CLIENTES VARIOS',
+        ]);
 
         if ($request->tipo_comprobante === '01') {
             $serie       = $empresa->serie_factura ?? 'F001';
@@ -66,8 +84,6 @@ class ComprobantesNotariaController extends Controller
             $correlativo = ($empresa->ultimo_num_boleta ?? 0) + 1;
             $empresa->increment('ultimo_num_boleta');
         }
-
-        $total     = round(floatval($acto->monto_cobrar), 2);
         $gravada   = $exonerada ? 0 : round($total / 1.18, 2);
         $igv       = $exonerada ? 0 : round($total - $gravada, 2);
         $baseImponible = $exonerada ? $total : $gravada;
@@ -317,9 +333,9 @@ class ComprobantesNotariaController extends Controller
 
         $request->validate([
             'tipo_comprobante'         => 'required|in:01,03',
-            'cliente_tipo_documento'   => 'required',
-            'cliente_numero_documento' => 'required',
-            'cliente_nombre'           => 'required|string',
+            'cliente_tipo_documento'   => 'nullable|string',
+            'cliente_numero_documento' => 'nullable|string',
+            'cliente_nombre'           => 'nullable|string',
             'cliente_email'            => 'nullable|email',
             'items'                    => 'required|array|min:1',
             'items.*.descripcion'      => 'required|string',
@@ -394,6 +410,22 @@ class ComprobantesNotariaController extends Controller
                 ]);
             }
         }
+
+        // Boleta sin documento: SUNAT permite "Clientes Varios" hasta S/ 700.
+        $sinDocumentoVD = !$request->filled('cliente_numero_documento') || $request->cliente_numero_documento === '00000000';
+        if ($request->tipo_comprobante === '01') {
+            if (!$request->filled('cliente_numero_documento') || !$request->filled('cliente_nombre')) {
+                return response()->json(['success' => false, 'mensaje' => 'Para Factura debe ingresar RUC y Razón Social']);
+            }
+        } elseif ($sinDocumentoVD && $total > 700) {
+            return response()->json(['success' => false, 'mensaje' => 'Para boletas mayores a S/ 700 SUNAT exige el DNI del cliente']);
+        }
+
+        $request->merge([
+            'cliente_tipo_documento'   => $sinDocumentoVD ? '1' : ($request->cliente_tipo_documento ?: '1'),
+            'cliente_numero_documento' => $sinDocumentoVD ? '00000000' : $request->cliente_numero_documento,
+            'cliente_nombre'           => $request->cliente_nombre ?: 'CLIENTES VARIOS',
+        ]);
 
         // Correlativo (recien aqui: si la validacion de arriba rechazo, no se
         // consume un numero de serie).
