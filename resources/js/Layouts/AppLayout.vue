@@ -722,6 +722,15 @@ const menuItems = computed(() => {
         if (industry === 'notaria') {
             const ocultarEnNotaria = ['/caja', '/reportes-restaurante', '/reportes/turnos', '/mesas', '/compras', '/proveedores', '/insumos', '/recetas']
             if (ocultarEnNotaria.includes(item.path)) return false
+
+            // Caja notarial / Cuentas x Cobrar: solo quien puede facturar
+            const rutasSoloFacturaNotaria = ['/notaria/caja', '/notaria/cuentas-cobrar']
+            const esAdminNotaria = rol === 'admin' || rol === 'superadmin'
+            if (rutasSoloFacturaNotaria.includes(item.path) && !esAdminNotaria && !page.props.auth?.user?.puede_facturar) return false
+
+            // Reportes / Auditoría / Servicios: solo admin
+            const rutasSoloAdminNotaria = ['/notaria/reportes', '/notaria/auditoria', '/notaria/servicios']
+            if (rutasSoloAdminNotaria.includes(item.path) && !esAdminNotaria) return false
         }
 
         // Ocultar Caja/Panel Cajero según modalidad de cobro (solo farmacia)

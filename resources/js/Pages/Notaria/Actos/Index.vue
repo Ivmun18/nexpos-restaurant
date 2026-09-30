@@ -498,18 +498,35 @@ const tiposActo = [
     { value: 'otro',                     label: '📁 Otro',                            grupo: 'Otros' },
 ]
 
-// Roles restringidos a un subconjunto de tipos de acto (mismo mapa que en el backend)
+// Roles con acceso total (sin restricción de tipo de acto). Cualquier otro
+// rol NO listado aquí ni en los mapas de abajo no ve ningún tipo (deny by
+// default), para no repetir el bug de 'escrituras' quedando sin filtrar.
+const ROLES_SIN_RESTRICCION = ['admin', 'superadmin', 'notario']
+
+// Roles restringidos por EXCLUSIÓN (ven todo menos lo listado). Mismo
+// criterio que User::tipoActoPermitidos() en el backend.
+const TIPOS_EXCLUIDOS_POR_ROL = {
+    escrituras: ['prescripcion_dominio', 'transferencia_vehicular'],
+}
+
+// Roles restringidos por INCLUSIÓN (mismo mapa que el backend)
 const TIPOS_POR_ROL = {
     asistente:       ['legalizacion'],
     prescripciones:  ['prescripcion_dominio', 'escritura_publica'],
     legalizaciones:  ['legalizacion', 'certificacion_notarial'],
     notificaciones:  ['notificacion', 'certificado_domiciliario'],
-    mixto:           ['legalizacion', 'certificacion_notarial', 'acta_no_contenciosa'],
+    mixto:           ['legalizacion', 'certificacion_notarial', 'transferencia_vehicular', 'escritura_publica'],
 }
 
 const tiposActoDisponibles = computed(() => {
-    const permitidos = TIPOS_POR_ROL[page.props.auth?.user?.rol]
-    return permitidos ? tiposActo.filter(t => permitidos.includes(t.value)) : tiposActo
+    const rol = page.props.auth?.user?.rol
+    if (ROLES_SIN_RESTRICCION.includes(rol)) return tiposActo
+    if (TIPOS_EXCLUIDOS_POR_ROL[rol]) {
+        const excluidos = TIPOS_EXCLUIDOS_POR_ROL[rol]
+        return tiposActo.filter(t => !excluidos.includes(t.value))
+    }
+    const permitidos = TIPOS_POR_ROL[rol] ?? []
+    return tiposActo.filter(t => permitidos.includes(t.value))
 })
 
 const gruposActo = computed(() => {

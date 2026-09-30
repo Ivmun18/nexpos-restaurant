@@ -153,16 +153,38 @@ class User extends Authenticatable
         return (bool) $this->puede_facturar;
     }
 
+    /**
+     * Todos los valores de tipo_acto que existen en el wizard de Expedientes
+     * (resources/js/Pages/Notaria/Actos/Index.vue, constante `tiposActo`).
+     * Sin whitelist en BD (columna VARCHAR libre) — esta es la única fuente
+     * de verdad de "qué tipos existen", usada para calcular accesos por
+     * exclusión (ver rol 'escrituras' abajo).
+     */
+    const TODOS_TIPOS_ACTO = [
+        'compra_venta', 'compra_venta_bien_futuro', 'compra_venta_hipoteca', 'compra_venta_alicuotas',
+        'aclaracion_compra_venta', 'ratificacion_compra_venta', 'contrato_preparatorio', 'adjudicacion',
+        'rectificacion_area', 'particion', 'prescripcion_dominio',
+        'donacion_inmueble', 'donacion_alicuotas', 'donacion_vehiculo',
+        'transferencia_vehicular',
+        'hipoteca', 'mutuo_hipoteca',
+        'poder', 'ampliacion_poder', 'revocatoria_poder',
+        'constitucion_sac', 'constitucion_srl', 'constitucion_asociacion', 'aumento_capital', 'transformacion_empresa',
+        'sustitucion_regimen', 'cese_regimen',
+        'testamento', 'reconocimiento_paternidad', 'autorizacion_viaje', 'autorizacion_viaje_ext', 'divorcio',
+        'sucesion_intestada', 'certificacion_notarial', 'legalizacion', 'escritura_publica', 'notificacion',
+        'certificado_domiciliario', 'acta_no_contenciosa', 'arrendamiento', 'carta_notarial', 'otro',
+    ];
+
     public function tipoActoPermitidos(): ?array
     {
         return match($this->rol) {
-            "admin", "notario", "abogado_asistente" => null,
+            "admin", "notario" => null,
+            "escrituras" => array_values(array_diff(self::TODOS_TIPOS_ACTO, ["prescripcion_dominio", "transferencia_vehicular"])),
             "asistente" => ["legalizacion"],
-            "escrituras" => ["escritura_publica"],
             "prescripciones" => ["prescripcion_dominio", "escritura_publica"],
             "legalizaciones" => ["legalizacion", "certificacion_notarial"],
             "notificaciones" => ["notificacion", "certificado_domiciliario"],
-            "mixto" => ["legalizacion", "certificacion_notarial", "acta_no_contenciosa", "transferencia_vehicular", "constatacion", "escritura_publica"],
+            "mixto" => ["legalizacion", "certificacion_notarial", "transferencia_vehicular", "escritura_publica"],
             default => [],
         };
     }
