@@ -499,18 +499,24 @@ const tiposActo = [
 ]
 
 // Roles con acceso total (sin restricción de tipo de acto). Cualquier otro
-// rol NO listado aquí ni en los mapas de abajo no ve ningún tipo (deny by
-// default), para no repetir el bug de 'escrituras' quedando sin filtrar.
+// rol NO listado aquí ni en el mapa de abajo no ve ningún tipo (deny by
+// default) — un tipo de acto nuevo no debe aparecerle a nadie salvo
+// admin/notario hasta que se asigne explícitamente a un rol.
 const ROLES_SIN_RESTRICCION = ['admin', 'superadmin', 'notario']
 
-// Roles restringidos por EXCLUSIÓN (ven todo menos lo listado). Mismo
-// criterio que User::tipoActoPermitidos() en el backend.
-const TIPOS_EXCLUIDOS_POR_ROL = {
-    escrituras: ['prescripcion_dominio', 'transferencia_vehicular'],
-}
-
-// Roles restringidos por INCLUSIÓN (mismo mapa que el backend)
+// Whitelist explícita por rol (mismo mapa que User::tipoActoPermitidos() en
+// el backend). Nunca por exclusión: un tipo nuevo no debe filtrarse solo.
 const TIPOS_POR_ROL = {
+    escrituras: [
+        'compra_venta', 'compra_venta_bien_futuro', 'compra_venta_hipoteca', 'compra_venta_alicuotas',
+        'aclaracion_compra_venta', 'ratificacion_compra_venta', 'contrato_preparatorio',
+        'adjudicacion', 'rectificacion_area', 'particion',
+        'donacion_inmueble', 'donacion_alicuotas', 'donacion_vehiculo',
+        'hipoteca', 'mutuo_hipoteca',
+        'poder', 'ampliacion_poder', 'revocatoria_poder',
+        'constitucion_sac', 'constitucion_srl', 'constitucion_asociacion', 'aumento_capital', 'transformacion_empresa',
+        'escritura_publica',
+    ],
     asistente:       ['legalizacion'],
     prescripciones:  ['prescripcion_dominio', 'escritura_publica'],
     legalizaciones:  ['legalizacion', 'certificacion_notarial'],
@@ -521,10 +527,6 @@ const TIPOS_POR_ROL = {
 const tiposActoDisponibles = computed(() => {
     const rol = page.props.auth?.user?.rol
     if (ROLES_SIN_RESTRICCION.includes(rol)) return tiposActo
-    if (TIPOS_EXCLUIDOS_POR_ROL[rol]) {
-        const excluidos = TIPOS_EXCLUIDOS_POR_ROL[rol]
-        return tiposActo.filter(t => !excluidos.includes(t.value))
-    }
     const permitidos = TIPOS_POR_ROL[rol] ?? []
     return tiposActo.filter(t => permitidos.includes(t.value))
 })
