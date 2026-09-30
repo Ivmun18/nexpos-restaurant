@@ -624,6 +624,13 @@ Route::middleware(['auth'])->prefix('reportes/comandas')->group(function () {
 // COMANDAS (Pantalla Kanban)
 // ==========================================
 Route::get('/reportes/turnos', [\App\Http\Controllers\ReporteTurnoController::class, 'index'])->middleware('auth')->name('reportes.turnos');
+// TODO: esta ruta solo tiene middleware 'auth' (sin restricción de rol); queda anotado, no se toca en esta tarea.
+
+// Reporte de Mozos (solo admin)
+Route::middleware(['auth', 'rol:admin'])->prefix('reportes/mozos')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ReporteMozoController::class, 'index'])->name('reportes.mozos');
+    Route::get('/{mozo}', [\App\Http\Controllers\ReporteMozoController::class, 'detalle'])->name('reportes.mozos.detalle');
+});
 
 Route::middleware(['auth'])->prefix('comandas')->group(function () {
     Route::get('/', [\App\Http\Controllers\ComandaController::class, 'index'])->name('comandas.index');

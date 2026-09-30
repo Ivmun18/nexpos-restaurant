@@ -467,7 +467,8 @@ const allMenuItems = [
     { path: '/cocina',              icon: 'cocina',     label: 'Cocina',             module: 'cocina',          section: 'RESTAURANTE' },
     { path: '/comandas',            icon: 'comanda',    label: 'Comandas',           module: 'comandas',        section: 'RESTAURANTE' },
     { path: '/reportes-restaurante',icon: 'ventas',     label: 'Reporte ventas',     module: 'pos_restaurante', section: 'RESTAURANTE' },
-    { path: '/reportes/turnos',     icon: 'reporte',    label: 'Reporte mozos',      module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/reportes/turnos',     icon: 'reporte',    label: 'Reporte de Turnos',  module: 'pos_restaurante', section: 'RESTAURANTE' },
+    { path: '/reportes/mozos',      icon: 'reporte',    label: 'Reporte de Mozos',   module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/reportes/comandas',   icon: 'comanda',    label: 'Reporte cocina',     module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/compras',             icon: 'compras',    label: 'Compras',            module: 'pos_restaurante', section: 'RESTAURANTE' },
     { path: '/proveedores',         icon: 'proveedor',  label: 'Proveedores',        module: 'pos_restaurante', section: 'RESTAURANTE' },
@@ -619,6 +620,9 @@ const menuItems = computed(() => {
 
         // Ocultar admin para no-admins
         if (item.module === 'admin' && rol !== 'admin' && rol !== 'superadmin') return false
+
+        // Reporte de Mozos: solo admin (la ruta ya tiene middleware rol:admin)
+        if (item.path === '/reportes/mozos' && rol !== 'admin' && rol !== 'superadmin') return false
 
         // CAJERO en FARMACIA: solo ver módulos permitidos
         if (rol === 'cajero' && industry === 'farmacia') {
