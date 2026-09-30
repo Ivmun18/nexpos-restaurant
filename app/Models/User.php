@@ -158,10 +158,11 @@ class User extends Authenticatable
         return match($this->rol) {
             "admin", "notario", "abogado_asistente" => null,
             "asistente" => ["legalizacion"],
+            "escrituras" => ["escritura_publica"],
             "prescripciones" => ["prescripcion_dominio", "escritura_publica"],
             "legalizaciones" => ["legalizacion", "certificacion_notarial"],
             "notificaciones" => ["notificacion", "certificado_domiciliario"],
-            "mixto" => ["legalizacion", "certificacion_notarial", "acta_no_contenciosa", "transferencia_vehicular", "constatacion"],
+            "mixto" => ["legalizacion", "certificacion_notarial", "acta_no_contenciosa", "transferencia_vehicular", "constatacion", "escritura_publica"],
             default => [],
         };
     }
