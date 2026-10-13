@@ -272,7 +272,7 @@ class CajaNotariaController extends Controller
                 'descripcion' => $it['tipo_servicio'] ?? 'Servicio notarial',
                 'cantidad'    => $it['cantidad'] ?? 1,
                 'precio'      => round(($it['precio_unitario'] ?? 0), 4),
-            ])->toArray(),
+            ] + (array_key_exists('con_biometrico', $it) ? ['con_biometrico' => (bool) $it['con_biometrico']] : []))->toArray(),
         ]);
 
         $resultado = app(\App\Http\Controllers\Notaria\ComprobantesNotariaController::class)->ventaDirecta($requestEmitir);

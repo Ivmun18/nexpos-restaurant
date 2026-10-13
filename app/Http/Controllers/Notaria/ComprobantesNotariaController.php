@@ -374,20 +374,47 @@ class ComprobantesNotariaController extends Controller
 
         // Agregar biométrico automáticamente si aplica (>= S/10, no exento) y
         // el frontend todavía no lo mandó como item.
-        $yaHuella = collect($itemsSolicitados)->contains(function ($i) {
+        $esHuella = function ($i) {
             return strtolower($i['descripcion'] ?? '') === 'uso biométrico' ||
                    strtolower($i['descripcion'] ?? '') === 'uso biometrico';
-        });
-        $huellaVD       = (!$excluyeBiometrico && !$yaHuella && $total >= 10) ? 1.50 : 0;
+        };
+        $yaHuella = collect($itemsSolicitados)->contains($esHuella);
+        // Un biometrico por unidad vendida (misma regla que el modal de
+        // Servicio Rapido): 9 certificados => 9 x 1.50, no 1 x 1.50. Los items
+        // de S/ 1.50 o menos no llevan biometrico. El modal ya manda los
+        // precios con la huella descontada y marca con 'con_biometrico' los
+        // items que la llevan; sin esa marca se decide por el precio.
+        $cantidadHuellaVD = (int) collect($itemsSolicitados)
+            ->reject($esHuella)
+            ->filter(fn($i) => array_key_exists('con_biometrico', $i)
+                ? (bool) $i['con_biometrico']
+                : floatval($i['precio'] ?? 0) > 1.50)
+            ->sum(fn($i) => max(intval($i['cantidad'] ?? 1), 1));
+
+        // Si el frontend mando "Uso biometrico", se cobra la cantidad enviada
+        // (puede ser mayor por huellas extra, que se suman al total) a S/ 1.50,
+        // pero nunca menos que la cantidad automatica.
+        if ($yaHuella) {
+            $itemsSolicitados = array_map(function ($i) use ($esHuella, $cantidadHuellaVD) {
+                if ($esHuella($i)) {
+                    $i['cantidad'] = max(intval($i['cantidad'] ?? 1), $cantidadHuellaVD, 1);
+                    $i['precio']   = 1.50;
+                }
+                return $i;
+            }, $itemsSolicitados);
+            $total = round(collect($itemsSolicitados)->sum(fn($i) => floatval($i['precio']) * intval($i['cantidad'] ?? 1)), 2);
+        }
+
+        $huellaVD       = (!$excluyeBiometrico && !$yaHuella && $total >= 10) ? round($cantidadHuellaVD * 1.50, 2) : 0;
         $itemsConHuella = $itemsSolicitados;
         if ($huellaVD > 0) {
             $itemsConHuella[] = [
                 'tipo_servicio'   => 'Uso biométrico',
                 'descripcion'     => 'Uso biométrico',
-                'cantidad'        => 1,
+                'cantidad'        => $cantidadHuellaVD,
                 'precio_unitario' => 1.50,
                 'precio'          => 1.50,
-                'monto'           => 1.50,
+                'monto'           => $huellaVD,
             ];
             $total = round($total + $huellaVD, 2);
         }

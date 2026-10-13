@@ -276,7 +276,7 @@
                                         <p style="margin:0; font-size:12px; font-weight:600;" :style="{color: it._esHuella ? '#D97706' : '#1E293B'}">
                                             <span v-if="it._esHuella" style="display:inline-flex; align-items:center; gap:5px;">
                                                 🖐 Uso biométrico ×
-                                                <input :value="it.cantidad" @change="actualizarCantidadBiometrico($event.target.value)" type="number" min="1" step="1"
+                                                <input :value="it.cantidad" @change="actualizarCantidadBiometrico($event)" type="number" :min="it._cantidadAuto" step="1"
                                                     style="width:44px; padding:2px 4px; border:1px solid #FBBF24; border-radius:4px; font-size:12px; text-align:center;" />
                                             </span>
                                             <span v-else>{{ it.tipo_servicio === '__otro__' ? it.tipo_servicio_custom : it.tipo_servicio }}</span>
@@ -792,7 +792,8 @@ const formRapido = ref({
 })
 const itemActual = ref({ tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' })
 const itemsRapido = ref([])
-const cantidadBiometricoManual = ref(1)
+// Huellas pedidas a mano en el modal (0 = solo las automáticas)
+const cantidadBiometricoManual = ref(0)
 const totalRapido = computed(() => itemsRapido.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0))
 
 function seleccionarServicio(nombre) {
@@ -812,12 +813,13 @@ function seleccionarServicio(nombre) {
 }
 
 function recalcularBiometrico() {
-    // Restaurar precio original del primer item si tenía huella descontada
-    const primerItem = itemsRapido.value.find(i => !i._esHuella)
-    if (primerItem && primerItem._precioOriginal !== undefined) {
-        primerItem.precio_unitario = primerItem._precioOriginal
-        delete primerItem._precioOriginal
-    }
+    // Restaurar precio original de los items que tenían huella descontada
+    itemsRapido.value.forEach(i => {
+        if (i._precioOriginal !== undefined) {
+            i.precio_unitario = i._precioOriginal
+            delete i._precioOriginal
+        }
+    })
     // Quitar biométrico existente
     itemsRapido.value = itemsRapido.value.filter(i => i.tipo_servicio !== '__biometrico__')
     // Calcular total real
@@ -828,28 +830,39 @@ function recalcularBiometrico() {
         const d = (i.tipo_servicio_custom || i.tipo_servicio || '').toLowerCase()
         return props.palabrasExentasBiometrico.some(p => d.includes(p))
     })
-    // Agregar biométrico si aplica: descontarlo del primer item
+    // Agregar biométrico si aplica: S/ 1.50 por unidad, descontado del precio
+    // unitario de cada item, así que la cantidad del biométrico es la suma de
+    // las cantidades de esos items (9 × 68.50 + 9 × 1.50 = 9 × 70.00).
     if (!esExento && totalReal >= 10) {
-        const cantidad = Math.max(Number(cantidadBiometricoManual.value) || 1, 1)
-        const totalBiometrico = Number((cantidad * 1.50).toFixed(2))
-        const primero = itemsRapido.value.find(i => !i._esHuella)
-        if (primero && Number(primero.precio_unitario) > totalBiometrico) {
-            primero._precioOriginal = Number(primero.precio_unitario)
-            primero.precio_unitario = Number((primero.precio_unitario - totalBiometrico).toFixed(2))
-        }
-        itemsRapido.value.push({
-            tipo_servicio: '__biometrico__',
-            tipo_servicio_custom: '',
-            cantidad: cantidad,
-            precio_unitario: 1.50,
-            _esHuella: true
+        let cantidad = 0
+        itemsRapido.value.forEach(i => {
+            if (Number(i.precio_unitario) > 1.50) {
+                i._precioOriginal = Number(i.precio_unitario)
+                i.precio_unitario = Number((i.precio_unitario - 1.50).toFixed(2))
+                cantidad += Number(i.cantidad) || 1
+            }
         })
+        // Se pueden pedir huellas extra a mano (se suman al total), pero
+        // nunca menos que las automáticas.
+        if (cantidad > 0) {
+            itemsRapido.value.push({
+                tipo_servicio: '__biometrico__',
+                tipo_servicio_custom: '',
+                cantidad: Math.max(cantidad, Number(cantidadBiometricoManual.value) || 0),
+                precio_unitario: 1.50,
+                _cantidadAuto: cantidad,
+                _esHuella: true
+            })
+        }
     }
 }
 
-function actualizarCantidadBiometrico(nuevaCantidad) {
-    cantidadBiometricoManual.value = Math.max(Number(nuevaCantidad) || 1, 1)
+function actualizarCantidadBiometrico(ev) {
+    cantidadBiometricoManual.value = Math.floor(Number(ev.target.value)) || 0
     recalcularBiometrico()
+    // Si se pidió menos que el mínimo, el input vuelve a la cantidad real
+    const huella = itemsRapido.value.find(i => i._esHuella)
+    if (huella) ev.target.value = huella.cantidad
 }
 
 function agregarItem() {
@@ -896,6 +909,7 @@ async function cobrarServicioRapido() {
                 precio_unitario: it.precio_unitario,
                 precio: it.precio_unitario,
                 monto: it.cantidad * it.precio_unitario,
+                ...(it._esHuella ? {} : { con_biometrico: it._precioOriginal !== undefined }),
             }
         })
         const totalMonto = items.reduce((s, i) => s + i.monto, 0)
@@ -926,7 +940,7 @@ async function cobrarServicioRapido() {
             formRapido.value = { cliente_nombre: 'CLIENTES VARIOS', cliente_documento: '00000000', metodo_pago: 'efectivo', forma_pago: 'Contado', cuotas: [] }
             itemsRapido.value = []
             itemActual.value = { tipo_servicio: '', tipo_servicio_custom: '', cantidad: 1, precio_unitario: '' }
-            cantidadBiometricoManual.value = 1
+            cantidadBiometricoManual.value = 0
             router.reload({ only: ['resumenCaja'] })
         } else {
             alert('❌ ' + data.mensaje)
