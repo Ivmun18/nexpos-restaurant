@@ -89,39 +89,46 @@ class ComprobantesNotariaController extends Controller
         $baseImponible = $exonerada ? $total : $gravada;
         $fileName = $empresa->ruc . '-' . $request->tipo_comprobante . '-' . $serie . '-' . str_pad($correlativo, 8, '0', STR_PAD_LEFT);
 
-        // Desglosar: servicio notarial + huella digital (1.50 solo si total >= 10
-        // y el asunto no esta en la lista de servicios exentos de biometrico).
-        $huella        = (!self::excluyeBiometrico($acto->asunto ?? '', (int) $acto->empresa_id) && $total >= 10) ? 1.50 : 0;
+        // Desglosar: servicio notarial + huella digital. Misma regla que el
+        // modal de caja: el acto lleva cantidad_biometricos huellas de S/ 1.50
+        // descontadas de su precio, solo si total >= 10, el precio alcanza para
+        // cubrirlas y el asunto no esta en la lista de exentos de biometrico.
+        $cantidadBiometricos = max((int) ($acto->cantidad_biometricos ?? 1), 1);
+        $huella        = (!self::excluyeBiometrico($acto->asunto ?? '', (int) $acto->empresa_id) && $total >= 10 && $total > round($cantidadBiometricos * 1.50, 2))
+            ? round($cantidadBiometricos * 1.50, 2) : 0;
         $montoServicio = round($total - $huella, 2);
 
         $lineas = [];
         $items = array_filter([
-            ['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'precio' => $montoServicio],
-            ...($huella > 0 ? [['desc' => 'Uso biométrico', 'codigo' => 'UB', 'precio' => $huella]] : []),
+            ['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'cantidad' => 1, 'precio' => $montoServicio],
+            ...($huella > 0 ? [['desc' => 'Uso biométrico', 'codigo' => 'UB', 'cantidad' => $cantidadBiometricos, 'precio' => 1.50]] : []),
         ], fn($item) => $item['precio'] > 0);
         if (empty($items)) {
-            $items = [['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'precio' => $total]];
+            $items = [['desc' => $acto->asunto, 'codigo' => $acto->numero_expediente ?? 'S/C', 'cantidad' => 1, 'precio' => $total]];
         }
 
-        foreach ($items as $idx => $item) {
-            $precioItem = round($item['precio'], 2);
-            $valUnit    = $exonerada ? $precioItem : round($precioItem / 1.18, 4);
-            $igvItem    = $exonerada ? 0 : round($precioItem - $valUnit, 2);
+        foreach (array_values($items) as $idx => $item) {
+            $cantidad   = max(intval($item['cantidad'] ?? 1), 1);
+            $precioUnit = round($item['precio'], 2);
+            $precioItem = round($precioUnit * $cantidad, 2);
+            $baseLinea  = $exonerada ? $precioItem : round($precioItem / 1.18, 4);
+            $valUnit    = $exonerada ? $precioUnit : round($precioUnit / 1.18, 4);
+            $igvItem    = $exonerada ? 0 : round($precioItem - $baseLinea, 2);
 
             $lineas[] = [
                 'cbc:ID'                  => ['_text' => (string)($idx + 1)],
-                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => '1'],
-                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                'cbc:InvoicedQuantity'    => ['_attributes' => ['unitCode' => 'ZZ'], '_text' => (string)$cantidad],
+                'cbc:LineExtensionAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseLinea],
                 'cac:PricingReference' => [
                     'cac:AlternativeConditionPrice' => [
-                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioItem],
+                        'cbc:PriceAmount'   => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $precioUnit],
                         'cbc:PriceTypeCode' => ['_text' => '01'],
                     ],
                 ],
                 'cac:TaxTotal' => [
                     'cbc:TaxAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                     'cac:TaxSubtotal' => [[
-                        'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $valUnit],
+                        'cbc:TaxableAmount' => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $baseLinea],
                         'cbc:TaxAmount'     => ['_attributes' => ['currencyID' => 'PEN'], '_text' => $igvItem],
                         'cac:TaxCategory'   => [
                             'cbc:ID'      => ['_text' => 'S'],

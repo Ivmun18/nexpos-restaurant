@@ -964,20 +964,34 @@ const totalExp     = computed(() => itemsExp.value.reduce((s, i) => s + (i.canti
 const itemActualExp = ref({ descripcion: '', cantidad: 1, precio_unitario: '' })
 
 function recalcularBiometricoExp() {
-    const primero = itemsExp.value.find(i => !i._esHuella && i._precioOriginal !== undefined)
-    if (primero) { primero.precio_unitario = primero._precioOriginal; delete primero._precioOriginal }
+    itemsExp.value.forEach(i => {
+        if (i._precioOriginal !== undefined) { i.precio_unitario = i._precioOriginal; delete i._precioOriginal }
+    })
     itemsExp.value = itemsExp.value.filter(i => !i._esHuella)
     const totalReal = itemsExp.value.reduce((s, i) => s + (i.cantidad * i.precio_unitario), 0)
-    const esTramite = itemsExp.value.some(i => (i.descripcion||'').toLowerCase().includes('tramite registral') || (i.descripcion||'').toLowerCase().includes('trámite registral'))
-    if (!esTramite && totalReal >= 10) {
-        const cantidadBiometricos = Math.max(Number(expedienteSeleccionado.value?.cantidad_biometricos) || 1, 1)
-        const totalBiometrico = Number((cantidadBiometricos * 1.50).toFixed(2))
-        const p = itemsExp.value.find(i => !i._esHuella)
-        if (p && Number(p.precio_unitario) > totalBiometrico) {
-            p._precioOriginal = Number(p.precio_unitario)
-            p.precio_unitario = Number((p.precio_unitario - totalBiometrico).toFixed(2))
+    // Misma lista de exentos que el backend (ver palabrasExentasBiometrico)
+    const esExento = itemsExp.value.some(i => {
+        const d = (i.descripcion || '').toLowerCase()
+        return props.palabrasExentasBiometrico.some(p => d.includes(p))
+    })
+    // Misma regla que Servicio Rápido: cada unidad descuenta sus huellas
+    // (huellas por unidad × 1.50) de su precio unitario y la cantidad del
+    // biométrico es huellas por unidad × unidades. El ítem del expediente
+    // lleva cantidad_biometricos huellas por unidad; los agregados a mano, 1.
+    if (!esExento && totalReal >= 10) {
+        let cantidad = 0
+        itemsExp.value.forEach(i => {
+            const huellas = Math.max(Number(i._huellasPorUnidad) || 1, 1)
+            const descuento = Number((huellas * 1.50).toFixed(2))
+            if (Number(i.precio_unitario) > descuento) {
+                i._precioOriginal = Number(i.precio_unitario)
+                i.precio_unitario = Number((i.precio_unitario - descuento).toFixed(2))
+                cantidad += huellas * (Number(i.cantidad) || 1)
+            }
+        })
+        if (cantidad > 0) {
+            itemsExp.value.push({ descripcion: 'Verificación biométrica RENIEC', cantidad: cantidad, precio_unitario: 1.50, _esHuella: true })
         }
-        itemsExp.value.push({ descripcion: 'Verificación biométrica RENIEC', cantidad: cantidadBiometricos, precio_unitario: 1.50, _esHuella: true })
     }
 }
 
@@ -1107,6 +1121,7 @@ function seleccionar(e) {
         descripcion:    e.asunto || 'Servicio notarial',
         cantidad:       1,
         precio_unitario: Number(e.saldo ?? (e.monto_cobrar - e.monto_pagado)),
+        _huellasPorUnidad: Math.max(Number(e.cantidad_biometricos) || 1, 1),
         _esHuella:      false
     }]
     itemActualExp.value = { descripcion: '', cantidad: 1, precio_unitario: '' }
